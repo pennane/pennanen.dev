@@ -16,7 +16,7 @@ export const getStaticProps = async () => {
 
 const Index = ({ projectsData }: InferGetStaticPropsType<typeof getStaticProps>) => {
     return (
-        <Layout>
+        <Layout description="Arttu Pennanen Web-like projects">
             <header>
                 <MainHeading />
             </header>

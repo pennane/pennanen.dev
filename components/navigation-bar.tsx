@@ -7,7 +7,7 @@ const NavigationBar = () => {
             <nav className={style['main']}>
                 <Link href="/">
                     <a className={style['brand'] + ' ' + style['link']}>
-                        <img src="/images/black-icon.png" />
+                        <img src="/images/black-icon.png" alt="" />
                         <span className="title">Arttu Pennanen</span>
                     </a>
                 </Link>

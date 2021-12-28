@@ -1,5 +1,6 @@
 import style from '../styles/project-link.module.css'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Project } from '../types'
 
 const ProjectLink = ({ project }: { project: Project }) => {
@@ -24,10 +25,20 @@ const ProjectLink = ({ project }: { project: Project }) => {
             <Link href={'/' + project.id}>
                 <a>
                     <div className={style['container']}>
-                        <img
-                            className={style['image']}
-                            src={project.icon ? '/stuff/' + project.id + '/' + project.icon : '/images/placeholder.png'}
-                        />
+                        <div className={style['image']}>
+                            <Image
+                                className={style['image']}
+                                width={48}
+                                height={48}
+                                alt={project.icon ? `${project.name} icon` : ''}
+                                src={
+                                    project.icon
+                                        ? '/stuff/' + project.id + '/' + project.icon
+                                        : '/images/placeholder.png'
+                                }
+                            />
+                        </div>
+
                         <div className={style['information']}>
                             <h2 className={style['heading']}>{project.name}</h2>
                             <p className={style['description']}>{project.description}</p>

@@ -19,9 +19,10 @@ const Layout = ({
                     <>
                         <meta name="og:description" content={description} />
                         <meta name="description" content={description} />
-                        <link rel="icon" href="/favicon.ico" />
                     </>
                 )}
+                <meta name="theme-color" content="#1c4ed8"></meta>
+                <link rel="icon" href="/favicon.ico" />
             </Head>
             <div className="page-container">
                 <BackgroundLines />

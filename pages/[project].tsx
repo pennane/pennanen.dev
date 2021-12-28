@@ -41,7 +41,7 @@ const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>
     project = project as Project
 
     return (
-        <Layout>
+        <Layout title={project.name} description={project.description || undefined}>
             <div className={style.project}>
                 <header className={style['header']}>
                     <h1>{project.name}</h1>
