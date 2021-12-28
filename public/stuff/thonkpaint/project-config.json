@@ -1,6 +1,7 @@
 {
     "url": null,
     "date": "1.5.2018",
+    "ignoreDate": true,
     "name": {
         "en": "Thonkpaint",
         "fi": null

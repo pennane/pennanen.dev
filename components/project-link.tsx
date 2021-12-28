@@ -2,23 +2,10 @@ import style from '../styles/project-link.module.css'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Project } from '../types'
+import { monthIndexToName } from '../lib/util'
 
 const ProjectLink = ({ project }: { project: Project }) => {
     const date = project.date && !project.ignoreDate ? new Date(project.date) : null
-    const monthNames = [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December'
-    ]
 
     return (
         <div className={style['main']}>
@@ -43,9 +30,9 @@ const ProjectLink = ({ project }: { project: Project }) => {
                             <h2 className={style['heading']}>{project.name}</h2>
                             <p className={style['description']}>{project.description}</p>
                             {date && (
-                                <span className={style['date']}>{`${
-                                    monthNames[date.getMonth()]
-                                }, ${date.getFullYear()}`}</span>
+                                <span className={style['date']}>{`${monthIndexToName(
+                                    date.getMonth()
+                                )}, ${date.getFullYear()}`}</span>
                             )}
                         </div>
                     </div>

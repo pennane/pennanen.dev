@@ -3,7 +3,7 @@ import Layout from '../components/layout'
 import style from '../styles/project.module.css'
 import linkStyle from '../styles/project-link.module.css'
 import { getProjectById, getProjectIds } from '../lib/stuff'
-import { isString } from '../lib/util'
+import { isString, monthIndexToName } from '../lib/util'
 import { Project, Project as ProjectPage } from '../types'
 
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -40,12 +40,19 @@ const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>
     if (!project) return null
     project = project as Project
 
+    const date = project.date ? new Date(project.date) : null
+
     return (
         <Layout title={project.name} description={project.description || undefined}>
             <div className={style.project}>
                 <header className={style['header']}>
                     <h1>{project.name}</h1>
                     <p>{project.description}</p>
+                    {date && (
+                        <span className={linkStyle['date']}>{`${monthIndexToName(
+                            date.getMonth()
+                        )}, ${date.getFullYear()}`}</span>
+                    )}
                 </header>
                 <section className={style['lift']}>
                     {project.icon && (
@@ -55,15 +62,15 @@ const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>
                     )}
                     {project.url && project.url.includes('github') && (
                         <a href={project.url} rel="noreferrer">
-                            outbound github link
+                            Open github link <span className={linkStyle['date']}>[{project.url}]</span>
                         </a>
                     )}
                     {project.url && !project.url.includes('github') && (
                         <a href={project.url} rel="noreferrer">
-                            outbound link
+                            Open outbound link <span className={linkStyle['date']}>[{project.url}]</span>
                         </a>
                     )}
-                    {!project.url && <a href={`/stuff/${project.id}/index.html`}>link</a>}
+                    {!project.url && <a href={`/stuff/${project.id}/index.html`}>Launch project</a>}
                 </section>
             </div>
         </Layout>
