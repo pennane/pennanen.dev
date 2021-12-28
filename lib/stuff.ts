@@ -58,7 +58,7 @@ export function getProjectIds() {
     })
 }
 
-export function getProjects() {
+export function getProjects(): Project[] {
     const directoryNames = getDirectories(directory)
     return directoryNames
         .map((id) => getProjectById(id))
@@ -69,5 +69,5 @@ export function getProjects() {
             if (!a.date || a.ignoreDate) return 1
             if (!b.date || b.ignoreDate) return -1
             return b.date - a.date
-        })
+        }) as Project[]
 }
