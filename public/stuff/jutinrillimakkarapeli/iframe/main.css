@@ -1,0 +1,79 @@
+* {
+    position: relative;
+	touch-action: manipulation;
+	
+}
+
+img, a, span {
+	user-select: none;
+	user-drag: none;
+}
+
+a {
+    font-family: "Comic Sans MS", sans-serif;
+    font-size: 1.3em;
+    text-decoration: none;
+    color: black;
+    margin-bottom: 0.5em;
+}
+
+a:hover {
+	cursor: pointer;
+}
+
+#cover {
+	position: absolute;
+	display: flex;
+	background-color: black;
+	z-index: 2;
+	width: 100%;
+	height: 100%;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+}
+
+#cover span {
+	color: white;
+}
+
+#game {
+    height: auto;
+    width: 100vw;
+    background-color: white;
+}
+
+#kuvituskuva {
+    width: 100vw;
+}
+
+#napit {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    left: 60%;
+    top: 15%;
+    
+}
+
+#footer {
+    position: fixed;
+    bottom: 0;
+    color: black;
+    color: rgba(0,0,0,0.3);
+    font-family: Arial, sans-serif;
+    font-size: 0.7em;
+}
+
+/*thonk*/
+
+@keyframes huerotation {
+ from {
+    -webkit-filter:hue-rotate();
+            filter:hue-rotate();
+    }
+  to {
+    -webkit-filter:hue-rotate(360deg);
+            filter:hue-rotate(360deg);
+    }
+}

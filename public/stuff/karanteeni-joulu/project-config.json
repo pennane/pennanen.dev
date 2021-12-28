@@ -1,0 +1,13 @@
+{
+    "url": "https://github.com/Pennane/korsoraattori-extension/releases",
+    "date": "29.11.2019",
+    "name": {
+        "en": "Karanteeni Advent Calendar 2019",
+        "fi": null
+    },
+    "description": {
+        "en": "Interactive advent calendar for a minecraft community",
+        "fi": null
+    },
+    "icon": "icon.png"
+}

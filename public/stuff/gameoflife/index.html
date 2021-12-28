@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=UA-126133790-2"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "UA-126133790-2");
+    </script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta charset="utf-8" />
+
+    <title>game of life</title>
+    <link rel="stylesheet" href="style/main.css" />
+  </head>
+
+  <body>
+    <div id="game">
+      <div id="game-of-life">
+        <input type="checkbox" id="base-checkbox" />
+      </div>
+      <div id="buttons">
+        <button id="start-game">start</button>
+        <button id="pause-game">pause</button>
+        <button id="randomize-game">randomize</button>
+        <button id="clear-game">clear</button>
+        <button id="rescale-game">re scale</button>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>

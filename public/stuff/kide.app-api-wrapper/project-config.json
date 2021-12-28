@@ -1,0 +1,13 @@
+{
+    "url": "https://github.com/Pennane/kide.app-api",
+    "date": "3.10.2021",
+    "name": {
+        "en": "Kide.app api wrapper",
+        "fi": null
+    },
+    "description": {
+        "en": "Simple promise based wrapper for the Kide.app API",
+        "fi": null
+    },
+    "icon": null
+}

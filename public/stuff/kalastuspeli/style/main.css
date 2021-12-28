@@ -1,0 +1,452 @@
+* {
+    box-sizing: border-box;
+    color: whitesmoke;
+    font-family: sans-serif;
+    user-select: none;
+    font-style: oblique;
+
+}
+
+button, body {
+    touch-action: manipulation;
+}
+
+button {
+    color: white;
+    cursor: pointer;
+    font-size: 0.8em;
+    background-color: #f44336;
+    border: 1px solid black;
+    transition: background-color 0.1s;
+    padding: .4em .7em;
+    text-shadow: 1px 1px black;
+}
+
+button:hover {
+    background-color: hsl(4, 90%, 18%)
+}
+
+html {
+    background-color: #252321;
+    overflow-x: hidden;
+}
+
+body {
+    background-image: url(../img/fullartbg.gif);
+    background-repeat: repeat-x;
+    background-size: cover;
+    background-position: center;
+    image-rendering: pixelated;
+
+}
+
+.utility span {
+    font-size: 0.9em;
+}
+
+#resetthegame {
+    display: flex;
+    flex-direction: column;
+}
+
+#resetbtn {
+    width: 5em;
+    margin-left: 2em;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#content {
+    min-height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#combined {
+    margin: 0;
+    max-width: 1000px;
+    width: 94%;
+    margin-top: 1em;
+    margin-right: 2em;
+    height: 100px;
+}
+
+span,
+p {
+    font-size: calc( 0.7em + 0.2vw);
+}
+
+#header {
+    text-align: center;
+    margin-bottom: 2em;
+}
+
+#header h1 {
+    font-size: calc(1.5em + 0.6vw);
+    font-style: oblique;
+    font-weight: 100;
+    letter-spacing: 0.2em;
+    animation-name: headeranimation;
+    animation-timing-function: ease-out;
+    animation-duration: 1s;
+    animation-iteration-count: 1;
+    animation-delay: 0s;
+    margin-bottom: 2em;
+    text-shadow: 2px 2px black;
+}
+
+.price {
+    font-style: oblique;
+}
+
+.theprice {
+    font-weight: 600;
+}
+
+#game {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    margin: 0;
+}
+
+#gamecontent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 0;
+}
+
+.upgfstat {
+    margin: 0;
+    padding: 0;
+}
+
+.upgrade {
+    border: 1px solid black;
+    width: 35px;
+    height: 35px;
+    margin-left: 0.3em;
+    margin-bottom: 0.3em;
+    transition: filter 0.3s;
+    cursor: pointer;
+}
+
+.upgrade:hover {
+    filter: brightness(40%);
+}
+
+#upg1 {
+    background-image: url(../img/allupg.png);
+    background-size: 35px 35px;
+}
+
+#upg2 {
+    background-image: url(../img/fishmanupg.png);
+    background-size: 35px 35px;
+}
+
+#upg3 {
+    background-image: url(../img/fishhutupg.png);
+    background-size: 35px 35px;
+}
+
+#upg4 {
+    background-image: url(../img/fishvesselupg.png);
+    background-size: 35px 35px;
+}
+
+#upg5 {
+    background-image: url(../img/fishflockupg.png);
+    background-size: 35px 35px;
+}
+
+#upg6 {
+    background-image: url(../img/fishmagicupg.png);
+    background-size: 35px 35px;
+}
+
+#upg7 {
+    background-image: url(../img/all4upg.png);
+    background-size: 35px 35px;
+}
+
+#upg8 {
+    background-image: url(../img/autoclick.png);
+    background-size: 35px 35px;
+}
+
+#utilityname {
+    white-space: nowrap;
+}
+
+#upgheader {
+    margin-bottom: 0.4em;
+}
+
+#upgparent {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.gamebar {
+    position: relative;
+    margin: 0.5em;
+
+}
+
+#clicking {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background-color: rgba(0, 0, 0, 0);
+    padding: 0;
+}
+
+#clicking img {
+    width: calc(100% + 1.3em);
+    min-width: 100px;
+    margin: 0;
+    padding: 0;
+}
+
+#clickbtnholder {
+    margin-top: 7em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#fishingbtn {
+    z-index: 2;
+    margin-top: -14em;
+}
+
+.floatingnumber {
+    position: absolute;
+    z-index: 1;
+    margin-top: -7em;
+}
+
+
+#gamebg {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.utilityimg {
+    max-width: 47px;
+    width: 5vw;
+
+}
+
+#utilitiescontent {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.combtn {
+    width: 1.5em;
+    height: 1.5em;
+
+    border: 1px solid black;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.combtn:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.active {
+    background-color: rgba(255, 255, 255, 0.7);
+}
+
+.active:hover {
+    background-color: rgba(255, 255, 255, 0.7);
+}
+
+#combtn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    margin-top: 1em;
+    z-index: 3;
+}
+
+
+#progress {
+    position: absolute;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 10px solid rgba(0, 0, 0, 0);
+    border-radius: 3px;
+    height: auto;
+    margin-bottom: 2em;
+}
+
+span.weighted {
+    color: red;
+    font-weight:bold;
+}
+
+#stats {
+    position: absolute;
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    width: 100%;
+    user-select: auto;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 10px solid rgba(0, 0, 0, 0);
+    border-radius: 3px;
+    height: auto;
+    opacity: 0;
+    z-index: -1;
+    margin-bottom: 2em;
+
+}
+
+#statparent {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+#upgcontent {
+    display: flex;
+    flex-wrap: wrap-reverse;
+}
+
+.barheader {
+    font-size: calc(0.8em + 0.8vw);
+    margin-top: 1em;
+    font-style: oblique;
+    margin-bottom: 0.5em;
+}
+
+.attention {
+    opacity: 0;
+    position: absolute;
+    right: 0px;
+    top: -15px;
+    color: white;
+    text-shadow: 2px 2px black;
+}
+
+.barsubheader {
+    font-size: calc(0.6em + 0.8vw);
+    margin-bottom: 0.3em;
+}
+
+#upgrades {
+    width: 100%;
+}
+
+#utilities {
+    width: 100%;
+    margin-top: 1em;
+}
+
+.statcategory {
+    margin-right: 1em;
+    margin-bottom: 1em;
+    width: 225px
+}
+
+.utility {
+    background-color: lightcoral;
+    border: 2px solid black;
+    border-bottom: 0;
+    padding: 4px;
+    width: 200px;
+}
+
+.upperut {
+    display: flex;
+
+}
+
+#bodybgloader {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    position: absolute;
+    background-image: url(../img/catch.gif);
+}
+
+.rightUpUt {
+    margin-right: 0.5em;
+}
+
+.leftUpUt {
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+#footer {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 0.4em;
+    margin-top: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+}
+
+#footerspan {
+    font-style: oblique;
+    text-transform: lowercase;
+    text-shadow: 1px 1px black;
+    font-size: 0.8em;
+}
+
+#currentyear {
+    margin-top: 0.1em;
+    font-style: oblique;
+    text-transform: lowercase;
+    text-shadow: 1px 1px black;
+    font-size: 0.7em;
+}
+
+@keyframes headeranimation {
+
+
+    0% {
+        letter-spacing: -0.06em;
+        opacity: 0;
+    }
+
+
+    80% {
+        letter-spacing: 0.2em;
+        opacity: 1;
+    }
+
+    100% {}
+}

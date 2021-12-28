@@ -1,0 +1,43 @@
+.container {
+    display: flex;
+    position: fixed;
+    justify-content: center;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+    pointer-events: none;
+    align-items: center;
+    height: 55px;
+}
+
+.main {
+    display: flex;
+    opacity: 0.99;
+    padding: 0 1.8em;
+    max-width: 1400px;
+    flex: 1 1 auto;
+}
+
+.link {
+    pointer-events: auto;
+    border: none;
+    padding: 0 0.5em;
+    height: 3.4rem;
+    font-size: 0.85em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    font-weight: 450;
+}
+
+.brand img {
+    width: 1.3rem;
+    opacity: 0.8;
+    margin: 0 0.6em 0 0;
+    transition: opacity 0.2s;
+}
+
+.title {
+    color: inherit;
+}

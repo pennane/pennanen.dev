@@ -1,0 +1,113 @@
+<!doctype html>
+
+<html lang="fi">
+
+<head>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-126133790-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-126133790-2');
+</script>
+
+    <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico" />
+    <title>Peigom our savior.</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+
+<body>
+    <!--Laittaa kaike keskelle-->
+    <div id="wrap">
+        <div id="headeri">
+            <div id="loogeli"></div>
+            <div id="otsikko">
+
+                <p id="otsikkoteksti">Peigom is our saviour.</p>
+            </div>
+            <div id="loogeli2"></div>
+        </div>
+
+        <div id="content">
+            <div id="palkkilista">
+                <div id="palkkihead">
+                    <p id="palkkiotsikko">Lista</p>
+                </div>
+                <div id="itselista">
+                    <ul style="color:black"><br><br>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="0">Etusivu</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="1">Teos 1</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="2">Teos 2</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="3">Teos 3</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="4">Teos 4</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="5">Teos 5</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="6">Teos 6</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="7">Teos 7</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="8">Teos 8</a></li>
+                        <li><a onclick="tiettyvaihto(this)" href="javascript:void(0)" data-value="9">Teos 9</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+
+
+            <div id="kuvaalue">
+                <div id="napit">
+                    <div id="button1">
+                        <button id="takaisin" onclick="takaisin()">Takaisin</button>
+                    </div>
+                    <div id=button2>
+                        <button id="eteen" onclick="eteen()">Eteenpäin</button>
+                    </div>
+                </div>
+
+                <img id="kuva" src="images/teos0.jpg " draggable="false " width="">
+
+            </div>
+
+            <div id="hmmthonk">
+                <a href="ala.html " target="_blank ">
+		            <img src="images/hmm.gif" id="hmmimg"> 
+                </a>
+
+            </div>
+
+        </div>
+
+
+
+    </div>
+    <script type=text/javascript>
+        var nro = document.getElementById("kuva").src;
+        nro = nro.substr(nro.length - 5); // => "Tabs1"
+        nro = nro.replace(/\D/g, '');
+
+        function takaisin() {
+            nro--;
+            if (nro < 0) {
+                nro = 9
+            }
+            document.getElementById("kuva").src = "images/teos" + nro + ".jpg"
+        }
+
+        function eteen() {
+            nro++;
+            if (nro > 9) {
+                nro = 0
+            }
+            document.getElementById("kuva").src = "images/teos" + nro + ".jpg"
+        }
+
+        function tiettyvaihto(elem) {
+            var val = elem.dataset.value;
+            console.log(val);
+            document.getElementById("kuva").src = "images/teos" + val + ".jpg";
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,13 @@
+{
+    "url": "https://github.com/Pennane/korsoraattori-extension/releases",
+    "date": "5.2.2021",
+    "name": {
+        "en": "Korsoraattori Chrome Extension",
+        "fi": null
+    },
+    "description": {
+        "en": "Korsoraattori wrapped as a Chrome extension",
+        "fi": null
+    },
+    "icon": "icon.png"
+}

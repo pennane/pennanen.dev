@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fi">
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=UA-126133790-2"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "UA-126133790-2");
+    </script>
+
+    <meta charset="utf-8" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css?family=Montserrat:400,700"
+      as="fetch"
+      crossorigin="anonymous"
+    />
+    <script type="text/javascript">
+      !(function(e, n, t) {
+        "use strict";
+        var o = "https://fonts.googleapis.com/css?family=Montserrat:400,700",
+          r = "__3perf_googleFontsStylesheet";
+
+        function c(e) {
+          (n.head || n.body).appendChild(e);
+        }
+
+        function a() {
+          var e = n.createElement("link");
+          (e.href = o), (e.rel = "stylesheet"), c(e);
+        }
+
+        function f(e) {
+          if (!n.getElementById(r)) {
+            var t = n.createElement("style");
+            (t.id = r), c(t);
+          }
+          n.getElementById(r).innerHTML = e;
+        }
+        e.FontFace && e.FontFace.prototype.hasOwnProperty("display")
+          ? (t[r] && f(t[r]),
+            fetch(o)
+              .then(function(e) {
+                return e.text();
+              })
+              .then(function(e) {
+                return e.replace(
+                  /@font-face{/g,
+                  "@font-face{font-display:swap;"
+                );
+              })
+              .then(function(e) {
+                return (t[r] = e);
+              })
+              .then(f)
+              .catch(a))
+          : a();
+      })(window, document, localStorage);
+    </script>
+    <link href="style/main.css" rel="stylesheet" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+      name="viewport"
+    />
+    <title>Hedelmäpeli</title>
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <header></header>
+      <div id="game">
+        <div id="gamecontent">
+          <div id="gameupper">
+            <h1>Hedelmäpeli</h1>
+            <div id="hedelmat">
+              <span class="b"></span> <span class="a"></span>
+              <span class="o"></span> <span class="k"></span>
+              <span class="t"></span><span class="p"></span>
+            </div>
+          </div>
+          <div id="gamemiddle">
+            <div id="gameflexleft">
+              <div id="display">
+                <div class="spinner" id="spinner1">
+                  <span class="fruit outerfruit f1" id="s1f1"
+                    ><div class="fruit-image"></div></span
+                  ><span class="fruit middlefruit f2" id="s1f2"
+                    ><div class="fruit-image"></div></span
+                  ><span class="fruit outerfruit f3" id="s1f3"
+                    ><div class="fruit-image"></div
+                  ></span>
+                </div>
+                <div class="spinner" id="spinner2">
+                  <span class="fruit outerfruit f1" id="s2f1"
+                    ><div class="fruit-image"></div></span
+                  ><span class="fruit middlefruit f2" id="s2f2"
+                    ><div class="fruit-image"></div></span
+                  ><span class="fruit outerfruit f3" id="s2f3"
+                    ><div class="fruit-image"></div
+                  ></span>
+                </div>
+                <div class="spinner" id="spinner3">
+                  <span class="fruit outerfruit f1" id="s3f1"
+                    ><div class="fruit-image"></div></span
+                  ><span class="fruit middlefruit f2" id="s3f2"
+                    ><div class="fruit-image"></div></span
+                  ><span class="fruit outerfruit f3" id="s3f3"
+                    ><div class="fruit-image"></div
+                  ></span>
+                </div>
+              </div>
+              <div id="buttons">
+                <div class="titles">
+                  <span>Pyöritys</span>
+                  <span class="nowrap">Muuta panosta</span>
+                </div>
+
+                <div class="buttonrow">
+                  <button id="spinbtn">Paina</button>
+                  <div id="betchange">
+                    <button id="betdown" class="round">-</button>
+                    <button id="betup" class="round">+</button>
+                  </div>
+                </div>
+                <div class="descs">
+                  <div id="spinvalues">
+                    <span id="spinvaluehead">Kolikoita:</span
+                    ><span id="spinvalue">0</span>
+                  </div>
+                  <div id="betvalues">
+                    <span id="betvaluehead">Panos:</span
+                    ><span id="betvalue">0</span>
+                  </div>
+                </div>
+              </div>
+              <div id="voittoako">
+                <span id="winspan"></span>
+              </div>
+            </div>
+            <div id="gameflexright">
+              <div id="info">
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="p small"></span><span class="p small"></span
+                    ><span class="p small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p3p">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="p small"></span><span class="p small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p2p">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="p small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p1p">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="t small"></span><span class="t small"></span
+                    ><span class="t small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p3t">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="t small"></span><span class="t small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p2t">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="k small"></span><span class="k small"></span
+                    ><span class="k small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p3k">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="k small"></span><span class="k small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p2k">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="b small"></span><span class="b small"></span
+                    ><span class="b small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p3b">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="o small"></span><span class="o small"></span
+                    ><span class="o small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p3o">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+                <div class="infoinner">
+                  <div class="infohedelmat">
+                    <span class="a small"></span><span class="a small"></span
+                    ><span class="a small"></span>
+                  </div>
+                  <div class="infovoitto">
+                    <span class="wamount" id="p3a">0</span
+                    ><span class="wk"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer></footer>
+    </div>
+    <script src="js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,51 @@
+body {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.generator {
+    width: 800px;
+    max-width: 95vw;
+}
+
+.generator > div {
+    margin: 0.2em 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: baseline;
+    align-items: baseline;
+}
+
+.input > div {
+    margin-bottom: 0.5em;
+}
+
+.input input {
+    margin-left: 0.5em;
+}
+
+#output {
+    font-family: 'Minecraftia', serif;
+    font-weight: normal;
+    font-style: normal;
+}
+
+#preview {
+  /*  background: rgba(0, 0, 0, 0.4); */
+    margin: 0.8em 0;
+    margin-bottom: 1.2em;
+    /* text-shadow: 2px 1.1px black; */
+}
+
+#nickname-output {
+    display: block;
+    padding: 0.65em;
+    font-size: 0.9em;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: text;
+}

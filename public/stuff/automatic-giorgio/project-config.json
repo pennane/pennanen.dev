@@ -1,0 +1,14 @@
+{
+    "url": null,
+    "date": "10.10.2020",
+    "ignoreDate": true,
+    "name": {
+        "en": "Automatic Giorgio",
+        "fi": null
+    },
+    "description": {
+        "en": "Random animated art with changing music",
+        "fi": null
+    },
+    "icon": "icon.png"
+}

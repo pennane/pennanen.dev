@@ -1,0 +1,13 @@
+{
+    "url": "https://github.com/Pennane/hirsipuu-solver",
+    "date": "25.12.2021",
+    "name": {
+        "en": "Hangman solver",
+        "fi": null
+    },
+    "description": {
+        "en": "Solve finnish words in a game of hangman",
+        "fi": null
+    },
+    "icon": "icon.png"
+}

@@ -1,0 +1,15 @@
+{
+    "directory": "radio",
+    "url": "http://radio.pennanen.dev/",
+    "custom_url": true,
+    "name": {
+        "en": "Vinyl Radio",
+        "fi": null
+    },
+    "description": {
+        "en": "A display for vinyl records",
+        "fi": null
+    },
+    "date": "25.4.2021",
+    "icon": "icon.png"
+}

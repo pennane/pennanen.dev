@@ -1,0 +1,62 @@
+canvas {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    max-height: 100vh;
+    max-width: 100vw;
+}
+
+* {
+    font-family: arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+}
+
+body {
+    background-color: black;
+    display: flex;
+    flex-wrap: wrap
+}
+
+#settings {
+    color: whitesmoke;
+    margin-left: 1em;
+}
+
+h2 {
+    font-size: calc(1.5em + .4vw);
+}
+
+p, span {
+    font-size: calc(0.7em + .4vw)
+}
+
+h3 {
+    font-size: calc(0.7em + .4vw)
+}
+
+.xval {
+    display: flex;
+    flex-direction: column;
+}
+
+.yval {
+    display: flex;
+    flex-direction: column;
+}
+
+.setting {
+    font-size: 1.5em;
+    display: flex;
+    justify-content: space-between
+}
+.setting h4 {
+    margin-right: .5em;
+}
+
+input {
+    border: 2px solid gray;
+    margin-left: .4em;
+}

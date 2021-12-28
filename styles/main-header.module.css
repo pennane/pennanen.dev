@@ -1,0 +1,27 @@
+.container {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 15em;
+}
+
+.gradient {
+    z-index: -1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    pointer-events: none;
+    user-select: none;
+    transform: translate(-50%, -50%) scaleX(1.2);
+}
+
+.gradient img {
+    max-width: 300px;
+    filter: blur(14px) contrast(1.12) saturate(0.8);
+}
+
+.heading h1 {
+    color: var(--title-color-invert);
+}

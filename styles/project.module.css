@@ -1,0 +1,14 @@
+.project {
+    margin-top: 70px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.lift {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}

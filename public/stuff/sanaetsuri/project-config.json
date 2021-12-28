@@ -1,0 +1,14 @@
+{
+    "url": null,
+    "date": "1.5.2020",
+    "ignoreDate": true,
+    "name": {
+        "en": "Wordsnack word finder",
+        "fi": null
+    },
+    "description": {
+        "en": "Word finder for the mobile game word snack",
+        "fi": null
+    },
+    "icon": "icon.png"
+}

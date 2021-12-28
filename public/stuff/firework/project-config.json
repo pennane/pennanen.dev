@@ -1,0 +1,14 @@
+{
+    "url": null,
+    "date": "1.7.2019",
+    "ignoreDate": true,
+    "name": {
+        "en": "Firework",
+        "fi": null
+    },
+    "description": {
+        "en": "Canvas fireworks",
+        "fi": null
+    },
+    "icon": "icon.png"
+}

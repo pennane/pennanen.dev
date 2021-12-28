@@ -1,0 +1,13 @@
+{
+    "url": "https://github.com/Pennane/kide.bot-telegram",
+    "date": "19.10.2021",
+    "name": {
+        "en": "Kide.app Helper",
+        "fi": null
+    },
+    "description": {
+        "en": "Telegram service to reserve and notify about upcoming Kide.app events ",
+        "fi": null
+    },
+    "icon": null
+}

@@ -1,0 +1,13 @@
+{
+    "url": null,
+    "date": "1.11.2018",
+    "name": {
+        "en": "Lottery Probability Simulator",
+        "fi": null
+    },
+    "description": {
+        "en": "Simulate lottery money loss",
+        "fi": null
+    },
+    "icon": "icon.png"
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=UA-126133790-2"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "UA-126133790-2");
+    </script>
+
+    <title>Jutin grillimakkarapeli</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+
+  <body>
+    <!-- 
+       
+       
+       The iFrame ratio for this game is @ 9:5
+       
+       So you should use size values like these:
+       
+       width="1000" height="556"
+       
+       width="800" height="444"
+       
+       width="600" height="333"
+       
+       width="400" height="222"
+    
+       
+       -->
+    <div id="game">
+      <div id="cover">
+        <span>Klikkaa aloittaaksesi</span>
+      </div>
+      <div id="kuvitus">
+        <img draggable="false" id="kuvituskuva" src="img/fas.jpg" />
+      </div>
+      <div id="napit">
+        <a class="game" href="#" id="aloitus"> Aloita peli </a>
+        <a class="game" href="#" id="aloitus2"> </a>
+        <a class="game" href="#" id="aloitus3"> </a>
+      </div>
+    </div>
+    <script src="main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+body {
+	background-color: #232222;
+	color: #f3f3f3;
+}
+
+div.content {
+	background-color: #2b2b2c;
+}
+
+
+div.ranknav {
+	color: black;
+}
+
+.ranktime {
+	color: #fff87f;
+}
+
+.ranktime::before {
+	content: "("
+}
+
+.ranktime::after {
+	content: ")"
+}
+
+.highlight {
+	color: #ff0000;
+}
+
+.highlight2 {
+	color: #4fa1ff;
+}
+
+.rank {
+	background-color: #2e2e2e;
+}
+
+.otherhead,
+.commandhead {
+	color: white;
+}
+
+
+table.commandtable tr:nth-child(odd) {
+	background-color: #242323;
+}
+
+table.commandtable tr:nth-child(even) {
+	background-color: #2a2a2a;
+}
+h3.eloton {
+	background: -webkit-linear-gradient(0deg, hsl(0, 0%, 85%), hsl(0, 0%, 70%));
+}
+
+.rankhead h3 {
+	color: white;
+	-webkit-text-fill-color: transparent;
+	-webkit-background-clip: text;
+}

@@ -1,0 +1,13 @@
+{
+    "url": "https://yatzy.pennanen.dev/",
+    "date": "1.1.2020",
+    "name": {
+        "en": "Yatzy",
+        "fi": null
+    },
+    "description": {
+        "en": "Traditional dice game ",
+        "fi": null
+    },
+    "icon": "icon.png"
+}

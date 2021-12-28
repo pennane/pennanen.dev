@@ -1,0 +1,13 @@
+{
+    "url": "https://github.com/Pennane/kide.app-api",
+    "date": "3.10.2021",
+    "name": {
+        "en": "Kide.app command line bot",
+        "fi": null
+    },
+    "description": {
+        "en": "Node command line tool for reserving kide.app events",
+        "fi": null
+    },
+    "icon": null
+}

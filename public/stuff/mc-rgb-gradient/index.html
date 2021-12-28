@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=UA-126133790-2"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "UA-126133790-2");
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>RGB Gradient Generaattori</title>
+    <link rel="stylesheet" type="text/css" href="main.css" />
+    <link rel="stylesheet" href="/fonts/inter/inter.css" />
+    <link rel="stylesheet" href="/fonts/minecraftia/minecraftia.css" />
+  </head>
+
+  <body>
+    <div class="generator">
+      <h1>Minecraft RGB gradient generaattori</h1>
+      <div class="input">
+        <div>
+          <span>Teksti</span>
+          <input type="text" id="nick-name" value="susseeee" />
+        </div>
+        <div class="colors">
+          <span>1</span>
+          <input type="color" id="first-color" value="#ff3300" />
+          <span>2</span>
+          <input type="color" id="second-color" value="#0000ff" />
+        </div>
+        <div></div>
+        <div>
+          <span>Väriaskelten määrä</span>
+          <input type="number" id="steps-amount" value="5" />
+        </div>
+      </div>
+
+      <div id="output">
+        <div id="preview"></div>
+        <span>Valmis teksti kopioitavaksi:</span>
+        <div id="nickname-output"></div>
+        <div id="warning"></div>
+      </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

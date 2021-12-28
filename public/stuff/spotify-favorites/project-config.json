@@ -1,0 +1,12 @@
+{
+    "url": "https://spotifyfavorites.pennanen.dev/",
+    "date": "10.12.2019",
+    "name": {
+        "en": "Spotify Favorites"
+    },
+    "description": {
+        "en": "Spotify listening history analytics",
+        "fi": null
+    },
+    "icon": "icon.png"
+}
