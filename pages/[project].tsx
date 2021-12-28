@@ -1,37 +1,31 @@
-import type { GetStaticPaths, GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import type { GetStaticPaths, GetStaticProps, GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import Layout from '../components/layout'
 import style from '../styles/project.module.css'
 import linkStyle from '../styles/project-link.module.css'
 import { getProjectById, getProjectIds } from '../lib/stuff'
 import { isString } from '../lib/util'
-import { Project } from '../types'
+import { Project, Project as ProjectPage } from '../types'
 
 export const getStaticPaths: GetStaticPaths = async () => {
-    const paths = await getProjectIds()
+    const paths = getProjectIds()
     return {
         paths,
         fallback: false
     }
 }
 
-export const getStaticProps = async ({ params }: GetStaticPropsContext) => {
+export const getStaticProps: GetStaticProps = ({ params }: GetStaticPropsContext) => {
     if (!params || !isString(params.project)) {
         return {
-            redirect: {
-                destination: '/',
-                permanent: false
-            }
+            notFound: true
         }
     }
 
-    const project = await getProjectById(params.project)
+    const project = getProjectById(params.project)
 
     if (!project) {
         return {
-            redirect: {
-                destination: '/',
-                permanent: false
-            }
+            notFound: true
         }
     }
 
@@ -42,9 +36,9 @@ export const getStaticProps = async ({ params }: GetStaticPropsContext) => {
     }
 }
 
-const Index = (context: InferGetStaticPropsType<typeof getStaticProps>) => {
-    const project = context.project as Project
+const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>) => {
     if (!project) return null
+    project = project as Project
 
     return (
         <Layout>
@@ -76,4 +70,4 @@ const Index = (context: InferGetStaticPropsType<typeof getStaticProps>) => {
     )
 }
 
-export default Index
+export default ProjectPage

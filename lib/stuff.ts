@@ -46,19 +46,19 @@ export const getProjectById = (id: string): Project | null => {
     }
 }
 
-function getProjectNames() {
+const getProjectNames = () => {
     const directoryNames = getDirectories(directory)
     return directoryNames
 }
 
-export function getProjectIds() {
+export const getProjectIds = () => {
     const names = getProjectNames()
     return names.map((name) => {
         return { params: { project: name } }
     })
 }
 
-export function getProjects(): Project[] {
+export const getProjects = (): Project[] => {
     const directoryNames = getDirectories(directory)
     return directoryNames
         .map((id) => getProjectById(id))
