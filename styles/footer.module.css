@@ -1,0 +1,16 @@
+.wrapper {
+    display: grid;
+    justify-items: center;
+    padding: 4rem;
+    margin-top: auto;
+}
+
+.main {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+.icon-link {
+    display: flex;
+}

@@ -57,7 +57,7 @@ const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>
                 <section className={style['lift']}>
                     {project.icon && (
                         <div>
-                            <img className={linkStyle['image']} src={`/stuff/${project.id}/${project.icon}`} />
+                            <img className={linkStyle['image']} src={`/sub/${project.id}/${project.icon}`} />
                         </div>
                     )}
                     {project.url && project.url.includes('github') && (
@@ -70,7 +70,7 @@ const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>
                             Open outbound link <span className={linkStyle['date']}>[{project.url}]</span>
                         </a>
                     )}
-                    {!project.url && <a href={`/stuff/${project.id}/index.html`}>Launch project</a>}
+                    {!project.url && <a href={`/sub/${project.id}/index.html`}>Launch project</a>}
                 </section>
             </div>
         </Layout>

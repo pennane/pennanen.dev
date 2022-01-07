@@ -19,9 +19,7 @@ const ProjectLink = ({ project }: { project: Project }) => {
                                 height={48}
                                 alt={project.icon ? `${project.name} icon` : ''}
                                 src={
-                                    project.icon
-                                        ? '/stuff/' + project.id + '/' + project.icon
-                                        : '/images/placeholder.png'
+                                    project.icon ? '/sub/' + project.id + '/' + project.icon : '/images/placeholder.png'
                                 }
                             />
                         </div>

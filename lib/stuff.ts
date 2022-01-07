@@ -3,7 +3,7 @@ import fs from 'fs'
 import { Project, ProjectConfig } from '../types'
 import { isNumber, isString } from './util'
 
-const directory = path.join(process.cwd(), 'public/stuff')
+const directory = path.join(process.cwd(), 'public/sub')
 
 const getDirectories = (path: string) => {
     return fs.readdirSync(path).filter((file) => {

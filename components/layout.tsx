@@ -1,7 +1,10 @@
 import Head from 'next/head'
 import BackgroundLines from './background-lines'
+import Footer from './footer'
 import NavigationBar from './navigation-bar'
+
 export const siteTitle = 'Arttu Pennanen'
+
 const Layout = ({
     children,
     title,
@@ -28,6 +31,7 @@ const Layout = ({
                 <BackgroundLines />
                 <NavigationBar />
                 <main>{children}</main>
+                <Footer />
             </div>
         </div>
     )

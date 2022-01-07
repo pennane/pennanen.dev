@@ -13,6 +13,14 @@ body {
     background: var(--main-background-color);
 }
 
+#__next,
+body,
+html,
+.layout-container,
+.page-container {
+    height: 100%;
+}
+
 a {
     color: #1d4ed8;
     text-decoration: none;
@@ -32,6 +40,8 @@ span {
 .page-container {
     z-index: 1;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 main {
