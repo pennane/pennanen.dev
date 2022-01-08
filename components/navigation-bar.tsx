@@ -11,7 +11,6 @@ const NavigationBar = () => {
                         <div className={style['brand-image']}>
                             <Image src="/images/black-icon.png" alt="" width={20} height={20} />
                         </div>
-
                         <span className="title">pennanen.dev</span>
                     </a>
                 </Link>

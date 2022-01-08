@@ -1,4 +1,5 @@
 import type { GetStaticPaths, GetStaticProps, GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import Image from 'next/image'
 import Layout from '../components/layout'
 import style from '../styles/project.module.css'
 import linkStyle from '../styles/project-link.module.css'
@@ -44,11 +45,14 @@ const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>
                 </header>
                 <section className={style['lift']}>
                     <div>
-                        <img
-                            className={linkStyle['image']}
-                            src={project.icon ? `/sub/${project.id}/${project.icon}` : '/images/placeholder.png'}
+                        <Image
+                            className={style['image']}
+                            width={48}
+                            height={48}
+                            alt={project.icon ? `${project.name} icon` : ''}
+                            src={project.icon ? '/sub/' + project.id + '/' + project.icon : '/images/placeholder.png'}
                         />
-                    </div>
+                    </div>{' '}
                     {project.url && project.url.includes('github') && (
                         <a href={project.url} rel="noreferrer">
                             Open github link <span className={linkStyle['date']}>[{project.url}]</span>

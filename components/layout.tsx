@@ -26,6 +26,7 @@ const Layout = ({
                 )}
                 <meta name="theme-color" content="#1c4ed8"></meta>
                 <link rel="icon" href="/favicon.ico" />
+                <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
             </Head>
             <div className="page-container">
                 <BackgroundLines />

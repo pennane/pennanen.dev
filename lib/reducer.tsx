@@ -1,5 +1,7 @@
 export interface AppState {
-    finished: boolean
+    animations: {
+        [animationKey: string]: boolean
+    }
 }
 
 export enum AppActionType {
@@ -8,22 +10,19 @@ export enum AppActionType {
 
 export interface AppAction {
     type: AppActionType
-    payload?: any
+    payload: string
 }
 
 export const initialState: AppState = {
-    finished: false
+    animations: {}
 }
 
 export const reducer = (state: AppState, action: AppAction): AppState => {
-    console.log('reducer')
-
     switch (action.type) {
         case AppActionType.ANIMATION_COMPLETE:
-            return {
-                ...state,
-                finished: true
-            }
+            const _state = { ...state }
+            _state.animations[action.payload] = true
+            return _state
 
         default:
             return state

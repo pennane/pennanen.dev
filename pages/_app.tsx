@@ -5,7 +5,7 @@ import { AppContextProvider } from '../lib/context'
 function App({ Component, pageProps }: AppProps) {
     return (
         <AppContextProvider>
-            <Component {...pageProps} />+{' '}
+            <Component {...pageProps} />
         </AppContextProvider>
     )
 }
