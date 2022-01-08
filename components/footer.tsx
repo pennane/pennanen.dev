@@ -9,7 +9,7 @@ const Footer = () => {
         <div className={style['wrapper']}>
             <footer className={style['main']}>
                 <span>
-                    <Link href="https://github.com/Pennane">
+                    <Link href="https://github.com/Pennane/pennanen.dev">
                         <a className={style['icon-link']}>Github</a>
                     </Link>
                 </span>
