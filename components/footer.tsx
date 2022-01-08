@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import style from '../styles/footer.module.css'
 
 const Footer = () => {
@@ -9,14 +8,12 @@ const Footer = () => {
     return (
         <div className={style['wrapper']}>
             <footer className={style['main']}>
-                <span>&copy; Arttu Pennanen {`${start} - ${end}`}</span>
-                {/* <span>
+                <span>
                     <Link href="https://github.com/Pennane">
-                        <a className={style['icon-link']}>
-                            <Image src="/images/GitHub-Mark-32px.png" alt="Github Logomark" width={24} height={24} />
-                        </a>
+                        <a className={style['icon-link']}>Github</a>
                     </Link>
-                </span> */}
+                </span>
+                <span>&copy; Arttu Pennanen {`${start} - ${end}`}</span>
             </footer>
         </div>
     )

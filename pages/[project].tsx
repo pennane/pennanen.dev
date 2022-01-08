@@ -15,25 +15,13 @@ export const getStaticPaths: GetStaticPaths = async () => {
 }
 
 export const getStaticProps: GetStaticProps = ({ params }: GetStaticPropsContext) => {
-    if (!params || !isString(params.project)) {
-        return {
-            notFound: true
-        }
-    }
+    if (!params || !isString(params.project)) return { notFound: true }
 
     const project = getProjectById(params.project)
 
-    if (!project) {
-        return {
-            notFound: true
-        }
-    }
+    if (!project) return { notFound: true }
 
-    return {
-        props: {
-            project
-        }
-    }
+    return { props: { project } }
 }
 
 const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>) => {
@@ -55,11 +43,12 @@ const ProjectPage = ({ project }: InferGetStaticPropsType<typeof getStaticProps>
                     )}
                 </header>
                 <section className={style['lift']}>
-                    {project.icon && (
-                        <div>
-                            <img className={linkStyle['image']} src={`/sub/${project.id}/${project.icon}`} />
-                        </div>
-                    )}
+                    <div>
+                        <img
+                            className={linkStyle['image']}
+                            src={project.icon ? `/sub/${project.id}/${project.icon}` : '/images/placeholder.png'}
+                        />
+                    </div>
                     {project.url && project.url.includes('github') && (
                         <a href={project.url} rel="noreferrer">
                             Open github link <span className={linkStyle['date']}>[{project.url}]</span>

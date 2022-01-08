@@ -8,9 +8,14 @@
 .main {
     display: flex;
     align-items: center;
-    gap: 1em;
+    gap: 1.8em;
 }
 
 .icon-link {
     display: flex;
+}
+
+.main a {
+    color: var(--text-color);
+    text-decoration: underline;
 }
