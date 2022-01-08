@@ -9,5 +9,8 @@
         "en": "Simple promise based wrapper for the Kide.app API",
         "fi": null
     },
-    "icon": null
+    "icon": null,
+    "images": [
+        "example.jpg"
+    ]
 }

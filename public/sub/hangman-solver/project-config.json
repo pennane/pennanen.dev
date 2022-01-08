@@ -9,5 +9,8 @@
         "en": "Solve finnish words in a game of hangman",
         "fi": null
     },
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "images": [
+        "https://raw.githubusercontent.com/Pennane/hirsipuu-solver/main/docs/example.png"
+    ]
 }

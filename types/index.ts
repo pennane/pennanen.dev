@@ -6,6 +6,7 @@ export interface Project {
     name: string
     description: string | null
     icon: string | null
+    images: string[]
 }
 
 export interface ProjectConfig {
@@ -21,4 +22,5 @@ export interface ProjectConfig {
     }
     icon: string | null
     ignoreDate?: boolean
+    images?: string[]
 }

@@ -42,7 +42,8 @@ export const getProjectById = (id: string): Project | null => {
         ignoreDate: data?.ignoreDate ? true : false,
         name: data?.name?.en || data?.name?.fi || id,
         description: data?.description?.en || data?.description?.fi || null,
-        icon: data?.icon || null
+        icon: data?.icon || null,
+        images: data.images || []
     }
 }
 

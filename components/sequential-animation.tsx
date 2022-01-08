@@ -30,7 +30,7 @@ const SequentialAnimation = ({ children, initialDelay = 0, delayBetween = 40, ..
 
         const timeout = setTimeout(() => {
             setAnimationFinished(true)
-        }, initialDelay + childrenArray.length * delayBetween + (props.animationDuration || 0))
+        }, (initialDelay + childrenArray.length * delayBetween + (props.animationDuration || 0)) / 2)
 
         const onHistoryChange = () => {
             if (shouldAnimate && animationFinished) {
