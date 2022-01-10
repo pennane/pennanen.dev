@@ -1,4 +1,4 @@
-import router, { useRouter } from 'next/router'
+import { useRouter } from 'next/router'
 import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../lib/context'
 import { AppActionType } from '../lib/reducer'
@@ -12,9 +12,16 @@ interface SequentialProps {
     childClass?: string
     once?: boolean
     animationKey?: string
+    stopped?: boolean
 }
 
-const SequentialAnimation = ({ children, initialDelay = 0, delayBetween = 40, ...props }: SequentialProps) => {
+const SequentialAnimation = ({
+    children,
+    initialDelay = 0,
+    delayBetween = 40,
+    stopped: wait = false,
+    ...props
+}: SequentialProps) => {
     const router = useRouter()
     const { dispatch, state } = useContext(AppContext)
 
@@ -24,6 +31,11 @@ const SequentialAnimation = ({ children, initialDelay = 0, delayBetween = 40, ..
     const [animationFinished, setAnimationFinished] = useState<boolean>(false)
 
     const childrenArray = React.Children.toArray(children)
+
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     useEffect(() => {
         if (!props.once || !props.animationKey) return
@@ -48,7 +60,11 @@ const SequentialAnimation = ({ children, initialDelay = 0, delayBetween = 40, ..
         }
     }, [animationFinished, shouldAnimate])
 
-    if (!shouldAnimate) return <div className={style['main']}> {children} </div>
+    if (!shouldAnimate || !mounted) return <div className={style['main']}> {children} </div>
+
+    if (wait) {
+        return <div className={style['main'] + ' ' + style['waiting']}>{children}</div>
+    }
 
     return (
         <div className={style['main']}>
