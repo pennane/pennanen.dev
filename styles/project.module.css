@@ -4,6 +4,7 @@
 
 .project > section {
     padding: 0 1.3em;
+    background: var(--main-background-color);
 }
 
 .header {

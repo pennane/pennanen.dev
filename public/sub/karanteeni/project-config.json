@@ -9,5 +9,7 @@
         "en": "Minecraft community website",
         "fi": null
     },
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "pretext": "A website built for the Finnish Minecraft community, Karanteeni. Built with Typescript and React (next.js)",
+    "github": "https://github.com/Karanteeni/karanteeni.github.io"
 }

@@ -7,9 +7,11 @@ const Projects = ({ projects }: { projects: Project[] }) => {
     return (
         <div className={style['projects']}>
             <SequentialAnimation childClass="fade-in" initialDelay={80} once={true} animationKey="projects">
-                {projects.map((p, i) => (
-                    <ProjectLink project={p} key={p.id + '-' + i} />
-                ))}
+                {projects
+                    .filter((p) => !p.ignoreInListing)
+                    .map((p, i) => (
+                        <ProjectLink project={p} key={p.id + '-' + i} />
+                    ))}
             </SequentialAnimation>
         </div>
     )

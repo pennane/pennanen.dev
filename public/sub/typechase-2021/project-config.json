@@ -9,5 +9,7 @@
         "en": "Multiplayer typing speed application",
         "fi": null
     },
+    "github": "https://github.com/Pennane/typechase",
+    "pretext": "Multiplayer typing speed game. So-called \"typeracer copy\". Uses Typescript, React, Redis and Docker as the tech stack.",
     "icon": "icon.png"
 }

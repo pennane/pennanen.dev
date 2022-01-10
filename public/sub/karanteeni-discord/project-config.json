@@ -7,5 +7,6 @@
     "description": {
         "en": "Discord moderation and utility service"
     },
-    "icon": "icon-144.png"
+    "icon": "icon-144.png",
+    "ignoreInListing": true
 }

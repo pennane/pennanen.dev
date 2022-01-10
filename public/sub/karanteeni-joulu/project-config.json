@@ -9,5 +9,6 @@
         "en": "Interactive advent calendar",
         "fi": null
     },
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "ignoreInListing": true
 }

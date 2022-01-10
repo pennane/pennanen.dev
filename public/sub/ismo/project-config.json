@@ -9,5 +9,6 @@
         "en": "Annoying Discord companion",
         "fi": null
     },
+    "pretext": "A fun Discord bot with the sole purpose of talking over your friends. How rude. Can be summoned using \"/ismo kohde <@user>\", and dismissed using \"/ismo lopeta\". Utilizes Discord's new slash commands.",
     "icon": "icon.png"
 }

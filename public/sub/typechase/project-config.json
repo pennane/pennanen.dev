@@ -9,5 +9,6 @@
         "en": "Typing speed application",
         "fi": null
     },
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "pretext": "A singleplayer typing speed game that stores progress in the browser."
 }

@@ -9,6 +9,7 @@
         "en": "Telegram service to reserve and notify about upcoming Kide.app events ",
         "fi": null
     },
+    "pretext": "Infamous Kide.app bot that can reserve tickets straight from Telegram. Also sends Telegram notifications of upcoming events to subscribed users. Built with typescript and utilizes my own-built Kide.app API wrapper to communicate with the Kide.app API. Currently the source code is kept private.",
     "icon": null,
     "images": [
         "example.jpg"

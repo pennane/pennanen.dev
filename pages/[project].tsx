@@ -7,7 +7,7 @@ import style from '../styles/project.module.css'
 import linkStyle from '../styles/project-link.module.css'
 import { getProjectById, getProjectIds } from '../lib/stuff'
 import { isString, monthIndexToName } from '../lib/util'
-import { Project} from '../types'
+import { Project } from '../types'
 
 export const getStaticPaths: GetStaticPaths = async () => {
     const paths = getProjectIds()
@@ -72,8 +72,14 @@ const ProjectPage = ({ project }: { project: Project }) => {
                     )}
                     {!project.url && <a href={`/sub/${project.id}/index.html`}>Launch project</a>}
                 </section>
-                {project.images && (
+                {project.pretext && (
                     <section>
+                        <p>{project.pretext}</p>
+                    </section>
+                )}
+                {project.images[0] && (
+                    <section>
+                        {'asdffdas'}
                         {project.images.map((url, i) => (
                             <div className={style['insert']} key={project.id + i}>
                                 {url.includes('://') && <img src={url} alt="" />}
@@ -82,6 +88,13 @@ const ProjectPage = ({ project }: { project: Project }) => {
                                 )}
                             </div>
                         ))}
+                    </section>
+                )}
+                {project.github && (
+                    <section>
+                        <a href={project.github} rel="noreferrer">
+                            View source
+                        </a>
                     </section>
                 )}
             </div>

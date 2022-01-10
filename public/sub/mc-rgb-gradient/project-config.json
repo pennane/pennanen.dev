@@ -9,5 +9,6 @@
         "en": null,
         "fi": null
     },
-    "icon": null
+    "icon": null,
+    "ignoreInListing": true
 }

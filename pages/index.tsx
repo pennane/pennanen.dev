@@ -2,11 +2,11 @@ import type { InferGetStaticPropsType } from 'next'
 import Layout from '../components/layout'
 import MainHeading from '../components/main-header'
 import Projects from '../components/projects'
-import { getProjects } from '../lib/stuff'
+import { getFilteredProjects } from '../lib/stuff'
 import { Project } from '../types'
 
 export const getStaticProps = async () => {
-    const projectsData: Project[] = getProjects()
+    const projectsData: Project[] = getFilteredProjects()
     return {
         props: {
             projectsData

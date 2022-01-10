@@ -3,10 +3,13 @@ export interface Project {
     url: string | null
     date: number | null
     ignoreDate: boolean
+    ignoreInListing: boolean
     name: string
     description: string | null
+    pretext: string | null
     icon: string | null
     images: string[]
+    github: string | null
 }
 
 export interface ProjectConfig {
@@ -21,6 +24,9 @@ export interface ProjectConfig {
         fi: string | null
     }
     icon: string | null
+    ignoreInListing?: boolean
     ignoreDate?: boolean
     images?: string[]
+    pretext?: string
+    github?: string
 }
