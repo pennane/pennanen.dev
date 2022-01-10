@@ -2,7 +2,7 @@ import Head from 'next/head'
 import BackgroundLines from './background-lines'
 import Footer from './footer'
 import NavigationBar from './navigation-bar'
-import React from "react";
+import React from 'react'
 
 export const siteTitle = 'Arttu Pennanen'
 
@@ -25,7 +25,7 @@ const Layout = ({
                         <meta name="description" content={description} />
                     </>
                 )}
-                <meta name="theme-color" content="#1c4ed8"></meta>
+                {/* <meta name="theme-color" content="#1c4ed8"></meta> */}
                 <link rel="icon" href="/favicon.ico" />
                 <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
             </Head>
