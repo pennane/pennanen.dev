@@ -15,17 +15,23 @@
     pointer-events: none;
     user-select: none;
     transform: translate(-50%, -50%) scaleX(1.2);
-    width: 300px;
+    width: 600px;
     max-width: 95vw;
     overflow: hidden;
     pointer-events: none;
+    text-align: center;
 }
 
 .gradient img {
-    max-width: 300px;
     filter: blur(14px) contrast(1.12) saturate(0.8);
+    transition: filter 0.4s;
+}
+
+.dark .gradient img {
+    filter: grayscale(1) opacity(0.3);
 }
 
 .heading h1 {
     color: var(--title-color-invert);
+    font-size: min(calc(2em + 1vw), 15vh);
 }

@@ -2,12 +2,14 @@ import style from '../styles/main-header.module.css'
 import Image from 'next/image'
 import SequentialAnimation from './sequential-animation'
 import { useState } from 'react'
+import { useTheme } from 'next-themes'
 
 const MainHeading = () => {
     const [splashImageLoaded, setSplashImageLoaded] = useState(false)
+    const { resolvedTheme } = useTheme()
 
     return (
-        <div className={style['container']}>
+        <div className={resolvedTheme === 'dark' ? `${style['container']} ${style['dark']}` : style['container']}>
             <SequentialAnimation
                 animationKey="header"
                 childClass="fade-in"

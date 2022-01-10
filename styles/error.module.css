@@ -11,11 +11,12 @@
 }
 
 .header {
-    font-size: 2.5em;
+    font-size: min(calc(2em + 3vw), 10vh);
+    line-height: 0.9;
     margin: 0;
     letter-spacing: -0.07em;
     padding: 0;
-    margin-top: 5rem;
+    margin-top: 4.4rem;
     margin-bottom: 2rem;
     display: flex;
     justify-content: center;
@@ -31,7 +32,7 @@
 }
 
 .link {
-    font-size: 2rem;
+    font-size: min(calc(1.5rem + 3vw), 10vh);
     font-weight: 600;
     text-decoration: underline;
 }
