@@ -1,13 +1,12 @@
 .container {
     display: flex;
     position: fixed;
-    justify-content: center;
+    justify-content: flex-start;
     top: 0;
     width: 100%;
     z-index: 10;
     pointer-events: none;
     align-items: center;
-    height: 55px;
 }
 
 .main {
@@ -16,6 +15,8 @@
     padding: 0 1.8em;
     max-width: 1400px;
     flex: 1 1 auto;
+    z-index: 2;
+    pointer-events: auto;
 }
 
 .link {

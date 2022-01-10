@@ -1,0 +1,33 @@
+.main {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex: 1 1 auto;
+}
+
+.button {
+    all: unset;
+    padding: 0.3rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.button svg {
+    --size: 0.82rem;
+    width: var(--size);
+    height: var(--size);
+    transform: rotate(0);
+    transition: transform 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+.dark {
+    color: #fbe126;
+}
+
+.dark svg {
+    transform: rotate(370deg);
+    display: block;
+}

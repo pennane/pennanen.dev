@@ -16,8 +16,7 @@
 .item {
     height: 100%;
     width: 20%;
-    border-left: 1px solid rgba(66, 71, 112, 0.065);
-    /* border-color: color-contrast(var(--main-background-color) vs rgba(66, 71, 112, 0.05882) hsl(0deg 0% 100%/4%)); */
+    border-left: 1px solid var(--background-line-color);
 }
 
 @media only screen and (max-width: 670px) {

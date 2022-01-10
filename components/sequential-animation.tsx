@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../lib/context'
-import { AppActionType } from '../lib/reducer'
+import { animationComplete } from '../lib/reducer'
 import style from '../styles/sequential-animation.module.css'
 
 interface SequentialProps {
@@ -45,11 +45,8 @@ const SequentialAnimation = ({
         }, (initialDelay + childrenArray.length * delayBetween + (props.animationDuration || 0)) / 2)
 
         const onHistoryChange = () => {
-            if (shouldAnimate && animationFinished) {
-                dispatch({
-                    type: AppActionType.ANIMATION_COMPLETE,
-                    payload: props.animationKey as string
-                })
+            if (shouldAnimate && animationFinished && props.animationKey) {
+                dispatch(animationComplete(props.animationKey))
             }
         }
         router.events.on('beforeHistoryChange', onHistoryChange)

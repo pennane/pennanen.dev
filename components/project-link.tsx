@@ -3,9 +3,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Project } from '../types'
 import { monthIndexToName } from '../lib/util'
+import { useState } from 'react'
 
 const ProjectLink = ({ project }: { project: Project }) => {
     const date = project.date && !project.ignoreDate ? new Date(project.date) : null
+    const [imageLoaded, setImageLoaded] = useState(false)
 
     return (
         <div className={style['main']}>
@@ -14,13 +16,14 @@ const ProjectLink = ({ project }: { project: Project }) => {
                     <div className={style['container']}>
                         <div className={style['image']}>
                             <Image
-                                className={style['image']}
+                                className={imageLoaded ? style['image'] : `${style['image']} ${style['loading']}`}
                                 width={48}
                                 height={48}
                                 alt={project.icon ? `${project.name} icon` : ''}
                                 src={
                                     project.icon ? '/sub/' + project.id + '/' + project.icon : '/images/placeholder.png'
                                 }
+                                onLoadingComplete={() => setImageLoaded(true)}
                             />
                         </div>
 

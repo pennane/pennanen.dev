@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 import Document, { Html, Head, Main, NextScript, DocumentContext } from 'next/document'
 
 class CustomDocument extends Document {

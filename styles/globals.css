@@ -3,7 +3,27 @@
     --title-color: black;
     --title-color-invert: white;
     --text-color: #4b5563;
+    --text-color-secondary: rgb(85 85 89);
     --link-color: #1d4ed8;
+    --link-hover-color: #60a5fa;
+    --background-line-color: rgba(66, 71, 112, 0.05882);
+    --image-background-color: hsla(0, 0%, 100%, 0.01176);
+}
+
+[data-theme='dark'] {
+    --main-background-color: black;
+    --title-color: white;
+    --title-color-invert: white;
+    --text-color: #b7bcc3;
+    --text-color-secondary: #9fa6ad;
+    --link-color: #1dd88e;
+    --link-hover-color: #60faa1;
+    --background-line-color: hsl(0deg 0% 100% / 4%);
+    --image-background-color: rgb(45 45 45 / 10%);
+}
+
+.theme-transition * {
+    transition: background-color 0.2s;
 }
 
 html,
@@ -26,6 +46,10 @@ html,
 a {
     color: var(--link-color);
     text-decoration: none;
+}
+
+a:hover {
+    color: var(--link-hover-color);
 }
 
 p,

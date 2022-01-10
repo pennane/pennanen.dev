@@ -1,7 +1,3 @@
-import { useRouter } from 'next/router'
-import { useContext, useEffect, useState } from 'react'
-import { AppContext } from '../lib/context'
-import { AppActionType } from '../lib/reducer'
 import style from '../styles/project-link.module.css'
 import { Project } from '../types'
 import ProjectLink from './project-link'

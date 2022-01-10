@@ -2,6 +2,7 @@ import Head from 'next/head'
 import BackgroundLines from './background-lines'
 import Footer from './footer'
 import NavigationBar from './navigation-bar'
+import React from "react";
 
 export const siteTitle = 'Arttu Pennanen'
 

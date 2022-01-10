@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
-import { Project, ProjectConfig } from '../types'
-import { isNumber, isString } from './util'
+import {Project, ProjectConfig} from '../types'
+import {isNumber, isString} from './util'
 
 const directory = path.join(process.cwd(), 'public/sub')
 
@@ -39,7 +39,7 @@ export const getProjectById = (id: string): Project | null => {
         id,
         url: data?.url || null,
         date,
-        ignoreDate: data?.ignoreDate ? true : false,
+        ignoreDate: !!data?.ignoreDate,
         name: data?.name?.en || data?.name?.fi || id,
         description: data?.description?.en || data?.description?.fi || null,
         icon: data?.icon || null,
@@ -48,8 +48,7 @@ export const getProjectById = (id: string): Project | null => {
 }
 
 const getProjectNames = () => {
-    const directoryNames = getDirectories(directory)
-    return directoryNames
+    return getDirectories(directory)
 }
 
 export const getProjectIds = () => {

@@ -1,11 +1,13 @@
-import type { GetStaticPaths, GetStaticProps, GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+// noinspection JSUnusedGlobalSymbols
+
+import type { GetStaticPaths, GetStaticProps, GetStaticPropsContext } from 'next'
 import Image from 'next/image'
 import Layout from '../components/layout'
 import style from '../styles/project.module.css'
 import linkStyle from '../styles/project-link.module.css'
 import { getProjectById, getProjectIds } from '../lib/stuff'
 import { isString, monthIndexToName } from '../lib/util'
-import { Project, Project as ProjectPage } from '../types'
+import { Project} from '../types'
 
 export const getStaticPaths: GetStaticPaths = async () => {
     const paths = getProjectIds()
