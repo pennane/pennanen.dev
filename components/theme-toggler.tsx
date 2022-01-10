@@ -4,7 +4,8 @@ import { faMoon } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const ThemeToggler = () => {
-    const { theme, setTheme } = useTheme()
+    const { resolvedTheme, setTheme } = useTheme()
+    const isDark = resolvedTheme === 'dark'
 
     let timeout: NodeJS.Timeout
 
@@ -14,13 +15,13 @@ const ThemeToggler = () => {
         timeout = setTimeout(() => {
             document.documentElement.classList.remove('theme-transition')
         }, 1000)
-        setTheme(theme === 'dark' ? 'light' : 'dark')
+        setTheme(isDark ? 'light' : 'dark')
     }
 
     return (
         <div className={style['main']} onClick={() => toggleTheme()}>
             <button
-                className={theme === 'dark' ? `${style['button']} ${style['dark']}` : style['button']}
+                className={isDark ? `${style['button']} ${style['dark']}` : style['button']}
                 aria-label="Toggle darkmode"
                 title="Toggle darkmode"
             >
