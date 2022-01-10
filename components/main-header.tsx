@@ -19,13 +19,15 @@ const MainHeading = () => {
                 stopped={!splashImageLoaded}
             >
                 <div className={style['gradient']}>
-                    <Image
-                        height={350}
-                        width={350}
-                        src="/images/gradient.png"
-                        alt="multicolored splash"
-                        onLoadingComplete={() => setSplashImageLoaded(true)}
-                    />
+                    <div className={style['image-wrapper']}>
+                        <Image
+                            height={350}
+                            width={350}
+                            src="/images/gradient.png"
+                            alt="multicolored splash"
+                            onLoadingComplete={() => setSplashImageLoaded(true)}
+                        />
+                    </div>
                 </div>
                 <div className={style['heading']}>
                     <h1>Welcome</h1>
