@@ -10,5 +10,8 @@
         "en": "Different kind of paint",
         "fi": null
     },
-    "icon": null
+    "icon": null,
+    "images": [
+        "starrynight.jpg"
+    ]
 }
