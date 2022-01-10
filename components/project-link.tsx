@@ -3,11 +3,19 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Project } from '../types'
 import { monthIndexToName } from '../lib/util'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const ProjectLink = ({ project }: { project: Project }) => {
     const date = project.date && !project.ignoreDate ? new Date(project.date) : null
     const [imageLoaded, setImageLoaded] = useState(false)
+    const mounted = useRef(false)
+
+    useEffect(() => {
+        mounted.current = true
+        return () => {
+            mounted.current = false
+        }
+    }, [])
 
     return (
         <div className={style['main']}>
@@ -23,7 +31,7 @@ const ProjectLink = ({ project }: { project: Project }) => {
                                 src={
                                     project.icon ? '/sub/' + project.id + '/' + project.icon : '/images/placeholder.png'
                                 }
-                                onLoadingComplete={() => setImageLoaded(true)}
+                                onLoadingComplete={() => mounted.current && setImageLoaded(true)}
                             />
                         </div>
 
