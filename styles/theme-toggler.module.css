@@ -23,11 +23,11 @@
     transition: transform 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 
-.dark {
+[data-theme='dark'] .button {
     color: #fbe126;
 }
 
-.dark svg {
+[data-theme='dark'] .button svg {
     transform: rotate(370deg);
     display: block;
 }

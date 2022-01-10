@@ -27,11 +27,11 @@
     transition: filter 0.4s;
 }
 
-.dark .gradient img {
+[data-theme='dark'] .gradient img {
     filter: grayscale(1) opacity(0.3);
 }
 
 .heading h1 {
     color: var(--title-color-invert);
-    font-size: min(calc(2em + 1vw), 15vh);
+    font-size: min(calc(1.8em + 1vw), 15vh);
 }

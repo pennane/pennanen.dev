@@ -20,11 +20,7 @@ const ThemeToggler = () => {
 
     return (
         <div className={style['main']} onClick={() => toggleTheme()}>
-            <button
-                className={isDark ? `${style['button']} ${style['dark']}` : style['button']}
-                aria-label="Toggle darkmode"
-                title="Toggle darkmode"
-            >
+            <button className={style['button']} aria-label="Toggle darkmode" title="Toggle darkmode">
                 <FontAwesomeIcon icon={faMoon} />
             </button>
         </div>
