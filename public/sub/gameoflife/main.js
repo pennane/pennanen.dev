@@ -1,157 +1,227 @@
-let base = document.getElementById('game-of-life')
+const base = document.getElementById('game')
+const container = document.querySelector('main')
+const defaultCheckbox = document.getElementById('base-checkbox')
+const startButton = document.getElementById('start-game')
+const pauseButton = document.getElementById('pause-game')
+const randomizeButton = document.getElementById('randomize-game')
+const clearButton = document.getElementById('clear-game')
 
-let size = {
-    x: 0,
-    y: 0
+let running = false
+let board = []
+let upcomingChanges = []
+
+let targetFrameTime = 150
+
+function onCheckboxClick(e) {
+    const x = Number(e.target.getAttribute('data-x'))
+    const y = Number(e.target.getAttribute('data-y'))
+    upcomingChanges.push([x, y])
 }
 
-let updateInterval = 200;
-
-function createBlock(x, y) {
-    let block = document.createElement('input')
-    block.type = "checkbox"
-    block.name = 'block' + x + '-' + y
-    block.id = 'block' + x + '-' + y
-    return block
+function getRandomCellValue() {
+    return Math.random() > 0.5 ? 1 : 0
 }
 
-let baseCheckbox = document.getElementById('base-checkbox')
-let boxWidth = parseInt(getComputedStyle(baseCheckbox).width) + 3
-let boxHeight = parseInt(getComputedStyle(baseCheckbox).height) + 8
+function createCheckbox(x, y) {
+    const input = document.createElement('input')
+    input.setAttribute('type', 'checkbox')
+    input.setAttribute('data-x', x)
+    input.setAttribute('data-y', y)
 
-baseCheckbox.style.display = 'none'
+    return input
+}
 
-function scaleGameBoard() {
-    let gameDiv = document.getElementById('game')
-    let gameWidth = parseInt(getComputedStyle(gameDiv).width)
-    let gameHeight = parseInt(getComputedStyle(gameDiv).height)
+function createColumn() {
+    const span = document.createElement('span')
+    return span
+}
 
-    let buttons = document.getElementById('buttons')
-    let buttonsHeight = parseInt(getComputedStyle(buttons).height)
-    size = {
-        x: Math.floor(gameWidth / boxWidth),
-        y: Math.floor((gameHeight - buttonsHeight) / boxHeight)
-    };
+function setButtonsToDOM(board) {
+    while (base.childElementCount > board.length) {
+        const last = base.lastChild
+        base.removeChild(last)
+    }
+    while (base.childElementCount < board.length) {
+        const button = createColumn()
+        base.appendChild(button)
+    }
+    base.childNodes.forEach((c, x) => {
+        while (c.childElementCount > board[0].length) {
+            const last = c.lastChild
+            c.removeChild(last)
+        }
+        if (c.childElementCount < board[0].length) {
+            for (let y = c.childElementCount; y < board[0].length; y++) {
+                const checkbox = createCheckbox(x, y)
+                c.appendChild(checkbox)
+            }
+        }
+    })
+}
 
-    [...document.querySelectorAll('#gameboard')].forEach(div => {
-        div.parentNode.removeChild(div);
+function getBoardSize() {
+    return {
+        width: Math.min(Math.floor(container.offsetWidth / (defaultCheckbox.offsetWidth + 1)) - 6, 64),
+        height: Math.min(Math.floor(container.offsetHeight / (defaultCheckbox.offsetHeight + 1)) - 10, 64)
+    }
+}
+
+function createBoard(defaultValue) {
+    const board = []
+    const { width, height } = getBoardSize()
+
+    for (let i = 0; i < width; i++) {
+        board[i] = []
+        for (let j = 0; j < height; j++) {
+            board[i][j] = defaultValue ?? getRandomCellValue()
+        }
+    }
+    return board
+}
+
+function getRescaledBoard(b) {
+    let board = [...b]
+    const { width, height } = getBoardSize()
+
+    if (board.length < width) {
+        const initialLength = board.length
+        board.length = width
+        board.fill([], initialLength, width)
+    } else {
+        board = board.slice(0, width)
+    }
+
+    board.forEach((column) => {
+        if (column.length < height) {
+            const initialLength = column.length
+            column.length = height
+            column.fill(0, initialLength, height)
+        } else {
+            column = column.slice(0, height)
+        }
     })
 
-    let gameBoard = document.createElement('div')
-    gameBoard.id = "gameboard"
-
-    for (let y = 0; y <= size.y; y++) {
-        let row = document.createElement('div')
-        row.id = "row-" + y
-        for (let x = 0; x <= size.x; x++) {
-            let block = createBlock(x, y)
-            row.appendChild(block)
-        }
-        gameBoard.appendChild(row)
-    }
-
-    base.appendChild(gameBoard)
+    return board
 }
 
-scaleGameBoard()
-
-let running = false;
-
-function checkNeigbhours(x, y) {
-    let alive = 0;
-    for (let nx = x - 1; nx <= x + 1; nx++) {
-        for (let ny = y - 1; ny <= y + 1; ny++) {
-            if (ny < 0 || nx < 0) {
-                continue
-            }
-            if (nx > size.x || ny > size.y) {
-                continue
-            }
-            if (nx === x && ny === y) {
-                continue
-            }
-
-            let name = 'block' + nx + '-' + ny
-            let state = document.getElementById(name).checked
-            if (state) alive++;
-        }
-    }
-    return alive
+function rescale() {
+    initialize(getRescaledBoard(board))
 }
 
-function randomizeGameBoard() {
-    for (let x = 0; x <= size.x; x++) {
-        for (let y = 0; y <= size.y; y++) {
-            let block = document.getElementById('block' + x + '-' + y)
-            block.checked = Math.random() >= 0.7
-        }
-    }
+function displayBoard(board) {
+    board.forEach((column, x) => {
+        column.forEach((checked, y) => {
+            const target = base.childNodes[x].childNodes[y]
+            target.checked = checked === 1
+        })
+    })
 }
 
-function clearGameBoard() {
-    for (let x = 0; x <= size.x; x++) {
-        for (let y = 0; y <= size.y; y++) {
-            let block = document.getElementById('block' + x + '-' + y)
-            block.checked = false
-        }
-    }
-}
+function getAliveNeighboursAmount(board, x, y) {
+    let amount = 0
+    for (let cx = x - 1; cx <= x + 1; cx++) {
+        if (cx < 0) continue
+        if (cx > board.length - 1) continue
 
-function calculateGameState() {
-    let state = []
-    for (let x = 0; x <= size.x; x++) {
-        state[x] = []
-        for (let y = 0; y <= size.y; y++) {
-            let block = document.getElementById('block' + x + '-' + y)
+        for (let cy = y - 1; cy <= y + 1; cy++) {
+            if (cy < 0) continue
+            if (cy > board[0].length - 1) continue
+            if (cy === y && x === cx) continue
 
-            let alive = block.checked
-            let neighbours = checkNeigbhours(x, y)
-
-            state[x][y] = alive;
-
-            if (alive && neighbours < 2) {
-                state[x][y] = false
-            } else if (alive && (neighbours === 2 || neighbours === 3)) {
-                state[x][y] = true
-            } else if (alive && neighbours > 3) {
-                state[x][y] = false
-            } else if (!alive && neighbours === 3) {
-                state[x][y] = true
+            if (board[cx][cy] === 1) {
+                amount++
             }
         }
     }
-    for (let x = 0; x <= size.x; x++) {
-        for (let y = 0; y <= size.y; y++) {
-            let block = document.getElementById('block' + x + '-' + y)
-            block.checked = state[x][y]
-        }
-    }
-    if (running) {
-        setTimeout(() => { calculateGameState() }, updateInterval)
-    }
-
+    return amount
 }
 
-document.getElementById('start-game').addEventListener('click', () => {
-    running = true;
-    calculateGameState()
-})
+function getNextCellState(board, x, y) {
+    const cell = board[x][y]
+    const alive = cell === 1
+    const aliveNeighbours = getAliveNeighboursAmount(board, x, y)
+    if (!alive && aliveNeighbours === 3) {
+        return 1
+    } else if (alive && aliveNeighbours < 2) {
+        return 0
+    } else if (alive && (aliveNeighbours === 2 || aliveNeighbours === 3)) {
+        return 1
+    } else if (alive && aliveNeighbours > 3) {
+        return 0
+    }
 
-document.getElementById('pause-game').addEventListener('click', () => {
-    running = false;
-})
+    return 0
+}
 
-document.getElementById('randomize-game').addEventListener('click', () => {
-    randomizeGameBoard()
-})
+function getNextBoardState(board) {
+    upcomingChanges.forEach(([x, y]) => {
+        board[x][y] = board[x][y] === 1 ? 0 : 1
+    })
 
-document.getElementById('clear-game').addEventListener('click', () => {
+    const nextBoard = []
+
+    board.forEach((column, x) => {
+        nextBoard[x] = []
+        for (let y = 0; y < column.length; y++) {
+            nextBoard[x][y] = getNextCellState(board, x, y)
+        }
+    })
+
+    upcomingChanges = []
+
+    return nextBoard
+}
+
+let animationTimeout
+function start() {
+    clearTimeout(animationTimeout)
+    running = true
+    function animate() {
+        board = getNextBoardState(board)
+        displayBoard(board)
+
+        if (running) {
+            animationTimeout = setTimeout(() => requestAnimationFrame(() => animate()), targetFrameTime)
+        }
+    }
+    requestAnimationFrame(() => animate())
+}
+
+function initialize(b, v) {
     running = false
-    clearGameBoard()
+    board = b || createBoard(v)
+    setButtonsToDOM(board)
+    displayBoard(board)
+}
+
+startButton.addEventListener('click', () => {
+    start()
 })
 
-document.getElementById('rescale-game').addEventListener('click', () => {
+pauseButton.addEventListener('click', () => {
     running = false
-    clearGameBoard()
-    scaleGameBoard()
 })
+
+clearButton.addEventListener('click', () => {
+    initialize(undefined, 0)
+})
+
+randomizeButton.addEventListener('click', () => {
+    initialize()
+})
+
+game.addEventListener('click', (e) => {
+    if (e.target.nodeName === 'INPUT') {
+        onCheckboxClick(e)
+    }
+})
+
+let timeout
+window.addEventListener('resize', () => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+        rescale()
+    }, 500)
+})
+
+initialize()
