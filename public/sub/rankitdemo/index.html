@@ -1,600 +1,497 @@
 <!DOCTYPE html>
 <html lang="fi">
-  <head>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=UA-126133790-2"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
+    <head>
+        <meta charset="utf-8" />
+        <!-- Code snippet to speed up Google Fonts rendering: googlefonts.3perf.com -->
+        <link href="https://fonts.gstatic.com" rel="dns-prefetch" />
+        <link href="https://fonts.gstatic.com" rel="preconnect" />
+        <link href="https://fonts.googleapis.com/css?family=Lato|Roboto:900" rel="preload" />
+        <script type="text/javascript">
+            !(function (e, t, n) {
+                'use strict'
+                var o = 'https://fonts.googleapis.com/css?family=Lato|Roboto:700',
+                    a = '__3perf_googleFontsStylesheet'
 
-      gtag("config", "UA-126133790-2");
-    </script>
+                function c(e) {
+                    ;(t.head || t.body).appendChild(e)
+                }
 
-    <meta charset="utf-8" />
-    <!-- Code snippet to speed up Google Fonts rendering: googlefonts.3perf.com -->
-    <link href="https://fonts.gstatic.com" rel="dns-prefetch" />
-    <link href="https://fonts.gstatic.com" rel="preconnect" />
-    <link
-      href="https://fonts.googleapis.com/css?family=Lato|Roboto:900"
-      rel="preload"
-    />
-    <script type="text/javascript">
-      !(function(e, t, n) {
-        "use strict";
-        var o = "https://fonts.googleapis.com/css?family=Lato|Roboto:700",
-          a = "__3perf_googleFontsStylesheet";
+                function r() {
+                    var e = t.createElement('link')
+                    ;(e.href = o), (e.rel = 'stylesheet'), c(e)
+                }
 
-        function c(e) {
-          (t.head || t.body).appendChild(e);
-        }
+                function f(e) {
+                    if (!t.getElementById(a)) {
+                        var n = t.createElement('style')
+                        ;(n.id = a), c(n)
+                    }
+                    t.getElementById(a).innerHTML = e
+                }
+                e.FontFace && e.FontFace.prototype.hasOwnProperty('display')
+                    ? (n[a] && f(n[a]),
+                      fetch(o)
+                          .then(function (e) {
+                              return e.text()
+                          })
+                          .then(function (e) {
+                              return e.replace(/@font-face {/g, '@font-face{font-display:swap;')
+                          })
+                          .then(function (e) {
+                              return (n[a] = e)
+                          })
+                          .then(f)
+                          .catch(r))
+                    : r()
+            })(window, document, localStorage)
+        </script>
+        <!-- End of code snippet for Google Fonts -->
+        <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <link href="style/main.css" rel="stylesheet" />
+        <title>rankit</title>
+    </head>
 
-        function r() {
-          var e = t.createElement("link");
-          (e.href = o), (e.rel = "stylesheet"), c(e);
-        }
+    <body>
+        <main>
+            <div class="content rankholder">
+                <div class="ranknav">
+                    <a class="ranklink eloton" id="eloton">Eloton</a>
+                    <a class="ranklink raihnas" id="raihnas">Raihnas</a>
+                    <a class="ranklink sisukas" id="sisukas">Sisukas</a>
+                    <a class="ranklink parantuva" id="parantuva">Parantuva</a>
+                    <a class="ranklink immuuni" id="immuuni">Immuuni</a>
+                    <a class="ranklink parantaja" id="parantaja">Parantaja</a>
+                    <a class="ranklink nekromantikko" id="nekromantikko">Nekromantikko</a>
+                    <a class="ranklink kuolematon" id="kuolematon">Kuolematon</a>
+                </div>
+                <div class="rankcontent">
+                    <div class="rank">
+                        <div class="rankhead">
+                            <h3 class="eloton">Eloton</h3>
+                            <span class="ranktime">0h</span>
+                        </div>
+                        <div class="commands">
+                            <table class="commandtable">
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">sethome</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">1 kappale</span></span
+                                        >
+                                    </td>
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">kit aloitus</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="otherhead">Muuta:</div>
+                        <div class="others">
+                            <table class="othertable">
+                                <tr class="otherrow">
+                                    <td><span class="commandname">vihane jesus</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="rank">
+                        <div class="rankhead">
+                            <h3 class="raihnas">Raihnas</h3>
+                            <span class="ranktime">5h</span>
+                        </div>
+                        <div class="commands">
+                            <table class="commandtable">
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">kit Raihnas</span>
+                                    </td>
+                                    <td><span class="highlight">/</span><span class="commandname">hat</span></td>
+                                </tr>
 
-        function f(e) {
-          if (!t.getElementById(a)) {
-            var n = t.createElement("style");
-            (n.id = a), c(n);
-          }
-          t.getElementById(a).innerHTML = e;
-        }
-        e.FontFace && e.FontFace.prototype.hasOwnProperty("display")
-          ? (n[a] && f(n[a]),
-            fetch(o)
-              .then(function(e) {
-                return e.text();
-              })
-              .then(function(e) {
-                return e.replace(
-                  /@font-face {/g,
-                  "@font-face{font-display:swap;"
-                );
-              })
-              .then(function(e) {
-                return (n[a] = e);
-              })
-              .then(f)
-              .catch(r))
-          : r();
-      })(window, document, localStorage);
-    </script>
-    <!-- End of code snippet for Google Fonts -->
-    <link
-      href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
-      rel="stylesheet"
-    />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <link href="style/main.css" rel="stylesheet" />
-    <title>rankit</title>
-  </head>
-
-  <body>
-    <main>
-      <div class="content rankholder">
-        <div class="ranknav">
-          <a class="ranklink eloton" id="eloton">Eloton</a>
-          <a class="ranklink raihnas" id="raihnas">Raihnas</a>
-          <a class="ranklink sisukas" id="sisukas">Sisukas</a>
-          <a class="ranklink parantuva" id="parantuva">Parantuva</a>
-          <a class="ranklink immuuni" id="immuuni">Immuuni</a>
-          <a class="ranklink parantaja" id="parantaja">Parantaja</a>
-          <a class="ranklink nekromantikko" id="nekromantikko">Nekromantikko</a>
-          <a class="ranklink kuolematon" id="kuolematon">Kuolematon</a>
-        </div>
-        <div class="rankcontent">
-          <div class="rank">
-            <div class="rankhead">
-              <h3 class="eloton">Eloton</h3>
-              <span class="ranktime">0h</span>
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">sethome</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">2 kappaletta</span></span
+                                        >
+                                    </td>
+                                    <td><span class="highlight">/</span><span class="commandname">workbench</span></td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td><span class="highlight">/</span><span class="commandname">compass</span></td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="rank">
+                        <div class="rankhead">
+                            <h3 class="sisukas">Sisukas</h3>
+                            <span class="ranktime">1d</span>
+                        </div>
+                        <div class="commands">
+                            <table class="commandtable">
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">kit Sisukas</span>
+                                    </td>
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">sethome</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">6 kappaletta</span></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td><span class="highlight">/</span><span class="commandname">enderchest</span></td>
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">mc</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Taikamatto jolla voi lentää käyttämällä välilyöntiä ja shiftiä.</span
+                                            ></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td><span class="highlight">/</span><span class="commandname">mc light</span></td>
+                                    <td><span class="highlight">/</span><span class="commandname">near</span></td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">vk</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Voit äänestää äänestyksissä äänestämällä "/vk n" vastaan ja "/vk y"
+                                                puolesta.</span
+                                            ></span
+                                        >
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="otherhead">Muuta:</div>
+                        <div class="others">
+                            <table class="othertable">
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">Kaksi uutta väriä taikamattoon (/mc)</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">Vaalean harmaa ja läpinäkyvä</span></span
+                                        >
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="rank">
+                        <div class="rankhead">
+                            <h3 class="parantuva">Parantuva</h3>
+                            <span class="ranktime">5d</span>
+                        </div>
+                        <div class="commands">
+                            <table class="commandtable">
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">kit Parantava</span>
+                                    </td>
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">sethome</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">8 kappaletta</span></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td><span class="highlight">/</span><span class="commandname">jump</span></td>
+                                    <td><span class="highlight">/</span><span class="commandname">mc tools</span></td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">nick</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Nimen on oltava samankaltainen käyttäjän Minecraft nimen kanssa
+                                                tunnistautumisen vuoksi.</span
+                                            ></span
+                                        >
+                                    </td>
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">tp xy z</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Voit teleporttaa X, Y ja Z koordinaatteihin.</span
+                                            ></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span
+                                        ><span class="commandname">rankaise votemute</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Aloittaa äänestyksen pelaajan hiljentämiseksi 20 minuutiksi.</span
+                                            ></span
+                                        >
+                                    </td>
+                                    <td>
+                                        <span class="highlight">/</span
+                                        ><span class="commandname">rankaise votekick</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Aloittaa äänestyksen pelaajan potkimiseksi.</span
+                                            ></span
+                                        >
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="otherhead">Muuta:</div>
+                        <div class="others">
+                            <table class="othertable">
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">Kyky hakata spawnereita ilman Silk Touch hakkua.</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Huom, keräämiseen silti tarvitsee hakun.</span
+                                            ></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">Kyky kirjoittaa kyltteihin väreillä.</span>
+                                    </td>
+                                </tr>
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">Kolme uutta väriä taikamattoon (/mc)</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">Valkoinen, harmaa ja sininen.</span></span
+                                        >
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="rank">
+                        <div class="rankhead">
+                            <h3 class="immuuni">Immuuni</h3>
+                            <span class="ranktime">10d</span>
+                        </div>
+                        <div class="commands">
+                            <table class="commandtable">
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">kit Immuuni</span>
+                                    </td>
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">sethome</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">12 kappaletta</span></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td><span class="highlight">/</span><span class="commandname">fly</span></td>
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">nimeä</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Nimeää kädessä olevan tavaran. Voi käyttää värejä</span
+                                            ></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">spawner</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Vaihtaa maassa olevan spawnerin tyypin</span
+                                            ></span
+                                        >
+                                    </td>
+                                    <td><span class="highlight">/</span><span class="commandname">tp</span></td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td><span class="highlight">/</span><span class="commandname">tptoggle</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="otherhead">Muuta:</div>
+                        <div class="others">
+                            <table class="othertable">
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">Kaksi uutta väriä taikamattoon (/mc)</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">Keltainen ja ruskea</span></span
+                                        >
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="rank">
+                        <div class="rankhead">
+                            <h3 class="parantaja">Parantaja</h3>
+                            <span class="ranktime">30d</span>
+                        </div>
+                        <div class="commands">
+                            <table class="commandtable">
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">kit Parantaja</span>
+                                    </td>
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">sethome</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">16 kappaletta</span></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td><span class="highlight">/</span><span class="commandname">jail</span></td>
+                                    <td><span class="highlight">/</span><span class="commandname">kick</span></td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td><span class="highlight">/</span><span class="commandname">mute</span></td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="otherhead">Muuta:</div>
+                        <div class="others">
+                            <table class="othertable">
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">AntiXray</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">jesus tietää</span></span
+                                        >
+                                    </td>
+                                </tr>
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">Kaksi uutta väriä taikamattoon (/mc)</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">Limetti ja musta</span></span
+                                        >
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="rank">
+                        <div class="rankhead">
+                            <h3 class="nekromantikko">Nekromantikko</h3>
+                            <span class="ranktime">60d</span>
+                        </div>
+                        <div class="commands">
+                            <table class="commandtable">
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">co i</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Asettaa blockkien tarkastelun päälle. Voidaan käyttää grieffaamisen
+                                                tutkimiseen.</span
+                                            ></span
+                                        >
+                                    </td>
+                                    <td>
+                                        <span class="highlight">/</span
+                                        ><span class="commandname">kit Nekromantikko</span>
+                                    </td>
+                                </tr>
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">sethome</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">18 kappaletta</span></span
+                                        >
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="otherhead">Muuta:</div>
+                        <div class="others">
+                            <table class="othertable">
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">Kaksi uutta väriä taikamattoon (/mc)</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext">Magenta ja punainen</span></span
+                                        >
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="rank">
+                        <div class="rankhead">
+                            <h3 class="kuolematon">Kuolematon</h3>
+                            <span class="ranktime">100d</span>
+                        </div>
+                        <div class="commands">
+                            <table class="commandtable">
+                                <tr class="commandrow">
+                                    <td>
+                                        <span class="highlight">/</span><span class="commandname">kit Kuolematon</span>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="otherhead">Muuta:</div>
+                        <div class="others">
+                            <table class="othertable">
+                                <tr class="otherrow">
+                                    <td>
+                                        <span class="commandname">Kuusi uutta väriä taikamattoon (/mc)</span
+                                        ><span class="tooltip highlight2"
+                                            ><i class="fas fa-info-circle"></i>
+                                            <span class="tooltiptext"
+                                                >Pinkki, syaani, purppura, oranssi, vihreä ja vaalean sininen</span
+                                            ></span
+                                        >
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="commands">
-              <table class="commandtable">
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">sethome</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">1 kappale</span></span
-                    >
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kit aloitus</span>
-                  </td>
-                </tr>
-              </table>
-            </div>
-            <div class="otherhead">Muuta:</div>
-            <div class="others">
-              <table class="othertable">
-                <tr class="otherrow">
-                  <td><span class="commandname">vihane jesus</span></td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="rank">
-            <div class="rankhead">
-              <h3 class="raihnas">Raihnas</h3>
-              <span class="ranktime">5h</span>
-            </div>
-            <div class="commands">
-              <table class="commandtable">
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kit Raihnas</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">hat</span>
-                  </td>
-                </tr>
-
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">sethome</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">2 kappaletta</span></span
-                    >
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">workbench</span>
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">compass</span>
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="rank">
-            <div class="rankhead">
-              <h3 class="sisukas">Sisukas</h3>
-              <span class="ranktime">1d</span>
-            </div>
-            <div class="commands">
-              <table class="commandtable">
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kit Sisukas</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">sethome</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">6 kappaletta</span></span
-                    >
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">enderchest</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">mc</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Taikamatto jolla voi lentää käyttämällä välilyöntiä ja
-                        shiftiä.</span
-                      ></span
-                    >
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">mc light</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">near</span>
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">vk</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Voit äänestää äänestyksissä äänestämällä "/vk n"
-                        vastaan ja "/vk y" puolesta.</span
-                      ></span
-                    >
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-            <div class="otherhead">Muuta:</div>
-            <div class="others">
-              <table class="othertable">
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname"
-                      >Kaksi uutta väriä taikamattoon (/mc)</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Vaalean harmaa ja läpinäkyvä</span
-                      ></span
-                    >
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="rank">
-            <div class="rankhead">
-              <h3 class="parantuva">Parantuva</h3>
-              <span class="ranktime">5d</span>
-            </div>
-            <div class="commands">
-              <table class="commandtable">
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kit Parantava</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">sethome</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">8 kappaletta</span></span
-                    >
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">jump</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">mc tools</span>
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">nick</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Nimen on oltava samankaltainen käyttäjän Minecraft
-                        nimen kanssa tunnistautumisen vuoksi.</span
-                      ></span
-                    >
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">tp xy z</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Voit teleporttaa X, Y ja Z koordinaatteihin.</span
-                      ></span
-                    >
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">rankaise votemute</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Aloittaa äänestyksen pelaajan hiljentämiseksi 20
-                        minuutiksi.</span
-                      ></span
-                    >
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">rankaise votekick</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Aloittaa äänestyksen pelaajan potkimiseksi.</span
-                      ></span
-                    >
-                  </td>
-                </tr>
-              </table>
-            </div>
-            <div class="otherhead">Muuta:</div>
-            <div class="others">
-              <table class="othertable">
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname"
-                      >Kyky hakata spawnereita ilman Silk Touch hakkua.</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Huom, keräämiseen silti tarvitsee hakun.</span
-                      ></span
-                    >
-                  </td>
-                </tr>
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname"
-                      >Kyky kirjoittaa kyltteihin väreillä.</span
-                    >
-                  </td>
-                </tr>
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname"
-                      >Kolme uutta väriä taikamattoon (/mc)</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Valkoinen, harmaa ja sininen.</span
-                      ></span
-                    >
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="rank">
-            <div class="rankhead">
-              <h3 class="immuuni">Immuuni</h3>
-              <span class="ranktime">10d</span>
-            </div>
-            <div class="commands">
-              <table class="commandtable">
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kit Immuuni</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">sethome</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">12 kappaletta</span></span
-                    >
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">fly</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">nimeä</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Nimeää kädessä olevan tavaran. Voi käyttää värejä</span
-                      ></span
-                    >
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">spawner</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Vaihtaa maassa olevan spawnerin tyypin</span
-                      ></span
-                    >
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">tp</span>
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">tptoggle</span>
-                  </td>
-                </tr>
-              </table>
-            </div>
-            <div class="otherhead">Muuta:</div>
-            <div class="others">
-              <table class="othertable">
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname"
-                      >Kaksi uutta väriä taikamattoon (/mc)</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">Keltainen ja ruskea</span></span
-                    >
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="rank">
-            <div class="rankhead">
-              <h3 class="parantaja">Parantaja</h3>
-              <span class="ranktime">30d</span>
-            </div>
-            <div class="commands">
-              <table class="commandtable">
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kit Parantaja</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">sethome</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">16 kappaletta</span></span
-                    >
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">jail</span>
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kick</span>
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">mute</span>
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-            <div class="otherhead">Muuta:</div>
-            <div class="others">
-              <table class="othertable">
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname">AntiXray</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">jesus tietää</span></span
-                    >
-                  </td>
-                </tr>
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname"
-                      >Kaksi uutta väriä taikamattoon (/mc)</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">Limetti ja musta</span></span
-                    >
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="rank">
-            <div class="rankhead">
-              <h3 class="nekromantikko">Nekromantikko</h3>
-              <span class="ranktime">60d</span>
-            </div>
-            <div class="commands">
-              <table class="commandtable">
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">co i</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Asettaa blockkien tarkastelun päälle. Voidaan käyttää
-                        grieffaamisen tutkimiseen.</span
-                      ></span
-                    >
-                  </td>
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kit Nekromantikko</span>
-                  </td>
-                </tr>
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">sethome</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">18 kappaletta</span></span
-                    >
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-            <div class="otherhead">Muuta:</div>
-            <div class="others">
-              <table class="othertable">
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname"
-                      >Kaksi uutta väriä taikamattoon (/mc)</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext">Magenta ja punainen</span></span
-                    >
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-          <div class="rank">
-            <div class="rankhead">
-              <h3 class="kuolematon">Kuolematon</h3>
-              <span class="ranktime">100d</span>
-            </div>
-            <div class="commands">
-              <table class="commandtable">
-                <tr class="commandrow">
-                  <td>
-                    <span class="highlight">/</span
-                    ><span class="commandname">kit Kuolematon</span>
-                  </td>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
-            <div class="otherhead">Muuta:</div>
-            <div class="others">
-              <table class="othertable">
-                <tr class="otherrow">
-                  <td>
-                    <span class="commandname"
-                      >Kuusi uutta väriä taikamattoon (/mc)</span
-                    ><span class="tooltip highlight2"
-                      ><i class="fas fa-info-circle"></i>
-                      <span class="tooltiptext"
-                        >Pinkki, syaani, purppura, oranssi, vihreä ja vaalean
-                        sininen</span
-                      ></span
-                    >
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-    <script src="js/main.js"></script>
-  </body>
+        </main>
+        <script src="js/main.js"></script>
+    </body>
 </html>

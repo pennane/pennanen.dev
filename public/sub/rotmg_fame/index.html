@@ -1,227 +1,196 @@
 <!DOCTYPE html>
 <html lang="fi">
-  <head>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=UA-126133790-2"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:600" rel="stylesheet" />
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="style/main.css" />
+        <title>Fame Calculator</title>
+    </head>
 
-      gtag("config", "UA-126133790-2");
-    </script>
+    <body>
+        <main>
+            <div id="list">
+                <div class="bonus">
+                    <div class="bonus-name bonus-title">Realm of the mad god Fame Calulator</div>
+                </div>
 
-    <link
-      href="https://fonts.googleapis.com/css?family=Open+Sans:600"
-      rel="stylesheet"
-    />
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style/main.css" />
-    <title>Fame Calculator</title>
-  </head>
+                <div class="bonus"></div>
 
-  <body>
-    <main>
-      <div id="list">
-        <div class="bonus">
-          <div class="bonus-name bonus-title">
-            Realm of the mad god Fame Calulator
-          </div>
-        </div>
+                <div class="bonus base-fame">
+                    <div class="bonus-name">Basefame:</div>
+                    <div class="base-fame-parent">
+                        <input id="basefame" type="text" />
+                    </div>
+                </div>
 
-        <div class="bonus"></div>
+                <div class="bonus"></div>
 
-        <div class="bonus base-fame">
-          <div class="bonus-name">Basefame:</div>
-          <div class="base-fame-parent">
-            <input id="basefame" type="text" />
-          </div>
-        </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-important="20" data-percentage="0.1">Ancestor</div>
+                    <div class="bonus-check-parent">
+                        <input id="fs13" class="bonus-checkbox important" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
 
-        <div class="bonus"></div>
+                <div class="bonus">
+                    <div class="bonus-name" data-important="10" data-percentage="0.1">Legacy Builder</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox important" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
 
-        <div class="bonus">
-          <div class="bonus-name " data-important="20" data-percentage="0.1">
-            Ancestor
-          </div>
-          <div class="bonus-check-parent">
-            <input id="fs13" class="bonus-checkbox important" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.25">Pacifist</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
 
-        <div class="bonus">
-          <div class="bonus-name" data-important="10" data-percentage="0.1">
-            Legacy Builder
-          </div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox important" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.25">Thirsty</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.25">Mundane</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.25">Boots on the Ground</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Tunnel Rat</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Enemy of the Gods</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Slayer of the Gods</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Oryx Slayer</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Accurate</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Sharpshooter</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Sniper</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.05">Explorer</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.05">Cartographer</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Team Player</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Leader of Men</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Doer of Deeds</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">Friend of the Cubes</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
 
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.25">Pacifist</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="" id="well-equipped">Well Equipped</div>
+                    <div class="bonus-text-parent">
+                        <input id="equippercent" class="bonus-text" type="text" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus">
+                    <div class="bonus-name" data-percentage="0.1">First Born</div>
+                    <div class="bonus-check-parent">
+                        <input class="bonus-checkbox" type="checkbox" />
+                    </div>
+                    <div class="bonus-addition">0</div>
+                </div>
+                <div class="bonus"></div>
+                <div class="bonus total">
+                    <div class="bonus-name">Total:</div>
+                    <div class="bonus-check-parent"></div>
+                    <div class="bonus-addition tf" id="total-fame">0</div>
+                    <img src="fame.png" class="fame-img" />
+                </div>
+            </div>
+        </main>
 
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.25">Thirsty</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.25">Mundane</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.25">
-            Boots on the Ground
-          </div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Tunnel Rat</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Enemy of the Gods</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Slayer of the Gods</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Oryx Slayer</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Accurate</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Sharpshooter</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Sniper</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.05">Explorer</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.05">Cartographer</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Team Player</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Leader of Men</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">Doer of Deeds</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">
-            Friend of the Cubes
-          </div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox" type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="" id="well-equipped">
-            Well Equipped
-          </div>
-          <div class="bonus-text-parent">
-            <input id="equippercent" class="bonus-text" type="text" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus">
-          <div class="bonus-name" data-percentage="0.1">First Born</div>
-          <div class="bonus-check-parent">
-            <input class="bonus-checkbox " type="checkbox" />
-          </div>
-          <div class="bonus-addition">0</div>
-        </div>
-        <div class="bonus"></div>
-        <div class="bonus total">
-          <div class="bonus-name">Total:</div>
-          <div class="bonus-check-parent"></div>
-          <div class="bonus-addition tf" id="total-fame">0</div>
-          <img src="fame.png" class="fame-img" />
-        </div>
-      </div>
-    </main>
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script>
-      !window.jQuery &&
-        document.write('<script src="js/jquery-3.3.1.min.js"><\/script>');
-    </script>
-    <script src="js/main.js" type="text/javascript"></script>
-  </body>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script>
+            !window.jQuery && document.write('<script src="js/jquery-3.3.1.min.js"><\/script>')
+        </script>
+        <script src="js/main.js" type="text/javascript"></script>
+    </body>
 </html>
