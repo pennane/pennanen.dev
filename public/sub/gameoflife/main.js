@@ -1,3 +1,6 @@
+let vh = window.innerHeight * 0.01
+document.documentElement.style.setProperty('--vh', `${vh}px`)
+
 const base = document.getElementById('game')
 const container = document.querySelector('main')
 const defaultCheckbox = document.getElementById('base-checkbox')
@@ -5,6 +8,8 @@ const startButton = document.getElementById('start-game')
 const pauseButton = document.getElementById('pause-game')
 const randomizeButton = document.getElementById('randomize-game')
 const clearButton = document.getElementById('clear-game')
+
+let { width, height } = getBoardSize()
 
 let running = false
 let board = []
@@ -61,7 +66,7 @@ function setButtonsToDOM(board) {
 
 function getBoardSize() {
     return {
-        width: Math.min(Math.floor(container.offsetWidth / (defaultCheckbox.offsetWidth + 1)) - 6, 64),
+        width: Math.min(Math.floor(container.offsetWidth / (defaultCheckbox.offsetWidth + 1)) - 7, 64),
         height: Math.min(Math.floor(container.offsetHeight / (defaultCheckbox.offsetHeight + 1)) - 10, 64)
     }
 }
@@ -220,8 +225,13 @@ let timeout
 window.addEventListener('resize', () => {
     clearTimeout(timeout)
     timeout = setTimeout(() => {
-        rescale()
-    }, 500)
+        let { width: updatedWidth, height: updatedHeight } = getBoardSize()
+        if (updatedWidth - width !== 0 || updatedHeight - height !== 0) {
+            width = updatedWidth
+            height = updatedHeight
+            rescale()
+        }
+    }, 250)
 })
 
 initialize()
