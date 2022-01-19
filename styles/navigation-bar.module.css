@@ -10,20 +10,25 @@
 }
 
 .main {
-    display: flex;
-    opacity: 0.99;
-    padding: 0 1.8em;
-    max-width: 1400px;
     flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    opacity: 0.99;
+    padding: 0.3em 1.8em;
+    max-width: 1400px;
     z-index: 2;
     pointer-events: auto;
+}
+
+.main > * {
+    height: 3.4em;
 }
 
 .link {
     pointer-events: auto;
     border: none;
     padding: 0 0.5em;
-    height: 3.4rem;
+    padding-right: 0.8em;
     font-size: 0.85em;
     cursor: pointer;
     display: inline-flex;

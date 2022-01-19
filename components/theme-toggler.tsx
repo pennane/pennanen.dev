@@ -4,8 +4,17 @@ import { faMoon } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const ThemeToggler = () => {
-    const { resolvedTheme, setTheme } = useTheme()
+    const { resolvedTheme, theme, setTheme } = useTheme()
     const isDark = resolvedTheme === 'dark'
+    let label
+
+    if (theme === 'dark') {
+        label = 'dark'
+    } else if (theme === 'light') {
+        label = 'light'
+    } else {
+        label = 'auto'
+    }
 
     let timeout: NodeJS.Timeout
 
@@ -20,7 +29,7 @@ const ThemeToggler = () => {
 
     return (
         <div className={style['main']} onClick={() => toggleTheme()}>
-            <button className={style['button']} aria-label="Toggle darkmode" title="Toggle darkmode">
+            <button className={style['button']} aria-label={label} title="Toggles between light and dark theme">
                 <FontAwesomeIcon icon={faMoon} />
             </button>
         </div>

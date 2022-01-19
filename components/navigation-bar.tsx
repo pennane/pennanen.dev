@@ -13,7 +13,7 @@ const NavigationBar = () => {
         <div className={style['container']}>
             <nav className={style['main']}>
                 <Link href="/">
-                    <a className={style['brand'] + ' ' + style['link']}>
+                    <a className={style['link']}>
                         <div className={style['brand-image']}>
                             {resolvedTheme === 'dark' && (
                                 <Image src={'/images/white-icon.png'} alt="" width={20} height={20} />
@@ -25,6 +25,7 @@ const NavigationBar = () => {
                         <span className="title">pennanen.dev</span>
                     </a>
                 </Link>
+
                 <ThemeToggler />
             </nav>
         </div>

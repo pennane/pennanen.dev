@@ -6,13 +6,15 @@
 }
 
 .button {
-    all: unset;
-    padding: 0.3rem;
+    background: none;
+    border: none;
+    display: grid;
+    place-items: center;
     cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     position: relative;
+    width: 3.4em;
+    height: 3.4em;
+    color: #444444;
 }
 
 .button svg {
@@ -23,11 +25,23 @@
     transition: transform 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 
+.button:hover {
+    color: black;
+}
+
 [data-theme='dark'] .button {
-    color: #fbe126;
+    color: #e0c80f;
 }
 
 [data-theme='dark'] .button svg {
     transform: rotate(370deg);
     display: block;
+}
+
+[data-theme='dark'] .button:hover {
+    color: #ffe000;
+}
+
+.button:hover svg {
+    --size: 0.83rem;
 }
