@@ -6,6 +6,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>sound</title>
         <style>
+            * {
+                font-family: monospace;
+            }
+
             .settings {
                 display: flex;
                 justify-content: flex-start;
@@ -20,6 +24,7 @@
 
             .settings > div:last-child {
                 flex-basis: 100%;
+                margin-bottom: 0.5em;
             }
 
             input {
@@ -32,9 +37,27 @@
             div {
                 display: flex;
                 flex-wrap: wrap;
+                align-items: center;
             }
             button {
+                background: white;
+                border: 1px solid rgb(69, 69, 69);
+                border-radius: 2px;
+                margin: 1px;
                 width: 7em;
+                font-size: 0.85rem;
+                height: 1.5rem;
+            }
+            code {
+                display: block;
+            }
+            code:first-of-type {
+                margin-top: 1em;
+            }
+
+            .pressed,
+            button:hover {
+                background-color: #e5e5e5;
             }
         </style>
     </head>
@@ -62,6 +85,8 @@
             <button id="whitenoise">whitenoise</button>
         </div>
         <div id="target"></div>
+        <code>numbers 1-0 can be used to play first 10 buttons </code>
+        <code>r key resets</code>
         <script src="main.js"></script>
     </body>
 </html>

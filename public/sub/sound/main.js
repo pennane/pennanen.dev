@@ -58,14 +58,14 @@ function whiteNoise(audioContext) {
     playSound({ array, audioContext })
 }
 
-let start = 20,
-    amount = 20,
-    gap = 10
+let start = 80,
+    amount = 10,
+    gap = 40
 
 function createButtons(initial) {
     if (!initial) {
         gap = Math.max(gapEl.value, 1)
-        start = Math.max(startEl.value, 1)
+        start = Math.min(Math.max(startEl.value, 1), 22000)
         amount = Math.min(Math.max(amountEl.value, 1), 200)
     }
 
@@ -93,3 +93,27 @@ createButtons(true)
 document.getElementById('whitenoise').addEventListener('click', () => whiteNoise(audioContext))
 document.getElementById('off').addEventListener('click', () => clearSources())
 document.getElementById('reset').addEventListener('click', () => createButtons())
+
+document.addEventListener('keydown', (e) => {
+    if (e.repeat) return
+    if (e.key === 'r' || e.key === 'R') {
+        clearSources()
+        return
+    }
+    let index = parseInt(e.key)
+    if (isNaN(index)) return
+    if (index === 0) index = 10
+    const button = document.querySelectorAll('#target div button')[index - 1]
+    if (!button) return
+    button.click()
+    button.classList.add('pressed')
+})
+
+document.addEventListener('keyup', (e) => {
+    let index = parseInt(e.key)
+    if (isNaN(index)) return
+    if (index === 0) index = 10
+    const button = document.querySelectorAll('#target div button')[index - 1]
+    if (!button) return
+    button.classList.remove('pressed')
+})

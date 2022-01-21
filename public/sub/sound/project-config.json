@@ -8,5 +8,6 @@
         "en": "playing with javascript audio context",
         "fi": null
     },
-    "ignoreInListing": true
+    "ignoreInListing": false,
+    "ignoreDate": true
 }
