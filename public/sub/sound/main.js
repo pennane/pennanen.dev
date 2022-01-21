@@ -95,7 +95,7 @@ document.getElementById('off').addEventListener('click', () => clearSources())
 document.getElementById('reset').addEventListener('click', () => createButtons())
 
 document.addEventListener('keydown', (e) => {
-    if (e.repeat) return
+    if (e.target.nodeName !== 'BODY' || e.repeat) return
     if (e.key === 'r' || e.key === 'R') {
         clearSources()
         return
@@ -110,6 +110,7 @@ document.addEventListener('keydown', (e) => {
 })
 
 document.addEventListener('keyup', (e) => {
+    if (e.target.nodeName !== 'BODY' || e.repeat) return
     let index = parseInt(e.key)
     if (isNaN(index)) return
     if (index === 0) index = 10
