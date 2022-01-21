@@ -1,3 +1,7 @@
+const gapEl = document.getElementById('gap')
+const amountEl = document.getElementById('amount')
+const startEl = document.getElementById('start')
+
 const audioContext = new AudioContext({ sampleRate: 44100 })
 const sampleRate = audioContext.sampleRate
 const gainNode = audioContext.createGain()
@@ -45,7 +49,7 @@ function createButton(audioContext, hz) {
     const button = document.createElement('button')
     button.textContent = hz + ' hz'
     button.addEventListener('click', () => playSound({ audioContext, array }))
-    document.querySelector('body').appendChild(button)
+    return button
 }
 
 function whiteNoise(audioContext) {
@@ -54,9 +58,38 @@ function whiteNoise(audioContext) {
     playSound({ array, audioContext })
 }
 
-for (let hz = 20; hz <= 1000; hz += 10) {
-    createButton(audioContext, hz)
+let start = 20,
+    amount = 20,
+    gap = 10
+
+function createButtons(initial) {
+    if (!initial) {
+        gap = Math.max(gapEl.value, 1)
+        start = Math.max(startEl.value, 1)
+        amount = Math.min(Math.max(amountEl.value, 1), 200)
+    }
+
+    gapEl.value = gap
+    startEl.value = start
+    amountEl.value = amount
+
+    const target = document.getElementById('target')
+    while (target.firstChild) {
+        target.removeChild(target.firstChild)
+    }
+
+    const container = document.createElement('div')
+
+    let hz = start
+    for (let i = 0; i < amount; i++) {
+        container.appendChild(createButton(audioContext, hz + i * gap))
+    }
+
+    target.appendChild(container)
 }
+
+createButtons(true)
 
 document.getElementById('whitenoise').addEventListener('click', () => whiteNoise(audioContext))
 document.getElementById('off').addEventListener('click', () => clearSources())
+document.getElementById('reset').addEventListener('click', () => createButtons())

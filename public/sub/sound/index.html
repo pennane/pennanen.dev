@@ -6,8 +6,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>sound</title>
         <style>
+            .settings {
+                display: flex;
+                justify-content: flex-start;
+                align-items: baseline;
+                margin-bottom: 1em;
+                gap: 0.5em;
+            }
+
+            .settings > button {
+                margin-top: 0.5em;
+            }
+
+            .settings > div:last-child {
+                flex-basis: 100%;
+            }
+
+            input {
+                width: 5em;
+            }
+            label {
+                margin-right: 0.25em;
+            }
+
             div {
                 display: flex;
+                flex-wrap: wrap;
             }
             button {
                 width: 7em;
@@ -15,10 +39,29 @@
         </style>
     </head>
     <body>
-        <div>
+        <div class="settings">
+            <div>
+                <label for="start">start</label>
+                <input type="number" id="start" min="20" />
+            </div>
+            <div>
+                <label for="gap">gap</label>
+                <input type="number" id="gap" min="1" />
+            </div>
+
+            <div>
+                <label for="amount">amount</label>
+                <input type="number" id="amount" min="1" max="100" />
+            </div>
+            <div>
+                <button id="reset">set</button>
+            </div>
+        </div>
+        <div class="default">
             <button id="off">clear</button>
             <button id="whitenoise">whitenoise</button>
         </div>
+        <div id="target"></div>
         <script src="main.js"></script>
     </body>
 </html>
