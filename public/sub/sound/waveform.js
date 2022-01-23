@@ -1,4 +1,4 @@
-export function* sineWave(audioContext, frequency) {
+export function* sineWaveGenerator(audioContext, frequency) {
     const sampleFrequency = audioContext.sampleRate / frequency
     let i = 0
     while (true) {
@@ -7,15 +7,15 @@ export function* sineWave(audioContext, frequency) {
     }
 }
 
-export function* squareWave(audioContext, frequency) {
+export function* squareWaveGenerator(audioContext, frequency) {
     const sampleFrequency = audioContext.sampleRate / frequency
     let i = 0
     while (true) {
         i++
-        yield Math.round(Math.sin(i / (sampleFrequency / (Math.PI * 2))))
+        yield Math.floor(Math.sin(i / (sampleFrequency / (Math.PI * 2))))
     }
 }
 
-export function whiteNoise(audioContext) {
+export function createWhiteNoise(audioContext) {
     return new Float32Array(audioContext.sampleRate).map(() => Math.random())
 }

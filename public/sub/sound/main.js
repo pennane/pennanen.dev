@@ -1,5 +1,5 @@
 import { useAnalyzer, startAnalysing } from './analyser.js'
-import { sineWave, squareWave, whiteNoise } from './waveform.js'
+import { sineWaveGenerator, createWhiteNoise } from './waveform.js'
 
 const gapEl = document.getElementById('gap')
 const layersEl = document.getElementById('amount')
@@ -7,16 +7,25 @@ const startEl = document.getElementById('start')
 const whitenoiseEl = document.getElementById('whitenoise')
 const stopEl = document.getElementById('off')
 const resetEl = document.getElementById('reset')
+const precisionEl = document.getElementById('precision')
 
 let start = 160,
     amount = 10,
     gap = 80,
-    polyphony = 3
+    polyphony = 3,
+    precision = 13,
+    precisionComputed = 2 ** precision,
+    visualizerSmoothing = 0.3,
+    gain = 0.05,
+    sampleRate = 44100
 
-const audioContext = new AudioContext({ sampleRate: 44100 })
+const audioContext = new AudioContext({ sampleRate })
 const audioAnalyser = audioContext.createAnalyser()
 const gainNode = audioContext.createGain()
-gainNode.gain.value = 0.1
+
+audioAnalyser.fftSize = precisionComputed
+audioAnalyser.smoothingTimeConstant = visualizerSmoothing
+gainNode.gain.value = gain
 
 gainNode.connect(audioAnalyser)
 gainNode.connect(audioContext.destination)
@@ -39,6 +48,13 @@ function playSound({ audioContext, array }) {
     return source
 }
 
+function removeSurplusSources() {
+    while (sources[polyphony]) {
+        sources[0].stop()
+        sources.shift()
+    }
+}
+
 function addSource({ audioContext, array, additional }) {
     const source = playSound({ audioContext, array })
 
@@ -49,10 +65,7 @@ function addSource({ audioContext, array, additional }) {
 
     sources.push(source)
 
-    while (sources[polyphony]) {
-        sources[0].stop()
-        sources.shift()
-    }
+    removeSurplusSources()
 }
 
 function clearSources() {
@@ -60,10 +73,22 @@ function clearSources() {
         source.stop()
     }
     sources = []
+
     if (additionalSource) {
         additionalSource.stop()
         additionalSource = undefined
     }
+}
+
+function createHoverSource(hz) {
+    const array = new Float32Array(audioContext.sampleRate)
+    const sampleGenerator = sineWaveGenerator(audioContext, hz)
+
+    for (let i = 0; i < array.length; i++) {
+        array[i] = sampleGenerator.next().value
+    }
+
+    addSource({ audioContext, array })
 }
 
 function toggleWhiteNoise(audioContext) {
@@ -72,35 +97,49 @@ function toggleWhiteNoise(audioContext) {
         additionalSource = undefined
         return
     }
-    const array = whiteNoise(audioContext)
+    const array = createWhiteNoise(audioContext)
 
     addSource({ array, audioContext, additional: true })
 }
 
 function createButton(audioContext, hz) {
     const array = new Float32Array(audioContext.sampleRate)
-    const sampleGenerator = sineWave(audioContext, hz)
+    const sampleGenerator = sineWaveGenerator(audioContext, hz)
 
     for (let i = 0; i < array.length; i++) {
         array[i] = sampleGenerator.next().value
     }
 
     const button = document.createElement('button')
-    button.textContent = hz + ' hz'
+    button.textContent = `${hz} hz`
     button.addEventListener('click', () => addSource({ audioContext, array }))
     return button
 }
 
-function createButtons(initial) {
-    if (!initial) {
-        gap = Math.max(gapEl.value, 1)
-        start = Math.min(Math.max(startEl.value, 40), 22000)
-        polyphony = Math.min(Math.max(layersEl.value, 1), 100)
-    }
-
+function setUserDefinedValues() {
     gapEl.value = gap
     startEl.value = start
     layersEl.value = polyphony
+    precisionEl.value = precision
+}
+
+function readUserDefinedValues() {
+    gap = Math.max(gapEl.value, 1)
+    start = Math.min(Math.max(startEl.value, 40), 22000)
+    polyphony = Math.min(Math.max(layersEl.value, 1), 100)
+    precision = Math.min(Math.max(precisionEl.value, 5), 15)
+    precisionComputed = 2 ** precision
+    audioAnalyser.fftSize = precisionComputed
+}
+
+function updateButtons(initial) {
+    if (!initial) {
+        readUserDefinedValues()
+    }
+
+    setUserDefinedValues()
+
+    removeSurplusSources()
 
     const target = document.getElementById('target')
     while (target.firstChild) {
@@ -112,16 +151,13 @@ function createButtons(initial) {
     let hz = start
     for (let i = 0; i < amount; i++) {
         if (hz + i * gap > 22000) continue
-        container.appendChild(createButton(audioContext, hz + i * gap))
+        container.appendChild(createButton(audioContext, hz + i * gap, i))
     }
 
     target.appendChild(container)
 }
 
-whitenoiseEl.addEventListener('click', () => toggleWhiteNoise(audioContext))
-stopEl.addEventListener('click', () => clearSources())
-resetEl.addEventListener('click', () => createButtons())
-document.addEventListener('keydown', (e) => {
+function handleKeydown(e) {
     if (e.target.nodeName === 'INPUT' || e.repeat) return
     if (e.key === 'r' || e.key === 'R') {
         clearSources()
@@ -138,8 +174,9 @@ document.addEventListener('keydown', (e) => {
     if (!button) return
     button.click()
     button.classList.add('pressed')
-})
-document.addEventListener('keyup', (e) => {
+}
+
+function handleKeyup(e) {
     if (e.target.nodeName === 'INPUT' || e.repeat) return
     let index = parseInt(e.key)
     if (isNaN(index)) return
@@ -147,9 +184,16 @@ document.addEventListener('keyup', (e) => {
     const button = document.querySelectorAll('#target div button')[index - 1]
     if (!button) return
     button.classList.remove('pressed')
-})
+}
 
-export { start, gap, amount }
+whitenoiseEl.addEventListener('click', () => toggleWhiteNoise(audioContext))
+stopEl.addEventListener('click', () => clearSources())
+resetEl.addEventListener('click', () => updateButtons())
+document.addEventListener('keydown', handleKeydown)
+document.addEventListener('keyup', handleKeyup)
+;[...document.querySelectorAll('input')].forEach((el) => el.addEventListener('change', () => updateButtons()))
 
-createButtons(true)
+updateButtons(true)
 startAnalysing()
+
+export { start, gap, amount, createHoverSource }
