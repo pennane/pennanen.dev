@@ -22,6 +22,10 @@
                 margin-top: 0.5em;
             }
 
+            .settings input {
+                margin-right: 0.4em;
+            }
+
             .settings > div:last-child {
                 flex-basis: 100%;
                 margin-bottom: 0.5em;
@@ -59,25 +63,40 @@
             button:hover {
                 background-color: #e5e5e5;
             }
+
+            canvas {
+                width: 100%;
+                height: 500px;
+                max-height: 50vh;
+            }
+
+            @media screen and (max-width: 600px) {
+                .settings {
+                    flex-direction: column;
+                }
+                .settings label {
+                    width: 7.2em;
+                }
+            }
         </style>
     </head>
     <body>
         <div class="settings">
             <div>
-                <label for="start">start</label>
-                <input type="number" id="start" min="20" />
+                <label for="start">starting hz</label>
+                <input type="number" id="start" min="40" />
             </div>
             <div>
-                <label for="gap">gap</label>
+                <label for="gap">hz gap</label>
                 <input type="number" id="gap" min="1" />
             </div>
 
             <div>
-                <label for="amount">amount</label>
+                <label for="amount">polyphony</label>
                 <input type="number" id="amount" min="1" max="100" />
             </div>
             <div>
-                <button id="reset">set</button>
+                <button id="reset">update</button>
             </div>
         </div>
         <div class="default">
@@ -85,8 +104,10 @@
             <button id="whitenoise">whitenoise</button>
         </div>
         <div id="target"></div>
-        <code>numbers 1-0 can be used to play first 10 buttons </code>
+        <code>numbers 1-0 can be used to play the buttons </code>
         <code>r key resets</code>
+        <code>w key toggles whitenoise</code>
+        <canvas id="visualizer"></canvas>
         <script src="main.js"></script>
     </body>
 </html>
