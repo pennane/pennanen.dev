@@ -1,6 +1,9 @@
 import { useAnalyzer, startAnalysing } from './analyser.js'
 import { sineWaveGenerator, createWhiteNoise, squareWaveGenerator } from './waveform.js'
-import f from './frequencies.js'
+
+import { loadSong, playSong, stopSong, songs, loadedSongName, unloadSong } from './track-loader.js'
+
+// Beware! Full spaghetti ahead.
 
 const gapEl = document.getElementById('gap')
 const layersEl = document.getElementById('amount')
@@ -9,17 +12,22 @@ const whitenoiseEl = document.getElementById('whitenoise')
 const stopEl = document.getElementById('off')
 const resetEl = document.getElementById('reset')
 const precisionEl = document.getElementById('precision')
+const buttonTargetEl = document.getElementById('target')
+const tracksSelectEl = document.getElementById('tracks')
+const loadtrackEl = document.getElementById('loadtrack')
+const playtrackEl = document.getElementById('playtrack')
+const stoptrackEl = document.getElementById('stoptrack')
 
-let start = 40,
+let start = 80,
     amount = 10,
-    gap = 90,
+    gap = 80,
     polyphony = 1,
-    precision = 14,
+    precision = 13,
     precisionComputed = 2 ** precision,
     visualizerSmoothing = 0,
     gain = 0.1,
     sampleRate = 44100,
-    soundGenerator = squareWaveGenerator
+    soundGenerator = sineWaveGenerator
 
 const audioContext = new AudioContext({ sampleRate })
 const audioAnalyser = audioContext.createAnalyser()
@@ -37,6 +45,11 @@ useAnalyzer(audioAnalyser)
 
 let sources = []
 let additionalSource
+
+function stopTrack() {
+    stopSong()
+    clearSources()
+}
 
 function playSound({ audioContext, array }) {
     let source
@@ -134,10 +147,12 @@ function toggleWhiteNoise(audioContext) {
     addSource({ array, audioContext, additional: true })
 }
 
-function getFrequencyArray(hz) {
+function getFrequencyArray(hz, generator) {
     const freqArray = new Float32Array(audioContext.sampleRate)
 
-    const sampleGenerator = soundGenerator(audioContext, Math.round(hz))
+    const sampleGenerator = generator
+        ? generator(audioContext, Math.round(hz))
+        : soundGenerator(audioContext, Math.round(hz))
 
     for (let i = 0; i < freqArray.length; i++) {
         freqArray[i] = sampleGenerator.next().value
@@ -145,20 +160,24 @@ function getFrequencyArray(hz) {
     return freqArray
 }
 
-function createButton(audioContext, hz) {
+function createButton(hz, generator) {
     let array
     if (Array.isArray(hz)) {
         array = []
         for (const freq of hz) {
-            array.push(getFrequencyArray(freq))
+            array.push(getFrequencyArray(freq, generator))
         }
     } else {
-        array = getFrequencyArray(hz)
+        array = getFrequencyArray(hz, generator)
     }
 
     const button = document.createElement('button')
-    button.textContent = `${hz[0] || hz} hz`
-    button.addEventListener('click', () => addSource({ audioContext, array }))
+    button.textContent = `${Math.round(hz[0] || hz)} hz`
+    button.addEventListener('click', (e) => {
+        e.target.classList.add('pressed')
+        setTimeout(() => e.target.classList.remove('pressed'), 250)
+        addSource({ audioContext, array })
+    })
     return button
 }
 
@@ -167,18 +186,6 @@ function setUserDefinedValues() {
     startEl.value = start
     layersEl.value = polyphony
     precisionEl.value = precision
-}
-
-function magicButtons() {
-    const mag = [
-        [f.FS2, f.CS3, f.FS3, f.AS3, f.CS4, f.FS4],
-        [f.G2, f.B2, f.D3, f.G3, f.B3, f.FS4],
-        [f.A2, f.E3, f.G3, f.CS4, f.FS4],
-        [f.G2, f.B2, f.D3, f.G3, f.B3, f.G4]
-    ].map((hz) => {
-        return createButton(audioContext, hz)
-    })
-    return mag
 }
 
 function readUserDefinedValues() {
@@ -191,33 +198,58 @@ function readUserDefinedValues() {
 }
 
 function updateButtons(initial) {
+    unloadSong()
+    playStopSetInteractive()
+    clearSources()
     if (!initial) {
         readUserDefinedValues()
     }
-
     setUserDefinedValues()
 
     removeSurplusSources()
 
-    const target = document.getElementById('target')
-
-    while (target.firstChild) {
-        target.removeChild(target.firstChild)
+    while (buttonTargetEl.firstChild) {
+        buttonTargetEl.removeChild(buttonTargetEl.firstChild)
     }
 
     const container = document.createElement('div')
 
-    const buttons = magicButtons()
-    buttons.forEach((b) => container.appendChild(b))
-    target.appendChild(container)
+    let hz = start
+    for (let i = 0; i < amount; i++) {
+        if (hz + i * gap > 22000) continue
+        container.appendChild(createButton(hz + i * gap))
+    }
 
-    // let hz = start
-    // for (let i = 0; i < amount; i++) {
-    //     if (hz + i * gap > 22000) continue
-    //     container.appendChild(createButton(audioContext, hz + i * gap, i))
-    // }
+    buttonTargetEl.appendChild(container)
+}
 
-    // target.appendChild(container)
+function playStopSetInteractive() {
+    if (loadedSongName()) {
+        playtrackEl.classList.remove('uninteractive')
+        stoptrackEl.classList.remove('uninteractive')
+    } else {
+        playtrackEl.classList.add('uninteractive')
+        stoptrackEl.classList.add('uninteractive')
+    }
+}
+
+function setSongsOptions() {
+    songs.forEach((song, i) => {
+        const option = document.createElement('option')
+        option.textContent = song.name
+        tracksSelectEl.appendChild(option)
+    })
+
+    loadtrackEl.addEventListener('click', (e) => {
+        if (loadedSongName) {
+            stopTrack()
+            unloadSong()
+        }
+        loadSong(songs[tracksSelectEl.selectedIndex], buttonTargetEl)
+        playStopSetInteractive()
+    })
+    playtrackEl.addEventListener('click', () => loadedSongName() && playSong())
+    stoptrackEl.addEventListener('click', () => loadedSongName() && stopTrack())
 }
 
 function handleKeydown(e) {
@@ -258,39 +290,6 @@ document.addEventListener('keyup', handleKeyup)
 
 updateButtons(true)
 startAnalysing()
+setSongsOptions()
 
-function wait(time) {
-    return new Promise((resolve) => setTimeout(() => resolve(), time))
-}
-
-async function nice() {
-    const b = document.querySelectorAll('#target div button')
-    const step = 100
-    b[0].click()
-    await wait(8 * step)
-    b[0].click()
-    await wait(8 * step)
-    b[1].click()
-    await wait(12 * step)
-    b[2].click()
-    await wait(8 * step)
-    b[2].click()
-    await wait(8 * step)
-    b[2].click()
-    await wait(8 * step)
-    b[1].click()
-    await wait(8 * step)
-    b[1].click()
-    await wait(12 * step)
-    b[3].click()
-    await wait(8 * step)
-    b[3].click()
-    await wait(8 * step)
-    await nice()
-}
-
-nice()
-
-window.nice = nice
-
-export { start, gap, amount, createHoverSource }
+export { start, gap, amount, createHoverSource, createButton }

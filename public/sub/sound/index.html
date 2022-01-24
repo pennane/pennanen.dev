@@ -5,7 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Sound</title>
-        <link rel="stylesheet" href="main.css" />
+        <link rel="stylesheet" href="style/main.css" />
     </head>
     <body>
         <div class="control">
@@ -27,14 +27,22 @@
                     <label for="amount">visualiser precision</label>
                     <input type="number" id="precision" min="10" max="15" />
                 </div>
+                <div class="loader">
+                    <select id="tracks"></select>
+                    <div class="loaderbuttons">
+                        <button id="loadtrack">load</button>
+                        <button id="playtrack" class="uninteractive">play</button>
+                        <button id="stoptrack" class="uninteractive">stop</button>
+                    </div>
+                </div>
                 <div>
-                    <button id="reset">update</button>
+                    <button id="reset">reload</button>
                 </div>
             </div>
             <div class="buttons">
                 <div class="default">
-                    <button id="off">clear (r)</button>
-                    <button id="whitenoise">noise (w)</button>
+                    <button id="off">clear <span class="keybind">(r)</span></button>
+                    <button id="whitenoise">noise <span class="keybind">(w)</span></button>
                 </div>
                 <div id="target"></div>
             </div>
@@ -43,8 +51,7 @@
         <code>numbers keys 1-0 can be used to play the buttons </code>
         <code>r key clears sounds</code>
         <code>w key toggles whitenoise</code>
-        <code>click the visualiser to set custom frequencies</code>
         <canvas id="visualiser"></canvas>
-        <script src="main.js" type="module"></script>
+        <script src="modules/main.js" type="module"></script>
     </body>
 </html>
