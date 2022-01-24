@@ -8,33 +8,38 @@
         <link rel="stylesheet" href="main.css" />
     </head>
     <body>
-        <div class="settings">
-            <div>
-                <label for="start">starting hz</label>
-                <input type="number" id="start" min="40" />
-            </div>
-            <div>
-                <label for="gap">hz gap</label>
-                <input type="number" id="gap" min="1" />
-            </div>
+        <div class="control">
+            <div class="settings">
+                <div>
+                    <label for="start">starting hz</label>
+                    <input type="number" id="start" min="40" />
+                </div>
+                <div>
+                    <label for="gap">hz gap</label>
+                    <input type="number" id="gap" min="1" />
+                </div>
 
-            <div>
-                <label for="amount">polyphony</label>
-                <input type="number" id="amount" min="1" max="100" />
+                <div>
+                    <label for="amount">polyphony</label>
+                    <input type="number" id="amount" min="1" max="100" />
+                </div>
+                <div>
+                    <label for="amount">visualiser precision</label>
+                    <input type="number" id="precision" min="10" max="15" />
+                </div>
+                <div>
+                    <button id="reset">update</button>
+                </div>
             </div>
-            <div>
-                <label for="amount">visualiser precision</label>
-                <input type="number" id="precision" min="10" max="15" />
-            </div>
-            <div>
-                <button id="reset">update</button>
+            <div class="buttons">
+                <div class="default">
+                    <button id="off">clear (r)</button>
+                    <button id="whitenoise">noise (w)</button>
+                </div>
+                <div id="target"></div>
             </div>
         </div>
-        <div class="default">
-            <button id="off">clear (r)</button>
-            <button id="whitenoise">noise (w)</button>
-        </div>
-        <div id="target"></div>
+
         <code>numbers keys 1-0 can be used to play the buttons </code>
         <code>r key clears sounds</code>
         <code>w key toggles whitenoise</code>
