@@ -85,23 +85,18 @@ canvas {
 
 @media screen and (max-width: 750px) {
     .settings {
-        flex-direction: column;
+        flex-direction: row;
+        flex: 0;
     }
     .settings label {
         width: 7.2em;
     }
-}
 
-@media screen and (max-width: 650px) {
     .control {
         flex-direction: row;
         flex-wrap: nowrap;
         align-items: baseline;
         gap: 0.5em;
-    }
-
-    .settings {
-        flex: 1 0 100%;
     }
 
     .settings > div {
