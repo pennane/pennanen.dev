@@ -1,6 +1,6 @@
 import { useAnalyzer, startAnalysing } from './analyser.js'
 import { sineWaveGenerator, createWhiteNoise, squareWaveGenerator } from './waveform.js'
-import frequencies from './frequencies.js'
+import f from './frequencies.js'
 
 const gapEl = document.getElementById('gap')
 const layersEl = document.getElementById('amount')
@@ -12,9 +12,9 @@ const precisionEl = document.getElementById('precision')
 
 let start = 40,
     amount = 10,
-    gap = 140,
+    gap = 180,
     polyphony = 1,
-    precision = 14,
+    precision = 12,
     precisionComputed = 2 ** precision,
     visualizerSmoothing = 0,
     gain = 0.05,
@@ -157,7 +157,11 @@ function createButton(audioContext, hz) {
 
     const button = document.createElement('button')
     button.textContent = `${hz[0] || hz} hz`
-    button.addEventListener('click', () => addSource({ audioContext, array }))
+    button.addEventListener('click', (e) => {
+        e.target.classList.add('pressed')
+        setTimeout(() => e.target.classList.remove('pressed'), 250)
+        addSource({ audioContext, array })
+    })
     return button
 }
 
@@ -170,13 +174,15 @@ function setUserDefinedValues() {
 
 function magicButtons() {
     const mag = [
-        frequencies.C5,
-        frequencies.GS4,
-        frequencies.G4,
-        frequencies.C4,
-        [frequencies.C3, frequencies.C4, frequencies.E4, frequencies.C5],
-        [frequencies.CS3, frequencies.CS4, frequencies.F4, frequencies.C5],
-        [frequencies.DS3, frequencies.DS4, frequencies.G4, frequencies.C5]
+        f.C5,
+        f.GS4,
+        f.G4,
+        f.C4,
+        [f.C3, f.C4, f.E4, f.C5],
+        [f.CS3, f.CS4, f.F4, f.C5],
+        [f.DS3, f.DS4, f.G4, f.C5],
+        [f.F3, f.C4, f.F4, f.A4, f.C5],
+        [f.C3, f.E4, f.G4, f.C5]
     ].map((hz) => {
         return createButton(audioContext, hz)
     })
@@ -265,9 +271,8 @@ function wait(time) {
     return new Promise((resolve) => setTimeout(() => resolve(), time))
 }
 
-async function nice() {
+async function mainPart(step) {
     const b = document.querySelectorAll('#target div button')
-    const step = 300
     b[0].click()
     await wait(step)
     b[1].click()
@@ -289,8 +294,37 @@ async function nice() {
     b[6].click()
     await wait(2 * step)
     b[6].click()
-
     await wait(3 * step)
+}
+
+async function otherPart(step) {
+    const b = document.querySelectorAll('#target div button')
+    b[7].click()
+    await wait(3 * step)
+    b[8].click()
+    await wait(2 * step)
+    b[8].click()
+    await wait(2 * step)
+    b[5].click()
+    await wait(2 * step)
+    b[5].click()
+    await wait(2 * step)
+    b[6].click()
+    await wait(2 * step)
+    b[6].click()
+    await wait(7 * step)
+}
+
+async function nice() {
+    const step = 240
+    await mainPart(step)
+    await mainPart(step)
+    await mainPart(step)
+    await mainPart(step)
+    await otherPart(step)
+    await otherPart(step)
+    await otherPart(step)
+    await otherPart(step)
     await nice()
 }
 nice()
