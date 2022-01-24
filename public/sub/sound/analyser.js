@@ -56,18 +56,10 @@ function draw(data, startValue, endValue) {
 
     let line = 1
 
-    if (canvas.height < 300) {
-        for (let i = startValue; i < endValue; i++) {
-            const value = mapBetween(data[i], 0, 255, 0, canvas.height - 10)
-            context.lineTo(space * line, canvas.height - value)
-            line++
-        }
-    } else {
-        for (let i = startValue; i < endValue; i++) {
-            const value = data[i]
-            context.lineTo(space * line, canvas.height - value)
-            line++
-        }
+    for (let i = startValue; i < endValue; i++) {
+        const value = mapBetween(data[i], 0, 255, 0, canvas.height - 10)
+        context.lineTo(space * line, canvas.height - value)
+        line++
     }
 
     context.lineTo(canvas.width, canvas.height)
