@@ -4,102 +4,8 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>sound analysing</title>
-        <style>
-            * {
-                font-family: monospace;
-            }
-
-            html {
-                color-scheme: light;
-            }
-
-            body {
-                background: #fafafa;
-                color: black;
-            }
-
-            .settings {
-                display: flex;
-                justify-content: flex-start;
-                align-items: baseline;
-                margin-bottom: 1em;
-                gap: 0.5em;
-            }
-
-            .settings > button {
-                margin-top: 0.5em;
-            }
-
-            .settings input {
-                margin-right: 0.4em;
-                margin-right: 0.4em;
-            }
-
-            .settings > div:last-child {
-                flex-basis: 100%;
-                margin-bottom: 0.5em;
-            }
-
-            input {
-                width: 5em;
-                background: #ffffff;
-                border: 1px solid rgba(27, 27, 27, 0.7);
-                border-radius: 2px;
-                padding: 0.15em;
-                color: black;
-            }
-
-            label {
-                margin-right: 0.25em;
-            }
-
-            div {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-            }
-
-            button {
-                cursor: pointer;
-                background: white;
-                border: 1px solid rgb(69, 69, 69);
-                border-radius: 2px;
-                margin: 1px;
-                width: 7.2em;
-                font-size: 0.85rem;
-                height: 1.5rem;
-            }
-
-            code {
-                display: block;
-            }
-            code:first-of-type {
-                margin-top: 1em;
-            }
-
-            .pressed,
-            button:hover {
-                background-color: #e5e5e5;
-            }
-
-            canvas {
-                width: 100%;
-                height: 500px;
-                max-height: 50vh;
-                margin-top: 1em;
-                user-select: none;
-            }
-
-            @media screen and (max-width: 750px) {
-                .settings {
-                    flex-direction: column;
-                }
-                .settings label {
-                    width: 7.2em;
-                }
-            }
-        </style>
+        <title>Sound</title>
+        <link rel="stylesheet" href="main.css" />
     </head>
     <body>
         <div class="settings">
@@ -117,7 +23,7 @@
                 <input type="number" id="amount" min="1" max="100" />
             </div>
             <div>
-                <label for="amount">visualizer precision</label>
+                <label for="amount">visualiser precision</label>
                 <input type="number" id="precision" min="10" max="15" />
             </div>
             <div>
@@ -132,8 +38,8 @@
         <code>numbers keys 1-0 can be used to play the buttons </code>
         <code>r key clears sounds</code>
         <code>w key toggles whitenoise</code>
-        <code>click the visualizer to set a custom frequencies</code>
-        <canvas id="visualizer"></canvas>
+        <code>click the visualiser to set a custom frequencies</code>
+        <canvas id="visualiser"></canvas>
         <script src="main.js" type="module"></script>
     </body>
 </html>

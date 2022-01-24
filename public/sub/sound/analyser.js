@@ -17,7 +17,7 @@ export function useAnalyzer(audioAnalyser) {
     updateDataArray()
 }
 
-const canvas = document.getElementById('visualizer')
+const canvas = document.getElementById('visualiser')
 const context = canvas.getContext('2d')
 
 canvas.width = canvas.offsetWidth
@@ -55,10 +55,19 @@ function draw(data, startValue, endValue) {
     context.moveTo(0, canvas.height)
 
     let line = 1
-    for (let i = startValue; i < endValue; i++) {
-        const value = data[i]
-        context.lineTo(space * line, canvas.height - value)
-        line++
+
+    if (canvas.height < 300) {
+        for (let i = startValue; i < endValue; i++) {
+            const value = mapBetween(data[i], 0, 255, 0, canvas.height - 10)
+            context.lineTo(space * line, canvas.height - value)
+            line++
+        }
+    } else {
+        for (let i = startValue; i < endValue; i++) {
+            const value = data[i]
+            context.lineTo(space * line, canvas.height - value)
+            line++
+        }
     }
 
     context.lineTo(canvas.width, canvas.height)
@@ -75,8 +84,8 @@ function animate() {
     }
 
     if (oldStart !== start || oldGap !== gap) {
-        startHz = start // Math.max(start - 2 * gap, 40)
-        endHz = start + amount * gap // Math.min(start + amount * gap + 2 * gap, 22000)
+        startHz = start
+        endHz = start + amount * gap
     }
 
     if (bincountChanged || !startValue || !endValue || start !== oldStart || gap !== oldGap || amount !== oldAmount) {
