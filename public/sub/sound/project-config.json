@@ -5,9 +5,15 @@
         "fi": null
     },
     "description": {
-        "en": "playing with javascript audio context",
+        "en": "Audiovisual frequencies",
         "fi": null
     },
     "ignoreInListing": false,
-    "ignoreDate": true
+    "ignoreDate": false,
+    "icon": "icon.jpg",
+    "pretext": "Playing around with javascript audio context.",
+    "images": [
+        "example.jpg"
+    ],
+    "github": "https://github.com/Pennane/pennanen.dev/tree/main/public/sub/sound"
 }

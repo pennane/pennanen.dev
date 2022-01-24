@@ -4,10 +4,19 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>sound</title>
+        <title>sound analysing</title>
         <style>
             * {
                 font-family: monospace;
+            }
+
+            html {
+                color-scheme: light;
+            }
+
+            body {
+                background: #fafafa;
+                color: black;
             }
 
             .settings {
@@ -24,6 +33,7 @@
 
             .settings input {
                 margin-right: 0.4em;
+                margin-right: 0.4em;
             }
 
             .settings > div:last-child {
@@ -33,7 +43,13 @@
 
             input {
                 width: 5em;
+                background: #ffffff;
+                border: 1px solid rgba(27, 27, 27, 0.7);
+                border-radius: 2px;
+                padding: 0.15em;
+                color: black;
             }
+
             label {
                 margin-right: 0.25em;
             }
@@ -43,7 +59,9 @@
                 flex-wrap: wrap;
                 align-items: center;
             }
+
             button {
+                cursor: pointer;
                 background: white;
                 border: 1px solid rgb(69, 69, 69);
                 border-radius: 2px;
@@ -52,6 +70,7 @@
                 font-size: 0.85rem;
                 height: 1.5rem;
             }
+
             code {
                 display: block;
             }
@@ -69,6 +88,7 @@
                 height: 500px;
                 max-height: 50vh;
                 margin-top: 1em;
+                user-select: none;
             }
 
             @media screen and (max-width: 750px) {

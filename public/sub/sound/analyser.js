@@ -99,6 +99,7 @@ function frequencyAtX(x) {
 }
 
 canvas.addEventListener('click', (e) => {
+    e.preventDefault()
     if (!isAnalysing()) return
     const x = e.clientX - canvas.offsetLeft
     createHoverSource(frequencyAtX(x))
