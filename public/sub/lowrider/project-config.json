@@ -1,0 +1,14 @@
+{
+    "date": "21.1.2022",
+    "name": {
+        "en": "lowrider",
+        "fi": null
+    },
+    "description": {
+        "en": "didididi",
+        "fi": null
+    },
+    "ignoreInListing": true,
+    "ignoreDate": false,
+    "icon": "icon.jpg"
+}
