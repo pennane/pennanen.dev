@@ -1,13 +1,15 @@
 import { createButton } from './main.js'
 import { wait } from './util.js'
 
-import pyramidSong from '../tracks/pyramid-song.js'
-import everythingInItsRightPlace from '../tracks/everything-in-its-right-place.js'
-
 let song
 let playing = false
 let target
-const songs = [everythingInItsRightPlace, pyramidSong]
+const songs = [
+    ['Pyramid Song', '../tracks/pyramid-song.js'],
+    ['Everything in its right place', '../tracks/everything-in-its-right-place.js'],
+    ['Take five', '../tracks/take-five.js']
+]
+
 async function next(time) {
     if (!playing) throw new Error()
     await wait(time)
@@ -22,12 +24,14 @@ function unloadSong() {
     song = undefined
 }
 
-function loadSong(_song, _target) {
+async function loadSong(_song, _target) {
     if (song) {
         unloadSong()
     }
-    console.log('loading', _song)
-    song = _song
+
+    const module = await import(_song[1])
+
+    song = module.default
     target = _target
 
     while (target.firstChild) {

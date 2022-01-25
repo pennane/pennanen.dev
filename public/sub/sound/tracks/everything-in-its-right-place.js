@@ -40,7 +40,7 @@ async function otherPart(b, step, next) {
     b[6].click()
     await next(2 * step)
     b[6].click()
-    await next(7 * step)
+    await next(8 * step)
 }
 
 const song = {

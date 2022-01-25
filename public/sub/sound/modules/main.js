@@ -236,16 +236,16 @@ function playStopSetInteractive() {
 function setSongsOptions() {
     songs.forEach((song, i) => {
         const option = document.createElement('option')
-        option.textContent = song.name
+        option.textContent = song[0]
         tracksSelectEl.appendChild(option)
     })
 
-    loadtrackEl.addEventListener('click', (e) => {
+    loadtrackEl.addEventListener('click', async (e) => {
         if (loadedSongName) {
             stopTrack()
             unloadSong()
         }
-        loadSong(songs[tracksSelectEl.selectedIndex], buttonTargetEl)
+        await loadSong(songs[tracksSelectEl.selectedIndex], buttonTargetEl)
         playStopSetInteractive()
     })
     playtrackEl.addEventListener('click', () => loadedSongName() && playSong())
