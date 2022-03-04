@@ -4,6 +4,7 @@ import { wait } from './util.js'
 let song
 let playing = false
 let target
+let finishedHook
 const songs = [
     ['Pyramid Song', '../tracks/pyramid-song.js'],
     ['Everything in its right place', '../tracks/everything-in-its-right-place.js'],
@@ -16,17 +17,24 @@ async function next(time) {
     if (!playing) throw new Error()
 }
 
-function unloadSong() {
-    if (playing) {
-        stopSong()
-        playing = false
-    }
-    song = undefined
+async function unloadSong() {
+    console.log('unloading')
+    await new Promise((resolve, reject) => {
+        if (playing) {
+            finishedHook = resolve
+            stopSong()
+            playing = false
+        } else {
+            resolve()
+        }
+    })
+
+    finishedHook = undefined
 }
 
 async function loadSong(_song, _target) {
     if (song) {
-        unloadSong()
+        await unloadSong()
     }
 
     const module = await import(_song[1])
@@ -57,7 +65,9 @@ async function playSong() {
         if (playing) return
         playing = true
         await loop()
-    } catch {}
+    } catch {
+        if (finishedHook) finishedHook()
+    }
 }
 
 function stopSong() {

@@ -175,7 +175,7 @@ function createButton(hz, generator) {
     button.textContent = `${Math.round(hz[0] || hz)} hz`
     button.addEventListener('click', (e) => {
         e.target.classList.add('pressed')
-        setTimeout(() => e.target.classList.remove('pressed'), 250)
+        setTimeout(() => e.target && e.target.classList.remove('pressed'), 250)
         addSource({ audioContext, array })
     })
     return button
@@ -243,8 +243,9 @@ function setSongsOptions() {
     loadtrackEl.addEventListener('click', async (e) => {
         if (loadedSongName) {
             stopTrack()
-            unloadSong()
+            await unloadSong()
         }
+        playStopSetInteractive()
         await loadSong(songs[tracksSelectEl.selectedIndex], buttonTargetEl)
         playStopSetInteractive()
     })
