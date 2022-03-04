@@ -19,7 +19,19 @@ export const getProjectById = (id: string): Project | null => {
         const file = fs.readFileSync(directory + '/' + id + '/project-config.json', 'utf-8')
         data = JSON.parse(file)
     } catch {
-        return null
+        return {
+            id,
+            url: null,
+            date: null,
+            ignoreDate: true,
+            name: id,
+            description: null,
+            pretext: null,
+            icon: null,
+            images: [],
+            ignoreInListing: true,
+            github: null
+        }
     }
 
     if (isString(data.date)) {
