@@ -1,587 +1,533 @@
-var ifirsttime = Cookies.get("firsttime");
-var cookiesloaded = 0;
-
-/* Variables */
-
-/*scores*/
-var fishscore = 0,
-    fishmanscore = 0,
-    fishhutscore = 0,
-    fishvesselscore = 0,
-    fishflockscore = 0,
-    fishmagicscore = 0;
-
-/*      */
-var fishman = 0,
-    fishhut = 0,
-    fishvessel = 0,
-    fishflock = 0,
-    fishmagic = 0,
-    totalyield = 0,
-    totaltotalyield = 0,
-    nE = 0,
-    fisknum = 0,
-    autoclicker = 0;
-
-
-/*prices*/
-var fishmanprice = parseInt(20),
-    fishhutprice = parseInt(500),
-    fishvesselprice = parseInt(2000),
-    fishflockprice = parseInt(50000),
-    fishmagicprice = parseInt(1000000);
-
-/*utility lucrativity*/
-var fishmanyield = 0.20,
-    fishhutyield = 4,
-    fishvesselyield = 40,
-    fishflockyield = 100,
-    fishmagicyield = 10000,
-    fishyield = 1;
-
-/*upgrades*/
-var upg1 = 10000,
-    upg2 = 10000,
-    upg3 = 20000,
-    upg4 = 50000,
-    upg5 = 10000,
-    upg6 = 10000000,
-    upg7 = 500000,
-    upg8 = 1000;
-
-var upg1b = 1,
-    upg2b = 0,
-    upg3b = 0,
-    upg4b = 0,
-    upg5b = 0,
-    upg6b = 0,
-    upg7b = 1,
-    upg8b = 0;
-/* ---------------------------- */
-
-
-
-
-$(document).ready(function () {
-
-    $("#resetbtn").click(function () {
-        if (confirm('Are you sure?')) {
-            abortTimer();
-            ckremove();
-            Cookies.remove("firsttime");
-            setTimeout(function () {
-                location.reload();
-            }, 3000);
-        } else {
-            // Do nothing!
-        }
-    });
-
-    $('#prognappi').click(function () {
-        $('#progress').css("opacity", "0");
-        $('#stats').css("opacity", "1");
-        $('#progress').css("z-index", "-1");
-        $('#stats').css("z-index", "auto");
-        console.log("stats esiin");
-        $('#prognappi').addClass('active');
-        $('#statsnappi').removeClass('active');
-    });
-
-    $('#statsnappi').click(function () {
-        $('#progress').css("opacity", "1");
-        $('#stats').css("opacity", "0");
-        $('#progress').css("z-index", "auto");
-        $('#stats').css("z-index", "-1");
-        $('#statsnappi').addClass('active');
-        $('#prognappi').removeClass('active');
-        console.log("progress esiin");
-    });
-
-    $("#fishingbtn").click(function () {
-        fisknum++;
-        if ($("body").css("background-image").includes("/img/fullartbg.gif")) {
-            $("body").css("background-image", "url(./img/catch.gif)");
-        }
-
-        addscore('fish');
-        floatingnumbers();
-        setTimeout(function () {
-            var lastfisk = fisknum;
-            setTimeout(function () {
-                if (lastfisk === fisknum) {
-                    $("body").css("background-image", "url(./img/fullartbg.gif)");
-                }
-            }, 1000);
-        }, 1300);
-    });
-
-    $(".purchasebtn").click(function (e) {
-        purchase($(e.target).attr("value"));
-
-    });
-
-    $(".upgrade").click(function (e) {
-        purchase(($(e.target).attr('id')));
-    });
-
-
-
-    if (ifirsttime === "no") {
-        console.log("Cool, you are coming back!");
-        ckload();
-        setTimeout(function () {
-            cookiesloaded = 1;
-        }, 2000);
-    } else {
-        console.log("So a first timer, hmm.");
-        Cookies.set("firsttime", "no");
-        setTimeout(function () {
-            cookiesloaded = 1;
-        }, 2000);
-        $(".attention").css("opacity", "1");
-        setTimeout(function () {
-            $(".attention").animate({
-                opacity: '0'
-            }, 5500);
-        }, 10000);
+class Storage {
+    constructor() {
+        this.storage = window.localStorage
+    }
+    set(item, value) {
+        return this.storage.setItem(item, value)
+    }
+    get(item) {
+        return this.storage.getItem(item)
+    }
+    has(item) {
+        return !!this.storage.getItem(item)
+    }
+    remove(item) {
+        return this.storage.removeItem(item)
     }
 
-});
+    keys() {
+        return Object.keys(this.storage)
+    }
 
+    clear() {
+        return this.storage.clear()
+    }
+
+    isEmpty() {
+        return this.storage.length > 0
+    }
+}
+
+let storage = new Storage()
+
+let gameData
+
+if (storage.has('game-data')) {
+    gameData = JSON.parse(localStorage.getItem('game-data'))
+} else {
+    gameData = {
+        scores: {
+            fishflockscore: 0,
+            fishhutscore: 0,
+            fishmagicscore: 0,
+            fishmanscore: 0,
+            fishvesselscore: 0
+        },
+        utilities: {
+            autoclicker: 0,
+            fishflock: {
+                price: 50000
+            },
+            fishhut: {
+                price: 500
+            },
+            fishmagic: {
+                price: 1000000
+            },
+            fishman: {
+                price: 20
+            },
+            fishvessel: {
+                price: 2000
+            },
+            amountOfFish: 0,
+            nE: 0,
+            totaltotalyield: 0,
+            totalyield: 0
+        },
+        lucrativity: {
+            fishflockyield: 100,
+            fishhutyield: 4,
+            fishmagicyield: 10000,
+            fishmanyield: 0.2,
+            fishvesselyield: 40,
+            fishyield: 1
+        },
+        upgrades: {
+            autoFisher: {
+                price: 1000,
+                purchased: false
+            },
+            all2x: {
+                price: 10000,
+                purchased: false,
+                multiplier: 2
+            },
+            fishermen2x: {
+                price: 20000,
+                purchased: false,
+                multiplier: 2
+            },
+            fishinghut2x: {
+                price: 50000,
+                purchased: false,
+                multiplier: 2
+            },
+            fishvessel2x: {
+                price: 100000,
+                purchased: false,
+                multiplier: 2
+            },
+            fishflock2x: {
+                price: 500000,
+                purchased: false,
+                multiplier: 2
+            },
+            all4x: {
+                price: 10000,
+                purchased: false,
+                multiplier: 4
+            },
+            fishermagic2x: {
+                price: 1000000,
+                purchased: false,
+                multiplier: 2
+            }
+        },
+        isFirstTime: true
+    }
+}
+
+var firstTime = storage.get(gameData.isFirstTime)
+
+let resetButton = document.getElementById('resetbtn')
+let progressButton = document.getElementById('prognappi')
+let statsButton = document.getElementById('statsnappi')
+let fishingButton = document.getElementById('fishingbtn')
+
+resetButton.addEventListener('click', () => {
+    if (confirm('Are you sure?')) {
+        abortTimer()
+        ckremove()
+        Cookies.remove('firsttime')
+        setTimeout(function () {
+            location.reload()
+        }, 3000)
+    }
+})
+
+progressButton.addEventListener('click', () => {
+    let progress = document.getElementById('progress')
+    let stats = document.getElementById('stats')
+
+    progress.style.opacity = '0'
+    stats.style.opacity = '1'
+
+    progress.style.zIndex = '-1'
+    stats.style.zIndex = 'auto'
+
+    progressButton.classList.add('active')
+    statsButton.classList.remove('active')
+})
+
+statsButton.addEventListener('click', () => {
+    let progress = document.getElementById('progress')
+    let stats = document.getElementById('stats')
+
+    progress.style.opacity = '1'
+    stats.style.opacity = '0'
+
+    progress.style.zIndex = 'auto'
+    stats.style.zIndex = '-1'
+
+    progressButton.classList.remove('active')
+    statsButton.classList.add('active')
+})
+
+let clicked = null
+fishingButton.addEventListener('click', () => {
+    clicked = Date.now()
+    const oldClicked = clicked
+
+    document.body.classList.add('fishing')
+    addscore('fish')
+    floatingnumbers()
+    setTimeout(function () {
+        if (oldClicked === clicked) {
+            document.body.classList.remove('fishing')
+        }
+    }, 2000)
+})
+
+if (firstTime) {
+    storage.set(firstTime, false)
+    document.querySelector('.attention').style.opacity = '1'
+    setTimeout(function () {
+        document.querySelector('.attention').style.opacity = '0'
+    }, 10000)
+}
 
 function floatingnumbers() {
-    nE++;
-    $("#clickbtnholder").append("<span class='floatingnumber' id='num" + nE + "'>" +
-        (parseInt(fishyield * upg1b * upg7b)) + "</span>");
-    $("#num" + nE).animate({
-        top: "-=300px",
-        opacity: '0'
-    }, 1500);
+    gameData.utilities.nE++
+    let floatingNumber = document.createElement('span')
+
+    floatingNumber.className = 'floatingnumber'
+    floatingNumber.id = 'num' + gameData.utilities.nE
+    let fishPerClick =
+        gameData.lucrativity.fishyield *
+        (gameData.upgrades.all2x.purchased ? gameData.upgrades.all2x.multiplier : 1) *
+        (gameData.upgrades.all4x.purchased ? gameData.upgrades.all4x.multiplier : 1)
+    floatingNumber.textContent = parseInt(fishPerClick)
+    document.querySelector('#clickbtnholder').appendChild(floatingNumber)
+    setTimeout(() => {
+        floatingNumber.parentElement.removeChild(floatingNumber)
+    }, 1500)
 }
 
 function purchase(val) {
     switch (val) {
-    case 'fishman':
-        if (fishscore >= fishmanprice) {
-            fishscore = fishscore - fishmanprice;
-            fishmanprice = parseInt(fishmanprice * 1.2);
-            fishmanscore++;
-            updatestats();
-        }
-        break;
+        case 'fishman':
+            if (gameData.utilities.amountOfFish >= gameData.utilities.fishman.price) {
+                gameData.utilities.amountOfFish -= gameData.utilities.fishman.price
+                gameData.utilities.fishman.price = parseInt(gameData.utilities.fishman.price * 1.2)
+                gameData.scores.fishmanscore++
+                updatestats()
+            }
+            break
 
-    case 'fishhut':
-        if (fishscore >= fishhutprice) {
-            fishscore = fishscore - fishhutprice;
-            fishhutprice = parseInt(fishhutprice * 1.2);
-            fishhutscore++;
-            updatestats();
-        }
-        break;
+        case 'fishhut':
+            if (gameData.utilities.amountOfFish >= gameData.utilities.fishhut.price) {
+                gameData.utilities.amountOfFish -= gameData.utilities.fishhut.price
+                gameData.utilities.fishhut.price = parseInt(gameData.utilities.fishhut.price * 1.2)
+                gameData.scores.fishhutscore = isNaN(gameData.scores.fishhutscore)
+                    ? 1
+                    : gameData.scores.fishhutscore + 1
+                updatestats()
+            }
+            break
 
-    case 'fishvessel':
-        if (fishscore >= fishvesselprice) {
-            fishscore = fishscore - fishvesselprice;
-            fishvesselprice = parseInt(fishvesselprice * 1.2);
-            fishvesselscore++;
-            updatestats();
-        }
-        break;
+        case 'fishvessel':
+            if (gameData.utilities.amountOfFish >= gameData.utilities.fishvessel.price) {
+                gameData.utilities.amountOfFish -= gameData.utilities.fishvessel.price
+                gameData.utilities.fishvessel.price = parseInt(gameData.utilities.fishvessel.price * 1.2)
+                gameData.scores.fishvesselscore = isNaN(gameData.scores.fishvesselscore)
+                    ? 1
+                    : gameData.scores.fishvesselscore + 1
+                updatestats()
+            }
+            break
 
-    case 'fishflock':
-        if (fishscore >= fishflockprice) {
-            fishscore = fishscore - fishflockprice;
-            fishflockprice = parseInt(fishflockprice * 1.2);
-            fishflockscore++;
-            updatestats();
-        }
-        break;
-
-    case 'fishmagic':
-        if (fishscore >= fishmagicprice) {
-            fishscore = fishscore - fishmagicprice;
-            fishmagicprice = parseInt(fishmagicprice * 1.2);
-            fishmagicscore++;
-            updatestats();
-        }
-        break;
-    case 'upg1':
-
-        if ((fishscore >= upg1 && upg1b == 1)) {
-            fishscore = fishscore - upg1;
-            updatestats();
-            upg1b = 2;
-        }
-        break;
-    case 'upg2':
-
-        if ((fishscore >= upg2 && upg2b == 0)) {
-            fishscore = fishscore - upg2;
-            fishmanyield = fishmanyield * 2;
-            updatestats();
-            upg2b = 1;
-        }
-        break;
-    case 'upg3':
-
-        if ((fishscore >= upg3 && upg3b == 0)) {
-            fishscore = fishscore - upg3;
-            fishhutyield = fishhutyield * 2;
-            updatestats();
-            upg3b = 1;
-        }
-        break;
-    case 'upg4':
-        if ((fishscore >= upg4 && upg4b == 0)) {
-            fishscore = fishscore - upg4;
-            fishvesselyield = fishvesselyield * 2;
-            updatestats();
-            upg4b = 1;
-        }
-        break;
-    case 'upg5':
-        if ((fishscore >= upg5 && upg5b == 0)) {
-            fishscore = fishscore - upg5;
-            fishflockyield = fishflockyield * 2;
-            updatestats();
-            upg5b = 1;
-        }
-        break;
-    case 'upg6':
-        if ((fishscore >= upg6 && upg6b == 0)) {
-            fishscore = fishscore - upg6;
-            fishmagicyield = fishmagicyield * 2;
-            updatestats();
-            upg6b = 1;
-        }
-        break;
-    case 'upg7':
-        if ((fishscore >= upg7 && upg7b == 1)) {
-            fishscore = fishscore - upg7;
-            updatestats();
-            upg7b = 4;
-        }
-        break;
-    case 'upg8':
-        if ((fishscore >= upg8 && upg8b == 0)) {
-            fishscore = fishscore - upg8;
-            upg8b = 1;
-        }
-        break;
-
-    default:
-        error("wrongpurchasetype");
+        case 'fishflock':
+            if (gameData.utilities.amountOfFish >= gameData.utilities.fishflock.price) {
+                gameData.utilities.amountOfFish -= gameData.utilities.fishflock.price
+                gameData.utilities.fishflock.price = parseInt(gameData.utilities.fishflock.price * 1.2)
+                gameData.scores.fishflockscore = isNaN(gameData.scores.fishflockscore)
+                    ? 1
+                    : gameData.scores.fishflockscore + 1
+                updatestats()
+            }
+            break
+        case 'fishmagic':
+            if (gameData.utilities.amountOfFish >= gameData.utilities.fishmagic.price) {
+                gameData.utilities.amountOfFish -= gameData.utilities.fishmagic.price
+                gameData.utilities.fishmagic.price = parseInt(gameData.utilities.fishmagic.price * 1.2)
+                gameData.scores.fishmagicscore = isNaN(gameData.scores.fishmagicscore)
+                    ? 1
+                    : gameData.scores.fishmagicscore + 1
+                updatestats()
+            }
+            break
+        case 'upg1':
+            if (
+                gameData.utilities.amountOfFish >= gameData.upgrades.all2x.price &&
+                !gameData.upgrades.all2x.purchased
+            ) {
+                gameData.utilities.amountOfFish -= gameData.upgrades.all2x.price
+                updatestats()
+                gameData.upgrades.all2x.purchased = true
+            }
+            break
+        case 'upg2':
+            if (
+                gameData.utilities.amountOfFish >= gameData.upgrades.fishermen2x.price &&
+                !gameData.upgrades.fishermen2x.purchased
+            ) {
+                gameData.utilities.amountOfFish -= gameData.upgrades.fishermen2x.price
+                gameData.lucrativity.fishmanyield *= 2
+                updatestats()
+                gameData.upgrades.fishermen2x.purchased = true
+            }
+            break
+        case 'upg3':
+            if (
+                gameData.utilities.amountOfFish >= gameData.upgrades.fishinghut2x.price &&
+                !gameData.upgrades.fishinghut2x.purchased
+            ) {
+                gameData.utilities.amountOfFish -= gameData.upgrades.fishinghut2x.price
+                gameData.lucrativity.fishhutyield *= 2
+                updatestats()
+                gameData.upgrades.fishinghut2x.purchased = true
+            }
+            break
+        case 'upg4':
+            if (
+                gameData.utilities.amountOfFish >= gameData.upgrades.fishvessel2x.price &&
+                !gameData.upgrades.fishvessel2x.purchased
+            ) {
+                gameData.utilities.amountOfFish -= gameData.upgrades.fishvessel2x.price
+                gameData.lucrativity.fishvesselyield *= 2
+                updatestats()
+                gameData.upgrades.fishvessel2x.purchased = true
+            }
+            break
+        case 'upg5':
+            if (
+                gameData.utilities.amountOfFish >= gameData.upgrades.fishflock2x.price &&
+                !gameData.upgrades.fishflock2x.purchased
+            ) {
+                gameData.utilities.amountOfFish -= gameData.upgrades.fishflock2x.price
+                gameData.lucrativity.fishflockyield *= 2
+                updatestats()
+                gameData.upgrades.fishflock2x.purchased = true
+            }
+            break
+        case 'upg6':
+            if (
+                gameData.utilities.amountOfFish >= gameData.upgrades.fishermagic2x.price &&
+                !gameData.upgrades.fishermagic2x.purchased
+            ) {
+                gameData.utilities.amountOfFish -= gameData.upgrades.fishermagic2x.price
+                gameData.lucrativity.fishmagicyield *= 2
+                updatestats()
+                gameData.upgrades.fishermagic2x.purchased = true
+            }
+            break
+        case 'upg7':
+            if (
+                gameData.utilities.amountOfFish >= gameData.upgrades.all4x.price &&
+                !gameData.upgrades.all4x.purchased
+            ) {
+                gameData.utilities.amountOfFish -= gameData.upgrades.all4x.price
+                updatestats()
+                gameData.upgrades.all4x.purchased = true
+            }
+            break
+        case 'upg8':
+            if (
+                gameData.utilities.amountOfFish >= gameData.upgrades.autoFisher.price &&
+                !gameData.upgrades.autoFisher.purchased
+            ) {
+                gameData.utilities.amountOfFish -= gameData.upgrades.autoFisher.price
+                gameData.upgrades.autoFisher.purchased = true
+            }
+            break
     }
-
 }
-
 
 function addscore(val) {
     switch (val) {
-    case 'fish':
-        fishscore = parseInt(fishscore + (fishyield * upg1b * upg7b));
-        $(".fishstat").text(fishscore);
-        break;
+        case 'fish':
+            let fishAdd = gameData.lucrativity.fishyield
+            if (gameData.upgrades.all2x.purchased) {
+                fishAdd *= gameData.upgrades.all2x.multiplier
+            }
 
-    case 'fishman':
-        fishmanscore++;
-        $("#fishmanstat").text(fishmanscore);
-        break;
+            if (gameData.upgrades.all4x.purchased) {
+                fishAdd *= gameData.upgrades.all4x.multiplier
+            }
 
-    case 'fishhut':
-        fishhutscore++;
-        $("#fishhutstat").text(fishhutscore);
-        break;
+            gameData.utilities.amountOfFish += parseInt(fishAdd)
+            document.querySelector('.fishstat').textContent = gameData.utilities.amountOfFish
+            break
 
-    case 'fishvessel':
-        fishvesselscore++;
-        $("#fishvesselstat").text(fishvesselscore);
-        break;
+        case 'fishman':
+            gameData.scores.fishmanscore++
+            document.querySelector('#fishmanstat').textContent = gameData.scores.fishmanscore
+            break
 
-    case 'fishflock':
-        fishflockscore++;
-        $("#fishflockstat").text(fishflockscore);
-        break;
+        case 'fishhut':
+            gameData.scores.fishhutscore++
+            document.querySelector('#fishhutstat').textContent = gameData.scores.fishhutscore
+            break
 
-    case 'fishmagic':
-        fishmagicscore++;
-        $("#fishmagicstat").text(fishmagicscore);
-        break;
+        case 'fishvessel':
+            gameData.scores.fishvesselscore++
+            document.querySelector('#fishvesselstat').textContent = gameData.scores.fishvesselscore
+            break
 
+        case 'fishflock':
+            gameData.scores.fishflockscore++
+            document.querySelector('#fishflockstat').textContent = gameData.scores.fishflockscore
+            break
 
-    default:
-        error("wrongtype");
+        case 'fishmagic':
+            gameData.scores.fishmagicscore++
+            document.querySelector('#fishmagicstat').textContent = gameData.scores.fishmagicscore
+            break
     }
-
 }
 
-var tid = setTimeout(fishpersec, 1000);
+var tid = setTimeout(fishpersec, 1000)
 
 function fishpersec() {
-    totalyield = (fishmanyield * fishmanscore) + (fishhutyield * fishhutscore) + (fishvesselyield * fishvesselscore) + (fishflockyield * fishflockscore) + (fishmagicyield * fishmagicscore);
+    totalyield =
+        gameData.lucrativity.fishmanyield * gameData.scores.fishmanscore +
+        gameData.lucrativity.fishhutyield * gameData.scores.fishhutscore +
+        gameData.lucrativity.fishvesselyield * gameData.scores.fishvesselscore +
+        gameData.lucrativity.fishflockyield * gameData.scores.fishflockscore +
+        gameData.lucrativity.fishmagicyield * gameData.scores.fishmagicscore
 
-    totaltotalyield = totalyield * upg1b * upg7b;
+    totaltotalyield = totalyield
 
-    totaltotalyield = Math.round(totaltotalyield * 100) / 100;
-    fishscore = fishscore + totaltotalyield;
-    fishscore = Math.round(fishscore * 100) / 100;
-    if (fishscore > 10000000) {
-        $(".fishstat").text(fishscore.toExponential());
-    } else {
-        $(".fishstat").text(fishscore);
+    if (gameData.upgrades.all2x.purchased) {
+        totaltotalyield *= gameData.upgrades.all2x.multiplier
     }
-    if (totalyield > 1000000) {
-        $("#fishpersecstat").text(totaltotalyield.toExponential());
-    } else {
-        $("#fishpersecstat").text(totaltotalyield);
-    }
-    updatestats();
-    $('span[style$="opacity: 0;"]').remove();
 
-    if ((!document.getElementById("autoclicker")) && upg8b == 1) {
-        var autoele = "<div id='autoclicker' class='utility'><span>Autoclicker </span><button id='autoOnOff'>On / Off</button> </div>";
-        $("#utilitiescontent").append(autoele);
-        console.log("autoclicker added");
-        $("#autoOnOff").click(function (e) {
-            if (autoclicker === 0) {
-                autoclicker = 1;
+    if (gameData.upgrades.all4x.purchased) {
+        totaltotalyield *= gameData.upgrades.all4x.multiplier
+    }
+
+    totaltotalyield = Math.round(totaltotalyield * 100) / 100
+
+    gameData.utilities.amountOfFish += totaltotalyield
+
+    gameData.utilities.amountOfFish = Math.round(gameData.utilities.amountOfFish * 100) / 100
+
+    let fishstat = document.querySelector('.fishstat')
+
+    if (gameData.utilities.amountOfFish > 10000000) {
+        fishstat.textContent = gameData.utilities.amountOfFish.toExponential()
+    } else {
+        fishstat.textContent = gameData.utilities.amountOfFish
+    }
+
+    let fishpersecstat = document.querySelector('#fishpersecstat')
+    if (totaltotalyield > 1000000) {
+        fishpersecstat.textContent = totaltotalyield.toExponential()
+    } else {
+        fishpersecstat.textContent = totaltotalyield
+    }
+
+    updatestats()
+
+    if (!document.getElementById('autoclicker') && gameData.upgrades.autoFisher.purchased) {
+        let target = document.querySelector('#utilitiescontent')
+        let autoclickerElement = document.createElement('div')
+        autoclickerElement.id = 'autoclicker'
+        autoclickerElement.className = 'utility'
+        let s = document.createElement('span')
+        s.textContent = 'Autoclicker'
+        let b = document.createElement('button')
+        b.textContent = 'on / off'
+        b.id = 'autoOnOff'
+
+        autoclickerElement.appendChild(s)
+        autoclickerElement.appendChild(b)
+
+        target.appendChild(autoclickerElement)
+
+        document.getElementById('autoOnOff').addEventListener('click', () => {
+            if (utilities.autoclicker === 0) {
+                utilities.autoclicker = 1
             } else {
-                autoclicker = 0;
+                utilities.autoclicker = 0
             }
-            autoclickerloop();
-        });
+            autoclickerloop()
+        })
     }
 
-    if (document.getElementById("autoclicker") && autoclicker === 1) {
-        $("#autoOnOff").text("On");
-        $("#autoOnOff").css("filter", "");
+    if (document.getElementById('autoclicker') && utilities.autoclicker === 1) {
+        let autoClickerStatus = document.getElementById('autoOnOff')
+        autoClickerStatus.textContent = 'on'
+        autoClickerStatus.style.filter = ''
     }
-    if (document.getElementById("autoclicker") && autoclicker === 0) {
-        $("#autoOnOff").css("filter", "brightness: 40");
-        $("#autoOnOff").text("Off");
+    if (document.getElementById('autoclicker') && utilities.autoclicker === 0) {
+        let autoClickerStatus = document.getElementById('autoOnOff')
+        autoClickerStatus.textContent = 'off'
+        autoClickerStatus.style.filter = 'brightness: 40'
     }
 
-
-
-
-    tid = setTimeout(fishpersec, 1000);
+    tid = setTimeout(fishpersec, 1000)
 }
+
+;[...document.querySelectorAll('.purchasingButton')].forEach((button) => {
+    button.addEventListener('click', () => {
+        if (button.value) {
+            purchase(button.value)
+        } else {
+            purchase(button.id)
+        }
+    })
+})
 
 function autoclickerloop() {
     setTimeout(function () {
-        $('#fishingbtn').click();
-        if (autoclicker === 1) {
-            autoclickerloop();
+        fishingButton.click()
+        if (utilities.autoclicker === 1) {
+            autoclickerloop()
         }
-    }, 250);
+    }, 250)
 }
-
-
-
-
-
-var cookietimer = setTimeout(cktimer, 8000);
 
 function cktimer() {
-    if (cookiesloaded === 1) {
-        ckremove();
-        setTimeout(function () {
-
-        }, 2000);
-        ckset();
-    }
-
-    cookietimer = setTimeout(cktimer, 8000);
+    storage.set('game-data', JSON.stringify(gameData))
+    cookietimer = setTimeout(cktimer, 8000)
 }
 
-
-
+let cookietimer = setTimeout(() => cktimer(), 8000)
 
 function abortTimer() {
-    clearTimeout(tid);
-    clearTimeout(cookietimer);
+    clearTimeout(tid)
+    clearTimeout(cookietimer)
 }
 
-
 function updatestats() {
-
-
     /* Scores */
-
-    $(".fishstat").text(fishscore);
-    $("#fishmanstat").text(fishmanscore);
-    $("#fishhutstat").text(fishhutscore);
-    $("#fishvesselstat").text(fishvesselscore);
-    $("#fishflockstat").text(fishflockscore);
-    $("#fishmagicstat").text(fishmagicscore);
-
+    ;[...document.querySelectorAll('.fishstat')].forEach((el) => (el.textContent = gameData.utilities.amountOfFish))
+    document.querySelector('#fishmanstat').textContent = gameData.scores.fishmanscore
+    document.querySelector('#fishhutstat').textContent = gameData.scores.fishhutscore
+    document.querySelector('#fishvesselstat').textContent = gameData.scores.fishvesselscore
+    document.querySelector('#fishflockstat').textContent = gameData.scores.fishflockscore
+    document.querySelector('#fishmagicstat').textContent = gameData.scores.fishmagicscore
 
     /* Prices */
 
-    $("#fishmanprice").text(fishmanprice);
-    $("#fishhutprice").text(fishhutprice);
-    $("#fishvesselprice").text(fishvesselprice);
-    $("#fishflockprice").text(fishflockprice);
-    $("#fishmagicprice").text(fishmagicprice);
+    document.querySelector('#fishmanprice').textContent = gameData.utilities.fishman.price
+    document.querySelector('#fishhutprice').textContent = gameData.utilities.fishhut.price
+    document.querySelector('#fishvesselprice').textContent = gameData.utilities.fishvessel.price
+    document.querySelector('#fishflockprice').textContent = gameData.utilities.fishflock.price
+    document.querySelector('#fishmagicprice').textContent = gameData.utilities.fishmagic.price
 
     /* Per secs */
 
-    $("#fishmanpersec").text(fishmanyield * fishmanscore);
-    $("#fishhutpersec").text(fishhutyield * fishhutscore);
-    $("#fishvesselpersec").text(fishvesselyield * fishvesselscore);
-    $("#fishflockpersec").text(fishflockyield * fishflockscore);
-    $("#fishmagicpersec").text(fishmagicyield * fishmagicscore);
-
-}
-
-function error(val) {
-    switch (val) {
-    case 'wrongtype':
-        console.log("Error: " + "Wrong type of value inserted.");
-        break;
-
-    case 'wrongpurchasetype':
-        console.log("Error: " + "Tried to purchase unknown type of utility.");
-        break;
-
-    default:
-        console.log("Error:" + "Unknown error");
-    }
-}
-
-
-/* Cookie business */
-/* Cookies */
-
-function ckload() {
-    /* Cookies load */
-    fishscore = parseFloat(Cookies.get('fishscoreck'));
-    fishmanscore = parseFloat(Cookies.get('fishmanscoreck'));
-    fishhutscore = parseFloat(Cookies.get('fishhutscoreck'));
-    fishvesselscore = parseFloat(Cookies.get('fishvesselscoreck'));
-    fishflockscore = parseFloat(Cookies.get('fishflockscoreck'));
-    fishmagicscore = parseFloat(Cookies.get('fishmagicscoreck'));
-
-    /*      */
-    fishman = parseFloat(Cookies.get('fishscoreck'));
-    fishhut = parseFloat(Cookies.get('fishshutck'));
-    fishvessel = parseFloat(Cookies.get('fishvesselck'));
-    fishflock = parseFloat(Cookies.get('fishflockck'));
-    fishmagic = parseFloat(Cookies.get('fishmagicck'));
-    totalyield = parseFloat(Cookies.get('totalyieldck'));
-    nE = parseFloat(Cookies.get('nEck'));
-
-    /*prices*/
-    fishmanprice = parseFloat(Cookies.get('fishmanpriceck'));
-    fishhutprice = parseFloat(Cookies.get('fishhutpriceck'));
-    fishvesselprice = parseFloat(Cookies.get('fishvesselpriceck'));
-    fishflockprice = parseFloat(Cookies.get('fishflockpriceck'));
-    fishmagicprice = parseFloat(Cookies.get('fishmagicpriceck'));
-
-    /*utility lucrativity*/
-    fishmanyield = parseFloat(Cookies.get('fishmanyieldck'));
-    fishhutyield = parseFloat(Cookies.get('fishhutyieldck'));
-    fishvesselyield = parseFloat(Cookies.get('fishvesselyieldck'));
-    fishflockyield = parseFloat(Cookies.get('fishflockyieldck'));
-    fishmagicyield = parseFloat(Cookies.get('fishmagicyieldck'));
-    fishyield = parseFloat(Cookies.get('fishyieldck'));
-
-    upg1b = Cookies.get('upg1bck');
-    upg2b = Cookies.get('upg2bck');
-    upg3b = Cookies.get('upg3bck');
-    upg4b = Cookies.get('upg4bck');
-    upg5b = Cookies.get('upg5bck');
-    upg6b = Cookies.get('upg6bck');
-    upg7b = Cookies.get('upg7bck');
-    upg8b = Cookies.get('upg8bck');
-
-
-}
-
-function ckset() {
-    /* Cookies set */
-    Cookies.set('fishscoreck', fishscore);
-    Cookies.set('fishmanscoreck', fishmanscore);
-    Cookies.set('fishhutscoreck', fishhutscore);
-    Cookies.set('fishvesselscoreck', fishvesselscore);
-    Cookies.set('fishflockscoreck', fishflockscore);
-    Cookies.set('fishmagicscoreck', fishmagicscore);
-
-    /*      */
-    Cookies.set('fishscoreck', fishscore);
-    Cookies.set('fishshutck', fishhut);
-    Cookies.set('fishvesselck', fishvessel);
-    Cookies.set('fishflockck', fishflock);
-    Cookies.set('fishmagicck', fishmagic);
-    Cookies.set('totalyieldck', totalyield);
-    Cookies.set('nEck', nE);
-
-    /*prices*/
-    Cookies.set('fishmanpriceck', fishmanprice);
-    Cookies.set('fishhutpriceck', fishhutprice);
-    Cookies.set('fishvesselpriceck', fishvesselprice);
-    Cookies.set('fishflockpriceck', fishflockprice);
-    Cookies.set('fishmagicpriceck', fishmagicprice);
-
-    /*utility lucrativity*/
-    Cookies.set('fishmanyieldck', fishmanyield);
-    Cookies.set('fishhutyieldck', fishhutyield);
-    Cookies.set('fishvesselyieldck', fishvesselyield);
-    Cookies.set('fishflockyieldck', fishflockyield);
-    Cookies.set('fishmagicyieldck', fishmagicyield);
-    Cookies.set('fishyieldck', fishyield);
-
-    Cookies.set('upg1bck', upg1b);
-    Cookies.set('upg2bck', upg2b);
-    Cookies.set('upg3bck', upg3b);
-    Cookies.set('upg4bck', upg4b);
-    Cookies.set('upg5bck', upg5b);
-    Cookies.set('upg6bck', upg6b);
-    Cookies.set('upg7bck', upg7b);
-    Cookies.set('upg8bck', upg8b);
-    /* ---------------------------- */
-}
-
-function ckremove() {
-    /* Cookies remove */
-    Cookies.remove('fishscoreck');
-    Cookies.remove('fishmanscoreck');
-    Cookies.remove('fishhutscoreck');
-    Cookies.remove('fishvesselscoreck');
-    Cookies.remove('fishflockscoreck');
-    Cookies.remove('fishmagicscoreck');
-
-    /*      */
-    Cookies.remove('fishscoreck');
-    Cookies.remove('fishshutck');
-    Cookies.remove('fishvesselck');
-    Cookies.remove('fishflockck');
-    Cookies.remove('fishmagicck');
-    Cookies.remove('totalyieldck');
-    Cookies.remove('nEck');
-
-    /*prices*/
-    Cookies.remove('fishmanpriceck');
-    Cookies.remove('fishhutpriceck');
-    Cookies.remove('fishvesselpriceck');
-    Cookies.remove('fishflockpriceck');
-    Cookies.remove('fishmagicpriceck');
-
-    /*utility lucrativity*/
-    Cookies.remove('fishmanyieldck');
-    Cookies.remove('fishhutyieldck');
-    Cookies.remove('fishvesselyieldck');
-    Cookies.remove('fishflockyieldck');
-    Cookies.remove('fishmagicyieldck');
-    Cookies.remove('fishyieldck');
-
-    Cookies.remove('upg1bck');
-    Cookies.remove('upg2bck');
-    Cookies.remove('upg3bck');
-    Cookies.remove('upg4bck');
-    Cookies.remove('upg5bck');
-    Cookies.remove('upg6bck');
-    Cookies.remove('upg7bck');
-    Cookies.remove('upg8bck');
-
+    document.querySelector('#fishmanpersec').textContent =
+        gameData.lucrativity.fishmanyield * gameData.scores.fishmanscore
+    document.querySelector('#fishhutpersec').textContent =
+        gameData.lucrativity.fishhutyield * gameData.scores.fishhutscore
+    document.querySelector('#fishvesselpersec').textContent =
+        gameData.lucrativity.fishvesselyield * gameData.scores.fishvesselscore
+    document.querySelector('#fishflockpersec').textContent =
+        gameData.lucrativity.fishflockyield * gameData.scores.fishflockscore
+    document.querySelector('#fishmagicpersec').textContent =
+        gameData.lucrativity.fishmagicyield * gameData.scores.fishmagicscore
 }

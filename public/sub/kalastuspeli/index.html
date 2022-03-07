@@ -7,18 +7,14 @@
         <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
         <meta content="the ultimate fish clicker game." name="description" />
         <meta content="Arttu Pennanen" name="author" />
-
-        <meta content="https://pennanen.dev/projects/kalastuspeli/" property="og:url" />
+        <meta content="https://pennanen.dev/sub/kalastuspeli/" property="og:url" />
         <meta content="A cover for the fishing game" property="og:image:alt" />
         <meta content="768" property="og:image:width" />
         <meta content="435" property="og:image:height" />
         <meta content="The ultimate mediocre fish clicking game for you to enjoy." property="og:description" />
         <meta content="the fishing game" property="og:title" />
-        <meta content="website" property="og:type" />
-
         <meta content="the fishing game" name="twitter:title" />
         <meta content="The ultimate mediocre fish clicking game for you to enjoy" name="twitter:description" />
-
         <link href="style/main.css" rel="stylesheet" />
         <link href="img/favicon.png" rel="icon" type="image/png" />
 
@@ -65,42 +61,50 @@
                                     </div>
 
                                     <div id="upgparent">
-                                        <div class="upgrade" id="upg8" title="Auto fisher, Price: 1 000"></div>
+                                        <div
+                                            class="upgrade purchasingButton"
+                                            id="upg8"
+                                            title="Auto fisher, Price: 1 000"
+                                        ></div>
 
                                         <div
-                                            class="upgrade"
+                                            class="upgrade purchasingButton"
                                             id="upg1"
                                             title="Double all the yield, Price: 10 000"
                                         ></div>
 
-                                        <div class="upgrade" id="upg2" title="Fishermen yield x2, Price: 10 000"></div>
+                                        <div
+                                            class="upgrade purchasingButton"
+                                            id="upg2"
+                                            title="Fishermen yield x2, Price: 10 000"
+                                        ></div>
 
                                         <div
-                                            class="upgrade"
+                                            class="upgrade purchasingButton"
                                             id="upg3"
                                             title="Fishing hut yield x2, Price: 20 000"
                                         ></div>
 
                                         <div
-                                            class="upgrade"
+                                            class="upgrade purchasingButton"
                                             id="upg4"
                                             title="Fish vessel yield x2, Price: 50 000"
                                         ></div>
 
                                         <div
-                                            class="upgrade"
+                                            class="upgrade purchasingButton"
                                             id="upg5"
                                             title="Fish flock yield x2, Price: 100 000"
                                         ></div>
 
                                         <div
-                                            class="upgrade"
+                                            class="upgrade purchasingButton"
                                             id="upg7"
                                             title="Quadruple all the yield, Price: 500 000"
                                         ></div>
 
                                         <div
-                                            class="upgrade"
+                                            class="upgrade purchasingButton"
                                             id="upg6"
                                             title="Fisher's magic yield x2, Price: 10 000 000"
                                         ></div>
@@ -122,12 +126,12 @@
                                     <div class="utility" id="fishman-utility">
                                         <div class="upperut">
                                             <div class="rightUpUt">
-                                                <img alt="" class="utilityimg" src="img/fishman.png" />
+                                                <img alt="" class="utilityimg" src="img/fishman.jpg" />
                                             </div>
 
                                             <div class="leftUpUt">
                                                 <span class="utilityname">Fisher man</span>
-                                                <button class="purchasebtn" value="fishman">Purchase</button>
+                                                <button class="purchasingButton" value="fishman">Purchase</button>
                                             </div>
                                         </div>
 
@@ -140,12 +144,12 @@
                                     <div class="utility" id="fishhut-utility">
                                         <div class="upperut">
                                             <div class="rightUpUt">
-                                                <img alt="" class="utilityimg" src="img/fishhut.png" />
+                                                <img alt="" class="utilityimg" src="img/fishhut.jpg" />
                                             </div>
 
                                             <div class="leftUpUt">
                                                 <span class="utilityname">Fish hut</span>
-                                                <button class="purchasebtn" value="fishhut">Purchase</button>
+                                                <button class="purchasingButton" value="fishhut">Purchase</button>
                                             </div>
                                         </div>
 
@@ -158,12 +162,12 @@
                                     <div class="utility" id="fishvessel-utility">
                                         <div class="upperut">
                                             <div class="rightUpUt">
-                                                <img alt="" class="utilityimg" src="img/fishvessel.png" />
+                                                <img alt="" class="utilityimg" src="img/fishvessel.jpg" />
                                             </div>
 
                                             <div class="leftUpUt">
                                                 <span class="utilityname">Fish vessel</span>
-                                                <button class="purchasebtn" value="fishvessel">Purchase</button>
+                                                <button class="purchasingButton" value="fishvessel">Purchase</button>
                                             </div>
                                         </div>
 
@@ -181,7 +185,7 @@
 
                                             <div class="leftUpUt">
                                                 <span class="utilityname">Fish friendo</span>
-                                                <button class="purchasebtn" value="fishflock">Purchase</button>
+                                                <button class="purchasingButton" value="fishflock">Purchase</button>
                                             </div>
                                         </div>
 
@@ -194,12 +198,12 @@
                                     <div class="utility" id="fishmagic-utility">
                                         <div class="upperut">
                                             <div class="rightUpUt">
-                                                <img alt="" class="utilityimg" src="img/fishmagic.png" />
+                                                <img alt="" class="utilityimg" src="img/fishmagic.jpg" />
                                             </div>
 
                                             <div class="leftUpUt">
                                                 <span class="utilityname">Fisher's magic</span>
-                                                <button class="purchasebtn" value="fishmagic">Purchase</button>
+                                                <button class="purchasingButton" value="fishmagic">Purchase</button>
                                             </div>
                                         </div>
 
@@ -302,11 +306,6 @@
                 <span id="footerspan">&copy; Arttu Pennanen &nbsp;</span><span id="currentyear">2018</span>
             </div>
         </div>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script>
-            !window.jQuery && document.write('<script src="js/jquery-3.3.1.min.js"><\/script>')
-        </script>
-        <script src="js/js-cookie.js"></script>
         <script src="js/main.js"></script>
     </body>
 </html>

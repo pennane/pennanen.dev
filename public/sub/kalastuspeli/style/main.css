@@ -4,10 +4,10 @@
     font-family: sans-serif;
     user-select: none;
     font-style: oblique;
-
 }
 
-button, body {
+button,
+body {
     touch-action: manipulation;
 }
 
@@ -18,12 +18,12 @@ button {
     background-color: #f44336;
     border: 1px solid black;
     transition: background-color 0.1s;
-    padding: .4em .7em;
+    padding: 0.4em 0.7em;
     text-shadow: 1px 1px black;
 }
 
 button:hover {
-    background-color: hsl(4, 90%, 18%)
+    background-color: hsl(4, 90%, 18%);
 }
 
 html {
@@ -32,12 +32,15 @@ html {
 }
 
 body {
-    background-image: url(../img/fullartbg.gif);
+    background-image: url(../img/fa.gif);
     background-repeat: repeat-x;
     background-size: cover;
     background-position: center;
     image-rendering: pixelated;
+}
 
+body.fishing {
+    background-image: url(../img/catch.gif);
 }
 
 .utility span {
@@ -80,7 +83,7 @@ body {
 
 span,
 p {
-    font-size: calc( 0.7em + 0.2vw);
+    font-size: calc(0.7em + 0.2vw);
 }
 
 #header {
@@ -151,17 +154,17 @@ p {
 }
 
 #upg2 {
-    background-image: url(../img/fishmanupg.png);
+    background-image: url(../img/fishmanupg.jpg);
     background-size: 35px 35px;
 }
 
 #upg3 {
-    background-image: url(../img/fishhutupg.png);
+    background-image: url(../img/fishhutupg.jpg);
     background-size: 35px 35px;
 }
 
 #upg4 {
-    background-image: url(../img/fishvesselupg.png);
+    background-image: url(../img/fishvesselupg.jpg);
     background-size: 35px 35px;
 }
 
@@ -171,7 +174,7 @@ p {
 }
 
 #upg6 {
-    background-image: url(../img/fishmagicupg.png);
+    background-image: url(../img/fishmagicupg.jpg);
     background-size: 35px 35px;
 }
 
@@ -202,7 +205,6 @@ p {
 .gamebar {
     position: relative;
     margin: 0.5em;
-
 }
 
 #clicking {
@@ -237,8 +239,10 @@ p {
     position: absolute;
     z-index: 1;
     margin-top: -7em;
+    animation-name: floatingnumber;
+    animation-duration: 1500ms;
+    animation-iteration-count: 1;
 }
-
 
 #gamebg {
     display: flex;
@@ -250,7 +254,8 @@ p {
 .utilityimg {
     max-width: 47px;
     width: 5vw;
-
+    height: 5vw;
+    max-height: 47px;
 }
 
 #utilitiescontent {
@@ -287,7 +292,6 @@ p {
     z-index: 3;
 }
 
-
 #progress {
     position: absolute;
     display: flex;
@@ -306,7 +310,7 @@ p {
 
 span.weighted {
     color: red;
-    font-weight:bold;
+    font-weight: bold;
 }
 
 #stats {
@@ -325,7 +329,6 @@ span.weighted {
     opacity: 0;
     z-index: -1;
     margin-bottom: 2em;
-
 }
 
 #statparent {
@@ -353,6 +356,7 @@ span.weighted {
     top: -15px;
     color: white;
     text-shadow: 2px 2px black;
+    transition: opacity 5000s;
 }
 
 .barsubheader {
@@ -372,7 +376,7 @@ span.weighted {
 .statcategory {
     margin-right: 1em;
     margin-bottom: 1em;
-    width: 225px
+    width: 225px;
 }
 
 .utility {
@@ -385,7 +389,6 @@ span.weighted {
 
 .upperut {
     display: flex;
-
 }
 
 #bodybgloader {
@@ -404,8 +407,6 @@ span.weighted {
     display: flex;
     flex-direction: column;
 }
-
-
 
 #footer {
     position: absolute;
@@ -435,18 +436,28 @@ span.weighted {
 }
 
 @keyframes headeranimation {
-
-
     0% {
         letter-spacing: -0.06em;
         opacity: 0;
     }
-
 
     80% {
         letter-spacing: 0.2em;
         opacity: 1;
     }
 
-    100% {}
+    100% {
+    }
+}
+
+@keyframes floatingnumber {
+    0% {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-300px);
+    }
 }
