@@ -180,18 +180,20 @@ async function computeProjectImage({ title, description }: { title?: string; des
     return buffer
 }
 
-export async function generateMainPageImage<T extends { title: string; description?: string }>(data: T) {
+export async function generateMainPageImage<T extends { title: string; description?: string }>(
+    data: T
+): Promise<string> {
     const target = './public/meta'
     if (!fs.existsSync(target)) {
         fs.mkdirSync(target)
     }
 
     const image = await computeMainPageImage({
-        title: data.title,
+        title: data.title || 'pennanen.dev',
         description: data.description
     })
 
-    const fileName = data.title.replaceAll(' ', '-').toLowerCase() + '.jpg'
+    const fileName = data.title.replace(/[\ \.\-]/g, '_').toLowerCase() + '.jpg'
     const directory = path.join(target, fileName)
 
     fs.writeFileSync(directory, image)
