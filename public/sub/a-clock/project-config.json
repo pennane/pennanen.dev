@@ -6,5 +6,6 @@
         "en": "a clock",
         "fi": null
     },
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "ignoreInListing": true
 }

@@ -11,5 +11,6 @@
         "fi": null
     },
     "icon": "icon.png",
-    "largeImage": "slots.png"
+    "largeImage": "slots.png",
+    "ignoreInListing": true
 }

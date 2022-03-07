@@ -10,7 +10,7 @@
         "en": "Different kind of paint",
         "fi": null
     },
-    "icon": null,
+    "icon": "logo.png",
     "images": [
         "starrynight.jpg"
     ],

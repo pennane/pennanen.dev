@@ -7,8 +7,9 @@
         "fi": null
     },
     "description": {
-        "en": "Demo that conveys human eyesight",
+        "en": "Brightness detection perception demo",
         "fi": null
     },
-    "icon": null
+    "icon": null,
+    "ignoreInListing": true
 }
