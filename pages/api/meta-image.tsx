@@ -1,23 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import path from 'path'
-import fs from 'fs'
 import { createCanvas, loadImage, registerFont } from 'canvas'
 import { wrapText } from '../../lib/util'
 
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Medium.ttf'), { family: 'Inter', weight: '300' })
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Bold.ttf'), { family: 'Inter', weight: '700' })
 
-const logoPath = fs.readFileSync(path.join(process.cwd(), 'public/icons/icon-white-128.png'))
-const logo = loadImage(logoPath)
-const bgPath = fs.readFileSync(path.join(process.cwd(), 'public/images/metabg.png'))
-const bg = loadImage(bgPath)
-const facePath = fs.readFileSync(path.join(process.cwd(), 'public/images/hl_pennanen.png'))
-const face = loadImage(facePath)
+const logo = loadImage('https://pennanen.dev/icons/icon-white-128.png')
+const bg = loadImage('https://pennanen.dev/images/metabg.png')
+const face = loadImage('https://pennanen.dev/images/hl_pennanen.png')
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { title, description } = req.query
-    // let image = null
-
     let width = 1200
     let height = 630
     let margin = 40
@@ -47,20 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // BG IMAGE
     context.drawImage(await bg, 0, 0, canvas.width, canvas.height)
-
-    // // Aside Icon
-    // if (image) {
-    //     try {
-    //         const icon = await loadImage(Array.isArray(image) ? image[0] : image)
-    //         context.drawImage(
-    //             icon,
-    //             canvas.width / 2 + canvas.width / 4 - 128,
-    //             canvas.height / 2 - 128 - margin,
-    //             256,
-    //             256
-    //         )
-    //     } catch {}
-    // }
 
     // BLUE BG OVER BG IMAGE
     context.fillStyle = 'rgba(0, 0, 0, 0.86)'
