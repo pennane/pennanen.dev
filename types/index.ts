@@ -9,6 +9,7 @@ export interface Project {
     pretext: string | null
     icon: string | null
     images: string[]
+    largeImage: string | null
     github: string | null
 }
 
@@ -26,6 +27,7 @@ export interface ProjectConfig {
     icon: string | null
     ignoreInListing?: boolean
     ignoreDate?: boolean
+    largeImage?: string
     images?: string[]
     pretext?: string
     github?: string

@@ -1,20 +1,22 @@
 import path from 'path'
 import fs from 'fs'
-import { createCanvas, loadImage, registerFont } from 'canvas'
-import { wrapText } from './util'
+import { createCanvas, Image, loadImage, registerFont } from 'canvas'
+import { drawImageProp, wrapText } from './util'
 import { Project } from '../types'
 
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Medium.ttf'), { family: 'Inter', weight: '300' })
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Bold.ttf'), { family: 'Inter', weight: '700' })
 
-const logoPath = fs.readFileSync(path.join(process.cwd(), 'public/icons/icon-white-128.png'))
-const logo = loadImage(logoPath)
-const darkLogoPath = fs.readFileSync(path.join(process.cwd(), 'public/icons/icon-black-128.png'))
-const darkLogo = loadImage(darkLogoPath)
-const bgPath = fs.readFileSync(path.join(process.cwd(), 'public/images/metabg.png'))
-const bg = loadImage(bgPath)
-const facePath = fs.readFileSync(path.join(process.cwd(), 'public/images/hl_pennanen.png'))
-const face = loadImage(facePath)
+const logoFile = fs.readFileSync(path.join(process.cwd(), 'public/icons/icon-white-128.png'))
+const logo = loadImage(logoFile)
+const darkLogoFile = fs.readFileSync(path.join(process.cwd(), 'public/icons/icon-black-128.png'))
+const darkLogo = loadImage(darkLogoFile)
+const bgFile = fs.readFileSync(path.join(process.cwd(), 'public/images/metabg.png'))
+const bg = loadImage(bgFile)
+const faceFile = fs.readFileSync(path.join(process.cwd(), 'public/images/hl_pennanen.png'))
+const face = loadImage(faceFile)
+const placeholderImg = fs.readFileSync(path.join(process.cwd(), 'public/images/placeholder.png'))
+const placeholder = loadImage(placeholderImg)
 
 async function computeMainPageImage({ title, description }: { title?: string; description?: string }): Promise<Buffer> {
     let width = 1200
@@ -85,7 +87,15 @@ async function computeMainPageImage({ title, description }: { title?: string; de
     return buffer
 }
 
-async function computeProjectImage({ title, description }: { title?: string; description?: string }): Promise<Buffer> {
+async function computeProjectImage({
+    title,
+    description,
+    image
+}: {
+    title?: string
+    description?: string
+    image?: Image
+}): Promise<Buffer> {
     let width = 1200
     let height = 630
     let margin = 40
@@ -113,8 +123,14 @@ async function computeProjectImage({ title, description }: { title?: string; des
     const canvas = createCanvas(width, height)
     const context = canvas.getContext('2d')
 
-    // BG IMAGE
-    context.drawImage(await bg, 0, 0, canvas.width, canvas.height)
+    context.imageSmoothingEnabled = true
+
+    // BG
+    if (image) {
+        drawImageProp(context, image, 0, 0, canvas.width, canvas.height)
+    } else {
+        context.drawImage(await bg, 0, 0, canvas.width, canvas.height)
+    }
 
     // BLACK BG OVER BG IMAGE
     context.fillStyle = 'rgba(0, 0, 0, 0.86)'
@@ -206,10 +222,23 @@ export async function generateProjectImage(project: Project) {
     if (!fs.existsSync(target)) {
         fs.mkdirSync(target)
     }
+
+    let icon = null
+    if (project.largeImage) {
+        try {
+            const imageFile = fs.readFileSync(
+                path.join(process.cwd(), 'public/sub/' + project.id + '/' + project.largeImage)
+            )
+            icon = await loadImage(imageFile)
+        } catch {}
+    }
+
     const image = await computeProjectImage({
         title: project.name || project.id,
-        description: project.description as string
+        description: project.description as string,
+        image: icon || undefined
     })
+
     const fileName = project.id.toLowerCase() + '.png'
     const directory = path.join(target, fileName)
     fs.writeFileSync(directory, image)
