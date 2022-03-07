@@ -17,8 +17,8 @@ interface SequentialProps {
 
 const SequentialAnimation = ({
     children,
-    initialDelay = 0,
-    delayBetween = 40,
+    initialDelay = 40,
+    delayBetween = 30,
     stopped: wait = false,
     ...props
 }: SequentialProps) => {

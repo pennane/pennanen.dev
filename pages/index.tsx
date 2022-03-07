@@ -5,6 +5,7 @@ import Projects from '../components/projects'
 import { generateMainPageImage } from '../lib/meta-image'
 import { getFilteredProjects } from '../lib/stuff'
 import { Project } from '../types'
+import Link from 'next/link'
 
 const description = 'Arttu Pennanen Web-like projects'
 
@@ -27,6 +28,9 @@ const Index = ({ projectsData, metaImage }: InferGetStaticPropsType<typeof getSt
             </header>
             <section>
                 <Projects projects={projectsData} />
+            </section>
+            <section className="all-link">
+                <Link href="/all">Open uncurated projects</Link>
             </section>
         </Layout>
     )

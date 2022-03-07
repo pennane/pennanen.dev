@@ -93,6 +93,16 @@ header {
     animation-iteration-count: 1;
 }
 
+.margin-top {
+    margin-top: 2rem;
+}
+
+.all-link {
+    text-align: center;
+    margin-top: 2rem;
+    text-decoration: underline;
+}
+
 @keyframes fadeIn {
     0% {
         opacity: 0;

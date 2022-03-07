@@ -43,6 +43,10 @@ async function computeMainPageImage({ title, description }: { title?: string; de
     // BG IMAGE
     context.drawImage(await bg, 0, 0, canvas.width, canvas.height)
 
+    // BLACK BG OVER BG IMAGE
+    context.fillStyle = 'rgba(255, 255, 255, 0.5)'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+
     // LOGO
     context.drawImage(await darkLogo, margin, margin, 32, 32)
     context.font = `${logoFontWeight} ${logoFontSize}pt Inter`
@@ -60,7 +64,7 @@ async function computeMainPageImage({ title, description }: { title?: string; de
             Array.isArray(title) ? title[0] : title,
             canvas.width / 2,
             squareY + margin + 170,
-            canvas.width / 2 - margin,
+            canvas.width / 1.25,
             headingLineHeight
         )
     }
@@ -76,9 +80,9 @@ async function computeMainPageImage({ title, description }: { title?: string; de
             Array.isArray(description) ? description[0] : description,
             canvas.width / 2,
             headingPosition
-                ? headingPosition.y + headingLineHeight * 1.4
-                : squareY + margin + 170 + headingLineHeight * 1.4,
-            canvas.width / 2 - margin,
+                ? headingPosition.y + headingLineHeight * 2
+                : squareY + margin + 170 + headingLineHeight * 2,
+            canvas.width / 1.25,
             textLineHeight
         )
     }
@@ -209,7 +213,7 @@ export async function generateMainPageImage<T extends { title: string; descripti
         description: data.description
     })
 
-    const fileName = data.title.replace(/[\ \.\-]/g, '_').toLowerCase() + '.jpg'
+    const fileName = data.title.replace(/[\|\ \.\-]/g, '_').toLowerCase() + '.jpg'
     const directory = path.join(target, fileName)
 
     fs.writeFileSync(directory, image)

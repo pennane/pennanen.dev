@@ -4,7 +4,7 @@ import SequentialAnimation from './sequential-animation'
 import { useState } from 'react'
 import { useTheme } from 'next-themes'
 
-const MainHeading = () => {
+const MainHeading = ({ text }: { text?: string }) => {
     const [splashImageLoaded, setSplashImageLoaded] = useState(false)
 
     return (
@@ -13,7 +13,7 @@ const MainHeading = () => {
                 animationKey="header"
                 childClass="fade-in"
                 once={true}
-                initialDelay={100}
+                initialDelay={0}
                 delayBetween={200}
                 animationDuration={800}
                 stopped={!splashImageLoaded}
@@ -30,7 +30,7 @@ const MainHeading = () => {
                     </div>
                 </div>
                 <div className={style['heading']}>
-                    <h1>Welcome</h1>
+                    <h1>{text || 'Welcome'}</h1>
                 </div>
             </SequentialAnimation>
         </div>
