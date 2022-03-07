@@ -10,5 +10,6 @@
         "en": "Construct 2 side scroller game",
         "fi": null
     },
-    "icon": "icon-114.png"
+    "icon": "icon-114.png",
+    "largeImage": "uggel.png"
 }

@@ -9,5 +9,6 @@
         "en": "Simulate lottery money loss",
         "fi": null
     },
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "largeImage": "lottery.png"
 }

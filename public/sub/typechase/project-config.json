@@ -10,5 +10,6 @@
         "fi": null
     },
     "icon": "icon.png",
-    "pretext": "A singleplayer typing speed game that stores progress in the browser."
+    "pretext": "A singleplayer typing speed game that stores progress in the browser.",
+    "largeImage": "typechaseoffline.png"
 }

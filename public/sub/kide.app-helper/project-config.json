@@ -16,5 +16,6 @@
         "example.jpg",
         "discord.jpg",
         "sotenoori.jpg"
-    ]
+    ],
+    "largeImage": "helper.png"
 }

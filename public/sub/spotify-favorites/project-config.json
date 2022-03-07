@@ -9,5 +9,6 @@
         "fi": null
     },
     "icon": "icon.png",
+    "largeImage": "spotify.png",
     "pretext": "Web application that shows what the user has been listening to the most. Sort of like Spotify Wrapped that can be accessed every day, and not just once a year. Built with vue.js. Utilizes netlify's serverless functions."
 }

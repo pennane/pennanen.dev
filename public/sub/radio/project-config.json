@@ -13,5 +13,6 @@
     "github": "https://github.com/Pennane/vinyl-display",
     "pretext": "A virtual vinyl collection. Can also be used as a song requesting tool for the occasional \"levyraati\" in Discord.",
     "date": "25.4.2021",
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "largeImage": "vinyl.png"
 }

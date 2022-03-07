@@ -10,5 +10,6 @@
         "en": "Convay's game of life as check boxes",
         "fi": null
     },
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "largeImage": "gameoflife.png"
 }

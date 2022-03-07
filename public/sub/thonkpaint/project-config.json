@@ -13,5 +13,6 @@
     "icon": null,
     "images": [
         "starrynight.jpg"
-    ]
+    ],
+    "largeImage": "starrynight.jpg"
 }

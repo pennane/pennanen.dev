@@ -10,5 +10,6 @@
         "fi": null
     },
     "icon": "icon.png",
-    "pretext": "A Minesweeper built with vue."
+    "pretext": "A Minesweeper built with vue.",
+    "largeImage": "minesweeper.png"
 }

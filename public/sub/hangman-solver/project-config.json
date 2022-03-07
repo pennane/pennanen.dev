@@ -11,6 +11,7 @@
     },
     "pretext": "Commandline application that outputs all the possible words from given options. Uses Finnish dictionary as the data set. Built with Typescript, and compiled with pkg to support windows, mac and linux operating systems..",
     "icon": "icon.png",
+    "largeImage": "hirsibuu.png",
     "images": [
         "https://raw.githubusercontent.com/Pennane/hirsipuu-solver/main/docs/example.png"
     ]

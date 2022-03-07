@@ -10,5 +10,6 @@
         "en": "Random animated art with changing music",
         "fi": null
     },
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "largeImage": "giorgi.png"
 }
