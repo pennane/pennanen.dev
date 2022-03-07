@@ -1,18 +1,7 @@
 import Image from 'next/image'
 import Layout from '../components/layout'
-import { getFilteredProjects } from '../lib/stuff'
-import { Project } from '../types'
 import style from '../styles/error.module.css'
 import Link from 'next/link'
-
-export const getStaticProps = async () => {
-    const projectsData: Project[] = getFilteredProjects()
-    return {
-        props: {
-            projectsData
-        }
-    }
-}
 
 const Error = () => {
     return (
