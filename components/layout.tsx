@@ -43,7 +43,12 @@ const Layout = ({
                 )}
 
                 <meta property="twitter:card" content="summary_large_image" />
-                <meta property="og:image" content="https://pennanen.dev/logo.jpg" />
+                <meta
+                    property="og:image"
+                    content={`/api/meta-image?${title ? encodeURIComponent('title=' + title + '&') : ''}${
+                        description ? encodeURIComponent('description=' + description + '&') : ''
+                    }`}
+                />
                 <meta property="twitter:image" content="https://pennanen.dev/logo.jpg" />
                 <meta property="twitter:url" content="https://pennanen.dev/" />
 
