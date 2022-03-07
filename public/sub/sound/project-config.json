@@ -15,5 +15,6 @@
     "images": [
         "example.jpg"
     ],
+    "largeImage": "example.jpg",
     "github": "https://github.com/Pennane/pennanen.dev/tree/main/public/sub/sound"
 }
