@@ -8,6 +8,7 @@ import linkStyle from '../styles/project-link.module.css'
 import { getProjectById, getProjectIds } from '../lib/stuff'
 import { isString, monthIndexToName } from '../lib/util'
 import { Project } from '../types'
+import { generateImage } from '../lib/meta-image'
 
 export const getStaticPaths: GetStaticPaths = async () => {
     const paths = getProjectIds()
@@ -17,24 +18,26 @@ export const getStaticPaths: GetStaticPaths = async () => {
     }
 }
 
-export const getStaticProps: GetStaticProps = ({ params }: GetStaticPropsContext) => {
+export const getStaticProps: GetStaticProps = async ({ params }: GetStaticPropsContext) => {
     if (!params || !isString(params.project)) return { notFound: true }
 
     const project = getProjectById(params.project)
 
     if (!project) return { notFound: true }
 
-    return { props: { project } }
+    const metaImage = await generateImage(project)
+
+    return { props: { project, metaImage } }
 }
 
-const ProjectPage = ({ project }: { project: Project }) => {
+const ProjectPage = ({ project, metaImage }: { project: Project; metaImage: string }) => {
     if (!project) return null
     project = project as Project
 
     const date = project.date ? new Date(project.date) : null
 
     return (
-        <Layout title={project.name} description={project.description || undefined}>
+        <Layout title={project.name} description={project.description || undefined} metaImage={metaImage || undefined}>
             <div className={style['project']}>
                 <header className={style['header']}>
                     <h1>{project.name}</h1>

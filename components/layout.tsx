@@ -9,11 +9,13 @@ export const siteTitle = 'Arttu Pennanen'
 const Layout = ({
     children,
     title,
-    description
+    description,
+    metaImage
 }: {
     children: React.ReactNode
     title?: string
     description?: string
+    metaImage?: string
 }) => {
     return (
         <div className="layout-container">
@@ -43,13 +45,20 @@ const Layout = ({
                 )}
 
                 <meta property="twitter:card" content="summary_large_image" />
-                <meta
-                    property="og:image"
-                    content={`/api/meta-image?${title ? encodeURIComponent('title=' + title + '&') : ''}${
-                        description ? encodeURIComponent('description=' + description + '&') : ''
-                    }`}
-                />
-                <meta property="twitter:image" content="https://pennanen.dev/logo.jpg" />
+
+                {metaImage && (
+                    <>
+                        <meta property="og:image" content={'/meta/' + metaImage} />
+                        <meta property="twitter:image" content={'/meta/' + metaImage} />
+                    </>
+                )}
+                {!metaImage && (
+                    <>
+                        <meta property="og:image" content="https://pennanen.dev/logo.jpg" />
+                        <meta property="twitter:image" content="https://pennanen.dev/logo.jpg" />
+                    </>
+                )}
+
                 <meta property="twitter:url" content="https://pennanen.dev/" />
 
                 <meta name="theme-color" content="#365abf"></meta>

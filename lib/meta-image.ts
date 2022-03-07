@@ -1,17 +1,20 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
 import path from 'path'
+import fs from 'fs'
 import { createCanvas, loadImage, registerFont } from 'canvas'
-import { wrapText } from '../../lib/util'
+import { wrapText } from './util'
+import { Project } from '../types'
 
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Medium.ttf'), { family: 'Inter', weight: '300' })
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Bold.ttf'), { family: 'Inter', weight: '700' })
 
-const logo = loadImage('https://pennanen.dev/icons/icon-white-128.png')
-const bg = loadImage('https://pennanen.dev/images/metabg.png')
-const face = loadImage('https://pennanen.dev/images/hl_pennanen.png')
+const logoPath = fs.readFileSync(path.join(process.cwd(), 'public/icons/icon-white-128.png'))
+const logo = loadImage(logoPath)
+const bgPath = fs.readFileSync(path.join(process.cwd(), 'public/images/metabg.png'))
+const bg = loadImage(bgPath)
+const facePath = fs.readFileSync(path.join(process.cwd(), 'public/images/hl_pennanen.png'))
+const face = loadImage(facePath)
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const { title, description } = req.query
+async function computeImage({ title, description }: { title?: string; description?: string }): Promise<Buffer> {
     let width = 1200
     let height = 630
     let margin = 40
@@ -54,13 +57,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     wrapText(context, 'pennanen.dev', margin + 32 + 10, margin - 2, canvas.width / 2 - 2 * margin, logoLineHeight)
 
     // TITLE
-
     if (title) {
         context.font = `${headingFontWeight} ${headingFontSize}pt Inter`
         context.fillStyle = '#4980ff'
         context.textAlign = 'left'
         context.textBaseline = 'top'
-
         headingPosition = wrapText(
             context,
             Array.isArray(title) ? title[0] : title,
@@ -77,7 +78,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         context.fillStyle = '#9fbcff'
         context.textAlign = 'left'
         context.textBaseline = 'top'
-
         wrapText(
             context,
             Array.isArray(description) ? description[0] : description,
@@ -106,8 +106,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         footerLineHeight
     )
     const buffer = canvas.toBuffer('image/png')
+    return buffer
+}
 
-    res.setHeader('Cache-Control', 's-maxage=31536000, stale-while-revalidate')
-    res.setHeader('Content-Type', 'image/png')
-    res.end(buffer)
+export async function generateImage(project: Project) {
+    const target = './public/meta'
+    if (!fs.existsSync(target)) {
+        fs.mkdirSync(target)
+    }
+    const image = await computeImage({ title: project.name || project.id, description: project.description as string })
+    const fileName = project.id.toLowerCase() + '.png'
+    const directory = path.join(target, fileName)
+    fs.writeFileSync(directory, image)
+
+    return fileName
 }
