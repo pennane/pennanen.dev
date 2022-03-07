@@ -73,7 +73,7 @@ const song = {
         [f.E2, f.GS2, f.B2, f.FS3],
         [f.FS2, f.CS3, f.FS3, f.AS3, f.E4, f.G4]
     ],
-    step: 320,
+    step: 110,
     playingFunction: async (b, step, next) => {
         await intro(b, step, next)
         await verse(b, step, next)
