@@ -18,14 +18,38 @@ const Layout = ({
     return (
         <div className="layout-container">
             <Head>
-                <title>{title ? `${title} | ${siteTitle}` : siteTitle}</title>
-                {description && (
+                {title && (
                     <>
-                        <meta name="og:description" content={description} />
-                        <meta name="description" content={description} />
+                        <title>{`${title} | ${siteTitle}`}</title>
+                        <meta name="title" content={`${title} | ${siteTitle}`} />
+                        <meta property="og:title" content={`${title} | ${siteTitle}`} />
+                        <meta name="twitter:title" content={`${title} | ${siteTitle}`} />
                     </>
                 )}
-                {/* <meta name="theme-color" content="#1c4ed8"></meta> */}
+                {!title && (
+                    <>
+                        <title>{siteTitle}</title>
+                        <meta name="title" content={siteTitle} />
+                        <meta property="og:title" content={siteTitle} />
+                        <meta name="twitter:title" content={siteTitle} />
+                    </>
+                )}
+                {description && (
+                    <>
+                        <meta name="description" content={description} />
+                        <meta property="og:description" content={description} />
+                        <meta name="twitter:description" content={description} />
+                    </>
+                )}
+
+                <meta property="twitter:card" content="summary_large_image" />
+                <meta property="og:image" content="https://pennanen.dev/logo.jpg" />
+                <meta property="twitter:image" content="https://pennanen.dev/logo.jpg" />
+                <meta property="twitter:url" content="https://pennanen.dev/" />
+
+                <meta name="theme-color" content="#365abf"></meta>
+                <meta name="robots" content="index, follow"></meta>
+                <meta name="author" content="Arttu Pennanen"></meta>
                 <link rel="icon" href="/favicon.ico" />
                 <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
             </Head>
