@@ -38,3 +38,7 @@
     object-fit: contain;
     margin-bottom: 1rem;
 }
+
+.insert:first-of-type {
+    margin-top: 1rem;
+}
