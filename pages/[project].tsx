@@ -8,7 +8,7 @@ import linkStyle from '../styles/project-link.module.css'
 import { getProjectById, getProjectIds } from '../lib/stuff'
 import { isString, monthIndexToName } from '../lib/util'
 import { Project } from '../types'
-import { generateImage } from '../lib/meta-image'
+import { generateProjectImage } from '../lib/meta-image'
 
 export const getStaticPaths: GetStaticPaths = async () => {
     const paths = getProjectIds()
@@ -25,7 +25,7 @@ export const getStaticProps: GetStaticProps = async ({ params }: GetStaticPropsC
 
     if (!project) return { notFound: true }
 
-    const metaImage = await generateImage(project)
+    const metaImage = await generateProjectImage(project)
 
     return { props: { project, metaImage } }
 }
