@@ -1,0 +1,24 @@
+{
+    "url": "https://helpotus-lahellasi.github.io/",
+    "date": "11.3.2022",
+    "name": {
+        "en": "Helpotus lähelläsi",
+        "fi": "Helpotus lähelläsi"
+    },
+    "description": {
+        "en": "Took part in a college project to create a lavatory map application",
+        "fi": null
+    },
+    "github": null,
+    "pretext": "Two friends and I built together a lavatory mapping website as a part of web technology course at Metropolia University of Applied Sciences. The website uses only plain Javascript as opposed to React-like libraries. ",
+    "icon": "logo.png",
+    "largeImage": "hl.png",
+    "images": [
+        "hl0.jpg",
+        "hl1.jpg",
+        "hl2.png",
+        "hl3.png"
+    ],
+    "notAuthor": true,
+    "ignoreInListing": true
+}
