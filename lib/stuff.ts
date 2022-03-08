@@ -31,7 +31,8 @@ export const getProjectById = (id: string): Project | null => {
             images: [],
             largeImage: null,
             ignoreInListing: true,
-            github: null
+            github: null,
+            notAuthor: null
         }
     }
 
@@ -60,7 +61,8 @@ export const getProjectById = (id: string): Project | null => {
         images: data.images || [],
         largeImage: data.largeImage || null,
         ignoreInListing: !!data.ignoreInListing,
-        github: data.github || null
+        github: data.github || null,
+        notAuthor: data.notAuthor || null
     }
 }
 

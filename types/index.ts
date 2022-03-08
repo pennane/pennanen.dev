@@ -11,6 +11,7 @@ export interface Project {
     images: string[]
     largeImage: string | null
     github: string | null
+    notAuthor: boolean | null
 }
 
 export interface ProjectConfig {
@@ -31,4 +32,5 @@ export interface ProjectConfig {
     images?: string[]
     pretext?: string
     github?: string
+    notAuthor?: boolean
 }

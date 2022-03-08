@@ -58,7 +58,7 @@ const ProjectPage = ({ project, metaImage }: { project: Project; metaImage: stri
                             src={project.icon ? '/sub/' + project.id + '/' + project.icon : '/images/placeholder.png'}
                         />
                     </div>
-                    {project.url && project.url.includes('github') && (
+                    {project.url && project.url.includes('github.com') && (
                         <a href={project.url} rel="noreferrer">
                             View source <span className={linkStyle['date']}>[{project.url}]</span>
                         </a>
@@ -68,7 +68,7 @@ const ProjectPage = ({ project, metaImage }: { project: Project; metaImage: stri
                             Launch project <span className={linkStyle['date']}>[{project.url}]</span>
                         </a>
                     )}
-                    {project.url && !project.url.includes('github') && !project.url.includes('pennanen.dev') && (
+                    {project.url && !project.url.includes('github.com') && !project.url.includes('pennanen.dev') && (
                         <a href={project.url} rel="noreferrer">
                             Open outbound link <span className={linkStyle['date']}>[{project.url}]</span>
                         </a>

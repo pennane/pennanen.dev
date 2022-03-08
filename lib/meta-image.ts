@@ -15,8 +15,6 @@ const bgFile = fs.readFileSync(path.join(process.cwd(), 'public/images/metabg.pn
 const bg = loadImage(bgFile)
 const faceFile = fs.readFileSync(path.join(process.cwd(), 'public/images/hl_pennanen.png'))
 const face = loadImage(faceFile)
-const placeholderImg = fs.readFileSync(path.join(process.cwd(), 'public/images/placeholder.png'))
-const placeholder = loadImage(placeholderImg)
 
 async function computeMainPageImage({ title, description }: { title?: string; description?: string }): Promise<Buffer> {
     let width = 1200
@@ -94,11 +92,13 @@ async function computeMainPageImage({ title, description }: { title?: string; de
 async function computeProjectImage({
     title,
     description,
-    image
+    image,
+    notAuthor
 }: {
     title?: string
     description?: string
     image?: Image
+    notAuthor: boolean | null
 }): Promise<Buffer> {
     let width = 1200
     let height = 630
@@ -182,20 +182,22 @@ async function computeProjectImage({
     }
 
     // FOOTER
+    if (!notAuthor) {
+        context.font = `${footerFontWeight} ${footerFontSize}pt Inter`
+        context.fillStyle = 'rgba(255, 255, 255, 0.95)'
+        context.textAlign = 'left'
+        context.textBaseline = 'top'
+        context.drawImage(await face, margin, canvas.height - 3 * margin, 80, 80)
+        wrapText(
+            context,
+            'Arttu Pennanen',
+            squareX + margin + 80 + margin / 2,
+            canvas.height - 2.35 * margin,
+            canvas.width / 2 - margin,
+            footerLineHeight
+        )
+    }
 
-    context.font = `${footerFontWeight} ${footerFontSize}pt Inter`
-    context.fillStyle = 'rgba(255, 255, 255, 0.95)'
-    context.textAlign = 'left'
-    context.textBaseline = 'top'
-    context.drawImage(await face, margin, canvas.height - 3 * margin, 80, 80)
-    wrapText(
-        context,
-        'Arttu Pennanen',
-        squareX + margin + 80 + margin / 2,
-        canvas.height - 2.35 * margin,
-        canvas.width / 2 - margin,
-        footerLineHeight
-    )
     const buffer = canvas.toBuffer('image/jpeg')
     return buffer
 }
@@ -240,7 +242,8 @@ export async function generateProjectImage(project: Project) {
     const image = await computeProjectImage({
         title: project.name || project.id,
         description: project.description as string,
-        image: icon || undefined
+        image: icon || undefined,
+        notAuthor: project.notAuthor
     })
 
     const fileName = project.id.toLowerCase() + '.png'
