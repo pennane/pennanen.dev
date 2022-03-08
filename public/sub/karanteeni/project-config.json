@@ -1,5 +1,5 @@
 {
-    "url": "http://karanteeni.net/",
+    "url": "https://karanteeni.net/",
     "date": "1.8.2019",
     "name": {
         "en": "Karanteeni Website",
@@ -10,6 +10,6 @@
         "fi": null
     },
     "icon": "icon.png",
-    "pretext": "A website built for the Finnish Minecraft community, Karanteeni. Built with Typescript and React (next.js)",
+    "pretext": "A website built for the Finnish Minecraft community Karanteeni. Built with Typescript and React (next.js)",
     "github": "https://github.com/Karanteeni/karanteeni.github.io"
 }

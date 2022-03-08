@@ -14,5 +14,6 @@
     "largeImage": "hirsibuu.png",
     "images": [
         "https://raw.githubusercontent.com/Pennane/hirsipuu-solver/main/docs/example.png"
-    ]
+    ],
+    "ignoreInListing": true
 }

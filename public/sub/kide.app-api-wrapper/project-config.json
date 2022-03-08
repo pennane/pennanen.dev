@@ -14,5 +14,5 @@
     "images": [
         "example.jpg"
     ],
-    "ignoreInListing": false
+    "ignoreInListing": true
 }

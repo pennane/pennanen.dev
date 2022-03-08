@@ -30,7 +30,7 @@ const Index = ({ projectsData, metaImage }: InferGetStaticPropsType<typeof getSt
                 <Projects projects={projectsData} />
             </section>
             <section className="all-link">
-                <Link href="/all">Open uncurated list of projects</Link>
+                <Link href="/uncurated">Open list of uncurated projects</Link>
             </section>
         </Layout>
     )

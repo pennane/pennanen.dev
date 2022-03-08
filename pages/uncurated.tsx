@@ -22,7 +22,7 @@ const All = ({ projectsData, metaImage }: InferGetStaticPropsType<typeof getStat
     return (
         <Layout description={description} metaImage={metaImage}>
             <section className="margin-top">
-                <Projects projects={[...projectsData].reverse()} />
+                <Projects projects={projectsData.filter((project) => project.ignoreInListing)} />
             </section>
         </Layout>
     )

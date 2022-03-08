@@ -6,11 +6,11 @@
         "fi": "Helpotus lähelläsi"
     },
     "description": {
-        "en": "Took part in a college project to create a lavatory map application",
+        "en": "Took part in a college project to create an application to find nearby restrooms",
         "fi": null
     },
     "github": null,
-    "pretext": "Two friends and I built together a lavatory mapping website as a part of web technology course at Metropolia University of Applied Sciences. The website uses only plain Javascript as opposed to React-like libraries. ",
+    "pretext": "Two friends and I built together a website for finding nearby restrooms as a part of web technology course at Metropolia University of Applied Sciences. The website uses only plain Javascript as opposed to React-like libraries. ",
     "icon": "logo.png",
     "largeImage": "hl.png",
     "images": [

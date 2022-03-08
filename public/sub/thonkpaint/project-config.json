@@ -14,5 +14,6 @@
     "images": [
         "starrynight.jpg"
     ],
-    "largeImage": "starrynight.jpg"
+    "largeImage": "starrynight.jpg",
+    "ignoreInListing": true
 }
