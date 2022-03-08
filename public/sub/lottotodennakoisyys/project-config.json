@@ -2,13 +2,14 @@
     "url": null,
     "date": "1.11.2018",
     "name": {
-        "en": "Lottery Probability Simulator",
+        "en": "Lottery Simulator",
         "fi": null
     },
     "description": {
-        "en": "Simulate lottery money loss",
+        "en": "Lottery simulator with same probabilities as the Finland national lottery",
         "fi": null
     },
+    "pretext": "Simulate money loss.",
     "icon": "icon.png",
     "largeImage": "lottery.png"
 }

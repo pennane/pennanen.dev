@@ -10,6 +10,7 @@
         "en": "Homage to 'Sakarin villapaitapeli'",
         "fi": null
     },
-    "icon": "icon.png",
-    "largeImage": "juti.png"
+    "pretext": "Nyt rillataan. Today we grillings.",
+    "icon": "logo.png",
+    "largeImage": "rilli.png"
 }
