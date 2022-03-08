@@ -206,9 +206,9 @@ export async function generateMainPageImage<T extends { title: string; descripti
     data: T
 ): Promise<string> {
     const target = './public/meta'
-    if (!fs.existsSync(target)) {
+    try {
         fs.mkdirSync(target)
-    }
+    } catch {}
 
     const image = await computeMainPageImage({
         title: data.title || 'pennanen.dev',
