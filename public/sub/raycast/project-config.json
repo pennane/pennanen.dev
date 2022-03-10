@@ -1,5 +1,5 @@
 {
-    "url": null,
+    "url": "https://raycast.vercel.app/",
     "date": "10.3.2022",
     "ignoreDate": false,
     "name": {
@@ -7,7 +7,7 @@
         "fi": null
     },
     "description": {
-        "en": "Raycast testing",
+        "en": "Experimenting with raycasting",
         "fi": null
     },
     "icon": "logo.jpg",
