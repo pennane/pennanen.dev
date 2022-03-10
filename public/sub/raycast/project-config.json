@@ -1,0 +1,15 @@
+{
+    "url": null,
+    "date": "10.3.2022",
+    "ignoreDate": false,
+    "name": {
+        "en": "Raycasting",
+        "fi": null
+    },
+    "description": {
+        "en": "Raycast testing",
+        "fi": null
+    },
+    "icon": "logo.jpg",
+    "largeImage": "raycast.png"
+}
