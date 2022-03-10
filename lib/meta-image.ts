@@ -13,8 +13,8 @@ const darkLogoFile = fs.readFileSync(path.join(process.cwd(), 'public/icons/icon
 const darkLogo = loadImage(darkLogoFile)
 const bgFile = fs.readFileSync(path.join(process.cwd(), 'public/images/metabg.png'))
 const bg = loadImage(bgFile)
-const faceFile = fs.readFileSync(path.join(process.cwd(), 'public/images/hl_pennanen.png'))
-const face = loadImage(faceFile)
+// const faceFile = fs.readFileSync(path.join(process.cwd(), 'public/images/hl_pennanen.png'))
+// const face = loadImage(faceFile)
 
 async function computeMainPageImage({ title, description }: { title?: string; description?: string }): Promise<Buffer> {
     let width = 1200
@@ -187,11 +187,11 @@ async function computeProjectImage({
         context.fillStyle = 'rgba(255, 255, 255, 0.95)'
         context.textAlign = 'left'
         context.textBaseline = 'top'
-        context.drawImage(await face, margin, canvas.height - 3 * margin, 80, 80)
+        // context.drawImage(await face, margin, canvas.height - 3 * margin, 80, 80)
         wrapText(
             context,
             'Arttu Pennanen',
-            squareX + margin + 80 + margin / 2,
+            margin,
             canvas.height - 2.35 * margin,
             canvas.width / 2 - margin,
             footerLineHeight
