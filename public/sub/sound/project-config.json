@@ -5,13 +5,13 @@
         "fi": null
     },
     "description": {
-        "en": "Audiovisual frequencies",
+        "en": "Generating audiovisual feedback with Javascript",
         "fi": null
     },
     "ignoreInListing": false,
     "ignoreDate": false,
     "icon": "icon.jpg",
-    "pretext": "Playing around with javascript audio context. Generating sounds, and playing simple songs.",
+    "pretext": "Playing around with javascript audio context. Generating sounds, and playing simple jingles from files.",
     "images": [
         "example.jpg"
     ],

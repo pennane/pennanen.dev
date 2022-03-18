@@ -2,7 +2,6 @@ import style from '../styles/main-header.module.css'
 import Image from 'next/image'
 import SequentialAnimation from './sequential-animation'
 import { useState } from 'react'
-import { useTheme } from 'next-themes'
 
 const MainHeading = ({ text }: { text?: string }) => {
     const [splashImageLoaded, setSplashImageLoaded] = useState(false)
@@ -24,7 +23,7 @@ const MainHeading = ({ text }: { text?: string }) => {
                             height={350}
                             width={350}
                             src="/images/gradient.png"
-                            alt="multicolored splash"
+                            alt=""
                             onLoadingComplete={() => setSplashImageLoaded(true)}
                         />
                     </div>

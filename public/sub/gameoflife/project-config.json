@@ -11,5 +11,6 @@
         "fi": null
     },
     "icon": "icon.png",
-    "largeImage": "gameoflife.png"
+    "largeImage": "gameoflife.png",
+    "ignoreInListing": true
 }

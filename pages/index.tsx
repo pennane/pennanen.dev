@@ -7,7 +7,8 @@ import { getFilteredProjects } from '../lib/stuff'
 import { Project } from '../types'
 import Link from 'next/link'
 
-const description = 'Arttu Pennanen Web-like projects'
+const description =
+    'Arttu Pennanen Web projects porfolio. Applications built with Typescript, Javascript, Node, Deno, React and Vue.'
 
 export const getStaticProps = async () => {
     const projectsData: Project[] = getFilteredProjects()

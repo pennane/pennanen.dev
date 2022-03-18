@@ -5,7 +5,7 @@ import { generateMainPageImage } from '../lib/meta-image'
 import { getProjects } from '../lib/stuff'
 import { Project } from '../types'
 
-const description = 'Every single web-project. Unfiltered and uncurated. Functionality not guaranteed.'
+const description = 'All of the prior Web projects. Unfiltered and uncurated. Functionality not guaranteed.'
 
 export const getStaticProps = async () => {
     const projectsData: Project[] = getProjects()

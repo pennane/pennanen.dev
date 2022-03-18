@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 const Error = () => {
     return (
-        <Layout description="Arttu Pennanen Web-like projects">
+        <Layout>
             <header className={style['header']}>
                 <h1>404 - Not found</h1>
             </header>
