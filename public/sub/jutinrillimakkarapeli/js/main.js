@@ -1,15 +1,20 @@
 let started = false
 
-let sounds = {
+const input1 = document.getElementById('input1')
+const input2 = document.getElementById('input2')
+const input3 = document.getElementById('input3')
+const gameImage = document.getElementById('gameImage')
+
+const sounds = {
     start: new Audio('sound/alku.mp3'),
     give: new Audio('sound/anna.mp3'),
-    yes: new Audio('sound/joo.mp3'),
-    no: new Audio('sound/ei.mp3')
+    accept: new Audio('sound/joo.mp3'),
+    deny: new Audio('sound/ei.mp3')
 }
 
-const play = (s) => {
+function playSound(sound) {
     try {
-        s.play()
+        sound.play()
     } catch (err) {}
 }
 
@@ -17,72 +22,96 @@ window.addEventListener('click', () => {
     if (started) return
     started = true
     document.getElementById('cover').style.display = 'none'
-    play(sounds.start)
+    playSound(sounds.start)
 })
 
-let buttons = document.querySelectorAll('.game')
-buttons.forEach((button) => button.addEventListener('click', game))
+const buttons = document.querySelectorAll('.game-inputs a')
+for (const button of buttons) {
+    button.addEventListener('click', handleGameState)
+}
 
-function game(event) {
-    let val = event.target.id
-    if (val == 'aloitus') {
-        document.getElementById('aloitus').innerHTML = 'hmmm anna jutille makkara'
-        document.getElementById('aloitus').id = 'placeholder1'
-        document.getElementById('kuvituskuva').src = 'img/ahm.jpg'
+function begin() {
+    input1.innerHTML = 'hmmm anna jutille makkara'
+    input2.innerHTML = 'joo'
+    input3.innerHTML = 'en'
 
-        document.getElementById('aloitus2').innerHTML = 'joo'
-        document.getElementById('aloitus2').id = 'joo'
+    input1.setAttribute('data-state-id', '')
+    input2.setAttribute('data-state-id', 'acceptState')
+    input3.setAttribute('data-state-id', 'denyState')
 
-        document.getElementById('aloitus3').innerHTML = 'en'
-        document.getElementById('aloitus3').id = 'ei'
+    gameImage.src = 'img/ahm.jpg'
+    playSound(sounds.give)
+}
 
-        play(sounds.give)
-    } else if (val == 'joo') {
-        document.getElementById('joo').innerHTML = ''
-        document.getElementById('ei').innerHTML = ''
-        document.getElementById('placeholder1').innerHTML = ''
+function accept() {
+    input1.innerHTML = ''
+    input2.innerHTML = ''
+    input3.innerHTML = ''
 
-        document.getElementById('joo').id = 'placeholder2'
-        document.getElementById('ei').id = 'placeholder3'
-        document.getElementById('placeholder1').id = 'loppuish'
+    input1.setAttribute('data-state-id', '')
+    input2.setAttribute('data-state-id', '')
+    input3.setAttribute('data-state-id', '')
 
-        document.getElementById('kuvituskuva').src = 'img/happy.jpg'
-        play(sounds.yes)
-        setTimeout(function () {
-            jatka()
-        }, 2700)
-    } else if (val == 'ei') {
-        document.getElementById('joo').innerHTML = ''
-        document.getElementById('ei').innerHTML = ''
-        document.getElementById('placeholder1').innerHTML = ''
-        document.getElementById('joo').id = 'placeholder2'
-        document.getElementById('ei').id = 'placeholder3'
-        document.getElementById('placeholder1').id = 'loppuish'
+    gameImage.src = 'img/happy.jpg'
 
-        document.getElementById('kuvituskuva').src = 'img/sad.jpg'
-        play(sounds.no)
-        setTimeout(function () {
-            jatka()
-        }, 2700)
-    }
+    playSound(sounds.accept)
 
-    function jatka() {
-        let sound1 = new Audio('sound/alku.mp3')
-        play(sounds.start)
-        document.getElementById('loppuish').innerHTML = 'Aloita peli'
-        document.getElementById('loppuish').id = 'aloitus'
-        document.getElementById('kuvituskuva').src = 'img/fas.jpg'
-        document.getElementById('placeholder2').id = 'aloitus2'
-        document.getElementById('placeholder3').id = 'aloitus3'
+    setTimeout(function () {
+        end()
+    }, 2700)
+}
+
+function deny() {
+    input1.innerHTML = ''
+    input2.innerHTML = ''
+    input3.innerHTML = ''
+
+    input1.setAttribute('data-state-id', '')
+    input2.setAttribute('data-state-id', '')
+    input3.setAttribute('data-state-id', '')
+
+    gameImage.src = 'img/sad.jpg'
+
+    playSound(sounds.deny)
+
+    setTimeout(function () {
+        end()
+    }, 2700)
+}
+
+function end() {
+    input1.innerHTML = 'Aloita peli'
+    input2.innerHTML = ''
+    input3.innerHTML = ''
+
+    input1.setAttribute('data-state-id', 'beginState')
+    input2.setAttribute('data-state-id', '')
+    input3.setAttribute('data-state-id', '')
+
+    gameImage.src = 'img/fas.jpg'
+
+    playSound(sounds.start)
+}
+
+function handleGameState(event) {
+    console.log(event)
+    const gameState = event.target.dataset.stateId
+    switch (gameState) {
+        case 'beginState':
+            begin()
+            break
+        case 'acceptState':
+            accept()
+            break
+        case 'denyState':
+            deny()
+            break
     }
 }
 
-if (window.location.hash) {
-    let hash = window.location.hash
-    if (hash == '#easteregg') {
-        document.body.style.backgroundImage = "url('img/sad.gif')"
-        document.body.style.backgroundRepeat = 'repeat'
-        document.body.style.animation = 'huerotation 1s linear infinite'
-        document.body.style.WebkitAnimation = 'huerotation 1s linear infinite'
-    }
+if (window.location.hash && window.location.hash == '#easteregg') {
+    document.body.style.backgroundImage = "url('img/sad.gif')"
+    document.body.style.backgroundRepeat = 'repeat'
+    document.body.style.animation = 'huerotation 1s linear infinite'
+    document.body.style.WebkitAnimation = 'huerotation 1s linear infinite'
 }
