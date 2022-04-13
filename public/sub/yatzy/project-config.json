@@ -11,5 +11,9 @@
     },
     "icon": "icon.png",
     "largeImage": "yatzy.png",
+    "images": [
+        "y1.jpg",
+        "y2.jpg"
+    ],
     "pretext": "Local single or two player traditional yatzy game built with vue.js. With appearance imitates the, now lost to the internet, Aapeli Yatzy."
 }

@@ -14,5 +14,11 @@
     "pretext": "A virtual vinyl collection. Can also be used as a song requesting tool for the occasional \"levyraati\" in Discord.",
     "date": "25.4.2021",
     "icon": "icon.png",
-    "largeImage": "vinyl.png"
+    "largeImage": "vinyl.png",
+    "images": [
+        "1.jpg",
+        "2.jpg",
+        "3.jpg",
+        "4.jpg"
+    ]
 }

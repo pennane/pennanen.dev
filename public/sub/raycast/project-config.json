@@ -11,5 +11,11 @@
         "fi": null
     },
     "icon": "logo.jpg",
-    "largeImage": "raycast.png"
+    "largeImage": "raycast.png",
+    "images": [
+        "rc1.jpg",
+        "rc2.jpg",
+        "rc3.jpg",
+        "rc4.jpg"
+    ]
 }

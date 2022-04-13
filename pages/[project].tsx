@@ -84,8 +84,10 @@ const ProjectPage = ({ project, metaImage }: { project: Project; metaImage: stri
                     <section>
                         {project.images.map((url, i) => (
                             <div className={style['insert']} key={project.id + i}>
-                                {url.includes('://') && <img src={url} alt="" />}
-                                {!url.includes('://') && <img src={'/sub/' + project.id + '/' + url} alt="" />}
+                                {url.includes('://') && <img src={url} alt="" loading="lazy" />}
+                                {!url.includes('://') && (
+                                    <img src={'/sub/' + project.id + '/' + url} alt="" loading="lazy" />
+                                )}
                             </div>
                         ))}
                     </section>
