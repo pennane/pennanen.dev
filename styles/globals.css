@@ -11,7 +11,7 @@
 }
 
 [data-theme='dark'] {
-    --main-background-color: #0d0d0d;
+    --main-background-color: #000322;
     --title-color: white;
     --title-color-invert: white;
     --text-color: #b7bcc3;
