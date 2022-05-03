@@ -9,6 +9,7 @@
         "en": "Traditional minesweeper",
         "fi": null
     },
+    "ignoreInListing": true,
     "icon": "icon.png",
     "pretext": "Conventional minesweeper built with vue.js",
     "largeImage": "minesweeper.png",

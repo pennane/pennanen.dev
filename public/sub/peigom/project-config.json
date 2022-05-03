@@ -10,5 +10,6 @@
     },
     "icon": "icon.png",
     "largeImage": "peigom.png",
+    "ignoreInListing": true,
     "pretext": "Eternity project filled with spaghetti code. A discord bot that has acquired acknowledgement among friends. Has built in music playback that can be a rare resource nowadays."
 }
