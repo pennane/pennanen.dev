@@ -10,7 +10,7 @@
         "fi": null
     },
     "pretext": "As a part of a game development course we created a space inspired runner game where the protagonist has to escape earth and find a peaceful new home. Developed in Unity using C#.",
-    "ignoreInListing": false,
+    "ignoreInListing": true,
     "ignoreDate": false,
     "icon": "pluto.png",
     "images": [

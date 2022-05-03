@@ -1,7 +1,7 @@
 {
     "url": null,
     "date": "15.10.2019",
-    "ignoreDate": true,
+    "ignoreDate": false,
     "name": {
         "en": "a clock",
         "fi": null

@@ -1,7 +1,7 @@
 {
     "url": null,
     "date": "14.8.2019",
-    "ignoreDate": true,
+    "ignoredate": false,
     "name": {
         "en": "Raymarching",
         "fi": null

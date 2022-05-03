@@ -1,7 +1,7 @@
 {
     "url": null,
     "date": "4.11.2020",
-    "ignoreDate": true,
+    "ignoredate": false,
     "name": {
         "en": "Air Surveillance narration",
         "fi": null

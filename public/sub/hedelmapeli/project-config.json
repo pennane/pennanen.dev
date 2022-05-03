@@ -1,7 +1,7 @@
 {
     "url": null,
     "date": "14.10.2018",
-    "ignoreDate": true,
+    "ignoredate": false,
     "name": {
         "en": "Slots machine",
         "fi": null

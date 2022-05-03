@@ -1,7 +1,7 @@
 {
     "url": null,
     "date": "1.5.2020",
-    "ignoreDate": true,
+    "ignoredate": false,
     "name": {
         "en": "Wordsnack word finder",
         "fi": null

@@ -1,7 +1,7 @@
 {
     "url": null,
     "date": "7.9.2018",
-    "ignoreDate": true,
+    "ignoredate": false,
     "name": {
         "en": "Color perception",
         "fi": null

@@ -1,7 +1,7 @@
 {
     "url": null,
     "date": "1.6.2018",
-    "ignoreDate": true,
+    "ignoredate": false,
     "name": {
         "en": "Juti's Grilling Game",
         "fi": null
