@@ -21,5 +21,6 @@
         "5.jpg",
         "6.jpg"
     ],
-    "largeImage": "4.jpg"
+    "largeImage": "4.jpg",
+    "notAuthor": true
 }
