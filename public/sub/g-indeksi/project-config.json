@@ -17,5 +17,6 @@
         "g1.jpg",
         "g2.jpg",
         "g3.jpg"
-    ]
+    ],
+    "ignoreInListing": true
 }

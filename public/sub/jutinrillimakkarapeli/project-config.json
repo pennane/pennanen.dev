@@ -12,5 +12,6 @@
     },
     "pretext": "Nyt rillataan. Today we grillings.",
     "icon": "logo.png",
-    "largeImage": "rilli.png"
+    "largeImage": "rilli.png",
+    "ignoreInListing": true
 }

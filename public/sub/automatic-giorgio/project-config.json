@@ -11,5 +11,6 @@
         "fi": null
     },
     "icon": "icon.png",
-    "largeImage": "giorgi.png"
+    "largeImage": "giorgi.png",
+    "ignoreInListing": true
 }

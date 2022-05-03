@@ -5,10 +5,10 @@
         "en": "Peigom"
     },
     "description": {
-        "en": "Hardwired Discord multi-utility bot",
+        "en": "Hardwired multi-utility Discord bot",
         "fi": null
     },
     "icon": "icon.png",
     "largeImage": "peigom.png",
-    "pretext": "Eternity project, full of beaufitul spaghetti. A discord bot that has acquired fame among friends. Has music bot functionality that can be a rare resource these days."
+    "pretext": "Eternity project filled with spaghetti code. A discord bot that has acquired acknowledgement among friends. Has built in music playback that can be a rare resource nowadays."
 }

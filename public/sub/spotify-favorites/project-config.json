@@ -5,7 +5,7 @@
         "en": "Spotify Favorites"
     },
     "description": {
-        "en": "Spotify listening history analytics",
+        "en": "Spotify listening analytics",
         "fi": null
     },
     "icon": "icon.png",
@@ -15,5 +15,5 @@
         "sp2.jpg",
         "sp3.jpg"
     ],
-    "pretext": "Web application that shows what the user has been listening to the most. Sort of like Spotify Wrapped that can be accessed every day, and not just once a year. Built with vue.js. Utilizes netlify's serverless functions."
+    "pretext": "Web application showing what the user has been listening to the most. Spotify Wrapped that can be accessed daily."
 }

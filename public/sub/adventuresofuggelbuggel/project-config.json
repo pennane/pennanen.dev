@@ -11,5 +11,6 @@
         "fi": null
     },
     "icon": "uggellogo.png",
-    "largeImage": "uggel.png"
+    "largeImage": "uggel.png",
+    "ignoreInListing": true
 }

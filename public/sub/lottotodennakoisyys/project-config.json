@@ -11,5 +11,6 @@
     },
     "pretext": "Simulate money loss.",
     "icon": "icon.png",
-    "largeImage": "lottery.png"
+    "largeImage": "lottery.png",
+    "ignoreInListing": true
 }
