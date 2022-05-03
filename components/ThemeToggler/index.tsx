@@ -1,5 +1,5 @@
 import { useTheme } from 'next-themes'
-import style from '../styles/theme-toggler.module.css'
+import style from './themetoggler.module.css'
 import { faMoon } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 

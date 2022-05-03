@@ -1,4 +1,4 @@
-import style from '../styles/background-lines.module.css'
+import style from './backgroundlines.module.css'
 
 const BackgroundLines = () => {
     return (

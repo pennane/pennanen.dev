@@ -1,6 +1,6 @@
-import style from '../styles/main-header.module.css'
+import style from './mainheading.module.css'
 import Image from 'next/image'
-import SequentialAnimation from './sequential-animation'
+import SequentialAnimation from '../../SequentialAnimation'
 import { useState } from 'react'
 
 const MainHeading = ({ text }: { text?: string }) => {
@@ -10,7 +10,6 @@ const MainHeading = ({ text }: { text?: string }) => {
         <div className={style['container']}>
             <SequentialAnimation
                 animationKey="header"
-                childClass="fade-in"
                 once={true}
                 initialDelay={0}
                 delayBetween={200}

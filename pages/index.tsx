@@ -1,17 +1,17 @@
 import type { InferGetStaticPropsType } from 'next'
-import Layout from '../components/layout'
-import MainHeading from '../components/main-header'
-import Projects from '../components/projects'
+import Layout from '../components/Layout'
+import MainHeading from '../components/Layout/MainHeading'
+import Projects from '../components/Project/Projects'
 import { generateMainPageImage } from '../lib/meta-image'
 import { getFilteredProjects } from '../lib/stuff'
-import { Project } from '../types'
+import { ProjectInterface } from '../types'
 import Link from 'next/link'
 
 const description =
     'Arttu Pennanen Web projects porfolio. Applications built with Typescript, Javascript, Node, Deno, React and Vue.'
 
 export const getStaticProps = async () => {
-    const projectsData: Project[] = getFilteredProjects()
+    const projectsData: ProjectInterface[] = getFilteredProjects()
     const metaImage = await generateMainPageImage({ title: 'pennanen.dev', description })
     return {
         props: {

@@ -1,8 +1,9 @@
 import Head from 'next/head'
-import BackgroundLines from './background-lines'
-import Footer from './footer'
-import NavigationBar from './navigation-bar'
+import BackgroundLines from '../BackgroundLines'
+import Footer from './Footer'
+import NavigationBar from './NavigationBar'
 import React from 'react'
+import style from './layout.module.css'
 
 export const siteTitle = 'Arttu Pennanen'
 
@@ -18,7 +19,7 @@ const Layout = ({
     metaImage?: string
 }) => {
     return (
-        <div className="layout-container">
+        <div className={style['container']}>
             <Head>
                 {title && (
                     <>
@@ -67,10 +68,10 @@ const Layout = ({
                 <link rel="icon" href="/favicon.ico" />
                 <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
             </Head>
-            <div className="page-container">
+            <div className={style['page']}>
                 <BackgroundLines />
                 <NavigationBar />
-                <main>{children}</main>
+                <main className={style['main']}>{children}</main>
                 <Footer />
             </div>
         </div>

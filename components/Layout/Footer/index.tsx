@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import style from '../styles/footer.module.css'
+import style from './footer.module.css'
 
 const Footer = () => {
     const start = 2018

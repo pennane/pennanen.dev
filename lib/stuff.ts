@@ -1,6 +1,6 @@
 import path from 'path'
 import fs from 'fs'
-import { Project, ProjectConfig } from '../types'
+import { ProjectInterface, ProjectConfig } from '../types'
 import { isNumber, isString } from './util'
 
 const directory = path.join(process.cwd(), 'public/sub')
@@ -11,7 +11,7 @@ const getDirectories = (path: string) => {
     })
 }
 
-export const getProjectById = (id: string): Project | null => {
+export const getProjectById = (id: string): ProjectInterface | null => {
     let data: ProjectConfig
     let date: number | null
 
@@ -77,20 +77,20 @@ export const getProjectIds = () => {
     })
 }
 
-export const getProjects = (): Project[] => {
+export const getProjects = (): ProjectInterface[] => {
     const directoryNames = getDirectories(directory)
     return directoryNames
         .map((id) => getProjectById(id))
         .filter(Boolean)
         .sort((a, b) => {
-            a = a as Project
-            b = b as Project
+            a = a as ProjectInterface
+            b = b as ProjectInterface
             if (!a.date || a.ignoreDate) return 1
             if (!b.date || b.ignoreDate) return -1
             return b.date - a.date
-        }) as Project[]
+        }) as ProjectInterface[]
 }
 
-export const getFilteredProjects = (): Project[] => {
+export const getFilteredProjects = (): ProjectInterface[] => {
     return getProjects().filter((p) => !p.ignoreInListing)
 }

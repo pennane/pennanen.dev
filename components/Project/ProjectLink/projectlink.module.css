@@ -1,11 +1,5 @@
-.projects {
-    background: var(--main-background-color);
-    margin-top: 2em;
-}
-
 .main {
     line-height: 1;
-    margin-bottom: 0.4em;
 }
 
 .container {
@@ -13,13 +7,12 @@
     grid-gap: 1em;
     gap: 1em;
     text-decoration: none;
-    padding: 0.3em;
     cursor: pointer;
 }
 
 .image {
-    height: 48px;
-    width: 48px;
+    height: 3rem;
+    width: 3rem;
     border-radius: 3px;
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 4%);
     flex: 0 0 auto;
@@ -34,12 +27,11 @@
 .information {
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    gap: 0.2rem;
 }
 
 .heading {
     margin: 0;
-    margin-bottom: 0.2em;
     font-size: 1rem;
     font-weight: 500;
     text-transform: capitalize;
@@ -48,7 +40,6 @@
 .date {
     color: var(--text-color-secondary);
     font-weight: 250;
-    margin-top: 0.25em;
 }
 
 .description {

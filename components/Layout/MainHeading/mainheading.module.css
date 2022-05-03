@@ -1,21 +1,25 @@
 .container {
     position: relative;
     z-index: 3;
+
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 15em;
+
+    margin-bottom: 7.5rem;
 }
 
 .gradient {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
     user-select: none;
     pointer-events: none;
     z-index: -1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .image-wrapper {

@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import style from '../styles/navigation-bar.module.css'
+import style from './navigationbar.module.css'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
 
-const ThemeToggler = dynamic(() => import('./theme-toggler'), { ssr: false })
+const ThemeToggler = dynamic(() => import('../../ThemeToggler'), { ssr: false })
 
 const NavigationBar = () => {
     const { resolvedTheme } = useTheme()

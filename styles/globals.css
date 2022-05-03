@@ -38,9 +38,7 @@ body {
 
 #__next,
 body,
-html,
-.layout-container,
-.page-container {
+html {
     height: 100%;
 }
 
@@ -64,35 +62,6 @@ span {
     box-sizing: border-box;
 }
 
-.page-container {
-    z-index: 1;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-
-main {
-    padding-left: calc(100vw - 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-section,
-header {
-    padding: 0 1em;
-    width: 570px;
-    max-width: 92vw;
-}
-
-.fade-in {
-    opacity: 0;
-    animation-name: fadeIn;
-    animation-fill-mode: both;
-    animation-duration: 500ms;
-    animation-iteration-count: 1;
-}
-
 .margin-top {
     margin-top: 2rem;
 }
@@ -101,13 +70,4 @@ header {
     text-align: center;
     margin-top: 2rem;
     text-decoration: underline;
-}
-
-@keyframes fadeIn {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
 }

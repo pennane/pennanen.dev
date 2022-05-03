@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import React, { useContext, useEffect, useState } from 'react'
-import { AppContext } from '../lib/context'
-import { animationComplete } from '../lib/reducer'
-import style from '../styles/sequential-animation.module.css'
+import { AppContext } from '../../lib/context'
+import { animationComplete } from '../../lib/reducer'
+import style from './sequential-animation.module.css'
 
 interface SequentialProps {
     children: React.ReactNode
@@ -57,17 +57,21 @@ const SequentialAnimation = ({
         }
     }, [animationFinished, shouldAnimate])
 
-    if (!shouldAnimate || !mounted) return <div className={style['main']}> {children} </div>
+    if (!shouldAnimate || !mounted) return <> {children} </>
 
     if (wait) {
-        return <div className={style['main'] + ' ' + style['waiting']}>{children}</div>
+        return <div className={style['waiting']}>{children}</div>
     }
 
     return (
-        <div className={style['main']}>
+        <>
             {childrenArray.map((child, i) => (
                 <div
-                    className={props.childClass ? `${style['child']} ${props.childClass}` : style['child']}
+                    className={
+                        props.childClass
+                            ? `${style['child']} ${props.childClass}`
+                            : `${style['child']} ${style['fade-in']}`
+                    }
                     style={
                         props.animationDuration
                             ? {
@@ -81,7 +85,7 @@ const SequentialAnimation = ({
                     {child}
                 </div>
             ))}
-        </div>
+        </>
     )
 }
 
