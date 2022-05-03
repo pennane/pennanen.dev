@@ -1,0 +1,16 @@
+import style from './contact.module.css'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faGithub, faLinkedinIn } from '@fortawesome/free-brands-svg-icons'
+
+export default function ContactLinks() {
+    return (
+        <div className={style.container}>
+            <a href="https://www.linkedin.com/in/arttu-pennanen/" target={'_blank'} className={style.link}>
+                <FontAwesomeIcon icon={faLinkedinIn} />
+            </a>
+            <a href="https://github.com/pennane" target={'_blank'} className={style.link}>
+                <FontAwesomeIcon icon={faGithub} />
+            </a>
+        </div>
+    )
+}

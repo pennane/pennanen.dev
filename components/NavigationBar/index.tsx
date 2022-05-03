@@ -3,8 +3,9 @@ import Image from 'next/image'
 import style from './navigationbar.module.css'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
+import ContactLinks from '../ContactLinks'
 
-const ThemeToggler = dynamic(() => import('../../ThemeToggler'), { ssr: false })
+const ThemeToggler = dynamic(() => import('../ThemeToggler'), { ssr: false })
 
 const NavigationBar = () => {
     const { resolvedTheme } = useTheme()
@@ -22,10 +23,10 @@ const NavigationBar = () => {
                                 <Image src={'/images/black-icon.png'} alt="" width={20} height={20} />
                             )}
                         </div>
-                        <span className="title">pennanen.dev</span>
+                        <span className={style['title']}>pennanen.dev</span>
                     </a>
                 </Link>
-
+                <ContactLinks />
                 <ThemeToggler />
             </nav>
         </div>

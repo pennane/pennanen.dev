@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import BackgroundLines from '../BackgroundLines'
-import Footer from './Footer'
-import NavigationBar from './NavigationBar'
+import Footer from '../Footer'
+import NavigationBar from '../NavigationBar'
 import React from 'react'
 import style from './layout.module.css'
 

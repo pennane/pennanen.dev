@@ -1,6 +1,6 @@
 import style from './mainheading.module.css'
 import Image from 'next/image'
-import SequentialAnimation from '../../SequentialAnimation'
+import SequentialAnimation from '../SequentialAnimation'
 import { useState } from 'react'
 
 const MainHeading = ({ text }: { text?: string }) => {

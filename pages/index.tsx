@@ -1,6 +1,6 @@
 import type { InferGetStaticPropsType } from 'next'
 import Layout from '../components/Layout'
-import MainHeading from '../components/Layout/MainHeading'
+import MainHeading from '../components/MainHeading'
 import Projects from '../components/Project/Projects'
 import { generateMainPageImage } from '../lib/meta-image'
 import { getFilteredProjects } from '../lib/stuff'

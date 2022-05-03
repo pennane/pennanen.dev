@@ -1,25 +1,29 @@
+* {
+    box-sizing: border-box;
+}
+
 :root {
-    --main-background-color: #fafafa;
+    --main-background-color: hsl(0deg 0% 98%);
     --title-color: black;
     --title-color-invert: white;
-    --text-color: #4b5563;
-    --text-color-secondary: rgb(85 85 89);
-    --link-color: #365abf;
-    --link-hover-color: #7897ed;
-    --background-line-color: rgba(66, 71, 112, 0.05882);
-    --image-background-color: hsla(0, 0%, 100%, 0.01176);
+    --text-color: hsl(215 14% 34%);
+    --text-color-secondary: hsl(240 2% 34%);
+    --link-color: hsl(224 56% 48%);
+    --link-hover-color: hsl(224 76% 70%);
+    --background-line-color: hsla(233 26% 35% 0.08);
+    --image-background-color: hsla(0 0% 100% 0.01176);
 }
 
 [data-theme='dark'] {
-    --main-background-color: #010219;
+    --main-background-color: hsl(238deg 92% 5%);
     --title-color: white;
     --title-color-invert: white;
-    --text-color: #b7bcc3;
-    --text-color-secondary: #9fa6ad;
-    --link-color: #1dd88e;
-    --link-hover-color: #60faa1;
+    --text-color: hsl(215deg 9% 74%);
+    --text-color-secondary: hsl(210deg 8% 65%);
+    --link-color: hsl(200deg 76% 48%);
+    --link-hover-color: hsl(200deg 94% 68%);
     --background-line-color: hsl(0deg 0% 100% / 4%);
-    --image-background-color: rgb(45 45 45 / 10%);
+    --image-background-color: hsl(0deg 0% 18% / 10%);
 }
 
 .theme-transition,
@@ -58,8 +62,8 @@ span {
     font-size: 0.9rem;
 }
 
-* {
-    box-sizing: border-box;
+h2 {
+    font-weight: 500;
 }
 
 .margin-top {
@@ -68,6 +72,6 @@ span {
 
 .all-link {
     text-align: center;
-    margin-top: 2rem;
+    margin: 3rem 0;
     text-decoration: underline;
 }

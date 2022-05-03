@@ -15,9 +15,10 @@
     align-items: center;
     opacity: 0.99;
     width: 1330px;
-    max-width: 90vw;
+    max-width: 92vw;
     z-index: 2;
     pointer-events: auto;
+    gap: 2.5rem;
 }
 
 .main > * {
@@ -43,12 +44,20 @@
     display: flex;
 }
 
-.title {
-    color: inherit;
-}
-
 @media screen and (max-width: 800px) {
     .main {
         max-width: 85vw;
+    }
+}
+
+@media screen and (max-width: 500px) {
+    .main {
+        gap: 1.75rem;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .main {
+        gap: 1rem;
     }
 }
