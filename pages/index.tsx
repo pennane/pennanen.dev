@@ -28,6 +28,7 @@ const Index = ({ projectsData, metaImage }: InferGetStaticPropsType<typeof getSt
                 <MainHeading />
             </header>
             <section>
+                <h2>Projects</h2>
                 <Projects projects={projectsData} />
             </section>
             <section className="all-link">

@@ -22,6 +22,7 @@ const All = ({ projectsData, metaImage }: InferGetStaticPropsType<typeof getStat
     return (
         <Layout description={description} metaImage={metaImage}>
             <section className="margin-top">
+                <h2>Uncurated projects</h2>
                 <Projects projects={projectsData.filter((project) => project.ignoreInListing)} />
             </section>
         </Layout>
