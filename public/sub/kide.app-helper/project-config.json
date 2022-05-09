@@ -9,11 +9,13 @@
         "en": "Telegram service to reserve and notify about upcoming Kide.app events ",
         "fi": "Kide.app botti, joka toimii suoraan Telegramin ja Discordin kautta."
     },
-    "pretext": "Infamous Kide.app bot that can reserve tickets straight from Telegram. Informs users of upcoming events and event detail changes by Discord and/or Telegram notifications. Built with Typescript. Utilizes my own-built API wrapper to communicate with the Kide.app API endpoints. Currently the source code is kept private and that is most likely how it will be kept to avoid uncontrollable spread.",
+    "pretext": "Infamous Kide.app bot that can reserve tickets straight from Telegram, command line or the web. Can be made to users about upcoming events and their detail changes. Built with Typescript. Utilizes custom built API wrapper to communicate with the Kide API endpoints. The source code is kept private to avoid uncontrollable and harmful spread.",
     "icon": null,
     "images": [
-        "newevent.jpg",
+        "web.png",
+        "web2.png",
         "example.jpg",
+        "web3.png",
         "discord.jpg",
         "sotenoori.jpg"
     ],
