@@ -10,8 +10,8 @@
     --text-color-secondary: hsl(240 2% 34%);
     --link-color: hsl(224 56% 48%);
     --link-hover-color: hsl(224 76% 70%);
-    --background-line-color: hsla(233 26% 35% 0.08);
-    --image-background-color: hsla(0 0% 100% 0.01176);
+    --background-line-color: hsl(233deg 26% 35% / 6%);
+    --image-background-color: hsl(0deg 0% 100% / 1%);
 }
 
 [data-theme='dark'] {
