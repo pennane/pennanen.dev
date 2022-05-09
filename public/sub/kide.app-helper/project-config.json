@@ -6,10 +6,10 @@
         "fi": "Kide.app Helper"
     },
     "description": {
-        "en": "Telegram service to reserve and notify about upcoming Kide.app events ",
-        "fi": "Kide.app botti, joka toimii suoraan Telegramin ja Discordin kautta."
+        "en": "Web service to reserve and notify about upcoming Kide.app events ",
+        "fi": "Kide.app botti, joka toimii suoraan Telegramin, netin ja Discordin kautta."
     },
-    "pretext": "Infamous Kide.app bot that can reserve tickets straight from Telegram, command line or the web. Can be made to users about upcoming events and their detail changes. Built with Typescript. Utilizes custom built API wrapper to communicate with the Kide API endpoints. The source code is kept private to avoid uncontrollable and harmful spread.",
+    "pretext": "Infamous Kide.app bot that can reserve tickets straight from Telegram, command line or the web. Can be made to inform users about upcoming events and their possible detail changes. Built with Typescript. Utilizes custom built API wrapper to communicate with the Kide API endpoints. The source code is kept private to avoid uncontrollable and harmful spread.",
     "icon": null,
     "images": [
         "web.png",
