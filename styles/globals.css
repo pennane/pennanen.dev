@@ -75,3 +75,7 @@ h2 {
     margin: 3rem 0;
     text-decoration: underline;
 }
+
+.pt0 {
+    padding-top: 0 !important;
+}

@@ -3,9 +3,9 @@ import Layout from '../components/Layout'
 import style from '../styles/error.module.css'
 import Link from 'next/link'
 
-const Error = () => {
+function Error() {
     return (
-        <Layout>
+        <Layout className="pt0">
             <header className={style['header']}>
                 <h1>404 - Not found</h1>
             </header>

@@ -11,15 +11,19 @@ const Layout = ({
     children,
     title,
     description,
-    metaImage
+    metaImage,
+    className
 }: {
     children: React.ReactNode
     title?: string
     description?: string
     metaImage?: string
+    className?: string
 }) => {
+    let preClass = style['container']
+    if (className) preClass += ' ' + className
     return (
-        <div className={style['container']}>
+        <div className={preClass}>
             <Head>
                 {title && (
                     <>
