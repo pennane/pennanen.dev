@@ -16,5 +16,5 @@
         "2.png"
     ],
     "ignoreInListing": true,
-    "pretext": "Uses a modified wave function collapse algorithm to generate sudokus one number at a time. Never has the world seen something like this."
+    "pretext": "Uses constraint propagation to generate sudokus one number at a time. Never has the world seen something like this."
 }
