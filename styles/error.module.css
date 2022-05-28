@@ -36,3 +36,12 @@
     font-weight: 600;
     text-decoration: underline;
 }
+
+.image {
+    opacity: 1;
+    transition: opacity 3s;
+}
+
+.image.loading {
+    opacity: 0;
+}
