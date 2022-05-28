@@ -31,7 +31,8 @@ function Error() {
                     layout="fill"
                     src="/images/starrynight.jpg"
                     alt=""
-                    loading="eager"
+                    loading="lazy"
+                    priority={true}
                     onLoadingComplete={() => mounted.current && setImageLoaded(true)}
                 ></Image>
             </div>
