@@ -1,24 +1,24 @@
 .child {
-    display: block;
+  display: block;
 }
 
 .waiting {
-    visibility: hidden;
+  visibility: hidden;
 }
 
 .fade-in {
-    opacity: 0;
-    animation-name: fadeIn;
-    animation-fill-mode: both;
-    animation-duration: 500ms;
-    animation-iteration-count: 1;
+  opacity: 0;
+  animation-name: fadeIn;
+  animation-fill-mode: both;
+  animation-duration: 500ms;
+  animation-iteration-count: 1;
 }
 
 @keyframes fadeIn {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }

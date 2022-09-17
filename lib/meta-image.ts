@@ -6,11 +6,11 @@ import { ProjectInterface } from '../types'
 
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Medium.ttf'), {
   family: 'Inter',
-  weight: '300'
+  weight: '300',
 })
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Bold.ttf'), {
   family: 'Inter',
-  weight: '700'
+  weight: '700',
 })
 
 const logoFile = fs.readFileSync(
@@ -28,7 +28,7 @@ const bg = loadImage(bgFile)
 
 async function computeMainPageImage({
   title,
-  description
+  description,
 }: {
   title?: string
   description?: string
@@ -109,7 +109,7 @@ async function computeProjectImage({
   title,
   description,
   image,
-  notAuthor
+  notAuthor,
 }: {
   title?: string
   description?: string
@@ -237,7 +237,7 @@ export async function generateMainPageImage<
 
   const image = await computeMainPageImage({
     title: data.title || 'pennanen.dev',
-    description: data.description
+    description: data.description,
   })
 
   // eslint-disable-next-line no-useless-escape
@@ -274,7 +274,7 @@ export async function generateProjectImage(project: ProjectInterface) {
     title: project.name || project.id,
     description: project.description as string,
     image: icon || undefined,
-    notAuthor: project.notAuthor
+    notAuthor: project.notAuthor,
   })
 
   const fileName = project.id.toLowerCase() + '.png'

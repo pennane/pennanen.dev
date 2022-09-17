@@ -1,32 +1,32 @@
 .wrapper {
-    display: grid;
-    justify-items: center;
-    padding: 4rem;
-    margin-top: auto;
+  display: grid;
+  justify-items: center;
+  padding: 4rem;
+  margin-top: auto;
 }
 
 .main {
-    display: flex;
-    align-items: center;
-    gap: 1.8em;
+  display: flex;
+  align-items: center;
+  gap: 1.8em;
 }
 
 .icon-link {
-    display: flex;
+  display: flex;
 }
 
 .main a {
-    color: var(--text-color);
-    text-decoration: underline;
+  color: var(--text-color);
+  text-decoration: underline;
 }
 
 @media screen and (max-width: 500px) {
-    .wrapper {
-        padding: 3em 0.5em;
-    }
+  .wrapper {
+    padding: 3em 0.5em;
+  }
 
-    .main {
-        /* flex-direction: column-reverse; */
-        gap: 0.5em;
-    }
+  .main {
+    /* flex-direction: column-reverse; */
+    gap: 0.5em;
+  }
 }

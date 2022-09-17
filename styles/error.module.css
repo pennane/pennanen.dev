@@ -1,47 +1,47 @@
 .background {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .background img {
-    filter: grayscale(1) opacity(0.3);
-    object-fit: cover;
+  filter: grayscale(1) opacity(0.3);
+  object-fit: cover;
 }
 
 .header {
-    font-size: min(calc(2em + 3vw), 10vh);
-    line-height: 0.9;
-    margin: 0;
-    letter-spacing: -0.07em;
-    padding: 0;
-    margin-top: 4.4rem;
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: center;
+  font-size: min(calc(2em + 3vw), 10vh);
+  line-height: 0.9;
+  margin: 0;
+  letter-spacing: -0.07em;
+  padding: 0;
+  margin-top: 4.4rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
 }
 
 .header h1 {
-    margin: 0;
+  margin: 0;
 }
 
 .link-wrapper {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 .link {
-    font-size: min(calc(1.5rem + 3vw), 10vh);
-    font-weight: 600;
-    text-decoration: underline;
+  font-size: min(calc(1.5rem + 3vw), 10vh);
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .image {
-    opacity: 1;
-    transition: opacity 1s;
+  opacity: 1;
+  transition: opacity 1s;
 }
 
 .image.loading {
-    opacity: 0;
+  opacity: 0;
 }

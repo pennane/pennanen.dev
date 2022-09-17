@@ -1,7 +1,7 @@
 .main {
-    background: var(--main-background-color);
-    margin-top: 2em;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  background: var(--main-background-color);
+  margin-top: 2em;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }

@@ -7,7 +7,7 @@ export const isNumber = (number: unknown): number is number =>
   typeof number === 'number' && !isNaN(number)
 export const dateToFinnishLocale = (date: Date) => {
   return date.toLocaleDateString('fi-Fi', {
-    timeZone: 'Europe/Helsinki'
+    timeZone: 'Europe/Helsinki',
   })
 }
 export const monthIndexToName = (number: number) => {
@@ -24,7 +24,7 @@ export const monthIndexToName = (number: number) => {
     'September',
     'October',
     'November',
-    'December'
+    'December',
   ]
   if (i > 11) return monthNames[11]
   else if (i < 0) return monthNames[0]

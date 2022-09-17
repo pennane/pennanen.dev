@@ -1,63 +1,63 @@
 .container {
-    display: flex;
-    position: fixed;
-    justify-content: center;
-    top: 0;
-    width: 100%;
-    z-index: 10;
-    pointer-events: none;
-    align-items: center;
+  display: flex;
+  position: fixed;
+  justify-content: center;
+  top: 0;
+  width: 100%;
+  z-index: 10;
+  pointer-events: none;
+  align-items: center;
 }
 
 .main {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
-    opacity: 0.99;
-    width: 1330px;
-    max-width: 92vw;
-    z-index: 2;
-    pointer-events: auto;
-    gap: 2.5rem;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  opacity: 0.99;
+  width: 1330px;
+  max-width: 92vw;
+  z-index: 2;
+  pointer-events: auto;
+  gap: 2.5rem;
 }
 
 .main > * {
-    height: 4rem;
+  height: 4rem;
 }
 
 .link {
-    pointer-events: auto;
-    border: none;
-    font-size: 0.85em;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    text-decoration: none;
-    font-weight: 450;
+  pointer-events: auto;
+  border: none;
+  font-size: 0.85em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-weight: 450;
 }
 
 .brand-image {
-    width: 1.3rem;
-    opacity: 0.8;
-    margin: 0 0.6rem 0 0;
-    transition: opacity 0.2s;
-    display: flex;
+  width: 1.3rem;
+  opacity: 0.8;
+  margin: 0 0.6rem 0 0;
+  transition: opacity 0.2s;
+  display: flex;
 }
 
 @media screen and (max-width: 800px) {
-    .main {
-        max-width: 85vw;
-    }
+  .main {
+    max-width: 85vw;
+  }
 }
 
 @media screen and (max-width: 500px) {
-    .main {
-        gap: 1.75rem;
-    }
+  .main {
+    gap: 1.75rem;
+  }
 }
 
 @media screen and (max-width: 400px) {
-    .main {
-        gap: 1rem;
-    }
+  .main {
+    gap: 1rem;
+  }
 }

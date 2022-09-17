@@ -7,15 +7,15 @@ import { ThemeProvider } from 'next-themes'
 import { GoogleAnalytics, usePagesViews } from 'nextjs-google-analytics'
 
 function App({ Component, pageProps }: AppProps) {
-    usePagesViews()
-    return (
-        <ThemeProvider>
-            <AppContextProvider>
-                <GoogleAnalytics />
-                <Component {...pageProps} />
-            </AppContextProvider>
-        </ThemeProvider>
-    )
+  usePagesViews()
+  return (
+    <ThemeProvider>
+      <AppContextProvider>
+        <GoogleAnalytics />
+        <Component {...pageProps} />
+      </AppContextProvider>
+    </ThemeProvider>
+  )
 }
 
 export default App

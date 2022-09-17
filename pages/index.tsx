@@ -8,34 +8,40 @@ import { ProjectInterface } from '../types'
 import Link from 'next/link'
 
 const description =
-    'Arttu Pennanen Web projects porfolio. Applications built with Typescript, Javascript, Node, Deno, React and Vue.'
+  'Arttu Pennanen Web projects porfolio. Applications built with Typescript, Javascript, Node, Deno, React and Vue.'
 
 export const getStaticProps = async () => {
-    const projectsData: ProjectInterface[] = getFilteredProjects()
-    const metaImage = await generateMainPageImage({ title: 'pennanen.dev', description })
-    return {
-        props: {
-            projectsData,
-            metaImage
-        }
-    }
+  const projectsData: ProjectInterface[] = getFilteredProjects()
+  const metaImage = await generateMainPageImage({
+    title: 'pennanen.dev',
+    description,
+  })
+  return {
+    props: {
+      projectsData,
+      metaImage,
+    },
+  }
 }
 
-const Index = ({ projectsData, metaImage }: InferGetStaticPropsType<typeof getStaticProps>) => {
-    return (
-        <Layout description={description} metaImage={metaImage}>
-            <header>
-                <MainHeading />
-            </header>
-            <section>
-                <h2>Projects</h2>
-                <Projects projects={projectsData} />
-            </section>
-            <section className="all-link">
-                <Link href="/uncurated">Open list of uncurated projects</Link>
-            </section>
-        </Layout>
-    )
+const Index = ({
+  projectsData,
+  metaImage,
+}: InferGetStaticPropsType<typeof getStaticProps>) => {
+  return (
+    <Layout description={description} metaImage={metaImage}>
+      <header>
+        <MainHeading />
+      </header>
+      <section>
+        <h2>Projects</h2>
+        <Projects projects={projectsData} />
+      </section>
+      <section className="all-link">
+        <Link href="/uncurated">Open list of uncurated projects</Link>
+      </section>
+    </Layout>
+  )
 }
 
 export default Index
