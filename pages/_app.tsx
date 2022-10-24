@@ -1,5 +1,3 @@
-// noinspection JSUnusedGlobalSymbols
-
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import { AppContextProvider } from '../lib/context'
