@@ -1,4 +1,4 @@
-export interface AppState {
+export type AppState = {
   animations: {
     [animationKey: string]: boolean
   }
@@ -8,10 +8,14 @@ export enum AppActionType {
   ANIMATION_COMPLETE,
 }
 
-export interface AppAction {
-  type: AppActionType
-  payload?: any
+export type Action<TType extends AppActionType, TPayload> = {
+  type: TType
+  payload: TPayload
 }
+
+type AnimationCompletedAction = Action<AppActionType.ANIMATION_COMPLETE, string>
+
+export type AppAction = AnimationCompletedAction
 
 export const initialState: AppState = {
   animations: {},

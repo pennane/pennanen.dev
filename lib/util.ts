@@ -1,5 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
-import { Image } from 'canvas'
+import { Image, CanvasRenderingContext2D } from 'canvas'
 
 export const isString = (text: unknown): text is string =>
   typeof text === 'string' || text instanceof String
@@ -39,7 +39,7 @@ export const getAbsoluteURL = (path: string) => {
 }
 
 export function wrapText(
-  context: any,
+  context: CanvasRenderingContext2D,
   text: string,
   x: number,
   y: number,
@@ -73,7 +73,7 @@ export function wrapText(
  * If image and context are only arguments rectangle will equal canvas
  */
 export function drawImageProp(
-  ctx: any,
+  ctx: CanvasRenderingContext2D,
   img: Image,
   x: number,
   y: number,
