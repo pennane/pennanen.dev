@@ -1,0 +1,18 @@
+{
+    "url": "https://helpotus-lahellasi.github.io/",
+    "date": "16.12.2022",
+    "name": {
+        "en": "Jobel",
+        "fi": "Jobel"
+    },
+    "description": {
+        "en": "Took part in a UAS project to create an quick and dirty jobdel copy",
+        "fi": null
+    },
+    "github": null,
+    "pretext": "As a UAS project our task was to create a MERN application in a one week time period. This is the outcome.",
+    "icon": "64.png",
+    "largeImage": "jobel.png",
+    "notAuthor": true,
+    "ignoreInListing": false
+}
