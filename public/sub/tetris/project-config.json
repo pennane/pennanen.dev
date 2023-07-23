@@ -8,15 +8,14 @@
         "en": "A simple Tetris game built with Typescript and Ramda",
         "fi": null
     },
-    "github": null,
     "pretext": "A functional mess. Almost as pure as application can be.",
     "icon": "logo.png",
     "largeImage": "1.png",
     "images": [
         "1.png",
-        "r.png",
+        "2.png",
         "3.png"
     ],
     "ignoreInListing": false,
-    "github": "https://github.com/Pennane/pennanen.dev"
+    "github": "https://github.com/pennane/tetris"
 }
