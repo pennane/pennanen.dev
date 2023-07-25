@@ -5,10 +5,10 @@
         "en": "Tetris"
     },
     "description": {
-        "en": "A simple Tetris game built with Typescript and Ramda",
+        "en": "A simple Tetris game with built with Typescript and Ramda",
         "fi": null
     },
-    "pretext": "A functional mess. Almost as pure as application can be.",
+    "pretext": "A functional mess. Almost as pure as application can be. Has procedural music generated on the fly. Each level applies new transformations to every musical note being played.",
     "icon": "logo.png",
     "largeImage": "1.png",
     "images": [
