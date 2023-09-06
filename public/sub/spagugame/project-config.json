@@ -1,0 +1,24 @@
+{
+    "url": "https://spagugame.pennanen.dev/",
+    "date": "6.9.2023",
+    "name": {
+        "en": "Spagugame",
+        "fi": null
+    },
+    "description": {
+        "en": "Solo UAS project. da future of social gaming",
+        "fi": null
+    },
+    "github": null,
+    "pretext": "Online multiplayer gaming website. Simple turn based games. Typescript, GraphQL, Redis, Mongo, React",
+    "icon": "logo.jpg",
+    "largeImage": "large.jpg",
+    "images": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+    ],
+    "notAuthor": true,
+    "ignoreInListing": false
+}
