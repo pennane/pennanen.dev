@@ -11,7 +11,7 @@
     },
     "github": null,
     "pretext": "Online multiplayer gaming website. Simple turn based games. Typescript, GraphQL, Redis, Mongo, React",
-    "icon": "logo.jpg",
+    "icon": "logo.png",
     "largeImage": "large.jpg",
     "images": [
         "1.png",
