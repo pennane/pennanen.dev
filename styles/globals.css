@@ -71,6 +71,7 @@ h2 {
 }
 
 .all-link {
+  color: var(--link-color);
   text-align: center;
   margin: 3rem 0;
   text-decoration: underline;
