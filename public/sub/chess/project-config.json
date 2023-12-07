@@ -1,0 +1,21 @@
+{
+    "url": "https://chess.pennanen.dev",
+    "date": "7.12.2023",
+    "name": {
+        "en": "Chess",
+        "fi": "Shakki"
+    },
+    "description": {
+        "en": "Websocket based online chess",
+        "fi": null
+    },
+    "github": "https://github.com/pennane/chess",
+    "pretext": "Websocket based graphql chess with ephemeral games.",
+    "icon": "logo.png",
+    "largeImage": "image.jpg",
+    "images": [
+        "image.jpg",
+        "info.jpg"
+    ],
+    "ignoreInListing": false
+}
