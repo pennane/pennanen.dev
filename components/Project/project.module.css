@@ -30,7 +30,8 @@
   background: var(--main-background-color);
 }
 
-.insert img {
+.insert img,
+.insert video {
   display: block;
   max-width: 100%;
   object-fit: contain;

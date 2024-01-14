@@ -64,8 +64,18 @@ export default function Project({ project }: { project: ProjectInterface }) {
         <section>
           {project.images.map((url, i) => (
             <div className={style['insert']} key={project.id + i}>
-              {url.includes('://') && <img src={url} alt="" loading="lazy" />}
-              {!url.includes('://') && (
+              {url.endsWith('.mp4') && (
+                <video
+                  src={'/sub/' + project.id + '/' + url}
+                  muted={true}
+                  autoPlay={true}
+                  loop={true}
+                />
+              )}
+              {!url.endsWith('.mp4') && url.includes('://') && (
+                <img src={url} alt="" loading="lazy" />
+              )}
+              {!url.endsWith('.mp4') && !url.includes('://') && (
                 <img
                   src={'/sub/' + project.id + '/' + url}
                   alt=""
