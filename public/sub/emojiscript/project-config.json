@@ -1,0 +1,22 @@
+{
+    "url": "https://emojiscript.pennanen.dev/",
+    "date": "22.1.2024",
+    "name": {
+        "en": "Emojiscript",
+        "fi": "null"
+    },
+    "description": {
+        "en": "Programming language that accepts only emoji as input",
+        "fi": null
+    },
+    "pretext": "Written alongside the 'Writing An Interpreter In Go' book by Thorsten Ball",
+    "ignoreInListing": true,
+    "ignoreDate": false,
+    "icon": "logo.png",
+    "images": [
+        "1.png"
+    ],
+    "largeImage": "large.png",
+    "notAuthor": false,
+    "github": "https://github.com/pennane/emojiscript"
+}
