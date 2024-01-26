@@ -10,6 +10,7 @@
         "en": "Experimenting with raycasting",
         "fi": null
     },
+    "ignoreInListing": true,
     "icon": "logo.jpg",
     "largeImage": "raycast.png",
     "images": [
