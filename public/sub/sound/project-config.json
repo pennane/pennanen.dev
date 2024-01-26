@@ -11,7 +11,7 @@
     "ignoreInListing": false,
     "ignoreDate": false,
     "icon": "icon.jpg",
-    "pretext": "Playing around with javascript audio context. Generating sounds, and playing simple jingles from files.",
+    "pretext": "Playing around with javascript audio context. Generating sounds, and playing jingles from files.",
     "images": [
         "example.jpg"
     ],

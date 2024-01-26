@@ -6,11 +6,11 @@
         "fi": null
     },
     "description": {
-        "en": "Solo UAS project. da future of social gaming",
+        "en": "Online multiplayer platform. da future of social gaming",
         "fi": null
     },
     "github": null,
-    "pretext": "Online multiplayer gaming website. Simple turn based games. Typescript, GraphQL, Redis, Mongo, React",
+    "pretext": "Online multiplayer gaming website. Simple turn based games. Typescript, GraphQL, Redis, Mongo, React. Built as a solo project for the Web Development 2 course at Metropolia.",
     "icon": "logo.png",
     "largeImage": "large.jpg",
     "images": [

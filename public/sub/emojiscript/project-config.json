@@ -9,7 +9,7 @@
         "en": "Programming language that accepts only emoji as input",
         "fi": null
     },
-    "pretext": "Written while reading Thorsten Ball's book 'Writing An Interpreter In Go'",
+    "pretext": "Written while reading Thorsten Ball's book 'Writing An Interpreter In Go'. Documentation for syntax is lacking, but that goes with the spirit of the language - its just emojis, figure it out!",
     "ignoreInListing": false,
     "ignoreDate": false,
     "icon": "eslogo.png",

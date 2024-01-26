@@ -10,7 +10,7 @@
         "fi": null
     },
     "github": "https://github.com/pennane/chess",
-    "pretext": "Websocket based graphql chess with ephemeral games.",
+    "pretext": "Ephemereal websocket based graphql chess games. Built with code readability and approachability in mind.",
     "icon": "logo.png",
     "largeImage": "image.jpg",
     "images": [

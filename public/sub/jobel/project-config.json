@@ -6,10 +6,10 @@
         "fi": "Jobel"
     },
     "description": {
-        "en": "UAS project made in a one week time crunch. A quick and dirty jodel copy",
+        "en": "A quick and dirty jodel copy made in a one week time crunch. ",
         "fi": null
     },
-    "pretext": "As a UAS project our task was to create a MERN application in a one week time period. This is the outcome. The codebase is a spaghetti monster, but sometimes that has to do.",
+    "pretext": "During a web development course at Metropolia, our task was to create a MERN application in a one week time period. This became the outcome. The codebase is a spaghetti monster, but sometimes that has to do.",
     "icon": "64.png",
     "largeImage": "jobel.png",
     "images": [

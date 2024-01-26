@@ -7,8 +7,8 @@
 }
 
 .header {
-  text-align: center;
-  margin-bottom: 5rem;
+  text-align: left;
+  margin-bottom: 1rem;
   background: var(--main-background-color);
 }
 
@@ -17,6 +17,7 @@
 }
 
 .lift {
+  margin-top: 2rem;
   display: flex;
   align-items: flex-start;
   gap: 1em;

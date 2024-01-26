@@ -8,7 +8,7 @@ import { ProjectInterface } from '../types'
 import Link from 'next/link'
 
 const description =
-  'Arttu Pennanen Web projects porfolio. Applications built with Typescript, Javascript, Node, Deno, React and Vue.'
+  'Arttu Pennanen - the digital playground pennanen.dev. Sharing my programming endeavours, from individual explorations to collaborative projects. Each piece is a step towards unraveling the vast world of code, crafted with desire to learn. Dive in to see where theory meets practice, through the lens of my experiences.'
 
 export const getStaticProps = async () => {
   const projectsData: ProjectInterface[] = getFilteredProjects()

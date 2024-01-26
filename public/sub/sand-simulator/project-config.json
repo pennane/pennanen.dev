@@ -6,10 +6,10 @@
         "fi": "null"
     },
     "description": {
-        "en": "Sand simulator game",
+        "en": "Pseudo physics simulation in the form of falling sand",
         "fi": null
     },
-    "pretext": "Different materials acting with other materials in pixel fashion. Also ants rule that world.",
+    "pretext": "A sand simulator game where different materials are acting with other materials in pixel fashion. (Also ants rule the world)",
     "ignoreInListing": false,
     "ignoreDate": false,
     "icon": "logo.png",
