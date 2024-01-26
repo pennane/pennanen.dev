@@ -12,7 +12,7 @@
     "pretext": "Written while reading Thorsten Ball's book 'Writing An Interpreter In Go'",
     "ignoreInListing": false,
     "ignoreDate": false,
-    "icon": "logo.png",
+    "icon": "eslogo.png",
     "images": [
         "1.png"
     ],
