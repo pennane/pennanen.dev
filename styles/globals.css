@@ -80,3 +80,22 @@ h2 {
 .pt0 {
   padding-top: 0 !important;
 }
+
+.about {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.about > * {
+  flex: 1;
+  min-width: min(240px, 80vw);
+}
+
+.about > div > p:first-of-type {
+  margin-top: 0;
+}
+
+.about > aside {
+  min-width: min(240px, 80vw);
+}
