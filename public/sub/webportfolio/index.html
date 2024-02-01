@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="FI">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Web Portfolio</title>
+    <link href="styling/style.css" rel="stylesheet" type="text/css">
+
+    <!-- Mobiili skaalaus -->
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <!-- Ulkoiset fontit ja ikonit -->
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <script src="https://use.fontawesome.com/b346d88d65.js">
+
+
+    </script>
+
+    <!-- Favicon ikonit sun muu "teemoitus" -->
+    <link href="img/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png">
+    <link href="img/favicon-96x96.png" el="icon" sizes="96x96" type="image/png">
+    <link href="img/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png">
+</head>
+
+<body>
+    <div id="wrapper">
+        <div class="headerbtn">
+            <a href="#globdestination" class="elevator">try me</a>
+        </div>
+        <div class="pilvi" id="content">
+            <div class="borderhead">
+                <h1 class="headerclass"> Web Portfolio</h1>
+                <p class="authorp"> Arttu Pennanen 2018</p>
+            </div>
+
+        </div>
+
+        <!-- Pää parallaksi ryhmittymät -->
+        <div id="parallaksi3">
+            <img alt="pilvi" class="avaruus" id="raketti" onclick="rakettifc()" src="img/raketti.gif">
+        </div>
+
+        <div id="parallaksi2">
+            <img alt="pilvi" class="pilvi" id="p2-2" src="img/pilvi3.png">
+            <img alt="pilvi" class="pilvi" id="p2-3" src="img/pilvi2.png">
+            <img alt="pilvi" class="avaruus" id="p2-4" src="img/stars2.png">
+            <img alt="laiva" class="pilvi" id="p2-laiva" src="img/pixlaiva2.png" onclick="laivafc()">
+        </div>
+
+        <div id="parallaksi1">
+            <img alt="pilvi" class="pilvi" id="p1-1" src="img/pilvi1.png" width="461">
+            <img alt="pilvi" class="pilvi" id="p1-2" src="img/pilvi3.png" width="404">
+            <img alt="pilvi" class="pilvi" id="p1-3" src="img/pilvi1.png" width="540">
+            <img alt="pilvi" class="avaruus" id="p1-4" src="img/stars1.png">
+        </div>
+
+        <!-- Satunnaiset parallaksi objektit -->
+        <div id="lintupassing">
+            <div id="lintupassingcontent"><img alt="" class="pilvi" id="lintu" onclick="lintuded()"
+                    src="img/lintu150.gif" width="180"></div>
+        </div>
+        <div id="parpar2" onclick="laivafc()"><img alt="pärskyt2" id="p2-parskyt2" src="img/pixlaivapars2.png"></div>
+        <div id="parpar3" onclick="laivafc()"><img alt="pärskyt" id="p2-parskyt3" src="img/pixlaivapars3.png"></div>
+        <div id="parallaksipohja">
+            <div id="parallaksipohjatausta"></div>
+            <div id="kivibg"></div>
+        </div>
+
+        <!-- Taustan loput osa-alueet -->
+        <div id="merenpohja">
+
+            <div id="lista">
+                <h3 class="listaheader">Satunnaiset web demot</h3>
+                <ul class="lista">
+                    <li><a href="" class="listalink">Jutin Grillimakkarapeli</a></li>
+                    <li><a href="" class="listalink">Adventure of Uggelbuggel peli</a></li>
+                    <li><a href="" class="listalink">Kalastuspeli</a></li>
+                    <li><a href="" class="listalink">Thonk Paint</a></li>
+                    <li><a href="" class="listalink">Thonket Spinner</a></li>
+                    <li><a href="" class="listalink">Laskin</a></li>
+                    <li><a href="" class="listalink">Lähtölaskenta</a></li>
+                    <li><a href="" class="listalink">Palvelin Dokumentointi</a></li>
+                    <li><a href="" class="listalink">Loputon scroll</a></li>
+                    <li><a href="" class="listalink">Personal Webpage</a></li>
+                    <li><a href="" class="listalink">Personal Webpage 2</a></li>
+                    <li><a href="" class="listalink">Pokeri kädet</a></li>
+                    <li><a href="" class="listalink">Väri generointi</a></li>
+                    <li><a href="" class="listalink">Ylä-aste html</a></li>
+                    <li><a href="" class="listalink">Kirosanaluettelo</a></li>
+                </ul>
+            </div>
+
+        </div>
+
+        <div id="truepohja"></div>
+
+        <div id="kivipohja">
+            <div class="globcave"><img alt="glabglob" class="globimg" id="globdestination" src="img/globcave.gif"></div>
+            <div class="cavebtn">
+                <a href="#wrapper" class="elevator">try me</a>
+            </div>
+        </div>
+    </div>
+
+    <audio id="globsound" loop="">
+        <source src="sound/klop.ogg" type="audio/ogg">
+        <source src="sound/klop.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Skriptit -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>!window.jQuery && document.write('<script src="/scripts/jquery-3.3.1.min.js"><\/script>')</script>
+    <script src="scripts/main.js" type="text/javascript"></script>
+</body>
+
+</html>
