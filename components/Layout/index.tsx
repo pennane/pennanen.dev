@@ -13,12 +13,14 @@ const Layout = ({
   description,
   metaImage,
   className,
+  pageClassName,
 }: {
   children: React.ReactNode
   title?: string
   description?: string
   metaImage?: string
   className?: string
+  pageClassName?: string
 }) => {
   let preClass = style['container']
   if (className) preClass += ' ' + className
@@ -78,7 +80,9 @@ const Layout = ({
       <div className={style['page']}>
         <BackgroundLines />
         <NavigationBar />
-        <main className={style['main']}>{children}</main>
+        <main className={`${style['main']} ${pageClassName || ''}`}>
+          {children}
+        </main>
         <Footer />
       </div>
     </div>

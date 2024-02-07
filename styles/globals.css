@@ -99,3 +99,16 @@ h2 {
 .about > aside {
   min-width: min(240px, 80vw);
 }
+
+.design-history .design-history-page {
+  width: 100%;
+}
+
+.history-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+.history-images > span {
+  width: 20rem !important;
+}
