@@ -90,6 +90,7 @@ h2 {
 .about > * {
   flex: 1;
   min-width: min(240px, 80vw);
+  background-color: var(--main-background-color);
 }
 
 .about > div > p:first-of-type {
