@@ -1,4 +1,4 @@
-export interface ProjectInterface {
+export interface IProject {
   id: string
   url: string | null
   date: number | null
@@ -14,7 +14,7 @@ export interface ProjectInterface {
   notAuthor: boolean | null
 }
 
-export interface ProjectConfig {
+export interface IProjectConfig {
   url: string | null
   date: string | number | null
   name: {

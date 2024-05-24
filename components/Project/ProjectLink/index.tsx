@@ -1,11 +1,11 @@
 import style from './projectlink.module.css'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ProjectInterface } from '../../../types'
+import { IProject } from '../../../types'
 import { monthIndexToName } from '../../../lib/util'
 import { useEffect, useRef, useState } from 'react'
 
-const ProjectLink = ({ project }: { project: ProjectInterface }) => {
+const ProjectLink = ({ project }: { project: IProject }) => {
   const date =
     project.date && !project.ignoreDate ? new Date(project.date) : null
   const [imageLoaded, setImageLoaded] = useState(false)

@@ -19,7 +19,9 @@
   align-items: stretch;
   max-width: 85vw;
   width: 530px;
+  gap: 3rem;
 }
+
 .main > header {
   width: 100%;
 }

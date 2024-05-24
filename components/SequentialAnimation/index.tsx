@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useLayoutEffect, useState } from 'react'
 import { AppContext } from '../../lib/context'
 import { animationComplete } from '../../lib/reducer'
 import style from './sequential-animation.module.css'
@@ -15,13 +15,13 @@ interface SequentialProps {
   stopped?: boolean
 }
 
-const SequentialAnimation = ({
+const SequentialAnimation: React.FC<SequentialProps> = ({
   children,
   initialDelay = 40,
   delayBetween = 30,
-  stopped: wait = false,
+  stopped = false,
   ...props
-}: SequentialProps) => {
+}) => {
   const router = useRouter()
   const { dispatch, state } = useContext(AppContext)
 
@@ -30,38 +30,45 @@ const SequentialAnimation = ({
       ? true
       : !state.animations[props.animationKey]
 
-  const [animationFinished, setAnimationFinished] = useState<boolean>(false)
+  const [animationFinished, setAnimationFinished] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   const childrenArray = React.Children.toArray(children)
 
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
+  useLayoutEffect(() => {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!props.once || !props.animationKey) return
 
-    const timeout = setTimeout(() => {
-      setAnimationFinished(true)
-    }, (initialDelay + childrenArray.length * delayBetween + (props.animationDuration || 0)) / 2)
+    const totalAnimationTime =
+      initialDelay +
+      childrenArray.length * delayBetween +
+      (props.animationDuration || 0)
+
+    const timeout = setTimeout(
+      () => setAnimationFinished(true),
+      totalAnimationTime / 2
+    )
 
     const onHistoryChange = () => {
       if (shouldAnimate && animationFinished && props.animationKey) {
         dispatch(animationComplete(props.animationKey))
       }
     }
+
     router.events.on('beforeHistoryChange', onHistoryChange)
 
     return () => {
       router.events.off('beforeHistoryChange', onHistoryChange)
-      clearInterval(timeout)
+      clearTimeout(timeout)
     }
   }, [animationFinished, shouldAnimate])
 
-  if (!shouldAnimate || !mounted) return <> {children} </>
+  if (!shouldAnimate || !mounted) return <>{children}</>
 
-  if (wait) {
+  if (stopped) {
     return <div className={style['waiting']}>{children}</div>
   }
 
@@ -69,20 +76,18 @@ const SequentialAnimation = ({
     <>
       {childrenArray.map((child, i) => (
         <div
+          key={`sequential-child-${i}`}
           className={
             props.childClass
               ? `${style['child']} ${props.childClass}`
               : `${style['child']} ${style['fade-in']}`
           }
-          style={
-            props.animationDuration
-              ? {
-                  animationDelay: initialDelay + delayBetween * i + 'ms',
-                  animationDuration: props.animationDuration + 'ms',
-                }
-              : { animationDelay: initialDelay + delayBetween * i + 'ms' }
-          }
-          key={'sequential-child-' + i}
+          style={{
+            animationDelay: `${initialDelay + delayBetween * i}ms`,
+            animationDuration: props.animationDuration
+              ? `${props.animationDuration}ms`
+              : 'undefined',
+          }}
         >
           {child}
         </div>

@@ -1,10 +1,10 @@
 import { monthIndexToName } from '../../lib/util'
 import style from './project.module.css'
 import linkStyle from './ProjectLink/projectlink.module.css'
-import { ProjectInterface } from '../../types'
+import { IProject } from '../../types'
 import Image from 'next/image'
 
-export default function Project({ project }: { project: ProjectInterface }) {
+export default function Project({ project }: { project: IProject }) {
   const date = project.date ? new Date(project.date) : null
   return (
     <div className={style['project']}>
@@ -15,7 +15,6 @@ export default function Project({ project }: { project: ProjectInterface }) {
             From {`${monthIndexToName(date.getMonth())}, ${date.getFullYear()}`}
           </span>
         )}
-        <p>{project.description}</p>
         <section className={style['lift']}>
           <div className={linkStyle['image']}>
             <Image
@@ -54,11 +53,16 @@ export default function Project({ project }: { project: ProjectInterface }) {
             <a href={`/sub/${project.id}/index.html`}>Launch project</a>
           )}
         </section>
+        <p className={style['description']}>{project.description}</p>
       </header>
 
       {project.pretext && (
         <section>
-          <p>{project.pretext}</p>
+          <p
+            dangerouslySetInnerHTML={{
+              __html: project.pretext,
+            }}
+          ></p>
         </section>
       )}
       {project.images[0] && (

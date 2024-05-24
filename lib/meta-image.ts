@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { createCanvas, Image, loadImage, registerFont } from 'canvas'
 import { drawImageProp, wrapText } from './util'
-import { ProjectInterface } from '../types'
+import { IProject } from '../types'
 
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Medium.ttf'), {
   family: 'Inter',
@@ -210,7 +210,6 @@ async function computeProjectImage({
     context.fillStyle = 'rgba(255, 255, 255, 0.95)'
     context.textAlign = 'left'
     context.textBaseline = 'top'
-    // context.drawImage(await face, margin, canvas.height - 3 * margin, 80, 80)
     wrapText(
       context,
       'Arttu Pennanen',
@@ -249,7 +248,7 @@ export async function generateMainPageImage<
   return fileName
 }
 
-export async function generateProjectImage(project: ProjectInterface) {
+export async function generateProjectImage(project: IProject) {
   const target = './public/meta'
   if (!fs.existsSync(target)) {
     fs.mkdirSync(target)

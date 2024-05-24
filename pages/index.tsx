@@ -4,15 +4,17 @@ import MainHeading from '../components/MainHeading'
 import Projects from '../components/Project/Projects'
 import { generateMainPageImage } from '../lib/meta-image'
 import { getFilteredProjects } from '../lib/stuff'
-import { ProjectInterface } from '../types'
+import { IProject } from '../types'
 import Link from 'next/link'
 import Image from 'next/image'
+import SequentialAnimation from '../components/SequentialAnimation'
+import { useState } from 'react'
 
 const description =
   'Arttu Pennanen - the digital playground pennanen.dev. Sharing my programming endeavours, from individual explorations to collaborative projects. Each piece is a step towards unraveling the vast world of code, crafted with desire to learn. Dive in to see where theory meets practice, through the lens of my experiences.'
 
 export const getStaticProps = async () => {
-  const projectsData: ProjectInterface[] = getFilteredProjects()
+  const projectsData: IProject[] = getFilteredProjects()
   const metaImage = await generateMainPageImage({
     title: 'pennanen.dev',
     description,
@@ -29,6 +31,7 @@ const Index = ({
   projectsData,
   metaImage,
 }: InferGetStaticPropsType<typeof getStaticProps>) => {
+  const [imgLoaded, setImgLoaded] = useState(false)
   return (
     <Layout description={description} metaImage={metaImage}>
       <header>
@@ -39,26 +42,37 @@ const Index = ({
         <div className="about">
           <div>
             <p>
-              Hello, I am Arttu. I like &quot;dumb&quot; stuff like functional
-              programming and using higher-order functions in JavaScript.
+              Hello, I&apos;m Arttu. I enjoy dumb stuff like functional
+              programming and thinking through problems in an exceedingly
+              generalized manner.
             </p>
             <p>
               I&apos;m currently working as a Junior Software Engineer at
               Hoxhunt and alongside completing an Information and Communication
-              Technology Bachelor&apos;s degree at Metropolia.
+              Technology Bachelor&apos;s degree at Metropolia UAS.
             </p>
             <p>
-              Here on my website, I post about the programming endeavors I find
-              myself tinkering with.
+              Here on this website, I post about some of the programming
+              I&apos;ve fought with.
             </p>
           </div>
           <aside>
-            <Image
-              alt='Black and white photo of myself giving thumbs-up outdoors."'
-              width={310}
-              height={200}
-              src={'/images/peukku.jpg'}
-            ></Image>
+            <SequentialAnimation
+              animationKey="face"
+              once={true}
+              initialDelay={300}
+              delayBetween={0}
+              animationDuration={500}
+              stopped={!imgLoaded}
+            >
+              <Image
+                alt="Black and white photo of myself giving thumbs-up outdoors"
+                width={310}
+                height={200}
+                src={'/images/peukku.jpg'}
+                onLoadingComplete={() => setImgLoaded(true)}
+              ></Image>
+            </SequentialAnimation>
           </aside>
         </div>
       </section>

@@ -1,5 +1,3 @@
-// noinspection JSUnusedGlobalSymbols
-
 import type {
   GetStaticPaths,
   GetStaticProps,
@@ -8,7 +6,7 @@ import type {
 import Layout from '../components/Layout'
 import { getProjectById, getProjectIds } from '../lib/stuff'
 import { isString } from '../lib/util'
-import { ProjectInterface } from '../types'
+import { IProject } from '../types'
 import { generateProjectImage } from '../lib/meta-image'
 import Project from '../components/Project'
 
@@ -38,11 +36,10 @@ const ProjectPage = ({
   project,
   metaImage,
 }: {
-  project: ProjectInterface
+  project: IProject
   metaImage: string
 }) => {
   if (!project) return null
-  project = project as ProjectInterface
   return (
     <Layout
       title={project.name}
