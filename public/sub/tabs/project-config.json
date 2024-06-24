@@ -1,0 +1,16 @@
+{
+    "url": "https://tabs-navy.vercel.app/",
+    "date": "24.6.2024",
+    "name": {
+        "en": "Tabs",
+        "fi": null
+    },
+    "description": {
+        "en": null,
+        "fi": null
+    },
+    "github": "https://github.com/pennane/tabs",
+    "pretext": "Parse guitar tabs",
+    "icon": null,
+    "ignoreInListing": true
+}
