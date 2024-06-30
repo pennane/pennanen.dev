@@ -1,0 +1,16 @@
+{
+    "url": "https://midi-parsing.vercel.app/",
+    "date": "16.4.2024",
+    "name": {
+        "en": "midi parser",
+        "fi": null
+    },
+    "description": {
+        "en": "Play midi files directly in browser",
+        "fi": null
+    },
+    "github": "https://github.com/pennane/midi-parsing",
+    "pretext": "Upload midi files and play them on the web through simple oscillators",
+    "icon": null,
+    "ignoreInListing": true
+}

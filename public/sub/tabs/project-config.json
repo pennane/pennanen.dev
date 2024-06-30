@@ -6,11 +6,11 @@
         "fi": null
     },
     "description": {
-        "en": null,
+        "en": "Play guitar tabs on the web",
         "fi": null
     },
     "github": "https://github.com/pennane/tabs",
-    "pretext": "Parse guitar tabs",
+    "pretext": "Parse guitar tabs because why not. Copy pasta guitar tab in and sound comes out.",
     "icon": null,
     "ignoreInListing": true
 }
