@@ -16,6 +16,6 @@
         "2.png",
         "3.png"
     ],
-    "ignoreInListing": false,
+    "ignoreInListing": true,
     "github": "https://github.com/pennane/tetris"
 }

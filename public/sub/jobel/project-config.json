@@ -19,6 +19,6 @@
         "jobel.png"
     ],
     "notAuthor": true,
-    "ignoreInListing": false,
+    "ignoreInListing": true,
     "github": "https://github.com/pennane/jobel"
 }

@@ -8,7 +8,6 @@
         "en": "Audiovisual feedback in browser",
         "fi": null
     },
-    "ignoreInListing": false,
     "ignoreDate": false,
     "icon": "icon.jpg",
     "pretext": "Playing around with javascript audio context. Generating sounds, and playing jingles from files.",
@@ -16,5 +15,6 @@
         "example.jpg"
     ],
     "largeImage": "example.jpg",
-    "github": "https://github.com/Pennane/pennanen.dev/tree/main/public/sub/sound"
+    "github": "https://github.com/Pennane/pennanen.dev/tree/main/public/sub/sound",
+    "ignoreInListing": true
 }
