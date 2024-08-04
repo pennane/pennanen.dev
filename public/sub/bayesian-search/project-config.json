@@ -1,5 +1,5 @@
 {
-    "url": null,
+    "url": "https://github.com/pennane/bayesian-search",
     "date": "4.8.2024",
     "name": {
         "en": "Bayesian search simulator",
@@ -17,6 +17,5 @@
         "search2.mp4"
     ],
     "largeImage": "logo.png",
-    "notAuthor": false,
-    "github": "https://github.com/pennane/bayesian-search"
+    "notAuthor": false
 }
