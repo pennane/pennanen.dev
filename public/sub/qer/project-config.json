@@ -1,5 +1,5 @@
 {
-    "url": "https://qer.pennanen.dev",
+    "url": "https://github.com/pennane/qer",
     "date": "9.11.2024",
     "name": {
         "en": "QER",
@@ -14,6 +14,5 @@
     "largeImage": "1.png",
     "images": [
         "1.png"
-    ],
-    "github": "https://github.com/pennane/qer"
+    ]
 }
