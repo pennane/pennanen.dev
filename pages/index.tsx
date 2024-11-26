@@ -47,7 +47,7 @@ const Index = ({
               generalized manner.
             </p>
             <p>
-              I&apos;m currently working as a Junior Software Engineer at
+              I&apos;m currently working as a Software Engineer at
               Hoxhunt and alongside completing an Information and Communication
               Technology Bachelor&apos;s degree at Metropolia UAS.
             </p>
