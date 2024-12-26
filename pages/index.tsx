@@ -7,7 +7,7 @@ import { IProject } from '../types'
 import Link from 'next/link'
 
 const description =
-  'Arttu Pennanen - the digital playground pennanen.dev. Sharing my programming endeavours, from individual explorations to collaborative projects. Each piece is a step towards unraveling the vast world of code, crafted with desire to learn. Dive in to see where theory meets practice, through the lens of my experiences.'
+  "Arttu Pennanen - the digital playground pennanen.dev. Sharing some of the personal projects I've built for the sake of building something."
 
 export const getStaticProps = async () => {
   const projectsData: IProject[] = getFilteredProjects()
