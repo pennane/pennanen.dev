@@ -50,12 +50,13 @@ html {
 }
 
 a {
-  color: var(--link-color);
+  color: var(--text-color);
   text-decoration: none;
 }
 
 a:hover {
-  color: var(--link-hover-color);
+  color: var(--text-color);
+  text-decoration: underline;
 }
 
 p,
@@ -108,11 +109,15 @@ section {
   margin-top: 2rem;
 }
 
-.all-link {
+.all-link a {
   color: var(--link-color);
   text-align: center;
   margin: 3rem 0;
   text-decoration: underline;
+}
+
+.all-link:hover a {
+  color: var(--link-hover-color)
 }
 
 .pt0 {
