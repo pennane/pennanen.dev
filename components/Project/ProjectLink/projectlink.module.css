@@ -36,6 +36,11 @@
   text-transform: capitalize;
 }
 
+
+a:hover .heading {
+  text-decoration: underline;
+}
+
 .date {
   margin-top: -0.25rem;
   color: var(--text-color-secondary);
