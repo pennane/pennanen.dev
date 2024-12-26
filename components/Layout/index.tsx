@@ -71,7 +71,7 @@ const Layout = ({
 
         <meta property="twitter:url" content="https://pennanen.dev/" />
 
-        <meta name="theme-color" content="#365abf"></meta>
+        <meta name="theme-color" content="#011e17"></meta>
         <meta name="robots" content="index, follow"></meta>
         <meta name="author" content="Arttu Pennanen"></meta>
         <link rel="icon" href="/favicon.ico" />
