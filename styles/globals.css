@@ -161,5 +161,10 @@ section {
 }
 
 .history-images>span {
+  object-fit: contain;
   width: 20rem !important;
+}
+
+.history-images img {
+  object-fit: contain;
 }
