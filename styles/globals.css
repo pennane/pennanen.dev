@@ -3,14 +3,14 @@
 }
 
 :root {
-  --main-hue: 167;
-  --main-background-color: hsl(var(--main-hue) 0% 98%);
+  --main-hue: 165;
+  --main-background-color: hsl(var(--main-hue) 10% 95%);
   --title-color: hsl(var(--main-hue) 55% 20%);
   --title-color-invert: white;
   --text-color: hsl(var(--main-hue) 75% 10%);
   --text-color-secondary: hsl(var(--main-hue) 2% 20%);
-  --link-color: hsl(var(--main-hue) 50% 45%);
-  --link-hover-color: hsl(var(--main-hue) 50% 65%);
+  --link-color: hsl(var(--main-hue) 50% 35%);
+  --link-hover-color: hsl(var(--main-hue) 50% 55%);
   --background-line-color: hsl(var(--main-hue) 26% 35% / 8%);
   --image-background-color: hsl(0deg 0% 100% / 1%);
 
@@ -22,8 +22,8 @@
   --title-color-invert: black;
   --text-color: hsl(var(--main-hue) 35% 85%);
   --text-color-secondary: hsl(var(--main-hue) 35% 70%);
-  --link-color: hsl(var(--main-hue) 100% 58% / 1);
-  --link-hover-color: hsl(var(--main-hue) 94% 72%);
+  --link-color: hsl(var(--main-hue) 100% 55%);
+  --link-hover-color: hsl(var(--main-hue) 100% 85%);
   --background-line-color: hsl(var(--main-hue) 0% 100% / 4%);
   --image-background-color: hsl(var(--main-hue) 0% 18% / 10%);
 }
@@ -115,7 +115,7 @@ section {
   text-decoration: underline;
 }
 
-.all-link:hover a {
+.all-link a:hover {
   color: var(--link-hover-color)
 }
 
