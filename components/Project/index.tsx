@@ -9,16 +9,19 @@ import { Stack } from '../Stack'
 export default function Project({ project }: { project: TProject }) {
 	const date = project.date ? new Date(project.date) : null
 	return (
-		<Stack fill="width">
+		<Stack fill="width" gap="large">
 			<header className={style['header']}>
-				<Stack gap="tiny">
-					<h1>{project.name}</h1>
-					{date && (
-						<span className={linkStyle['date']}>
-							From{' '}
-							{`${monthIndexToName(date.getMonth())}, ${date.getFullYear()}`}
-						</span>
-					)}
+				<Stack gap="medium">
+					<Stack gap="none">
+						<h1>{project.name}</h1>
+						{date && (
+							<span className={linkStyle['date']}>
+								From{' '}
+								{`${monthIndexToName(date.getMonth())}, ${date.getFullYear()}`}
+							</span>
+						)}
+					</Stack>
+
 					<Section direction="row" alignItems="center">
 						<div className={linkStyle['image']}>
 							<Image

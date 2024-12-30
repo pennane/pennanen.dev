@@ -2,7 +2,7 @@ import Head from 'next/head'
 import BackgroundLines from '../BackgroundLines'
 import Footer from '../Footer'
 import NavigationBar from '../NavigationBar'
-import React, { ReactNode } from 'react'
+import React from 'react'
 import style from './layout.module.css'
 import { Stack, TStackProps } from '../Stack'
 
@@ -74,17 +74,11 @@ const LayoutHead = ({
 	</Head>
 )
 
-const LayoutBody = ({
-	wrapperClassName,
-	children,
-}: {
-	wrapperClassName?: string
-	children: ReactNode
-}) => (
+const LayoutBody = ({ children, ...rest }: TStackProps) => (
 	<Stack className={style['page']} alignItems="center">
 		<BackgroundLines />
 		<NavigationBar />
-		<Stack className={`${style['main']} ${wrapperClassName || ''}`}>
+		<Stack className={`${style['main']} ${rest.className || ''}`} {...rest}>
 			{children}
 		</Stack>
 		<Footer />
@@ -97,7 +91,6 @@ const Layout = ({
 	description,
 	metaImage,
 	wrapperClassName,
-	className: className,
 	...rest
 }: {
 	children: React.ReactNode
@@ -105,20 +98,19 @@ const Layout = ({
 	description?: string
 	metaImage?: string
 	wrapperClassName?: string
-	className?: string
 } & TStackProps) => {
-	const wrapperClass = style['container'].concat(
-		wrapperClassName ? ' ' + wrapperClassName : ''
-	)
+	const wrapperClass = [style['container'], wrapperClassName]
+		.filter(Boolean)
+		.join(' ')
 
 	return (
-		<Stack className={wrapperClass} {...rest}>
+		<Stack className={wrapperClass}>
 			<LayoutHead
 				description={description}
 				title={title}
 				metaImage={metaImage}
 			/>
-			<LayoutBody wrapperClassName={className}>{children}</LayoutBody>
+			<LayoutBody {...rest}>{children}</LayoutBody>
 		</Stack>
 	)
 }

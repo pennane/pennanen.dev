@@ -70,7 +70,7 @@ a:hover {
 p,
 span {
 	color: var(--text-color);
-	line-height: 1.6;
+	line-height: 1.75;
 	margin: 0;
 }
 
@@ -80,6 +80,7 @@ span {
 
 p {
 	font-size: 1rem;
+	color: var(--text-color);
 }
 
 h1,
@@ -88,8 +89,15 @@ h3,
 h4,
 h5,
 p {
-	color: var(--title-color);
 	margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+	color: var(--title-color);
 }
 
 h2 {
@@ -132,11 +140,11 @@ h3 {
 }
 
 .stack.medium {
-	gap: 1rem;
+	gap: 0.75rem;
 }
 
 .stack.large {
-	gap: 2rem;
+	gap: 1.5rem;
 }
 
 .relative {

@@ -34,8 +34,9 @@ const Index = ({
 			description={description}
 			metaImage={metaImage}
 			wrapperClassName={style.main}
+			gap="large"
 		>
-			<Section className="relative">
+			<Section className="relative" gap="small">
 				<header>
 					<h2>Arttu Pennanen</h2>
 					<h3>Software Engineer</h3>
