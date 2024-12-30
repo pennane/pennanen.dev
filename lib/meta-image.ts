@@ -240,11 +240,11 @@ export async function generateMainPageImage<
 	})
 
 	// eslint-disable-next-line no-useless-escape
-	const fileName =
-		data.title.replace(/[\|\ \.\-]/g, '_').toLowerCase() + '.jpg'
+	const fileName = data.title.replace(/[| .-]/g, '_').toLowerCase() + '.jpg'
 	const directory = path.join(target, fileName)
 
-	fs.writeFileSync(directory, image)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	fs.writeFileSync(directory, image as any)
 
 	return fileName
 }
@@ -279,7 +279,8 @@ export async function generateProjectImage(project: IProject) {
 
 	const fileName = project.id.toLowerCase() + '.png'
 	const directory = path.join(target, fileName)
-	fs.writeFileSync(directory, image)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	fs.writeFileSync(directory, image as any)
 
 	return fileName
 }
