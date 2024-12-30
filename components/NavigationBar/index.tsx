@@ -4,6 +4,7 @@ import style from './navigationbar.module.css'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
 import ContactLinks from '../ContactLinks'
+import { Stack } from '../Stack'
 
 const ThemeToggler = dynamic(() => import('../ThemeToggler'), { ssr: false })
 
@@ -11,7 +12,12 @@ const NavigationBar = () => {
 	const { resolvedTheme } = useTheme()
 
 	return (
-		<div className={style['container']}>
+		<Stack
+			className={style['container']}
+			direction="row"
+			justifyContent="center"
+			fill="width"
+		>
 			<nav className={style['main']}>
 				<Link href="/">
 					<a className={style['link']}>
@@ -39,7 +45,7 @@ const NavigationBar = () => {
 				<ContactLinks />
 				<ThemeToggler />
 			</nav>
-		</div>
+		</Stack>
 	)
 }
 

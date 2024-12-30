@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { TProject } from '../../../models'
 import { useEffect, useRef, useState } from 'react'
 import { monthIndexToName } from '../../../lib/date'
+import { Section } from '../../Section'
 
 const ProjectLink = ({ project }: { project: TProject }) => {
 	const date =
@@ -47,7 +48,7 @@ const ProjectLink = ({ project }: { project: TProject }) => {
 							/>
 						</div>
 
-						<div className={style['information']}>
+						<Section gap="tiny">
 							<h2 className={style['heading']}>{project.name}</h2>
 							<p className={style['description']}>
 								{project.description}
@@ -59,7 +60,7 @@ const ProjectLink = ({ project }: { project: TProject }) => {
 									date.getMonth()
 								)}, ${date.getFullYear()}`}</span>
 							)}
-						</div>
+						</Section>
 					</div>
 				</a>
 			</Link>

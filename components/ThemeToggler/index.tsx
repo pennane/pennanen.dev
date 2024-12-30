@@ -2,6 +2,7 @@ import { useTheme } from 'next-themes'
 import style from './themetoggler.module.css'
 import { faMoon } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Stack } from '../Stack'
 
 const ThemeToggler = () => {
 	const { resolvedTheme, setTheme } = useTheme()
@@ -16,7 +17,12 @@ const ThemeToggler = () => {
 	}
 
 	return (
-		<div className={style.main}>
+		<Stack
+			className={style.main}
+			direction="row"
+			alignItems="center"
+			justifyContent="flex-end"
+		>
 			<button
 				onClick={toggleTheme}
 				className={style.button}
@@ -26,7 +32,7 @@ const ThemeToggler = () => {
 			>
 				<FontAwesomeIcon icon={faMoon} />
 			</button>
-		</div>
+		</Stack>
 	)
 }
 

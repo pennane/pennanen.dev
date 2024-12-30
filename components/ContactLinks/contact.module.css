@@ -1,9 +1,3 @@
-.container {
-	display: flex;
-	gap: 0;
-	align-items: center;
-}
-
 .link {
 	display: flex;
 	color: var(--text-color);

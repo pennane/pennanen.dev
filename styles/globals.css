@@ -11,7 +11,7 @@
 	--text-color-secondary: hsl(var(--main-hue) 2% 20%);
 	--link-color: hsl(var(--main-hue) 50% 35%);
 	--link-hover-color: hsl(var(--main-hue) 50% 55%);
-	--background-line-color: hsl(var(--main-hue) 26% 35% / 8%);
+	--line-color: hsl(var(--main-hue) 26% 35% / 8%);
 	--image-background-color: hsl(0deg 0% 100% / 1%);
 }
 
@@ -23,7 +23,7 @@
 	--text-color-secondary: hsl(var(--main-hue) 35% 70%);
 	--link-color: hsl(var(--main-hue) 100% 55%);
 	--link-hover-color: hsl(var(--main-hue) 100% 85%);
-	--background-line-color: hsl(var(--main-hue) 0% 100% / 4%);
+	--line-color: hsl(var(--main-hue) 0% 100% / 4%);
 	--image-background-color: hsl(var(--main-hue) 0% 18% / 10%);
 }
 
@@ -58,12 +58,12 @@ html {
 }
 
 a {
-	color: var(--text-color);
+	color: var(--link-color);
 	text-decoration: none;
 }
 
 a:hover {
-	color: var(--text-color);
+	color: var(--link-hover-color);
 	text-decoration: underline;
 }
 
@@ -86,7 +86,8 @@ h1,
 h2,
 h3,
 h4,
-h5 {
+h5,
+p {
 	color: var(--title-color);
 	margin: 0;
 }
@@ -102,77 +103,42 @@ h3 {
 	font-weight: 500;
 }
 
-header {
-	margin-top: 2rem;
+.stack {
+	display: flex;
 }
 
-section {
-	display: flex;
+.stack.row {
+	flex-direction: row;
+}
+
+.stack.column {
 	flex-direction: column;
+}
+
+.stack.wrap {
+	flex-wrap: wrap;
+}
+
+.stack.none {
+	gap: 0rem;
+}
+
+.stack.tiny {
+	gap: 0.25rem;
+}
+
+.stack.small {
+	gap: 0.5rem;
+}
+
+.stack.medium {
 	gap: 1rem;
 }
 
-.margin-top {
-	margin-top: 2rem;
+.stack.large {
+	gap: 2rem;
 }
 
-.all-link a {
-	color: var(--link-color);
-	text-align: center;
-	margin: 3rem 0;
-	text-decoration: underline;
-}
-
-.all-link a:hover {
-	color: var(--link-hover-color);
-}
-
-.pt0 {
-	padding-top: 0 !important;
-}
-
-.about {
+.relative {
 	position: relative;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1rem;
-}
-
-.about > div {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.about > * {
-	flex: 1;
-	min-width: min(240px, 80vw);
-	background-color: var(--main-background-color);
-}
-
-.about > div > p:first-of-type {
-	margin-top: 0;
-}
-
-.about > aside {
-	min-width: min(240px, 80vw);
-}
-
-.design-history .design-history-page {
-	width: 100%;
-}
-
-.history-images {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1rem;
-}
-
-.history-images > span {
-	object-fit: contain;
-	width: 20rem !important;
-}
-
-.history-images img {
-	object-fit: contain;
 }

@@ -5,6 +5,8 @@ import { generateMainPageImage } from '../metaImage'
 import { getFilteredProjects } from '../lib/staticProps'
 import { TProject } from '../models'
 import Link from 'next/link'
+import style from './index.module.css'
+import { Section } from '../components/Section'
 
 const description =
 	"Arttu Pennanen - the digital playground pennanen.dev. Sharing some of the personal projects I've built for the sake of building something."
@@ -28,8 +30,12 @@ const Index = ({
 	metaImage,
 }: InferGetStaticPropsType<typeof getStaticProps>) => {
 	return (
-		<Layout description={description} metaImage={metaImage}>
-			<section style={{ position: 'relative' }}>
+		<Layout
+			description={description}
+			metaImage={metaImage}
+			wrapperClassName={style.main}
+		>
+			<Section className="relative">
 				<header>
 					<h2>Arttu Pennanen</h2>
 					<h3>Software Engineer</h3>
@@ -47,14 +53,16 @@ const Index = ({
 						</p>
 					</div>
 				</div>
-			</section>
-			<section>
+			</Section>
+
+			<Section>
 				<h3>My pride and joy</h3>
 				<Projects projects={projectsData} />
-			</section>
-			<section className="all-link">
+			</Section>
+
+			<Section className="all-link">
 				<Link href="/uncurated">List of uncurated projects</Link>
-			</section>
+			</Section>
 		</Layout>
 	)
 }

@@ -16,7 +16,7 @@
 .item {
 	height: 100%;
 	width: 20%;
-	border-left: 1px solid var(--background-line-color);
+	border-left: 1px solid var(--line-color);
 }
 
 @media only screen and (max-width: 670px) {

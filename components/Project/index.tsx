@@ -3,79 +3,89 @@ import linkStyle from './ProjectLink/projectlink.module.css'
 import { TProject } from '../../models'
 import Image from 'next/image'
 import { monthIndexToName } from '../../lib/date'
+import { Section } from '../Section'
+import { Stack } from '../Stack'
 
 export default function Project({ project }: { project: TProject }) {
 	const date = project.date ? new Date(project.date) : null
 	return (
-		<div className={style['project']}>
+		<Stack fill="width">
 			<header className={style['header']}>
-				<h1>{project.name}</h1>
-				{date && (
-					<span className={linkStyle['date']}>
-						From{' '}
-						{`${monthIndexToName(date.getMonth())}, ${date.getFullYear()}`}
-					</span>
-				)}
-				<section className={style['lift']}>
-					<div className={linkStyle['image']}>
-						<Image
-							className={linkStyle['image']}
-							width={48}
-							height={48}
-							alt={project.icon ? `${project.name} icon` : ''}
-							src={
-								project.icon
-									? '/sub/' + project.id + '/' + project.icon
-									: '/images/placeholder.png'
-							}
-						/>
-					</div>
-					{project.url && project.url.includes('github.com') && (
-						<a href={project.url} rel="noreferrer">
-							View source{' '}
-							<span className={linkStyle['date']}>
-								[{project.url}]
-							</span>
-						</a>
+				<Stack gap="tiny">
+					<h1>{project.name}</h1>
+					{date && (
+						<span className={linkStyle['date']}>
+							From{' '}
+							{`${monthIndexToName(date.getMonth())}, ${date.getFullYear()}`}
+						</span>
 					)}
-					{project.url && project.url.includes('pennanen.dev') && (
-						<a href={project.url} rel="noreferrer">
-							Open project{' '}
-							<span className={linkStyle['date']}>
-								[{project.url}]
-							</span>
-						</a>
-					)}
-					{project.url &&
-						!project.url.includes('github.com') &&
-						!project.url.includes('pennanen.dev') && (
+					<Section direction="row" alignItems="center">
+						<div className={linkStyle['image']}>
+							<Image
+								className={linkStyle['image']}
+								width={48}
+								height={48}
+								alt={project.icon ? `${project.name} icon` : ''}
+								src={
+									project.icon
+										? '/sub/' +
+											project.id +
+											'/' +
+											project.icon
+										: '/images/placeholder.png'
+								}
+							/>
+						</div>
+						{project.url && project.url.includes('github.com') && (
 							<a href={project.url} rel="noreferrer">
-								Open outbound link{' '}
+								View source{' '}
 								<span className={linkStyle['date']}>
 									[{project.url}]
 								</span>
 							</a>
 						)}
-					{!project.url && (
-						<a href={`/sub/${project.id}/index.html`}>
-							Launch project
-						</a>
-					)}
-				</section>
-				<p className={style['description']}>{project.description}</p>
+						{project.url &&
+							project.url.includes('pennanen.dev') && (
+								<a href={project.url} rel="noreferrer">
+									Open project{' '}
+									<span className={linkStyle['date']}>
+										[{project.url}]
+									</span>
+								</a>
+							)}
+						{project.url &&
+							!project.url.includes('github.com') &&
+							!project.url.includes('pennanen.dev') && (
+								<a href={project.url} rel="noreferrer">
+									Open outbound link{' '}
+									<span className={linkStyle['date']}>
+										[{project.url}]
+									</span>
+								</a>
+							)}
+						{!project.url && (
+							<a href={`/sub/${project.id}/index.html`}>
+								Launch project
+							</a>
+						)}
+					</Section>
+					<p className={style['description']}>
+						{project.description}
+					</p>
+				</Stack>
 			</header>
 
 			{project.pretext && (
-				<section>
+				<Section>
 					<p
 						dangerouslySetInnerHTML={{
 							__html: project.pretext,
 						}}
 					></p>
-				</section>
+				</Section>
 			)}
 			{project.images[0] && (
-				<section>
+				<Section>
 					{project.images.map((url, i) => (
 						<div className={style['insert']} key={project.id + i}>
 							{url.endsWith('.mp4') && (
@@ -98,15 +108,15 @@ export default function Project({ project }: { project: TProject }) {
 							)}
 						</div>
 					))}
-				</section>
+				</Section>
 			)}
 			{project.github && (
-				<section>
+				<Section>
 					<a href={project.github} rel="noreferrer">
 						View source
 					</a>
-				</section>
+				</Section>
 			)}
-		</div>
+		</Stack>
 	)
 }

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Stack } from '../Stack'
 import style from './footer.module.css'
 
 const Footer = () => {
@@ -6,16 +7,16 @@ const Footer = () => {
 	const end = new Date().getFullYear()
 
 	return (
-		<div className={style['wrapper']}>
-			<footer className={style['main']}>
+		<footer className={style.main}>
+			<Stack direction="row" alignItems="center" justifyContent="center">
 				<span>
 					<Link href="https://github.com/Pennane/pennanen.dev">
-						<a className={style['icon-link']}>Github</a>
+						<a>Github</a>
 					</Link>
 				</span>
 				<span>&copy; Arttu Pennanen {`${start} - ${end}`}</span>
-			</footer>
-		</div>
+			</Stack>
+		</footer>
 	)
 }
 

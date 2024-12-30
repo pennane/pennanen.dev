@@ -3,6 +3,7 @@ import Layout from '../components/Layout'
 import fs from 'fs'
 import path from 'path'
 import Image from 'next/image'
+import style from './history.module.css'
 
 const description = 'Site design history'
 
@@ -22,23 +23,21 @@ const All = ({ images }: InferGetStaticPropsType<typeof getStaticProps>) => {
 	return (
 		<Layout
 			description={description}
-			className="design-history"
-			pageClassName="design-history-page"
+			wrapperClassName={style.main}
+			className="design-history-page"
 		>
-			<section>
-				<h2>Design history</h2>
-				<div className="history-images">
-					{images.map((url, i) => (
-						<Image
-							width={320}
-							height={566}
-							key={i}
-							src={'/history/' + url}
-							loading="lazy"
-						></Image>
-					))}
-				</div>
-			</section>
+			<h2>Design history</h2>
+			<div className="history-images">
+				{images.map((url, i) => (
+					<Image
+						width={320}
+						height={566}
+						key={i}
+						src={'/history/' + url}
+						loading="lazy"
+					></Image>
+				))}
+			</div>
 		</Layout>
 	)
 }

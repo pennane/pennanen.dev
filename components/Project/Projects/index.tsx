@@ -2,10 +2,11 @@ import style from './projects.module.css'
 import { TProject } from '../../../models'
 import ProjectLink from '../ProjectLink'
 import SequentialAnimation from '../../SequentialAnimation'
+import { Stack } from '../../Stack'
 
 const Projects = ({ projects }: { projects: TProject[] }) => {
 	return (
-		<div className={style['main']}>
+		<Stack className={style['main']}>
 			<SequentialAnimation
 				initialDelay={80}
 				delayBetween={40}
@@ -16,7 +17,7 @@ const Projects = ({ projects }: { projects: TProject[] }) => {
 					<ProjectLink project={p} key={p.id + '-' + i} />
 				))}
 			</SequentialAnimation>
-		</div>
+		</Stack>
 	)
 }
 
