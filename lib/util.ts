@@ -2,56 +2,56 @@
 import { Image, CanvasRenderingContext2D } from 'canvas'
 
 export const isString = (text: unknown): text is string =>
-  typeof text === 'string' || text instanceof String
+	typeof text === 'string' || text instanceof String
 export const isNumber = (number: unknown): number is number =>
-  typeof number === 'number' && !isNaN(number)
+	typeof number === 'number' && !isNaN(number)
 
 export const monthIndexToName = (number: number) => {
-  const i = Math.round(number)
-  const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ]
-  if (i > 11) return monthNames[11]
-  else if (i < 0) return monthNames[0]
-  return monthNames[i]
+	const i = Math.round(number)
+	const monthNames = [
+		'January',
+		'February',
+		'March',
+		'April',
+		'May',
+		'June',
+		'July',
+		'August',
+		'September',
+		'October',
+		'November',
+		'December',
+	]
+	if (i > 11) return monthNames[11]
+	else if (i < 0) return monthNames[0]
+	return monthNames[i]
 }
 
 export function wrapText(
-  context: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  lineHeight: number
+	context: CanvasRenderingContext2D,
+	text: string,
+	x: number,
+	y: number,
+	maxWidth: number,
+	lineHeight: number
 ) {
-  const words = text.split(' ')
-  let line = ''
+	const words = text.split(' ')
+	let line = ''
 
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' '
-    const metrics = context.measureText(testLine)
-    const testWidth = metrics.width
-    if (testWidth > maxWidth && n > 0) {
-      context.fillText(line, x, y)
-      line = words[n] + ' '
-      y += lineHeight
-    } else {
-      line = testLine
-    }
-  }
-  context.fillText(line, x, y)
-  return { x, y }
+	for (let n = 0; n < words.length; n++) {
+		const testLine = line + words[n] + ' '
+		const metrics = context.measureText(testLine)
+		const testWidth = metrics.width
+		if (testWidth > maxWidth && n > 0) {
+			context.fillText(line, x, y)
+			line = words[n] + ' '
+			y += lineHeight
+		} else {
+			line = testLine
+		}
+	}
+	context.fillText(line, x, y)
+	return { x, y }
 }
 
 /**
@@ -62,61 +62,61 @@ export function wrapText(
  * If image and context are only arguments rectangle will equal canvas
  */
 export function drawImageProp(
-  ctx: CanvasRenderingContext2D,
-  img: Image,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  offsetX?: number,
-  offsetY?: number
+	ctx: CanvasRenderingContext2D,
+	img: Image,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+	offsetX?: number,
+	offsetY?: number
 ) {
-  if (arguments.length === 2) {
-    x = y = 0
-    w = ctx.canvas.width
-    h = ctx.canvas.height
-  }
+	if (arguments.length === 2) {
+		x = y = 0
+		w = ctx.canvas.width
+		h = ctx.canvas.height
+	}
 
-  // default offset is center
-  offsetX = typeof offsetX === 'number' ? offsetX : 0.5
-  offsetY = typeof offsetY === 'number' ? offsetY : 0.5
+	// default offset is center
+	offsetX = typeof offsetX === 'number' ? offsetX : 0.5
+	offsetY = typeof offsetY === 'number' ? offsetY : 0.5
 
-  // keep bounds [0.0, 1.0]
-  if (offsetX < 0) offsetX = 0
-  if (offsetY < 0) offsetY = 0
-  if (offsetX > 1) offsetX = 1
-  if (offsetY > 1) offsetY = 1
+	// keep bounds [0.0, 1.0]
+	if (offsetX < 0) offsetX = 0
+	if (offsetY < 0) offsetY = 0
+	if (offsetX > 1) offsetX = 1
+	if (offsetY > 1) offsetY = 1
 
-  const iw = img.width,
-    ih = img.height,
-    r = Math.min(w / iw, h / ih)
-  let nw = iw * r, // new prop. width
-    nh = ih * r, // new prop. height
-    cx,
-    cy,
-    cw,
-    ch,
-    ar = 1
+	const iw = img.width,
+		ih = img.height,
+		r = Math.min(w / iw, h / ih)
+	let nw = iw * r, // new prop. width
+		nh = ih * r, // new prop. height
+		cx,
+		cy,
+		cw,
+		ch,
+		ar = 1
 
-  // decide which gap to fill
-  if (nw < w) ar = w / nw
-  if (Math.abs(ar - 1) < 1e-14 && nh < h) ar = h / nh // updated
-  nw *= ar
-  nh *= ar
+	// decide which gap to fill
+	if (nw < w) ar = w / nw
+	if (Math.abs(ar - 1) < 1e-14 && nh < h) ar = h / nh // updated
+	nw *= ar
+	nh *= ar
 
-  // calc source rectangle
-  cw = iw / (nw / w)
-  ch = ih / (nh / h)
+	// calc source rectangle
+	cw = iw / (nw / w)
+	ch = ih / (nh / h)
 
-  cx = (iw - cw) * offsetX
-  cy = (ih - ch) * offsetY
+	cx = (iw - cw) * offsetX
+	cy = (ih - ch) * offsetY
 
-  // make sure source rectangle is valid
-  if (cx < 0) cx = 0
-  if (cy < 0) cy = 0
-  if (cw > iw) cw = iw
-  if (ch > ih) ch = ih
+	// make sure source rectangle is valid
+	if (cx < 0) cx = 0
+	if (cy < 0) cy = 0
+	if (cw > iw) cw = iw
+	if (ch > ih) ch = ih
 
-  // fill image in dest. rectangle
-  ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h)
+	// fill image in dest. rectangle
+	ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h)
 }

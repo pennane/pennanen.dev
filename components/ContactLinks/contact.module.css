@@ -1,24 +1,24 @@
 .container {
-  display: flex;
-  gap: 0;
-  align-items: center;
+	display: flex;
+	gap: 0;
+	align-items: center;
 }
 
 .link {
-  display: flex;
-  color: var(--text-color);
-  padding: 0 0.62rem;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
+	display: flex;
+	color: var(--text-color);
+	padding: 0 0.62rem;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
 }
 
 .link:hover {
-  color: inherit;
+	color: inherit;
 }
 
 .link > svg {
-  --size: 1.25rem;
-  width: var(--size);
-  height: var(--size);
+	--size: 1.25rem;
+	width: var(--size);
+	height: var(--size);
 }

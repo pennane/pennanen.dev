@@ -1,6 +1,6 @@
 .main {
-  background: var(--main-background-color);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+	background: var(--main-background-color);
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
 }

@@ -1,7 +1,7 @@
 import type {
-  GetStaticPaths,
-  GetStaticProps,
-  GetStaticPropsContext,
+	GetStaticPaths,
+	GetStaticProps,
+	GetStaticPropsContext,
 } from 'next'
 import Layout from '../components/Layout'
 import { getProjectById, getProjectIds } from '../lib/stuff'
@@ -11,44 +11,44 @@ import { generateProjectImage } from '../lib/meta-image'
 import Project from '../components/Project'
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const paths = getProjectIds()
-  return {
-    paths,
-    fallback: false,
-  }
+	const paths = getProjectIds()
+	return {
+		paths,
+		fallback: false,
+	}
 }
 
 export const getStaticProps: GetStaticProps = async ({
-  params,
+	params,
 }: GetStaticPropsContext) => {
-  if (!params || !isString(params.project)) return { notFound: true }
+	if (!params || !isString(params.project)) return { notFound: true }
 
-  const project = getProjectById(params.project)
+	const project = getProjectById(params.project)
 
-  if (!project) return { notFound: true }
+	if (!project) return { notFound: true }
 
-  const metaImage = await generateProjectImage(project)
+	const metaImage = await generateProjectImage(project)
 
-  return { props: { project, metaImage } }
+	return { props: { project, metaImage } }
 }
 
 const ProjectPage = ({
-  project,
-  metaImage,
+	project,
+	metaImage,
 }: {
-  project: IProject
-  metaImage: string
+	project: IProject
+	metaImage: string
 }) => {
-  if (!project) return null
-  return (
-    <Layout
-      title={project.name}
-      description={project.description || undefined}
-      metaImage={metaImage || undefined}
-    >
-      <Project project={project} />
-    </Layout>
-  )
+	if (!project) return null
+	return (
+		<Layout
+			title={project.name}
+			description={project.description || undefined}
+			metaImage={metaImage || undefined}
+		>
+			<Project project={project} />
+		</Layout>
+	)
 }
 
 export default ProjectPage

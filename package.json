@@ -1,33 +1,34 @@
 {
-  "name": "pennanen.dev",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "prettier": "npx prettier --write .",
-    "knip": "knip"
-  },
-  "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^6.7.2",
-    "@fortawesome/free-brands-svg-icons": "^6.7.2",
-    "@fortawesome/free-regular-svg-icons": "^6.7.2",
-    "@fortawesome/react-fontawesome": "^0.2.2",
-    "canvas": "^3.0.0",
-    "next": "^12.3.4",
-    "next-themes": "^0.2.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@types/node": "^22.10.2",
-    "@types/react": "^18.3.18",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
-    "eslint": "9.17.0",
-    "eslint-plugin-react": "^7.37.3",
-    "knip": "^5.41.1",
-    "typescript": "5.7.2"
-  }
+	"name": "pennanen.dev",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"lint": "next lint",
+		"knip": "knip",
+		"format": "prettier -w ."
+	},
+	"dependencies": {
+		"@fortawesome/fontawesome-svg-core": "^6.7.2",
+		"@fortawesome/free-brands-svg-icons": "^6.7.2",
+		"@fortawesome/free-regular-svg-icons": "^6.7.2",
+		"@fortawesome/react-fontawesome": "^0.2.2",
+		"canvas": "^3.0.0",
+		"next": "^12.3.4",
+		"next-themes": "^0.2.1",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.2",
+		"@types/react": "^18.3.18",
+		"@typescript-eslint/eslint-plugin": "^5.62.0",
+		"@typescript-eslint/parser": "^5.62.0",
+		"eslint": "8.57.0",
+		"eslint-plugin-react": "^7.37.3",
+		"knip": "^5.41.1",
+		"prettier": "^3.4.2",
+		"typescript": "^5.1.0"
+	}
 }

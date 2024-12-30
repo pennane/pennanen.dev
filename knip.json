@@ -1,7 +1,9 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
-  "next": true,
-  "ignore": [
-    "public/**"
-  ]
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"next": true,
+	"prettier": true,
+	"eslint": true,
+	"ignore": [
+		"public/**"
+	]
 }
