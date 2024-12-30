@@ -4,11 +4,11 @@ export type AppState = {
   }
 }
 
-export enum AppActionType {
+enum AppActionType {
   ANIMATION_COMPLETE,
 }
 
-export type Action<TType extends AppActionType, TPayload> = {
+type Action<TType extends AppActionType, TPayload> = {
   type: TType
   payload: TPayload
 }

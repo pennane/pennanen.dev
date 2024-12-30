@@ -5,7 +5,7 @@ import NavigationBar from '../NavigationBar'
 import React from 'react'
 import style from './layout.module.css'
 
-export const siteTitle = 'Arttu Pennanen'
+const siteTitle = 'Arttu Pennanen'
 
 const Layout = ({
   children,

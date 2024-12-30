@@ -5,11 +5,7 @@ export const isString = (text: unknown): text is string =>
   typeof text === 'string' || text instanceof String
 export const isNumber = (number: unknown): number is number =>
   typeof number === 'number' && !isNaN(number)
-export const dateToFinnishLocale = (date: Date) => {
-  return date.toLocaleDateString('fi-Fi', {
-    timeZone: 'Europe/Helsinki',
-  })
-}
+
 export const monthIndexToName = (number: number) => {
   const i = Math.round(number)
   const monthNames = [
@@ -29,13 +25,6 @@ export const monthIndexToName = (number: number) => {
   if (i > 11) return monthNames[11]
   else if (i < 0) return monthNames[0]
   return monthNames[i]
-}
-
-export const getAbsoluteURL = (path: string) => {
-  const baseURL = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000'
-  return baseURL + path
 }
 
 export function wrapText(
