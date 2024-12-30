@@ -1,31 +1,4 @@
-// noinspection JSUnusedGlobalSymbols
 import { Image, CanvasRenderingContext2D } from 'canvas'
-
-export const isString = (text: unknown): text is string =>
-	typeof text === 'string' || text instanceof String
-export const isNumber = (number: unknown): number is number =>
-	typeof number === 'number' && !isNaN(number)
-
-export const monthIndexToName = (number: number) => {
-	const i = Math.round(number)
-	const monthNames = [
-		'January',
-		'February',
-		'March',
-		'April',
-		'May',
-		'June',
-		'July',
-		'August',
-		'September',
-		'October',
-		'November',
-		'December',
-	]
-	if (i > 11) return monthNames[11]
-	else if (i < 0) return monthNames[0]
-	return monthNames[i]
-}
 
 export function wrapText(
 	context: CanvasRenderingContext2D,

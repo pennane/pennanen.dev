@@ -1,9 +1,9 @@
 import type { InferGetStaticPropsType } from 'next'
 import Layout from '../components/Layout'
 import Projects from '../components/Project/Projects'
-import { generateMainPageImage } from '../lib/meta-image'
-import { getFilteredProjects } from '../lib/stuff'
-import { TProject } from '../types/models'
+import { generateMainPageImage } from '../metaImage'
+import { getFilteredProjects } from '../lib/staticProps'
+import { TProject } from '../models'
 import Link from 'next/link'
 
 const description =

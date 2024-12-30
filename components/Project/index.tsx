@@ -1,8 +1,8 @@
-import { monthIndexToName } from '../../lib/util'
 import style from './project.module.css'
 import linkStyle from './ProjectLink/projectlink.module.css'
-import { TProject } from '../../types/models'
+import { TProject } from '../../models'
 import Image from 'next/image'
+import { monthIndexToName } from '../../lib/date'
 
 export default function Project({ project }: { project: TProject }) {
 	const date = project.date ? new Date(project.date) : null

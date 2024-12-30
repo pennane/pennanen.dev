@@ -7,7 +7,8 @@
 		"start": "next start",
 		"lint": "next lint",
 		"knip": "knip",
-		"format": "prettier -w ."
+		"format": "prettier -w .",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-svg-core": "^6.7.2",

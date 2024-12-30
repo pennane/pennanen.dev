@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
-import { TProject, TProjectConfig } from '../types/models'
-import { isNumber, isString } from './util'
+import { TProject, TProjectConfig } from '../models'
+import { isNumber, isString } from './fp'
 
 const directory = path.join(process.cwd(), 'public/sub')
 

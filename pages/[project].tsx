@@ -4,10 +4,10 @@ import type {
 	GetStaticPropsContext,
 } from 'next'
 import Layout from '../components/Layout'
-import { getProjectById, getProjectIds } from '../lib/stuff'
-import { isString } from '../lib/util'
-import { TProject } from '../types/models'
-import { generateProjectImage } from '../lib/meta-image'
+import { getProjectById, getProjectIds } from '../lib/staticProps'
+import { isString } from '../lib/fp'
+import { TProject } from '../models'
+import { generateProjectImage } from '../metaImage'
 import Project from '../components/Project'
 
 export const getStaticPaths: GetStaticPaths = async () => {

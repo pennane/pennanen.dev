@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import React, { useContext, useLayoutEffect, useState } from 'react'
-import { AppContext } from '../../lib/context'
-import { animationComplete } from '../../lib/reducer'
+import { AppContext } from '../../context'
+import { animationComplete } from '../../context/reducer'
 import style from './sequential-animation.module.css'
 
 interface SequentialProps {

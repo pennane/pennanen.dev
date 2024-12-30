@@ -1,9 +1,9 @@
 import style from './projectlink.module.css'
 import Link from 'next/link'
 import Image from 'next/image'
-import { TProject } from '../../../types/models'
-import { monthIndexToName } from '../../../lib/util'
+import { TProject } from '../../../models'
 import { useEffect, useRef, useState } from 'react'
+import { monthIndexToName } from '../../../lib/date'
 
 const ProjectLink = ({ project }: { project: TProject }) => {
 	const date =

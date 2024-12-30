@@ -1,13 +1,14 @@
 import path from 'path'
 import fs from 'fs'
 import { createCanvas, Image, loadImage, registerFont } from 'canvas'
-import { drawImageProp, wrapText } from './util'
-import { TProject } from '../types/models'
+import { TProject } from '../models'
+import { wrapText, drawImageProp } from './lib'
 
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Medium.ttf'), {
 	family: 'Inter',
 	weight: '300',
 })
+
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Bold.ttf'), {
 	family: 'Inter',
 	weight: '700',

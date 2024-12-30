@@ -1,9 +1,9 @@
 import type { InferGetStaticPropsType } from 'next'
 import Layout from '../components/Layout'
 import Projects from '../components/Project/Projects'
-import { generateMainPageImage } from '../lib/meta-image'
-import { getProjects } from '../lib/stuff'
-import { TProject } from '../types/models'
+import { generateMainPageImage } from '../metaImage'
+import { getProjects } from '../lib/staticProps'
+import { TProject } from '../models'
 
 const description =
 	'All of the prior Web projects. Unfiltered and uncurated. Functionality not guaranteed.'

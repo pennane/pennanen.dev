@@ -1,5 +1,5 @@
 import style from './projects.module.css'
-import { TProject } from '../../../types/models'
+import { TProject } from '../../../models'
 import ProjectLink from '../ProjectLink'
 import SequentialAnimation from '../../SequentialAnimation'
 
