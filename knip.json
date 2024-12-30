@@ -3,7 +3,5 @@
 	"next": true,
 	"prettier": true,
 	"eslint": true,
-	"ignore": [
-		"public/**"
-	]
+	"ignore": ["public/**"]
 }
