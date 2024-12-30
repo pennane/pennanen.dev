@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { createCanvas, Image, loadImage, registerFont } from 'canvas'
 import { drawImageProp, wrapText } from './util'
-import { IProject } from '../types'
+import { TProject } from '../types/models'
 
 registerFont(path.join(process.cwd(), 'public/fonts/Inter-Medium.ttf'), {
 	family: 'Inter',
@@ -249,7 +249,7 @@ export async function generateMainPageImage<
 	return fileName
 }
 
-export async function generateProjectImage(project: IProject) {
+export async function generateProjectImage(project: TProject) {
 	const target = './public/meta'
 	if (!fs.existsSync(target)) {
 		fs.mkdirSync(target)

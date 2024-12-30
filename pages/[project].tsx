@@ -6,7 +6,7 @@ import type {
 import Layout from '../components/Layout'
 import { getProjectById, getProjectIds } from '../lib/stuff'
 import { isString } from '../lib/util'
-import { IProject } from '../types'
+import { TProject } from '../types/models'
 import { generateProjectImage } from '../lib/meta-image'
 import Project from '../components/Project'
 
@@ -36,7 +36,7 @@ const ProjectPage = ({
 	project,
 	metaImage,
 }: {
-	project: IProject
+	project: TProject
 	metaImage: string
 }) => {
 	if (!project) return null

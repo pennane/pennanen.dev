@@ -1,4 +1,4 @@
-export interface IProject {
+export type TProject = {
 	id: string
 	url: string | null
 	date: number | null
@@ -14,7 +14,7 @@ export interface IProject {
 	notAuthor: boolean | null
 }
 
-export interface IProjectConfig {
+export type TProjectConfig = {
 	url: string | null
 	date: string | number | null
 	name: {

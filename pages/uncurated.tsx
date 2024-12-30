@@ -3,13 +3,13 @@ import Layout from '../components/Layout'
 import Projects from '../components/Project/Projects'
 import { generateMainPageImage } from '../lib/meta-image'
 import { getProjects } from '../lib/stuff'
-import { IProject } from '../types'
+import { TProject } from '../types/models'
 
 const description =
 	'All of the prior Web projects. Unfiltered and uncurated. Functionality not guaranteed.'
 
 export const getStaticProps = async () => {
-	const projectsData: IProject[] = getProjects()
+	const projectsData: TProject[] = getProjects()
 	const metaImage = await generateMainPageImage({
 		title: 'All | pennanen.dev',
 		description,

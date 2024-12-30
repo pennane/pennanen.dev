@@ -1,9 +1,9 @@
 import style from './projects.module.css'
-import { IProject } from '../../../types'
+import { TProject } from '../../../types/models'
 import ProjectLink from '../ProjectLink'
 import SequentialAnimation from '../../SequentialAnimation'
 
-const Projects = ({ projects }: { projects: IProject[] }) => {
+const Projects = ({ projects }: { projects: TProject[] }) => {
 	return (
 		<div className={style['main']}>
 			<SequentialAnimation

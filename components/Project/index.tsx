@@ -1,10 +1,10 @@
 import { monthIndexToName } from '../../lib/util'
 import style from './project.module.css'
 import linkStyle from './ProjectLink/projectlink.module.css'
-import { IProject } from '../../types'
+import { TProject } from '../../types/models'
 import Image from 'next/image'
 
-export default function Project({ project }: { project: IProject }) {
+export default function Project({ project }: { project: TProject }) {
 	const date = project.date ? new Date(project.date) : null
 	return (
 		<div className={style['project']}>

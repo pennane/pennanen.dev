@@ -3,14 +3,14 @@ import Layout from '../components/Layout'
 import Projects from '../components/Project/Projects'
 import { generateMainPageImage } from '../lib/meta-image'
 import { getFilteredProjects } from '../lib/stuff'
-import { IProject } from '../types'
+import { TProject } from '../types/models'
 import Link from 'next/link'
 
 const description =
 	"Arttu Pennanen - the digital playground pennanen.dev. Sharing some of the personal projects I've built for the sake of building something."
 
 export const getStaticProps = async () => {
-	const projectsData: IProject[] = getFilteredProjects()
+	const projectsData: TProject[] = getFilteredProjects()
 	const metaImage = await generateMainPageImage({
 		title: 'pennanen.dev',
 		description,
