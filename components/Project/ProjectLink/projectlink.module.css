@@ -32,7 +32,11 @@
 	text-transform: capitalize;
 }
 
-a:hover .heading {
+.main a:hover {
+	text-decoration: none;
+}
+a:hover .heading,
+a:hover .description {
 	text-decoration: underline;
 }
 

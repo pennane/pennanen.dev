@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Stack } from '../Stack'
 import style from './footer.module.css'
 
@@ -9,12 +8,7 @@ const Footer = () => {
 	return (
 		<footer className={style.main}>
 			<Stack direction="row" alignItems="center" justifyContent="center">
-				<span>
-					<Link href="https://github.com/Pennane/pennanen.dev">
-						<a>Github</a>
-					</Link>
-				</span>
-				<span>&copy; Arttu Pennanen {`${start} - ${end}`}</span>
+				<span>&copy; {`${start} - ${end}`} Arttu Pennanen </span>
 			</Stack>
 		</footer>
 	)
