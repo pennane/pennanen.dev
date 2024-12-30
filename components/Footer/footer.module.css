@@ -1,4 +1,5 @@
 .main {
-	padding: 4rem;
+	padding: 2rem;
 	margin-top: auto;
+	background-color: var(--main-background-color);
 }
