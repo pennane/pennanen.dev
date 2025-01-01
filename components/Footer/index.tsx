@@ -8,7 +8,7 @@ const Footer = () => {
 	return (
 		<footer className={style.main}>
 			<Stack direction="row" alignItems="center" justifyContent="center">
-				<span>&copy; {`${start} - ${end}`} Arttu Pennanen </span>
+				<span>&copy; {`${start} – ${end}`} Arttu Pennanen </span>
 			</Stack>
 		</footer>
 	)
