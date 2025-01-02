@@ -32,6 +32,10 @@
 	transition: background-color 0.2s;
 }
 
+html {
+	scrollbar-gutter: stable;
+}
+
 html,
 body {
 	padding: 0;
