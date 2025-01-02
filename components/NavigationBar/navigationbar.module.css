@@ -1,21 +1,16 @@
-.container {
-	position: fixed;
-	top: 0;
-	z-index: 10;
-	pointer-events: none;
-	align-items: center;
-}
-
 .main {
-	flex: 1 1 auto;
 	display: flex;
 	align-items: center;
 	opacity: 0.99;
-	width: 1330px;
-	max-width: 92vw;
 	z-index: 2;
-	pointer-events: auto;
 	gap: 2.5rem;
+	position: sticky;
+	top: 0;
+	background-color: var(--nav-bg-color);
+	backdrop-filter: blur(3px);
+	mask-image: linear-gradient(rgb(0 0 0 / 100%) 55%, transparent);
+	padding: 0 0.5rem;
+	margin: 0 -0.5rem;
 }
 
 .main > * {
@@ -43,22 +38,4 @@
 	margin: 0.1rem 0.6rem 0 0;
 	transition: opacity 0.2s;
 	display: flex;
-}
-
-@media screen and (max-width: 800px) {
-	.main {
-		max-width: 85vw;
-	}
-}
-
-@media screen and (max-width: 500px) {
-	.main {
-		gap: 1.75rem;
-	}
-}
-
-@media screen and (max-width: 400px) {
-	.main {
-		gap: 1rem;
-	}
 }

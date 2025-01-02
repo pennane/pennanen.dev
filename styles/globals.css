@@ -5,6 +5,7 @@
 :root {
 	--main-hue: 165;
 	--main-background-color: hsl(var(--main-hue) 10% 95%);
+	--nav-bg-color: hsla(var(--main-hue) 10% 95% / 0.5);
 	--title-color: hsl(var(--main-hue) 55% 20%);
 	--title-color-invert: white;
 	--text-color: hsl(var(--main-hue) 75% 10%);
@@ -17,6 +18,7 @@
 
 [data-theme='dark'] {
 	--main-background-color: hsl(var(--main-hue) 96% 6% / 1);
+	--nav-bg-color: hsl(var(--main-hue) 96% 6% / 0.5);
 	--title-color: hsl(var(--main-hue) 35% 92%);
 	--title-color-invert: black;
 	--text-color: hsl(var(--main-hue) 35% 85%);
@@ -147,10 +149,23 @@ h3 {
 	gap: 0.75rem;
 }
 
+.stack.mediumlarge {
+	gap: 1.25rem;
+}
+
 .stack.large {
 	gap: 1.5rem;
 }
 
 .relative {
 	position: relative;
+}
+
+.full footer {
+	background-color: transparent;
+}
+
+.full nav {
+	background-color: transparent;
+	backdrop-filter: none;
 }

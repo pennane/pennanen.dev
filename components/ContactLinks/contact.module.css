@@ -1,7 +1,8 @@
 .link {
 	display: flex;
 	color: var(--text-color);
-	padding: 0 0.62rem;
+	padding: 0 0.75rem;
+	min-width: 42px;
 	justify-content: center;
 	align-items: center;
 	height: 100%;
@@ -12,7 +13,7 @@
 }
 
 .link > svg {
-	--size: 1.25rem;
+	--size: 1.15rem;
 	width: var(--size);
 	height: var(--size);
 }

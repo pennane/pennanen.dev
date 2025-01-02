@@ -9,7 +9,6 @@ import { isString } from '../lib/fp'
 import { TProject } from '../models'
 import { generateProjectImage } from '../metaImage'
 import Project from '../components/Project'
-import style from './[project].module.css'
 
 export const getStaticPaths: GetStaticPaths = async () => {
 	const paths = getProjectIds()
@@ -46,7 +45,6 @@ const ProjectPage = ({
 			title={project.name}
 			description={project.description || undefined}
 			metaImage={metaImage || undefined}
-			wrapperClassName={style.main}
 		>
 			<Project project={project} />
 		</Layout>

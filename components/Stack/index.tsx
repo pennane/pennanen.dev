@@ -1,4 +1,4 @@
-type GapSize = 'none' | 'tiny' | 'small' | 'medium' | 'large'
+type GapSize = 'none' | 'tiny' | 'small' | 'medium' | 'mediumlarge' | 'large'
 type Direction = 'row' | 'column'
 type JustifyContent =
 	| 'flex-start'

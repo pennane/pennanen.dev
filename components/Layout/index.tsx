@@ -74,14 +74,23 @@ const LayoutHead = ({
 	</Head>
 )
 
-const LayoutBody = ({ children, ...rest }: TStackProps) => (
-	<Stack className={style['page']} alignItems="center">
+const LayoutBody = ({
+	children,
+	wrapperClassName,
+	...rest
+}: TStackProps & { wrapperClassName?: string }) => (
+	<Stack
+		className={[style['page'], wrapperClassName].filter(Boolean).join(' ')}
+		alignItems="center"
+	>
 		<BackgroundLines />
-		<NavigationBar />
-		<Stack className={`${style['main']} ${rest.className || ''}`} {...rest}>
-			{children}
+		<Stack gap="mediumlarge" className={style['main']}>
+			<NavigationBar />
+			<Stack className={rest.className || ''} {...rest}>
+				{children}
+			</Stack>
+			<Footer />
 		</Stack>
-		<Footer />
 	</Stack>
 )
 
@@ -90,7 +99,6 @@ const Layout = ({
 	title,
 	description,
 	metaImage,
-	wrapperClassName,
 	...rest
 }: {
 	children: React.ReactNode
@@ -99,19 +107,15 @@ const Layout = ({
 	metaImage?: string
 	wrapperClassName?: string
 } & TStackProps) => {
-	const wrapperClass = [style['container'], wrapperClassName]
-		.filter(Boolean)
-		.join(' ')
-
 	return (
-		<Stack className={wrapperClass}>
+		<>
 			<LayoutHead
 				description={description}
 				title={title}
 				metaImage={metaImage}
 			/>
 			<LayoutBody {...rest}>{children}</LayoutBody>
-		</Stack>
+		</>
 	)
 }
 

@@ -5,7 +5,6 @@ import { generateMainPageImage } from '../metaImage'
 import { getFilteredProjects } from '../lib/staticProps'
 import { TProject } from '../models'
 import Link from 'next/link'
-import style from './index.module.css'
 import { Section } from '../components/Section'
 
 const description =
@@ -30,12 +29,7 @@ const Index = ({
 	metaImage,
 }: InferGetStaticPropsType<typeof getStaticProps>) => {
 	return (
-		<Layout
-			description={description}
-			metaImage={metaImage}
-			wrapperClassName={style.main}
-			gap="large"
-		>
+		<Layout description={description} metaImage={metaImage} gap="large">
 			<Section className="relative" gap="small">
 				<header>
 					<h2>Arttu Pennanen</h2>

@@ -17,7 +17,7 @@ function Error() {
 	}, [])
 
 	return (
-		<Layout wrapperClassName={style.wrapper} gap="large">
+		<Layout wrapperClassName="full" gap="large">
 			<Stack className={style.main} gap="none">
 				<header>
 					<Stack className={style['header']}>
@@ -31,11 +31,12 @@ function Error() {
 				</Stack>
 				<div className={style['background']}>
 					<Image
-						className={
-							imageLoaded
-								? style['image']
-								: `${style['image']} ${style['loading']}`
-						}
+						className={[
+							style['image'],
+							!imageLoaded && style['loading'],
+						]
+							.filter(Boolean)
+							.join(' ')}
 						layout="fill"
 						src="/images/starrynight.jpg"
 						alt=""
