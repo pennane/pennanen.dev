@@ -2,22 +2,33 @@ import style from './projectlink.module.css'
 import Link from 'next/link'
 import Image from 'next/image'
 import { TProject } from '../../../models'
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useLayoutEffect, useState } from 'react'
 import { monthIndexToName } from '../../../lib/date'
 import { Section } from '../../Section'
+import { AppContext } from '../../../context'
+import { animationComplete } from '../../../context/reducer'
 
 const ProjectLink = ({ project }: { project: TProject }) => {
 	const date =
 		project.date && !project.ignoreDate ? new Date(project.date) : null
-	const [imageLoaded, setImageLoaded] = useState(false)
-	const mounted = useRef(false)
 
-	useEffect(() => {
-		mounted.current = true
-		return () => {
-			mounted.current = false
-		}
-	}, [])
+	const { dispatch, state } = useContext(AppContext)
+
+	const animationKey = `project-${project.id}`
+
+	const runPreviously = !!state.animations[animationKey]
+
+	const [imageLoaded, setImageLoaded] = useState(runPreviously)
+
+	const [mounted, setMounted] = useState(false)
+	useLayoutEffect(() => setMounted(true), [])
+
+	const handleLoadComplete = () => {
+		if (!mounted || imageLoaded) return
+
+		dispatch(animationComplete(animationKey))
+		setImageLoaded(true)
+	}
 
 	return (
 		<div className={style['main']}>
@@ -26,11 +37,12 @@ const ProjectLink = ({ project }: { project: TProject }) => {
 					<div className={style['container']}>
 						<div className={style['image']}>
 							<Image
-								className={
-									imageLoaded
-										? style['image']
-										: `${style['image']} ${style['loading']}`
-								}
+								className={[
+									style['image'],
+									!imageLoaded && style['loading'],
+								]
+									.filter(Boolean)
+									.join(' ')}
 								width={48}
 								height={48}
 								alt={project.icon ? `${project.name} icon` : ''}
@@ -42,9 +54,7 @@ const ProjectLink = ({ project }: { project: TProject }) => {
 											project.icon
 										: '/images/placeholder.png'
 								}
-								onLoadingComplete={() =>
-									mounted.current && setImageLoaded(true)
-								}
+								onLoadingComplete={handleLoadComplete}
 							/>
 						</div>
 

@@ -12,40 +12,73 @@ interface SequentialProps {
 	childClass?: string
 	once?: boolean
 	animationKey?: string
-	stopped?: boolean
+}
+
+const FINISHED_STYLE = {
+	animationPlayState: 'paused',
+	animationDirection: 'reverse',
+}
+
+const INITIAL_STYLE = {
+	animationPlayState: 'paused',
+}
+
+const ONGOING_STYLE = ({
+	initialDelay,
+	delayBetween,
+	animationDuration,
+	i,
+}: {
+	initialDelay: number
+	delayBetween: number
+	animationDuration?: number
+	i: number
+}) => ({
+	animationDelay: `${initialDelay + delayBetween * i}ms`,
+	animationDuration: animationDuration ? `${animationDuration}ms` : undefined,
+})
+
+const getStyle = (props: {
+	shouldAnimate: boolean
+	mounted: boolean
+	initialDelay: number
+	delayBetween: number
+	animationDuration: number | undefined
+	i: number
+}) => {
+	if (!props.shouldAnimate) return FINISHED_STYLE
+	if (!props.mounted) return INITIAL_STYLE
+	return ONGOING_STYLE(props)
 }
 
 const SequentialAnimation: React.FC<SequentialProps> = ({
 	children,
 	initialDelay = 40,
 	delayBetween = 30,
-	stopped = false,
-	...props
+	once,
+	animationKey,
+	animationDuration,
+	childClass,
 }) => {
 	const router = useRouter()
 	const { dispatch, state } = useContext(AppContext)
 
-	const shouldAnimate =
-		!props.animationKey || !(props.animationKey in state.animations)
-			? true
-			: !state.animations[props.animationKey]
+	const shouldAnimate = !animationKey || !state.animations[animationKey]
 
 	const [animationFinished, setAnimationFinished] = useState(false)
 	const [mounted, setMounted] = useState(false)
 
 	const childrenArray = React.Children.toArray(children)
 
-	useLayoutEffect(() => {
-		setMounted(true)
-	}, [])
+	useLayoutEffect(() => setMounted(true), [])
 
 	useLayoutEffect(() => {
-		if (!props.once || !props.animationKey) return
+		if (!once || !animationKey) return
 
 		const totalAnimationTime =
 			initialDelay +
 			childrenArray.length * delayBetween +
-			(props.animationDuration || 0)
+			(animationDuration || 0)
 
 		const timeout = setTimeout(
 			() => setAnimationFinished(true),
@@ -53,8 +86,8 @@ const SequentialAnimation: React.FC<SequentialProps> = ({
 		)
 
 		const onHistoryChange = () => {
-			if (shouldAnimate && animationFinished && props.animationKey) {
-				dispatch(animationComplete(props.animationKey))
+			if (shouldAnimate && animationFinished && animationKey) {
+				dispatch(animationComplete(animationKey))
 			}
 		}
 
@@ -66,34 +99,22 @@ const SequentialAnimation: React.FC<SequentialProps> = ({
 		}
 	}, [animationFinished, shouldAnimate])
 
-	if (!shouldAnimate || !mounted) return <>{children}</>
-
-	if (stopped) {
-		return <div className={style['waiting']}>{children}</div>
-	}
-
-	return (
-		<>
-			{childrenArray.map((child, i) => (
-				<div
-					key={`sequential-child-${i}`}
-					className={
-						props.childClass
-							? `${style['child']} ${props.childClass}`
-							: `${style['child']} ${style['fade-in']}`
-					}
-					style={{
-						animationDelay: `${initialDelay + delayBetween * i}ms`,
-						animationDuration: props.animationDuration
-							? `${props.animationDuration}ms`
-							: 'undefined',
-					}}
-				>
-					{child}
-				</div>
-			))}
-		</>
-	)
+	return childrenArray.map((child, i) => (
+		<div
+			key={`sequential-child-${i}`}
+			className={[style.child, childClass || style['fade-in']].join(' ')}
+			style={getStyle({
+				i,
+				animationDuration,
+				delayBetween,
+				initialDelay,
+				mounted,
+				shouldAnimate,
+			})}
+		>
+			{child}
+		</div>
+	))
 }
 
 export default SequentialAnimation

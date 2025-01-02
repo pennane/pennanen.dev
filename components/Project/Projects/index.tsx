@@ -9,7 +9,6 @@ const Projects = ({ projects }: { projects: TProject[] }) => {
 		<Stack className={style['main']}>
 			<SequentialAnimation
 				initialDelay={80}
-				delayBetween={40}
 				once={true}
 				animationKey={`projects-${projects.length}`}
 			>
