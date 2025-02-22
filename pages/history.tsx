@@ -2,7 +2,7 @@ import type { InferGetStaticPropsType } from 'next'
 import Layout from '../components/Layout'
 import fs from 'fs'
 import path from 'path'
-import Image from 'next/image'
+import Image from "next/legacy/image"
 
 const description = 'Site design history'
 
