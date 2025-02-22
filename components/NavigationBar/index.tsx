@@ -26,7 +26,6 @@ const NavigationBar = () => {
 					/>
 				</div>
 				<span className={style['title']}>pennanen.dev</span>
-
 			</Link>
 			<ContactLinks />
 			<ThemeToggler />

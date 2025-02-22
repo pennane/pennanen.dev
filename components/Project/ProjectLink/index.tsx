@@ -47,10 +47,7 @@ const ProjectLink = ({ project }: { project: TProject }) => {
 							alt={project.icon ? `${project.name} icon` : ''}
 							src={
 								project.icon
-									? '/sub/' +
-									project.id +
-									'/' +
-									project.icon
+									? '/sub/' + project.id + '/' + project.icon
 									: '/images/placeholder.png'
 							}
 							onLoad={handleLoadComplete}
