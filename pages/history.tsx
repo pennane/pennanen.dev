@@ -30,6 +30,7 @@ const All = ({ images }: InferGetStaticPropsType<typeof getStaticProps>) => {
 						key={i}
 						src={'/history/' + url}
 						loading="lazy"
+						alt=""
 					></Image>
 				))}
 			</div>

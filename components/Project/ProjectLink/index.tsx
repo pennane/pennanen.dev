@@ -33,46 +33,44 @@ const ProjectLink = ({ project }: { project: TProject }) => {
 	return (
 		<div className={style['main']}>
 			<Link href={'/' + project.id}>
-				<a>
-					<div className={style['container']}>
-						<div className={style['image']}>
-							<Image
-								className={[
-									style['image'],
-									!imageLoaded && style['loading'],
-								]
-									.filter(Boolean)
-									.join(' ')}
-								width={48}
-								height={48}
-								alt={project.icon ? `${project.name} icon` : ''}
-								src={
+				<div className={style['container']}>
+					<div className={style['image']}>
+						<Image
+							className={[
+								style['image'],
+								!imageLoaded && style['loading'],
+							]
+								.filter(Boolean)
+								.join(' ')}
+							width={48}
+							height={48}
+							alt={project.icon ? `${project.name} icon` : ''}
+							src={
+								project.icon
+									? '/sub/' +
+									project.id +
+									'/' +
 									project.icon
-										? '/sub/' +
-											project.id +
-											'/' +
-											project.icon
-										: '/images/placeholder.png'
-								}
-								onLoadingComplete={handleLoadComplete}
-							/>
-						</div>
-
-						<Section gap="tiny">
-							<h2 className={style['heading']}>{project.name}</h2>
-							<p className={style['description']}>
-								{project.description}
-							</p>
-							{date && (
-								<span
-									className={style['date']}
-								>{`${monthIndexToName(
-									date.getMonth()
-								)}, ${date.getFullYear()}`}</span>
-							)}
-						</Section>
+									: '/images/placeholder.png'
+							}
+							onLoad={handleLoadComplete}
+						/>
 					</div>
-				</a>
+
+					<Section gap="tiny">
+						<h2 className={style['heading']}>{project.name}</h2>
+						<p className={style['description']}>
+							{project.description}
+						</p>
+						{date && (
+							<span
+								className={style['date']}
+							>{`${monthIndexToName(
+								date.getMonth()
+							)}, ${date.getFullYear()}`}</span>
+						)}
+					</Section>
+				</div>
 			</Link>
 		</div>
 	)

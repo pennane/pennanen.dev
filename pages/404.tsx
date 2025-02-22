@@ -25,8 +25,8 @@ function Error() {
 					</Stack>
 				</header>
 				<Stack>
-					<Link href="/">
-						<a className={style['link']}>To home</a>
+					<Link href="/" className={style['link']}>
+						To home
 					</Link>
 				</Stack>
 				<div className={style['background']}>
@@ -41,7 +41,7 @@ function Error() {
 						src="/images/starrynight.jpg"
 						alt=""
 						loading="lazy"
-						onLoadingComplete={() =>
+						onLoad={() =>
 							mounted.current && setImageLoaded(true)
 						}
 					/>

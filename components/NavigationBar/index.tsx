@@ -12,22 +12,21 @@ const NavigationBar = () => {
 
 	return (
 		<nav className={style['main']}>
-			<Link href="/">
-				<a className={style['link']}>
-					<div className={style['brand-image']}>
-						<Image
-							src={
-								resolvedTheme === 'dark'
-									? '/images/white-icon.png'
-									: '/images/black-icon.png'
-							}
-							alt=""
-							width={20}
-							height={20}
-						/>
-					</div>
-					<span className={style['title']}>pennanen.dev</span>
-				</a>
+			<Link className={style['link']} href="/">
+				<div className={style['brand-image']}>
+					<Image
+						src={
+							resolvedTheme === 'dark'
+								? '/images/white-icon.png'
+								: '/images/black-icon.png'
+						}
+						alt=""
+						width={20}
+						height={20}
+					/>
+				</div>
+				<span className={style['title']}>pennanen.dev</span>
+
 			</Link>
 			<ContactLinks />
 			<ThemeToggler />

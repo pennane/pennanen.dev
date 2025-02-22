@@ -1,287 +1,143 @@
-import path from 'path'
-import fs from 'fs'
-import { createCanvas, Image, loadImage, registerFont } from 'canvas'
-import { TProject } from '../models'
-import { wrapText, drawImageProp } from './lib'
+import path from 'path';
+import fs from 'fs';
+import { createCanvas, Image, loadImage, registerFont, CanvasRenderingContext2D } from 'canvas';
+import { TProject } from '../models';
+import { wrapText, drawImageProp } from './lib';
 
-registerFont(path.join(process.cwd(), 'public/fonts/Inter-Medium.ttf'), {
-	family: 'Inter',
-	weight: '300',
-})
+const ASSET_PATH = path.join(process.cwd(), 'public');
+const META_PATH = path.join(ASSET_PATH, 'meta');
+const FONT_PATH = path.join(ASSET_PATH, 'fonts');
+const ICON_PATH = path.join(ASSET_PATH, 'icons');
+const IMAGE_PATH = path.join(ASSET_PATH, 'images');
 
-registerFont(path.join(process.cwd(), 'public/fonts/Inter-Bold.ttf'), {
-	family: 'Inter',
-	weight: '700',
-})
+const FONTS = [
+	{ file: 'Inter-Medium.ttf', family: 'Inter', weight: '300' },
+	{ file: 'Inter-Bold.ttf', family: 'Inter', weight: '700' },
+];
 
-const logoFile = fs.readFileSync(
-	path.join(process.cwd(), 'public/icons/icon-white-128.png')
-)
-const logo = loadImage(logoFile)
-const darkLogoFile = fs.readFileSync(
-	path.join(process.cwd(), 'public/icons/icon-black-128.png')
-)
-const darkLogo = loadImage(darkLogoFile)
-const bgFile = fs.readFileSync(
-	path.join(process.cwd(), 'public/images/metabg.png')
-)
-const bg = loadImage(bgFile)
+FONTS.forEach(({ file, family, weight }) => {
+	registerFont(path.join(FONT_PATH, file), { family, weight });
+});
 
-async function computeMainPageImage({
-	title,
-	description,
-}: {
-	title?: string
-	description?: string
-}): Promise<Buffer> {
-	const width = 1200
-	const height = 630
-	const margin = 40
-	const squareY = 0
+const loadAsset = async (filePath: string) => loadImage(fs.readFileSync(filePath));
 
-	const logoFontSize = 18
-	const logoFontWeight = 300
+const ASSETS = {
+	logo: loadAsset(path.join(ICON_PATH, 'icon-white-128.png')),
+	darkLogo: loadAsset(path.join(ICON_PATH, 'icon-black-128.png')),
+	bg: loadAsset(path.join(IMAGE_PATH, 'metabg.png')),
+};
 
-	const headingFontSize = 48
-	const headingFontWeight = 700
-	const headingLineHeight = headingFontSize * 1.45
+const createCanvasContext = (width: number, height: number) => {
+	const canvas = createCanvas(width, height);
+	return { canvas, context: canvas.getContext('2d') };
+};
 
-	const textFontSize = 22
-	const textFontWeight = 300
-	const textLineHeight = textFontSize * 1.5
+const drawText = (
+	context: CanvasRenderingContext2D,
+	text: string,
+	x: number,
+	y: number,
+	maxWidth: number,
+	lineHeight: number,
+	font: string,
+	color: string,
+	align: CanvasTextAlign = 'center'
+) => {
+	context.font = font;
+	context.fillStyle = color;
+	context.textAlign = align;
+	context.textBaseline = 'top';
+	return wrapText(context, text, x, y, maxWidth, lineHeight);
+};
 
-	let headingPosition = null
-
-	const canvas = createCanvas(width, height)
-	const context = canvas.getContext('2d')
-
-	// BG IMAGE
-	context.drawImage(await bg, 0, 0, canvas.width, canvas.height)
-
-	// BLACK BG OVER BG IMAGE
-	context.fillStyle = 'rgba(255, 255, 255, 0.5)'
-	context.fillRect(0, 0, canvas.width, canvas.height)
-
-	// LOGO
-	context.drawImage(await darkLogo, margin, margin, 32, 32)
-	context.font = `${logoFontWeight} ${logoFontSize}pt Inter`
-	context.fillStyle = 'rgba(0, 0, 0, 0.8)'
-	context.textBaseline = 'top'
-
-	// TITLE
-	if (title) {
-		context.font = `${headingFontWeight} ${headingFontSize}pt Inter`
-		context.fillStyle = '#004dff'
-		context.textAlign = 'center'
-		context.textBaseline = 'top'
-		headingPosition = wrapText(
-			context,
-			Array.isArray(title) ? title[0] : title,
-			canvas.width / 2,
-			squareY + margin + 170,
-			canvas.width / 1.25,
-			headingLineHeight
-		)
-	}
-
-	// DESCRIPTION
-	if (description) {
-		context.font = `${textFontWeight} ${textFontSize}pt Inter`
-		context.fillStyle = '#004dff'
-		context.textAlign = 'center'
-		context.textBaseline = 'top'
-		wrapText(
-			context,
-			Array.isArray(description) ? description[0] : description,
-			canvas.width / 2,
-			headingPosition
-				? headingPosition.y + headingLineHeight * 2
-				: squareY + margin + 170 + headingLineHeight * 2,
-			canvas.width / 1.25,
-			textLineHeight
-		)
-	}
-
-	const buffer = canvas.toBuffer('image/png')
+const generateImageBuffer = async (
+	width: number,
+	height: number,
+	format: 'image/png' | 'image/jpeg',
+	draw: (context: CanvasRenderingContext2D) => Promise<void>,
+) => {
+	const { canvas, context } = createCanvasContext(width, height);
+	await draw(context);
+	const buffer = canvas.toBuffer(format as any)
 	return buffer
+};
+
+async function computeMainPageImage(title?: string, description?: string) {
+	return generateImageBuffer(1200, 630, 'image/png', async (context) => {
+		context.drawImage(await ASSETS.bg, 0, 0, 1200, 630);
+		context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+		context.fillRect(0, 0, 1200, 630);
+
+		context.drawImage(await ASSETS.darkLogo, 40, 40, 32, 32);
+
+		let headingY = 210;
+		if (title) {
+			headingY = drawText(context, title, 600, headingY, 960, 69.6, '700 48pt Inter', '#004dff').y;
+		}
+
+		if (description) {
+			drawText(context, description, 600, headingY + 96, 960, 33, '300 22pt Inter', '#004dff');
+		}
+	});
 }
 
-async function computeProjectImage({
-	title,
-	description,
-	image,
-	notAuthor,
-}: {
-	title?: string
-	description?: string
-	image?: Image
-	notAuthor: boolean | null
-}): Promise<Buffer> {
-	const width = 1200
-	const height = 630
-	const margin = 40
-	const squareX = 0
-	const squareY = 0
+async function computeProjectImage({ title, image, description, notAuthor }: { title: string | null, image: Image | null, description: string | null, notAuthor: boolean }) {
+	return generateImageBuffer(1200, 630, 'image/jpeg', async (context) => {
+		if (image) {
+			drawImageProp(context, image, 0, 0, 1200, 630);
+		} else {
+			context.drawImage(await ASSETS.bg, 0, 0, 1200, 630);
+		}
 
-	const logoFontSize = 18
-	const logoFontWeight = 300
-	const logoLineHeight = logoFontWeight * 1.45
+		context.fillStyle = 'rgba(0, 0, 0, 0.86)';
+		context.fillRect(0, 0, 600, 630);
+		context.drawImage(await ASSETS.logo, 40, 40, 32, 32);
+		
+		drawText(context, "pennanen.dev", 82, 38, 300, 520, '300 18pt Inter', 'rgba(255, 255, 255, 0.8)', 'left')
 
-	const headingFontSize = 48
-	const headingFontWeight = 700
-	const headingLineHeight = headingFontSize * 1.45
+		let headingY = 190;
+		if (title) {
+			headingY = drawText(context, title, 40, headingY, 520, 69.6, '700 48pt Inter', '#4980ff', 'left').y;
+		}
 
-	const textFontSize = 22
-	const textFontWeight = 300
-	const textLineHeight = textFontSize * 1.5
+		if (description) {
+			drawText(context, description, 40, headingY + 80, 520, 33, '300 22pt Inter', '#9fbcff', 'left');
+		}
 
-	const footerFontSize = 20
-	const footerFontWeight = 300
-	const footerLineHeight = footerFontWeight * 1.5
-
-	let headingPosition = null
-
-	const canvas = createCanvas(width, height)
-	const context = canvas.getContext('2d')
-
-	context.imageSmoothingEnabled = true
-
-	// BG
-	if (image) {
-		drawImageProp(context, image, 0, 0, canvas.width, canvas.height)
-	} else {
-		context.drawImage(await bg, 0, 0, canvas.width, canvas.height)
-	}
-
-	// BLACK BG OVER BG IMAGE
-	context.fillStyle = 'rgba(0, 0, 0, 0.86)'
-	context.fillRect(squareX, squareY, canvas.width / 2, canvas.height)
-
-	// LOGO
-	context.drawImage(await logo, margin, margin, 32, 32)
-	context.font = `${logoFontWeight} ${logoFontSize}pt Inter`
-	context.fillStyle = 'rgba(255, 255, 255, 0.8)'
-	context.textBaseline = 'top'
-	wrapText(
-		context,
-		'pennanen.dev',
-		margin + 32 + 10,
-		margin - 2,
-		canvas.width / 2 - 2 * margin,
-		logoLineHeight
-	)
-
-	// TITLE
-	if (title) {
-		context.font = `${headingFontWeight} ${headingFontSize}pt Inter`
-		context.fillStyle = '#4980ff'
-		context.textAlign = 'left'
-		context.textBaseline = 'top'
-		headingPosition = wrapText(
-			context,
-			Array.isArray(title) ? title[0] : title,
-			squareX + margin,
-			squareY + margin + 150,
-			canvas.width / 2 - 2 * margin,
-			headingLineHeight
-		)
-	}
-
-	// DESCRIPTION
-	if (description) {
-		context.font = `${textFontWeight} ${textFontSize}pt Inter`
-		context.fillStyle = '#9fbcff'
-		context.textAlign = 'left'
-		context.textBaseline = 'top'
-		wrapText(
-			context,
-			Array.isArray(description) ? description[0] : description,
-			squareX + margin,
-			headingPosition
-				? headingPosition.y + headingLineHeight * 1.4
-				: squareY + margin + 150 + headingLineHeight * 1.4,
-			canvas.width / 2 - 2 * margin,
-			textLineHeight
-		)
-	}
-
-	// FOOTER
-	if (!notAuthor) {
-		context.font = `${footerFontWeight} ${footerFontSize}pt Inter`
-		context.fillStyle = 'rgba(255, 255, 255, 0.95)'
-		context.textAlign = 'left'
-		context.textBaseline = 'top'
-		wrapText(
-			context,
-			'Arttu Pennanen',
-			margin,
-			canvas.height - 2.35 * margin,
-			canvas.width / 2 - margin,
-			footerLineHeight
-		)
-	}
-
-	const buffer = canvas.toBuffer('image/jpeg')
-	return buffer
+		if (!notAuthor) {
+			drawText(context, 'Arttu Pennanen', 40, headingY + 350, 520, 30, '300 20pt Inter', 'rgba(255, 255, 255, 0.95)', 'left');
+		}
+	});
 }
 
-export async function generateMainPageImage<
-	T extends { title: string; description?: string },
->(data: T): Promise<string> {
-	const target = './public/meta'
-	try {
-		fs.mkdirSync(target)
-	} catch {
-		//
-	}
+const ensureMetaDirectory = () => {
+	if (!fs.existsSync(META_PATH)) fs.mkdirSync(META_PATH);
+};
 
-	const image = await computeMainPageImage({
-		title: data.title || 'pennanen.dev',
-		description: data.description,
-	})
+const saveImage = (fileName: string, buffer: Buffer) => {
+	const filePath = path.join(META_PATH, fileName);
+	fs.writeFileSync(filePath, buffer);
+	return fileName;
+};
 
-	// eslint-disable-next-line no-useless-escape
-	const fileName = data.title.replace(/[| .-]/g, '_').toLowerCase() + '.jpg'
-	const directory = path.join(target, fileName)
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	fs.writeFileSync(directory, image as any)
-
-	return fileName
+export async function generateMainPageImage<T extends { title: string; description?: string }>(data: T) {
+	ensureMetaDirectory();
+	const buffer = await computeMainPageImage(data.title || 'pennanen.dev', data.description);
+	const fileName = `${data.title.replace(/[| .-]/g, '_').toLowerCase()}.jpg`;
+	return saveImage(fileName, buffer);
 }
 
 export async function generateProjectImage(project: TProject) {
-	const target = './public/meta'
-	if (!fs.existsSync(target)) {
-		fs.mkdirSync(target)
-	}
+	ensureMetaDirectory();
+	let projectImage: Image | null = null;
 
-	let icon = null
 	if (project.largeImage) {
 		try {
-			const imageFile = fs.readFileSync(
-				path.join(
-					process.cwd(),
-					'public/sub/' + project.id + '/' + project.largeImage
-				)
-			)
-			icon = await loadImage(imageFile)
-		} catch {
-			//
-		}
+			const imageFile = fs.readFileSync(path.join(ASSET_PATH, 'sub', project.id, project.largeImage));
+			projectImage = await loadImage(imageFile);
+		} catch { }
 	}
 
-	const image = await computeProjectImage({
-		title: project.name || project.id,
-		description: project.description as string,
-		image: icon || undefined,
-		notAuthor: project.notAuthor,
-	})
-
-	const fileName = project.id.toLowerCase() + '.png'
-	const directory = path.join(target, fileName)
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	fs.writeFileSync(directory, image as any)
-
-	return fileName
+	const buffer = await computeProjectImage({ description: project.description, image: projectImage, notAuthor: !!project.notAuthor, title: project.name || project.id, });
+	return saveImage(`${project.id.toLowerCase()}.png`, buffer);
 }
