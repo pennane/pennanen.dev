@@ -1,4 +1,4 @@
-import Image from "next/legacy/image"
+import Image from "next/image"
 import Layout from '../components/Layout'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
@@ -17,7 +17,7 @@ function Error() {
 	}, [])
 
 	return (
-		<Layout wrapperClassName="full" gap="large">
+		(<Layout wrapperClassName="full" gap="large">
 			<Stack className={style.main} gap="none">
 				<header>
 					<Stack className={style['header']}>
@@ -37,18 +37,18 @@ function Error() {
 						]
 							.filter(Boolean)
 							.join(' ')}
-						layout="fill"
 						src="/images/starrynight.jpg"
 						alt=""
 						loading="lazy"
 						onLoad={() =>
 							mounted.current && setImageLoaded(true)
 						}
-					/>
+						fill
+						sizes="100vw" />
 				</div>
 			</Stack>
-		</Layout>
-	)
+		</Layout>)
+	);
 }
 
 export default Error
