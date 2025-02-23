@@ -16,12 +16,12 @@ function parseFrontmatter(fileContent: string) {
   const frontMatterLines = frontMatterBlock.trim().split('\n')
   const metadata: Partial<Metadata> = {}
 
-  frontMatterLines.forEach((line) => {
+  for (const line of frontMatterLines) {
     const [key, ...valueArr] = line.split(': ')
     let value = valueArr.join(': ').trim()
     value = value.replace(/^['"](.*)['"]$/, '$1')
     metadata[key.trim() as keyof Metadata] = value
-  })
+  }
 
   return { metadata: metadata as Metadata, content }
 }
