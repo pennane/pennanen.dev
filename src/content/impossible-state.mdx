@@ -5,11 +5,11 @@ date: '2025-02-23'
 
 # Impossible States
 
-With modeling developers can remove the need to add tests for impossible states.
+Modeling can help eliminate the need for tests that handle impossible states.
 
-Consider creating some game, where there must always be at least 2 players for the game to be valid.
+Consider a game where at least two players are required for the game to be valid.
 
-We could model the players in the game as an array.
+We could model the players as an array:
 
 ```ts
 type Game = {
@@ -17,18 +17,18 @@ type Game = {
 }
 ```
 
-While this is intuitive, it forces the developer to add checks for the player count through out the code base.
+While this is intuitive, it forces the developer to add checks for the player count throughout the codebase:
 
 ```ts
 const game: Game = {
-  players: [] // We just adhered to the schema, but the schema was lying. Where are our 2 players?
+  players: [] // The schema is followed, but where are the 2 players?
 }
 ```
 
-Instead through the power of modeling, instead of modeling the players as an array, we can force the 2 required players to exist already on type level.
+Instead, through modeling, we can enforce that two players are always present at the type level, eliminating the need for runtime checks.
 
 ```ts
-type Game {
+type Game = {
   players: {
     first: Player
     second: Player
@@ -37,6 +37,6 @@ type Game {
 }
 ```
 
-Now its impossible\* to create a game without 2 players.
+Now, it's impossible\* to create a game without two players.
 
-\*you can of course always do what ever you want, but the types do not allow you to do so by default.
+\*while you can still override the types, they prevent this situation by default.

@@ -1,12 +1,17 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Fira_Code, Inter } from 'next/font/google'
 import './globals.css'
-import 'highlight.js/styles/github-dark.css'
 import Layout from '../components/Layout'
+import 'highlight.js/styles/github-dark.css'
 
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap'
+})
+
+export const firacodeMono = Fira_Code({
+  subsets: ['latin'],
+  display: 'block'
 })
 
 export const metadata: Metadata = {
@@ -21,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className}`}>
         <Layout>{children}</Layout>
       </body>
     </html>

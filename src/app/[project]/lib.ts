@@ -96,6 +96,11 @@ export function getProjects() {
     .map(readConfig)
     .filter(Boolean)
     .map(parseConfig)
+    .sort((a, b) => {
+      if (!a.date) return 1
+      if (!b.date) return -1
+      return b.date - a.date
+    })
 }
 
 export function getProjectById(id: string) {
