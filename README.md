@@ -1,7 +1,7 @@
 # pennanen.dev repository
 
-### A repository for the personal portfolio-esque website, pennanen.dev
+### repository for the personal portfolio-esque website
 
 ![](./public/images/apple-touch-icon.png)
 
-Built using Typescript and Next.js
+Built with ts and next

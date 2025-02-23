@@ -1,0 +1,40 @@
+.wrapper {
+  padding-top: 0;
+}
+
+.main {
+  gap: 4rem;
+}
+
+.background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.background img {
+  filter: grayscale(1) opacity(0.3);
+  object-fit: cover;
+}
+
+.header {
+  font-size: min(calc(2em + 3vw), 10vh);
+  line-height: 0.9;
+  letter-spacing: -0.07em;
+}
+
+.link {
+  font-size: min(calc(1.5rem + 3vw), 10vh);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.image {
+  opacity: 1;
+  transition: opacity 1s;
+}
+
+.image.loading {
+  opacity: 0;
+}
