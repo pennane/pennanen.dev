@@ -1,0 +1,42 @@
+---
+title: 'Impossible State in Functional Programming'
+date: '2025-02-23'
+---
+
+# Impossible States
+
+With modeling developers can remove the need to add tests for impossible states.
+
+Consider creating some game, where there must always be at least 2 players for the game to be valid.
+
+We could model the players in the game as an array.
+
+```ts
+type Game = {
+  players: Player[]
+}
+```
+
+While this is intuitive, it forces the developer to add checks for the player count through out the code base.
+
+```ts
+const game: Game = {
+  players: [] // We just adhered to the schema, but the schema was lying. Where are our 2 players?
+}
+```
+
+Instead through the power of modeling, instead of modeling the players as an array, we can force the 2 required players to exist already on type level.
+
+```ts
+type Game {
+  players: {
+    first: Player
+    second: Player
+    rest: Player[]
+  }
+}
+```
+
+Now its impossible\* to create a game without 2 players.
+
+\*you can of course always do what ever you want, but the types do not allow you to do so by default.
