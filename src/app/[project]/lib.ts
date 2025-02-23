@@ -64,8 +64,8 @@ const emptyConfig = (id: string): ProjectConfig => {
     id,
     images: [],
     notAuthor: false,
-    ignoreDate: false,
-    ignoreInListing: false,
+    ignoreDate: true,
+    ignoreInListing: true,
     name: {},
     description: {}
   }
