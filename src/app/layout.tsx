@@ -16,8 +16,7 @@ const firacodeMono = Fira_Code({
 })
 
 export const metadata: Metadata = {
-  title: 'pennanen.dev',
-  description: 'blaa blaa'
+  title: 'pennanen.dev'
 }
 
 export default function RootLayout({

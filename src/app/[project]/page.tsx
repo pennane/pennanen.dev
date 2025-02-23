@@ -3,6 +3,20 @@ import { Stack } from '../../components/Stack'
 import { formatDate } from '../lib'
 import { getProjectById, getProjects } from './lib'
 import styles from './page.module.css'
+import { Metadata } from 'next'
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ project: string }>
+}): Promise<Metadata> {
+  const id = (await params).project
+  const project = getProjectById(id)!
+  return {
+    title: project.name,
+    description: project.description
+  }
+}
 
 export default async function Page({
   params
