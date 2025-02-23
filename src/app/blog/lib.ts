@@ -3,9 +3,14 @@ import path from 'path'
 
 type Metadata = {
   title: string
-  publishedAt: string
-  summary: string
-  image?: string
+  date: string
+  summary?: string
+}
+
+export type Post = {
+  metadata: Metadata
+  slug: string
+  content: string
 }
 
 function parseFrontmatter(fileContent: string) {
@@ -26,19 +31,19 @@ function parseFrontmatter(fileContent: string) {
   return { metadata: metadata as Metadata, content }
 }
 
-function getMDXFiles(dir: string) {
+function getMdxFiles(dir: string) {
   return fs.readdirSync(dir).filter((file) => path.extname(file) === '.mdx')
 }
 
-function readMDXFile(filePath: string) {
+function readMdxFile(filePath: string) {
   const rawContent = fs.readFileSync(filePath, 'utf-8')
   return parseFrontmatter(rawContent)
 }
 
-function getMDXData(dir: string) {
-  const mdxFiles = getMDXFiles(dir)
-  return mdxFiles.map((file) => {
-    const { metadata, content } = readMDXFile(path.join(dir, file))
+function getMdxData(dir: string) {
+  const mdxFiles = getMdxFiles(dir)
+  return mdxFiles.map((file): Post => {
+    const { metadata, content } = readMdxFile(path.join(dir, file))
     const slug = path.basename(file, path.extname(file))
 
     return {
@@ -50,5 +55,5 @@ function getMDXData(dir: string) {
 }
 
 export function getBlogPosts() {
-  return getMDXData(path.join(process.cwd(), 'src', 'content'))
+  return getMdxData(path.join(process.cwd(), 'src', 'content'))
 }

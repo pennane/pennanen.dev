@@ -5,7 +5,7 @@ const Navbar = () => {
   return (
     <nav>
       <Stack direction="row" gap={'1rem'}>
-        <Link href="/">Projects</Link>
+        <Link href="/">pennanen.dev</Link>
         <Link href="/blog">Blog</Link>
       </Stack>
     </nav>

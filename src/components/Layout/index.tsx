@@ -5,10 +5,12 @@ import styles from './layout.module.css'
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <Stack className={styles.layout} gap="2rem">
-      <Navbar />
-      <main>{children}</main>
-      <Footer />
+    <Stack align="center">
+      <Stack className={styles.layout} gap="2rem">
+        <Navbar />
+        <main>{children}</main>
+        <Footer />
+      </Stack>
     </Stack>
   )
 }
