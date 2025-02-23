@@ -59,7 +59,19 @@ const getDirectories = (dir: string) => {
     .filter((file) => fs.statSync(dir + '/' + file).isDirectory())
 }
 
-const readConfig = (id: string): ProjectConfig | null => {
+const emptyConfig = (id: string): ProjectConfig => {
+  return {
+    id,
+    images: [],
+    notAuthor: false,
+    ignoreDate: false,
+    ignoreInListing: false,
+    name: {},
+    description: {}
+  }
+}
+
+const readConfig = (id: string): ProjectConfig => {
   try {
     const file = fs.readFileSync(
       path.join(process.cwd(), 'public', 'sub', id, 'project-config.json'),
@@ -69,7 +81,7 @@ const readConfig = (id: string): ProjectConfig | null => {
 
     return ProjectConfigSchema.parse(Object.assign(input, { id }))
   } catch {
-    return null
+    return emptyConfig(id)
   }
 }
 
@@ -94,7 +106,6 @@ export const parseConfig = (config: ProjectConfig): Project => {
 export function getProjects() {
   return getDirectories(path.join(process.cwd(), 'public', 'sub'))
     .map(readConfig)
-    .filter(Boolean)
     .map(parseConfig)
     .sort((a, b) => {
       if (!a.date) return 1

@@ -9,10 +9,11 @@ export function parseDateString(date: unknown) {
 
 const formatter = new Intl.DateTimeFormat('en-GB', {
   year: 'numeric',
-  month: 'long',
-  day: '2-digit'
+  month: 'short',
+  day: 'numeric'
 })
 
 export function formatDate(date: number | Date | undefined | null) {
-  return formatter.format(date || undefined)
+  if (!date) return ''
+  return formatter.format(date)
 }

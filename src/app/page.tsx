@@ -5,9 +5,9 @@ import { Entries } from './entries/components/Entries'
 
 export default function Page() {
   return (
-    <Stack className={styles.page} gap="1rem">
+    <Stack className={styles.page} gap="2rem">
       <Stack>
-        <Stack gap="0">
+        <Stack>
           <h1>Arttu Pennanen</h1>
           <h2>Software Engineer</h2>
         </Stack>

@@ -29,7 +29,7 @@ type StackProps = {
 
 export const Stack: React.FC<StackProps> = ({
   direction = 'column',
-  align = 'stretch',
+  align = 'baseline',
   justify = 'flex-start',
   wrap = false,
   reverse = false,
