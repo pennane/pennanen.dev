@@ -3,11 +3,20 @@
   --hue: 222;
   --background-light: hsl(var(--hue) 100% 98% / 1);
   --background-dark: hsl(var(--hue) 100% 4% / 1);
+  --foreground-secondary-light: hsl(var(--hue) 100% 24% / 1);
+  --foreground-secondary-dark: hsl(var(--hue) 100% 88% / 1);
   --accent-light: hsl(var(--hue) 100% 50%);
   --accent-dark: hsl(var(--hue) 100% 50%);
+  --line-color-light: hsl(var(--hue) 100% 1% / 0.05);
+  --line-color-dark: hsl(var(--hue) 100% 100% / 0.05);
   --background: light-dark(var(--background-light), var(--background-dark));
   --foreground: light-dark(var(--background-dark), var(--background-light));
+  --foreground-secondary: light-dark(
+    var(--foreground-secondary-light),
+    var(--foreground-secondary-dark)
+  );
   --accent: light-dark(var(--accent-light), var(--accent-dark));
+  --line-color: light-dark(var(--line-color-light), var(--line-color-dark));
 }
 
 html {
@@ -16,13 +25,19 @@ html {
 
 body {
   color: var(--foreground);
-  background: var(--background);
   font-family: apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.025rem;
   line-height: 1.5;
+}
+
+main,
+nav,
+body {
+  background-color: var(--background);
+  transition: background-color 0.3s;
 }
 
 pre,
@@ -65,4 +80,20 @@ a {
 
 code.hljs {
   border-radius: 0.2rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.icon.icon-link {
+  opacity: 0;
+  margin-left: 0.25rem;
+  font-size: 0.8em;
+  color: var(--foreground-secondary);
+}
+
+.icon.icon-link::after {
+  content: '#';
+}
+
+*:hover > a .icon.icon-link {
+  opacity: 1;
 }

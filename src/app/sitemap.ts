@@ -6,7 +6,7 @@ export const baseUrl = 'https://pennanen.dev'
 export default async function sitemap() {
   const entries = getBlogPosts().map((post) => ({
     url: `${baseUrl}/entries/${post.slug}`,
-    lastModified: post.metadata.publishedAt || post.metadata.date
+    lastModified: post.metadata.date
   }))
 
   const projects = getProjects().map((project) => ({

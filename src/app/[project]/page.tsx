@@ -1,20 +1,49 @@
 import Image from 'next/image'
 import { Stack } from '../../components/Stack'
-import { formatDate } from '../lib'
+import { formatDate, parseDateString } from '../lib'
 import { getProjectById, getProjects } from './lib'
 import styles from './page.module.css'
 import { Metadata } from 'next'
+import { baseUrl } from '../sitemap'
+import { generateProjectImage } from '../../meta/image'
 
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ project: string }>
-}): Promise<Metadata> {
+}): Promise<Metadata | undefined> {
   const id = (await params).project
-  const project = getProjectById(id)!
+  const project = getProjectById(id)
+
+  if (!project) {
+    return
+  }
+  const ogImage = await generateProjectImage(project)
+  const title = project.name
+  const description = project.description
+  const publishedTime = parseDateString(project.date)?.toISOString()
+
   return {
-    title: project.name,
-    description: project.description
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      publishedTime,
+      url: `${baseUrl}/${project.id}`,
+      images: [
+        {
+          url: ogImage
+        }
+      ]
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage]
+    }
   }
 }
 
