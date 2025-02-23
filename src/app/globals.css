@@ -60,6 +60,7 @@ a {
 
 .hljs {
   background-color: light-dark(#0d1117, transparent) !important;
+  border: 1px solid hsl(var(--hue) 100% 30% / 20%);
 }
 
 code.hljs {
