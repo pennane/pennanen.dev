@@ -9,7 +9,8 @@ const inter = Inter({
   display: 'swap'
 })
 
-export const firacodeMono = Fira_Code({
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const firacodeMono = Fira_Code({
   subsets: ['latin'],
   display: 'block'
 })
