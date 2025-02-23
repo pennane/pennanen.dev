@@ -32,7 +32,7 @@ export async function generateMetadata({
       url: `${baseUrl}/entries/${post.slug}`,
       images: [
         {
-          url: `${baseUrl}/${ogImage}`
+          url: `${baseUrl}/meta/${ogImage}`
         }
       ]
     },
@@ -40,7 +40,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: [`${baseUrl}/${ogImage}`]
+      images: [`${baseUrl}/meta/${ogImage}`]
     }
   }
 }
