@@ -1,0 +1,145 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Open Sans', sans-serif;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #353535;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.bonus:nth-child(even) {
+    background-color: #151515;
+}
+
+.bonus:nth-child(odd) {
+    background-color: #1e1e1e;
+}
+
+
+
+.bonus {
+    display: flex;
+    color: #787878;
+    font-size: calc(1em + 0.2vw);
+    padding-bottom: 0.5em;
+    padding-top: 0.5em;
+    height: 1.2em;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.bonus-header {
+    justify-content: flex-start;
+}
+
+.bonus-header span {
+    justify-content: flex-start;
+    margin-left: 13.333%;
+    width: 200px;
+
+}
+
+
+.bonus-check-parent {
+    width: 3vw;
+    min-width: 62px;
+    display: flex;
+    justify-content: center;
+    padding-right: calc(3% + 5px);
+    padding-left: calc(3% + 5px);
+    align-items: center;
+}
+
+.bonus-name {
+    width: calc(180px * 1vw);
+    min-width: 180px;
+    padding-left: calc(1% + 5px);
+}
+
+.bonus-addition {
+    color: #d9ac09;
+    margin-right: calc(3% + 5px);
+    text-align: left;
+    max-width: 100%;
+}
+
+.bonus:first-child {
+    height: 1.5em;
+    border-radius: 8px 8px 0 0
+}
+
+.bonus:last-child {
+    border-radius: 0 0 8px 8px;
+    height: 1.5em;
+}
+
+
+#list {
+    margin-top: 2em;
+}
+
+.bonus-title {
+    width: 100%;
+}
+
+.base-fame-parent input[type=text] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    color: #d9ac09;
+    margin: 0;
+    margin-left: calc(3% + 10px);
+    width: 37%;
+    font-size: calc(0.9em + 0.1vw);
+    padding: 0;
+    border: 1px solid white;
+    height: 1.1em;
+}
+
+.fame-img {
+    max-width: calc(16px + 0.1vw);
+    margin: 0 0.4em;
+}
+
+.bonus-text-parent {
+    width: 3vw;
+    min-width: 62px;
+    display: flex;
+    justify-content: center;
+    padding-right: calc(3% + 5px);
+    align-items: center;
+    margin: 0;
+}
+
+.tf {
+    margin: 0;
+    width: auto;
+    max-width: 100%;
+}
+
+input[type=text].bonus-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    color: #d9ac09;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    font-size: calc(0.9em + 0.1vw);
+    padding: 0;
+    border: 1px solid white;
+    height: 1.1em;
+}
+

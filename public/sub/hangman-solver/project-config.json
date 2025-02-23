@@ -1,0 +1,19 @@
+{
+    "url": "https://github.com/Pennane/hirsipuu-solver",
+    "date": "25.12.2021",
+    "name": {
+        "en": "Hangman solver",
+        "fi": null
+    },
+    "description": {
+        "en": "Solve Finnish words in a game of hangman",
+        "fi": null
+    },
+    "pretext": "Commandline application that outputs all the possible words from given options. Uses Finnish dictionary as the data set. Built with Typescript, and compiled with pkg to support windows, mac and linux operating systems..",
+    "icon": "icon.png",
+    "largeImage": "hirsibuu.png",
+    "images": [
+        "https://raw.githubusercontent.com/Pennane/hirsipuu-solver/main/docs/example.png"
+    ],
+    "ignoreInListing": true
+}

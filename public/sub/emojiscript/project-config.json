@@ -1,0 +1,22 @@
+{
+    "url": "https://emojiscript.pennanen.dev/",
+    "date": "22.1.2024",
+    "name": {
+        "en": "Emojiscript",
+        "fi": "null"
+    },
+    "description": {
+        "en": "Programming language that accepts only emoji as input",
+        "fi": null
+    },
+    "pretext": "Written while reading Thorsten Ball's book 'Writing An Interpreter In Go'. Documentation for syntax is lacking, but that goes with the spirit of the language - its just emojis, figure it out!<br><br><i>\"Dear NAME_OF_FRIEND, remember when I said that someday I’ll be someone and do something great people will remember me for? Well, today’s the day. My Monkey interpreter works and it supports functions, higher-order functions, closures and integers and arithmetic and long story short: I’ve never been happier in my life!\"</i>",
+    "ignoreInListing": false,
+    "ignoreDate": false,
+    "icon": "eslogo.png",
+    "images": [
+        "1.png"
+    ],
+    "largeImage": "large.png",
+    "notAuthor": false,
+    "github": "https://github.com/pennane/emojiscript"
+}

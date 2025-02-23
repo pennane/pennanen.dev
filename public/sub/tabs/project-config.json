@@ -1,0 +1,16 @@
+{
+    "url": "https://tabs-navy.vercel.app/",
+    "date": "24.6.2024",
+    "name": {
+        "en": "Tabs",
+        "fi": null
+    },
+    "description": {
+        "en": "Play guitar tabs on the web",
+        "fi": null
+    },
+    "github": "https://github.com/pennane/tabs",
+    "pretext": "Parse guitar tabs because why not. Copy pasta guitar tab in and sound comes out.",
+    "icon": null,
+    "ignoreInListing": true
+}

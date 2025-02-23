@@ -1,0 +1,24 @@
+{
+    "url": "https://jobel.vercel.app",
+    "date": "16.12.2022",
+    "name": {
+        "en": "Jobel",
+        "fi": "Jobel"
+    },
+    "description": {
+        "en": "A quick and dirty jodel copy made in a one week time crunch. ",
+        "fi": null
+    },
+    "pretext": "During a web development course at Metropolia, our task was to create a MERN application in a one week time period. This became the outcome. The codebase is a spaghetti monster, but sometimes that has to do.",
+    "icon": "64.png",
+    "largeImage": "jobel.png",
+    "images": [
+        "11.png",
+        "22.png",
+        "33.png",
+        "jobel.png"
+    ],
+    "notAuthor": true,
+    "ignoreInListing": true,
+    "github": "https://github.com/pennane/jobel"
+}

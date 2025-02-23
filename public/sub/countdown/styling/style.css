@@ -1,0 +1,53 @@
+body {
+	margin: 0;
+	padding: 0;
+	
+	font-family: 'Roboto', sans-serif;
+	
+	width: 100%;
+	height: 100vh;
+	height: calc(var(--vh, 1vh) * 100);
+		
+	background: white;
+	color: #111111
+}
+
+main {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	justify-content: center;
+	align-items: center;
+}
+
+#counter {
+	display: flex;
+	flex-direction: column;
+	width: 80%;
+}
+
+#counter span {
+	font-size: calc(1rem + 7vmin);
+	font-weight: 700;
+	text-transform: uppercase;
+	display: inline-block;
+}
+
+.number {
+	color: #1243e8;
+}
+
+.identifier {
+	color:black;
+}
+
+#uppercontent, #middlecontent, #lowercontent {
+	display: inline-block;
+	width: auto;
+}
+
+.days, .hours, .minutes, .seconds {
+	display: inline-block;
+}

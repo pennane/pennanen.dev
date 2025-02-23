@@ -1,0 +1,12 @@
+{
+    "url": "https://github.com/Pennane/karanteeni-discord",
+    "date": "13.9.2020",
+    "name": {
+        "en": "Karanteeni Overseer"
+    },
+    "description": {
+        "en": "Discord moderation and utility service"
+    },
+    "icon": "icon-144.png",
+    "ignoreInListing": true
+}

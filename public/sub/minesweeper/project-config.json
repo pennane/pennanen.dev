@@ -1,0 +1,21 @@
+{
+    "url": "https://minesweeper.pennanen.dev",
+    "date": "6.1.2021",
+    "name": {
+        "en": "Minesweeper",
+        "fi": null
+    },
+    "description": {
+        "en": "Traditional minesweeper",
+        "fi": null
+    },
+    "ignoreInListing": true,
+    "icon": "icon.png",
+    "pretext": "Conventional minesweeper built with vue.js",
+    "largeImage": "minesweeper.png",
+    "images": [
+        "ms1.jpg",
+        "ms2.jpg",
+        "ms3.jpg"
+    ]
+}

@@ -1,0 +1,24 @@
+{
+    "url": "https://helpotus-lahellasi.github.io/",
+    "date": "11.3.2022",
+    "name": {
+        "en": "Helpotus lähelläsi",
+        "fi": "Helpotus lähelläsi"
+    },
+    "description": {
+        "en": "An application that finds restrooms near you",
+        "fi": null
+    },
+    "github": null,
+    "pretext": "Together two friends and I built a website that helps finding restrooms from the vicinity. The website was built as a part of web technology course at Metropolia University of Applied Sciences. The website uses only plain Javascript as opposed to React-like libraries. ",
+    "icon": "logo.png",
+    "largeImage": "hl.png",
+    "images": [
+        "hl0.jpg",
+        "hl1.jpg",
+        "hl2.png",
+        "hl3.png"
+    ],
+    "notAuthor": true,
+    "ignoreInListing": false
+}

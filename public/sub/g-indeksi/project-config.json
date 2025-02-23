@@ -1,0 +1,22 @@
+{
+    "url": "https://g-indeksi.pennanen.dev/",
+    "date": "29.1.2022",
+    "name": {
+        "en": "G-index",
+        "fi": null
+    },
+    "description": {
+        "en": "Monitor the value of G-index. Big G.",
+        "fi": null
+    },
+    "github": "https://github.com/Pennane/G-indeksi",
+    "pretext": "Scrapes the G-index from the web using Typescript and Deno. Serves the data as a JSON API endpoint.",
+    "icon": "logo.jpg",
+    "largeImage": "isog.png",
+    "images": [
+        "g1.jpg",
+        "g2.jpg",
+        "g3.jpg"
+    ],
+    "ignoreInListing": true
+}

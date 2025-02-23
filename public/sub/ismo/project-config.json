@@ -1,0 +1,15 @@
+{
+    "url": "https://github.com/Pennane/ismo",
+    "date": "4.11.2021",
+    "name": {
+        "en": "ISMO",
+        "fi": null
+    },
+    "description": {
+        "en": "Annoying Discord companion",
+        "fi": null
+    },
+    "pretext": "A Discord bot that talks over other people. How rude. Ismo can be summoned using command \"/ismo kohde <@user>\", and dismissed using command \"/ismo lopeta\". Utilizes Discord's slash commands.",
+    "icon": "icon.png",
+    "ignoreInListing": true
+}

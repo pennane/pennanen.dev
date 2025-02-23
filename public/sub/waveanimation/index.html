@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fi">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="style/main.css" />
+        <meta content="Wave animation generator" name="description" />
+        <meta content="Wave, graphic, animation" name="keywords" />
+        <meta content="Arttu Pennanen" name="author" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <meta content="website" property="og:type" />
+        <link href="https://fonts.googleapis.com/css?family=Lato:400,400i" rel="stylesheet" />
+        <link href="style/main.min.css" rel="stylesheet" />
+        <title>Wave animator</title>
+    </head>
+
+    <body>
+        <canvas id="canvas" width="512" height="512"> </canvas>
+        <div id="settings">
+            <h2>Settings</h2>
+            <div class="setting">
+                <p>Refresh rate</p>
+                <input
+                    autocomplete="9823asdi787asd6f81"
+                    id="afps"
+                    type="number"
+                    value="60"
+                    step="1"
+                    min="1"
+                    max="600"
+                />
+            </div>
+
+            <div class="setting">
+                <p>Line width</p>
+                <input
+                    autocomplete="9823asdi787asd6f81"
+                    id="linewidth"
+                    type="number"
+                    value="5"
+                    min="1"
+                    step="1"
+                    max="300"
+                />
+            </div>
+
+            <div class="setting">
+                <p>Lines</p>
+                <input
+                    autocomplete="9823asdi787asd6f81"
+                    id="pointlength"
+                    type="number"
+                    value="10"
+                    max="10000"
+                    step="1"
+                    min="2"
+                />
+            </div>
+
+            <div class="setting">
+                <p>Intensity (0.01 - 2)</p>
+                <input
+                    autocomplete="9823asdi787asd6f81"
+                    id="changeAmount"
+                    type="number"
+                    step="0.01"
+                    value="0.2"
+                    min="0.01"
+                    max="2"
+                />
+            </div>
+
+            <div class="setting">
+                <p>Size</p>
+                <input
+                    autocomplete="9823asdi787asd6f81"
+                    id="size"
+                    type="number"
+                    value="20"
+                    step="1"
+                    min="1"
+                    max="200"
+                />
+            </div>
+
+            <br />
+            <div class="setting xval">
+                <h3>X values</h3>
+                <div>
+                    <span>Sin</span
+                    ><input autocomplete="9823asdi787asd6f81" name="xvalue" id="sin" type="radio" checked />
+                    <span>Cos</span><input autocomplete="9823asdi787asd6f81" name="xvalue" id="cos" type="radio" />
+                    <span>Tan</span><input autocomplete="9823asdi787asd6f81" name="xvalue" id="tan" type="radio" />
+                </div>
+
+                <div></div>
+                <span>Multiplier</span
+                ><input autocomplete="9823asdi787asd6f81" id="xmult" type="number" value="1" step="0.1" max="100" />
+            </div>
+            <br />
+            <div class="setting yval">
+                <h3>Y values</h3>
+                <div>
+                    <span>Sin</span><input autocomplete="9823asdi787asd6f81" name="yvalue" id="sin" type="radio" />
+                    <span>Cos</span
+                    ><input autocomplete="9823asdi787asd6f81" name="yvalue" id="cos" type="radio" checked />
+                    <span>Tan</span><input autocomplete="9823asdi787asd6f81" name="yvalue" id="tan" type="radio" />
+                </div>
+
+                <span>Multiplier</span
+                ><input autocomplete="9823asdi787asd6f81" id="ymult" type="number" value="2" step="0.1" max="100" />
+            </div>
+            <br />
+            <h2>Advanced:</h2>
+
+            <div class="setting evalx">
+                <span>Advanced X:</span><input autocomplete="9823asdi787asd6f81" id="adx" type="text" />
+            </div>
+            <div class="setting evaly">
+                <span>Advanced Y:</span><input autocomplete="9823asdi787asd6f81" id="ady" type="text" />
+            </div>
+        </div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script>
+            !window.jQuery && document.write('<script src="js/jquery-3.3.1.min.js"><\/script>')
+        </script>
+        <script src="js/main.js" type="text/javascript"></script>
+    </body>
+</html>

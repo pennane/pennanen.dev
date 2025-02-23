@@ -1,0 +1,15 @@
+{
+    "url": null,
+    "date": "14.8.2019",
+    "ignoredate": false,
+    "name": {
+        "en": "Raymarching",
+        "fi": null
+    },
+    "description": {
+        "en": "Raymarching demo",
+        "fi": null
+    },
+    "icon": "logo.png",
+    "ignoreInListing": true
+}

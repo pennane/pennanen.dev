@@ -1,0 +1,18 @@
+body {
+	margin: 0;
+	background-color: #fff;
+}
+
+#wrapper {
+	position: absolute;
+	width: 100vw;
+	height: 100vh;
+	overflow: hidden;
+	background-color: black;
+}
+
+#svg {
+	position: absolute;
+	top: 0;
+	left: 0;
+}

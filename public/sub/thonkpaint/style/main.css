@@ -1,0 +1,190 @@
+* {
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+#imgholder {
+	margin: 0;
+	padding: 0;
+	position: absolute
+}
+
+button,
+div,
+h1,
+h2,
+h3,
+li,
+p,
+span,
+ul {
+	font-family: Open Sans, sans-serif
+}
+
+li,
+p,
+span,
+ul {
+	font-size: calc(1em + .1vw)
+}
+
+button {
+	font-size: calc(.7em + .1vw)
+}
+
+input {
+	width: 20px
+}
+
+h3 {
+	font-size: calc(1.1em + .1vw)
+}
+
+h3,
+ul {
+	margin: 0
+}
+
+h3,
+li,
+ul {
+	padding: 0
+}
+
+li {
+	margin: 0 0 0 1.5em
+}
+
+h1,
+h2,
+h3 {
+	font-weight: 300
+}
+
+h1 {
+	text-align: center;
+	margin: calc(.1em + .7vh) 0 0;
+	font-size: calc(1.5em + .1vw)
+}
+
+body,
+h1 {
+	padding: 0
+}
+
+body {
+	background-color: #f9f9f9;
+	margin: 0
+}
+
+#wrap {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center
+}
+
+#canvas {
+	background-color: #fff;
+	width: 70vw;
+	height: 60vh;
+	border: 1px solid #000;
+	border-radius: 10px;
+	-webkit-transition: background-color 1s;
+	-o-transition: background-color 1s;
+	transition: background-color 1s
+}
+
+#uppercontent {
+	z-index: 1;
+	margin-top: calc(.1em + 1vh)
+}
+
+#lowercontent,
+#uppercontent {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: row;
+	flex-direction: row;
+	-ms-flex-pack: distribute;
+	justify-content: space-around
+}
+
+#lowercontent {
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center
+}
+
+#sizeHead {
+	margin-right: .5em
+}
+
+#sizevalue {
+	width: 40px;
+	margin-left: .6em
+}
+
+footer {
+	margin: 6em 0 3em;
+	color: #969696;
+	font-size: .6em
+}
+
+#colours {
+	margin: 20px 0;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-around
+}
+
+#colours,
+.color {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex
+}
+
+.color {
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center
+}
+
+.timg {
+	width: calc(1em + 2vh)
+}
+
+#buttons,
+#download {
+	margin-top: .5em
+}
+
+footer span {
+	font-size: 1.3em
+}
+
+@media only screen and (max-width: 700px) {
+	#howtouse {
+		display: none;
+	}
+}

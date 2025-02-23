@@ -1,0 +1,15 @@
+{
+    "url": null,
+    "date": "7.10.2018",
+    "ignoredate": false,
+    "name": {
+        "en": "Laser refraction & reflection",
+        "fi": null
+    },
+    "description": {
+        "en": null,
+        "fi": null
+    },
+    "icon": "icon.png",
+    "ignoreInListing": true
+}

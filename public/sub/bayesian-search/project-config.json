@@ -1,0 +1,21 @@
+{
+    "url": "https://github.com/pennane/bayesian-search",
+    "date": "4.8.2024",
+    "name": {
+        "en": "Bayesian search simulator",
+        "fi": "null"
+    },
+    "description": {
+        "en": "Testing how bayesian search could be implemented",
+        "fi": null
+    },
+    "pretext": "Imagine a helicopter trying to save people over board! Today we are simulating rescue missions.",
+    "ignoreInListing": true,
+    "ignoreDate": false,
+    "icon": "logo.png",
+    "images": [
+        "search2.mp4"
+    ],
+    "largeImage": "logo.png",
+    "notAuthor": false
+}

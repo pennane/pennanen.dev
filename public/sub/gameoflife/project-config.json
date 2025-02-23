@@ -1,0 +1,16 @@
+{
+    "url": null,
+    "date": "4.7.2020",
+    "ignoredate": false,
+    "name": {
+        "en": "Game of life",
+        "fi": null
+    },
+    "description": {
+        "en": "Convay's game of life as check boxes",
+        "fi": null
+    },
+    "icon": "icon.png",
+    "largeImage": "gameoflife.png",
+    "ignoreInListing": true
+}

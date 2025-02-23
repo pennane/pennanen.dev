@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html lang="fi">
+    <head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <link href="style/main.css" rel="stylesheet" />
+
+        <!-- Code snippet to speed up Google Fonts rendering: googlefonts.3perf.com -->
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+        <link
+            rel="preload"
+            href="https://fonts.googleapis.com/css?family=Merriweather"
+            as="fetch"
+            crossorigin="anonymous"
+        />
+        <script type="text/javascript">
+            !(function (e, n, t) {
+                'use strict'
+                var o = 'https://fonts.googleapis.com/css?family=Merriweather',
+                    r = '__3perf_googleFontsStylesheet'
+                function c(e) {
+                    ;(n.head || n.body).appendChild(e)
+                }
+                function a() {
+                    var e = n.createElement('link')
+                    ;(e.href = o), (e.rel = 'stylesheet'), c(e)
+                }
+                function f(e) {
+                    if (!n.getElementById(r)) {
+                        var t = n.createElement('style')
+                        ;(t.id = r), c(t)
+                    }
+                    n.getElementById(r).innerHTML = e
+                }
+                e.FontFace && e.FontFace.prototype.hasOwnProperty('display')
+                    ? (t[r] && f(t[r]),
+                      fetch(o)
+                          .then(function (e) {
+                              return e.text()
+                          })
+                          .then(function (e) {
+                              return e.replace(/@font-face {/g, '@font-face{font-display:swap;')
+                          })
+                          .then(function (e) {
+                              return (t[r] = e)
+                          })
+                          .then(f)
+                          .catch(a))
+                    : a()
+            })(window, document, localStorage)
+        </script>
+        <!-- End of code snippet for Google Fonts -->
+
+        <title>Lottosimulaattori</title>
+    </head>
+
+    <body>
+        <main>
+            <div id="lottery">
+                <h2>Sinun numerosi:</h2>
+                <div id="numbers">
+                    <div class="containers">
+                        <div class="lotnum gs" id="lotn1">
+                            <span id="lspan1" class="lotnum"></span>
+                        </div>
+                        <div class="lotnum gs" id="lotn2">
+                            <span id="lspan2" class="lotnum"></span>
+                        </div>
+                        <div class="lotnum gs" id="lotn3">
+                            <span id="lspan3" class="lotnum"></span>
+                        </div>
+                        <div class="lotnum gs" id="lotn4">
+                            <span id="lspan4" class="lotnum"></span>
+                        </div>
+                        <div class="lotnum gs" id="lotn5">
+                            <span id="lspan5" class="lotnum"></span>
+                        </div>
+                        <div class="lotnum gs" id="lotn6">
+                            <span id="lspan6" class="lotnum"></span>
+                        </div>
+                        <div class="lotnum gs" id="lotn7">
+                            <span id="lspan7" class="lotnum"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tickets">
+                    <div>
+                        <button id="purchase1ticket">Osta 1 rivi lottoa</button>
+                        <button id="purchase10ticket">Osta 10 riviä lottoa</button>
+                        <button id="purchase100ticket">Osta 100 riviä lottoa</button>
+                        <button id="purchase1000ticket">Osta 1000 riviä lottoa</button>
+                        <button id="purchaseinfiniteticket">Osta loputtomasti</button>
+                    </div>
+                </div>
+
+                <div id="stats">
+                    <div class="statholder" id="v3b">
+                        <span class="nhead">3 + 1 oikein:</span> <span id="v3ba">0</span><br />
+                        <br />
+
+                        <div class="prob">
+                            <div>
+                                <span>Todennäköisyys:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span>
+                                    <span class="bottom" id="v3bp">Infinity</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span>Veikkaus tod.näk.:</span><br />
+
+                                <div class="fraction"><span class="top">1</span> <span class="bottom">107,4</span></div>
+                            </div>
+                        </div>
+                        <br />
+                        <span>€/Voitto:</span> <span>2</span><span>€</span> <span>Voitettu:</span
+                        ><span id="v3bw">0</span><span>€</span>
+                    </div>
+
+                    <div class="statholder" id="v4">
+                        <span class="nhead">4 oikein:</span> <span id="v4a">0</span><br />
+                        <br />
+
+                        <div class="prob">
+                            <div>
+                                <span>Todennäköisyys:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span>
+                                    <span class="bottom" id="v4p">Infinity</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span>Veikkaus tod.näk.:</span><br />
+
+                                <div class="fraction"><span class="top">1</span> <span class="bottom">97,6</span></div>
+                            </div>
+                        </div>
+                        <br />
+                        <span>€/Voitto:</span> <span>10</span><span>€</span> <span>Voitettu:</span
+                        ><span id="v4w">0</span><span>€</span>
+                    </div>
+
+                    <div class="statholder" id="v5">
+                        <span class="nhead">5 oikein:</span> <span id="v5a">0</span><br />
+                        <br />
+
+                        <div class="prob">
+                            <div>
+                                <span>Todennäköisyys:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span>
+                                    <span class="bottom" id="v5p">Infinity</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span>Veikkaus tod.näk.:</span><br />
+
+                                <div class="fraction"><span class="top">1</span> <span class="bottom">1 681</span></div>
+                            </div>
+                        </div>
+                        <br />
+                        <span>€/Voitto:</span> <span>50</span><span>€</span> <span>Voitettu:</span
+                        ><span id="v5w">0</span><span>€</span>
+                    </div>
+
+                    <div class="statholder" id="v6">
+                        <span class="nhead">6 oikein:</span> <span id="v6a">0</span><br />
+                        <br />
+
+                        <div class="prob">
+                            <div>
+                                <span>Todennäköisyys:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span>
+                                    <span class="bottom" id="v6p">Infinity</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span>Veikkaus tod.näk.:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span> <span class="bottom">83 230</span>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <span>€/Voitto:</span> <span>2 000</span><span>€</span> <span>Voitettu:</span
+                        ><span id="v6w">0</span><span>€</span>
+                    </div>
+
+                    <div class="statholder" id="v6b">
+                        <span class="nhead">6 + 1 oikein:</span> <span id="v6ba">0</span><br />
+                        <br />
+
+                        <div class="prob">
+                            <div>
+                                <span>Todennäköisyys:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span>
+                                    <span class="bottom" id="v6bp">Infinity</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span>Veikkaus tod.näk.:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span>
+                                    <span class="bottom">2 663 365</span>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <span>€/Voitto:</span> <span>100 000</span><span>€</span> <span>Voitettu:</span
+                        ><span id="v6bw">0</span><span>€</span>
+                    </div>
+
+                    <div class="statholder" id="v7">
+                        <span class="nhead">7 oikein:</span> <span id="v7a">0</span><br />
+                        <br />
+
+                        <div class="prob">
+                            <div>
+                                <span>Todennäköisyys:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span>
+                                    <span class="bottom" id="v7p">Infinity</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span>Veikkaus tod.näk.:</span><br />
+
+                                <div class="fraction">
+                                    <span class="top">1</span>
+                                    <span class="bottom">18 643 560</span>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <span>€/Voitto:</span> <span>5 000 000</span><span>€</span> <span>Voitettu:</span
+                        ><span id="v7w">0</span><span>€</span>
+                    </div>
+
+                    <div class="statholder" id="yht"><span>Rivejä ostettu:</span> <span id="yhta">0</span><br /></div>
+
+                    <div class="statholder" id="rahayht">
+                        <span>Rahaa käytetty:</span> <span id="used">0</span><span>€</span><br />
+                    </div>
+
+                    <div class="statholder" id="voit"><span>Voittojen määrä:</span> <span id="voita">0</span></div>
+
+                    <div class="statholder" id="voittoyht">
+                        <span>Rahaa saatu:</span> <span id="gained">0</span><span>€</span><br />
+                    </div>
+
+                    <div class="statholder" id="mahd">
+                        <span>Todennäköisyys saada voitto:</span>
+
+                        <div class="fraction">
+                            <span class="top">1</span>
+                            <span class="bottom" id="mahdp">Infinity</span>
+                        </div>
+                    </div>
+                    <div class="statholder" id="vmahd">
+                        <span>Veikkaus tod.näk. saada voitto:</span>
+
+                        <div class="fraction"><span class="top">1</span> <span class="bottom">49,6</span></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <script src="js/main.dist.js" type="text/javascript"></script>
+    </body>
+</html>

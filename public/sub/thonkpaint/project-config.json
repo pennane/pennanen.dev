@@ -1,0 +1,19 @@
+{
+    "url": null,
+    "date": "1.5.2018",
+    "ignoredate": false,
+    "name": {
+        "en": "Thonkpaint",
+        "fi": null
+    },
+    "description": {
+        "en": "Different kind of paint",
+        "fi": null
+    },
+    "icon": "logo.png",
+    "images": [
+        "starrynight.jpg"
+    ],
+    "largeImage": "starrynight.jpg",
+    "ignoreInListing": true
+}

@@ -1,0 +1,14 @@
+{
+    "url": "https://joulu.karanteeni.net/",
+    "date": "29.11.2019",
+    "name": {
+        "en": "Karanteeni Advent Calendar 2019",
+        "fi": null
+    },
+    "description": {
+        "en": "Interactive advent calendar",
+        "fi": null
+    },
+    "icon": "icon.png",
+    "ignoreInListing": true
+}

@@ -1,0 +1,18 @@
+{
+    "url": "https://github.com/pennane/qer",
+    "date": "9.11.2024",
+    "name": {
+        "en": "QER",
+        "fi": "QER"
+    },
+    "description": {
+        "en": "Unbiased way to queue songs in Spotify",
+        "fi": null
+    },
+    "pretext": "QER (queuer) is an auxiliary tool to queue songs in Spotify, split impartially between users.",
+    "icon": "logo.png",
+    "largeImage": "1.png",
+    "images": [
+        "1.png"
+    ]
+}

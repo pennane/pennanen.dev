@@ -1,0 +1,74 @@
+body {
+	margin: 0;
+	background-color: black;
+	font-family: 'Open Sans', sans-serif;
+}
+
+* {
+	user-select: none;
+}
+
+main {
+	display: flex;
+	padding: 2em;
+	justify-content: center;
+}
+
+
+#canvas {
+	background-color: white;
+	object-fit: contain;
+	height: 100%;
+	width: 100%;
+}
+
+table {
+	background-color: white;
+}
+
+#info {
+	background-color: white;
+	padding: 1em;
+	padding-left: 1.3em;
+}
+#canvasparent {
+	background-color: white;
+}
+
+#info div {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 0.6em;
+	align-items: center;
+}
+
+input {
+	max-width: 70%
+}
+
+select {
+	border-radius: 0;
+	max-width: 43%;
+}
+
+option {
+	border-radius: 0;
+}
+
+.degree {
+	color: #656565
+}
+
+.grabbing {
+	cursor: grabbing
+}
+
+.grab {
+	cursor: grab
+}
+
+@media only screen and (max-width: 800px) { 
+		main {
+			flex-direction: column-reverse;
+		}
+}

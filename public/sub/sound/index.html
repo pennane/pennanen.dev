@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Sound</title>
+        <link rel="stylesheet" href="style/main.css" />
+    </head>
+    <body>
+        <div class="control">
+            <div class="settings">
+                <div>
+                    <label for="start">starting hz</label>
+                    <input type="number" id="start" min="40" />
+                </div>
+                <div>
+                    <label for="gap">hz gap</label>
+                    <input type="number" id="gap" min="1" />
+                </div>
+
+                <div>
+                    <label for="amount">polyphony</label>
+                    <input type="number" id="amount" min="1" max="100" />
+                </div>
+                <div>
+                    <label for="amount">visualiser precision</label>
+                    <input type="number" id="precision" min="10" max="15" />
+                </div>
+                <div class="loader">
+                    <select id="tracks"></select>
+                    <div class="loaderbuttons">
+                        <button id="loadtrack">load</button>
+                        <button id="playtrack" class="uninteractive">play</button>
+                        <button id="stoptrack" class="uninteractive">stop</button>
+                    </div>
+                </div>
+                <div>
+                    <button id="reset">reload</button>
+                </div>
+            </div>
+            <div class="buttons">
+                <div class="default">
+                    <button id="off">clear <span class="keybind">(r)</span></button>
+                    <button id="whitenoise">noise <span class="keybind">(w)</span></button>
+                </div>
+                <div id="target"></div>
+            </div>
+        </div>
+
+        <code>numbers keys 1-0 can be used to play the buttons </code>
+        <code>r key clears sounds</code>
+        <code>w key toggles whitenoise</code>
+        <canvas id="visualiser"></canvas>
+        <script src="modules/main.js" type="module"></script>
+    </body>
+</html>
