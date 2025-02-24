@@ -41,7 +41,7 @@ type TicTacToePlayers = {
 }
 ```
 
-So, instead of defining players as just an array, we can go ham, and enforce the minimum player count already on type level.
+Instead of defining players as just an array, we can go ham, and enforce the minimum player count already on type level.
 
 Runtime checks no longer required! Faulty state made impossible and the model actually reflects business logic constraints.
 
@@ -49,15 +49,15 @@ Its also easily serializable. No tricks attached.
 
 ```ts
 const players: TicTacToePlayers = {
-  first: createPlayer(),
-  second: createPlayer(),
-  rest: []
+  first: createPlayer(), // ts happy
+  second: createPlayer(), // ts happy
+  rest: [] // ts happy
 }
 ```
 
 There is really no way to create an invalid set of players as long as the types are followed - and that is nice.
 
-Nothing is keeping from going further than 2 either - or making the type generic.
+The atleast-2-items-array can be easily made generic, and nothing is restraining from not going beyond 2 items.
 
 ```ts
 type NonEmptyArray<T> = {
@@ -66,7 +66,7 @@ type NonEmptyArray<T> = {
 }
 
 type AtLeast2Array<T> = NonEmptyArray<T> & { second: T }
-type AtLeast3Array<T> = NonEmptyArray<T> & { third: T }
+type AtLeast3Array<T> = AtLeast2Array<T> & { third: T }
 ```
 
 ## Rationale
