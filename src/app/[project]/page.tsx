@@ -64,8 +64,7 @@ export default async function Page({
             <h1>{project.name}</h1>
             {date && <time>{formatDate(date)}</time>}
           </Stack>
-
-          <Stack direction="row" align="center">
+          <Stack vertical alignItems="center">
             <div>
               <Image
                 width={48}

@@ -13,7 +13,7 @@ export default function Page() {
     })
 
   return (
-    <Stack className={styles.page}>
+    <Stack className={styles.page} gap="0.6rem">
       {projects.map((project) => (
         <ProjectLink key={project.id} project={project} />
       ))}

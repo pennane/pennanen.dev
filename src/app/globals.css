@@ -40,6 +40,11 @@ body {
   transition: background-color 0.3s;
 }
 
+body.not-found main,
+body.not-found nav {
+  background-color: initial;
+}
+
 pre,
 code {
   font-family: 'Fira Code', Menlo, Monaco, 'Courier New', monospace;

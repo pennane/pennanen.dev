@@ -1,10 +1,19 @@
 // components/Stack.tsx
 import React from 'react'
 
+export enum Gap {
+  none = '0',
+  tiny = '0.125rem',
+  small = '0.25rem',
+  medium = '0.5rem',
+  large = '1rem',
+  xLarge = '2rem'
+}
+
 type StackProps = {
-  direction?: 'row' | 'column'
-  align?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline'
-  justify?:
+  vertical?: boolean
+  alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline'
+  justifyContent?:
     | 'flex-start'
     | 'center'
     | 'flex-end'
@@ -13,14 +22,7 @@ type StackProps = {
     | 'space-evenly'
   wrap?: boolean | 'wrap' | 'wrap-reverse'
   reverse?: boolean
-  alignContent?:
-    | 'flex-start'
-    | 'center'
-    | 'flex-end'
-    | 'stretch'
-    | 'space-between'
-    | 'space-around'
-  gap?: string
+  gap?: string | { row: string; column: string }
   children: React.ReactNode
 } & React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,
@@ -28,27 +30,32 @@ type StackProps = {
 >
 
 export const Stack: React.FC<StackProps> = ({
-  direction = 'column',
-  align = 'baseline',
-  justify = 'flex-start',
+  vertical = false,
+  alignItems = 'baseline',
+  justifyContent = 'flex-start',
   wrap = false,
   reverse = false,
-  alignContent = 'baseline',
-  gap = '0.5rem',
+  gap = Gap.medium,
   children,
   ...rest
 }) => {
+  const direction = vertical ? 'row' : 'column'
+
   const wrapStyle =
     wrap === true ? 'wrap' : wrap === 'wrap-reverse' ? 'wrap-reverse' : 'nowrap'
+
+  const flexGap =
+    typeof gap === 'string'
+      ? { gap }
+      : { columnGap: gap.column, rowGap: gap.row }
 
   const style: React.CSSProperties = {
     display: 'flex',
     flexDirection: reverse ? `${direction}-reverse` : direction,
-    gap: gap,
-    alignItems: align,
-    justifyContent: justify,
-    flexWrap: wrapStyle,
-    alignContent: alignContent
+    ...flexGap,
+    alignItems: alignItems,
+    justifyContent: justifyContent,
+    flexWrap: wrapStyle
   }
 
   return (

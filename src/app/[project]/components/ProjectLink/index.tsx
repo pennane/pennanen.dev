@@ -1,17 +1,17 @@
 import Link from 'next/link'
 import { Project } from '../../lib'
 import { formatDate } from '../../../lib'
-import { Stack } from '../../../../components/Stack'
+import { Gap, Stack } from '../../../../components/Stack'
 import Image from 'next/image'
 
 export const ProjectLink = ({ project }: { project: Project }) => {
   return (
     <Link href={`/${project.id}`}>
-      <Stack direction="row" align="flex-start">
+      <Stack vertical alignItems="flex-start">
         <time style={{ width: '6.5rem', flexShrink: 0 }}>
           {formatDate(project.date)}
         </time>
-        <Stack direction="row" align="flex-start">
+        <Stack vertical alignItems="flex-start">
           <Image
             alt=""
             src={
@@ -21,11 +21,9 @@ export const ProjectLink = ({ project }: { project: Project }) => {
             }
             width={24}
             height={24}
-            style={{ marginTop: '.20rem' }}
           />
-          <Stack gap="0" wrap>
+          <Stack gap={Gap.none} wrap>
             <h4>{project.name}</h4>{' '}
-            {/* {project.description && <span>{project.description}</span>} */}
           </Stack>
         </Stack>
       </Stack>

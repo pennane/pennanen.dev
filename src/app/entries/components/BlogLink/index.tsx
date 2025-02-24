@@ -6,7 +6,7 @@ import { Stack } from '../../../../components/Stack'
 export const BlogLink = ({ post }: { post: Post }) => {
   return (
     <Link href={`/entries/${post.slug}`} key={post.slug}>
-      <Stack direction="row" wrap="wrap-reverse" align="flex-start">
+      <Stack vertical wrap="wrap-reverse" alignItems="flex-start">
         <time style={{ width: '6.5rem' }}>
           {formatDate(parseDateString(post.metadata.date))}
         </time>
