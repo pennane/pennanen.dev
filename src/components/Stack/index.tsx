@@ -1,5 +1,5 @@
-// components/Stack.tsx
 import React from 'react'
+import clsx from 'clsx'
 
 export enum Gap {
   none = '0',
@@ -7,7 +7,8 @@ export enum Gap {
   small = '0.25rem',
   medium = '0.5rem',
   large = '1rem',
-  xLarge = '2rem'
+  xLarge = '2rem',
+  mega = '3rem'
 }
 
 type StackProps = {
@@ -22,12 +23,9 @@ type StackProps = {
     | 'space-evenly'
   wrap?: boolean | 'wrap' | 'wrap-reverse'
   reverse?: boolean
-  gap?: string | { row: string; column: string }
+  gap?: Gap | { row: Gap; column: Gap }
   children: React.ReactNode
-} & React.DetailedHTMLProps<
-  React.HTMLAttributes<HTMLDivElement>,
-  HTMLDivElement
->
+} & React.HTMLAttributes<HTMLDivElement>
 
 export const Stack: React.FC<StackProps> = ({
   vertical = false,
@@ -37,29 +35,38 @@ export const Stack: React.FC<StackProps> = ({
   reverse = false,
   gap = Gap.medium,
   children,
+  className,
   ...rest
 }) => {
-  const direction = vertical ? 'row' : 'column'
+  const direction = vertical ? 'flex-row' : 'flex-col'
+  const wrapClass =
+    wrap === true
+      ? 'flex-wrap'
+      : wrap === 'wrap-reverse'
+      ? 'flex-wrap-reverse'
+      : 'flex-nowrap'
+  const flexDirection = reverse ? `${direction}-reverse` : direction
 
-  const wrapStyle =
-    wrap === true ? 'wrap' : wrap === 'wrap-reverse' ? 'wrap-reverse' : 'nowrap'
-
-  const flexGap =
-    typeof gap === 'string'
-      ? { gap }
-      : { columnGap: gap.column, rowGap: gap.row }
-
-  const style: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: reverse ? `${direction}-reverse` : direction,
-    ...flexGap,
-    alignItems: alignItems,
-    justifyContent: justifyContent,
-    flexWrap: wrapStyle
+  let gapStyle = {}
+  if (typeof gap === 'object') {
+    gapStyle = { columnGap: gap.column, rowGap: gap.row }
+  } else {
+    gapStyle = { gap }
   }
 
   return (
-    <div {...rest} style={style}>
+    <div
+      style={gapStyle}
+      {...rest}
+      className={clsx(
+        'flex',
+        flexDirection,
+        wrapClass,
+        `items-${alignItems}`,
+        `justify-${justifyContent}`,
+        className
+      )}
+    >
       {children}
     </div>
   )
