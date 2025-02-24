@@ -1,6 +1,6 @@
 :root {
   color-scheme: light dark;
-  --hue: 222;
+  --hue: 218;
   --background-light: hsl(var(--hue) 100% 98% / 1);
   --background-dark: hsl(var(--hue) 100% 4% / 1);
   --foreground-secondary-light: hsl(var(--hue) 100% 24% / 1);
