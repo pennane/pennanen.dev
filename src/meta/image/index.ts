@@ -236,8 +236,8 @@ async function computePostImage({
   date,
   summary
 }: {
-  title: string
-  date: string
+  title?: string
+  date?: string
   summary?: string
 }) {
   return generateImageBuffer(1200, 630, 'image/jpeg', async (context) => {
@@ -260,17 +260,20 @@ async function computePostImage({
     )
 
     let headingY = 190
-    headingY = drawText(
-      context,
-      title,
-      40,
-      headingY,
-      520,
-      69.6,
-      '700 48pt Inter',
-      '#4980ff',
-      'left'
-    ).y
+
+    if (title) {
+      headingY = drawText(
+        context,
+        title,
+        40,
+        headingY,
+        520,
+        69.6,
+        '700 48pt Inter',
+        '#4980ff',
+        'left'
+      ).y
+    }
 
     if (summary) {
       drawText(
@@ -285,18 +288,19 @@ async function computePostImage({
         'left'
       )
     }
-
-    drawText(
-      context,
-      date,
-      40,
-      headingY + 350,
-      520,
-      30,
-      '300 20pt Inter',
-      'rgba(255, 255, 255, 0.95)',
-      'left'
-    )
+    if (date) {
+      drawText(
+        context,
+        date,
+        40,
+        headingY + 350,
+        520,
+        30,
+        '300 20pt Inter',
+        'rgba(255, 255, 255, 0.95)',
+        'left'
+      )
+    }
   })
 }
 
