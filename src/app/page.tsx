@@ -6,8 +6,8 @@ import Link from 'next/link'
 
 export default function Page() {
   return (
-    <Stack className={styles.page} gap="2rem">
-      <Stack vertical alignItems="flex-end" gap="1rem" wrap>
+    <Stack className={styles.page} gap={Gap.xLarge}>
+      <Stack vertical alignItems="flex-end" gap={Gap.large} wrap>
         <Stack gap={Gap.none}>
           <h1>Arttu Pennanen</h1>
           <h2>Software Engineer</h2>

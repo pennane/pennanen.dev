@@ -1,11 +1,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import style from './not-found.module.css'
-import { Stack } from '../components/Stack'
+import { Gap, Stack } from '../components/Stack'
 
 export default function NotFound() {
   return (
-    <Stack className={style.main} gap="0">
+    <Stack className={style.main} gap={Gap.none}>
       <header>
         <Stack className={style['header']}>
           <h1>404 - Not found</h1>
