@@ -7,8 +7,8 @@
   --foreground-secondary-dark: hsl(var(--hue) 100% 88% / 1);
   --accent-light: hsl(var(--hue) 100% 50%);
   --accent-dark: hsl(var(--hue) 100% 58%);
-  --line-color-light: hsl(var(--hue) 100% 1% / 0.05);
-  --line-color-dark: hsl(var(--hue) 100% 100% / 0.05);
+  --line-color-light: hsl(var(--hue) 100% 11% / 0.05);
+  --line-color-dark: hsl(var(--hue) 100% 50% / 0.08);
   --background: light-dark(var(--background-light), var(--background-dark));
   --foreground: light-dark(var(--background-dark), var(--background-light));
   --foreground-secondary: light-dark(
@@ -87,12 +87,13 @@ a:hover {
 
 .hljs {
   background-color: light-dark(#0d1117, transparent) !important;
-  border: 1px solid hsl(var(--hue) 100% 30% / 20%);
+  border: 1px solid hsl(var(--hue) 80% 30% / 25%);
 }
 
 code.hljs {
   border-radius: 0.2rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  box-shadow: inset 0 4px 6px -1px hsl(var(--hue) 91.67% 9.41% / 20%),
+    0 2px 4px -2px hsl(var(--hue) 91.67% 9.41% / 10%);
 }
 
 .icon.icon-link {
