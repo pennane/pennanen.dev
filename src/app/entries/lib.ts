@@ -2,8 +2,8 @@ import fs from 'fs'
 import path from 'path'
 
 type Metadata = {
-  title: string
-  date: string
+  title?: string
+  date?: string
   summary?: string
 }
 
@@ -13,13 +13,9 @@ export type Post = {
   content: string
 }
 
-function parseFrontmatter(fileContent: string) {
-  const frontmatterRegex = /---\s*([\s\S]*?)\s*---/
-  const match = frontmatterRegex.exec(fileContent)
-  const frontMatterBlock = match![1]
-  const content = fileContent.replace(frontmatterRegex, '').trim()
+export function parseFrontmatterContent(frontMatterBlock: string): Metadata {
   const frontMatterLines = frontMatterBlock.trim().split('\n')
-  const metadata: Partial<Metadata> = {}
+  const metadata: Metadata = {}
 
   for (const line of frontMatterLines) {
     const [key, ...valueArr] = line.split(': ')
@@ -28,7 +24,17 @@ function parseFrontmatter(fileContent: string) {
     metadata[key.trim() as keyof Metadata] = value
   }
 
-  return { metadata: metadata as Metadata, content }
+  return metadata
+}
+
+function parseFrontmatter(fileContent: string) {
+  const frontmatterRegex = /---\s*([\s\S]*?)\s*---/
+  const match = frontmatterRegex.exec(fileContent)
+  const frontMatterBlock = match![1]
+  const content = fileContent.replace(frontmatterRegex, '').trim()
+  const metadata = parseFrontmatterContent(frontMatterBlock)
+
+  return { metadata, content }
 }
 
 function getMdxFiles(dir: string) {

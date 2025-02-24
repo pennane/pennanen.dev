@@ -1,0 +1,78 @@
+---
+title: 'Lying Arrays'
+date: '23.02.2025'
+---
+
+Programmers are often drawn towards lists without hesitation (arrays, or whatever) even when dealing with business logic that needs at least n items to be present, accepting the cost of runtime validation everywhere.
+
+```ts
+...
+
+if (players.length < 2) {
+  throw new Error("A game of tic-tac-toe needs at least 2 players!")
+}
+
+...
+```
+
+This is my personal grudge - even in typed languages there is logically incorrect modeling everywhere. Type safety should really be thought as logic safety.
+
+```ts
+type TicTacToePlayers = Player[] // YEE, TYPE-SAFE LANGUAGE
+```
+
+So, why not fix the problem before it even becomes one? No runtime checks, please.
+
+## Lists with n+ elements
+
+Nothing keeps us from defining the right tool for the job.
+
+The problem could be solved with various language-dependent data structures, but if looking to solve it in a language-agnostic manner, this is what can be done:
+
+```ts
+// bad(ish)
+type TicTacToePlayers = Player[]
+
+// good(ish)
+type TicTacToePlayers = {
+  first: Player
+  second: Player
+  rest: Player[]
+}
+```
+
+So, instead of defining players as just an array, we can go ham, and enforce the minimum player count already on type level.
+
+Runtime checks no longer required! Faulty state made impossible and the model actually reflects business logic constraints.
+
+Its also easily serializable. No tricks attached.
+
+```ts
+const players: TicTacToePlayers = {
+  first: createPlayer(),
+  second: createPlayer(),
+  rest: []
+}
+```
+
+There is really no way to create an invalid set of players as long as the types are followed - and that is nice.
+
+Nothing is keeping from going further than 2 either - or making the type generic.
+
+```ts
+type NonEmptyArray<T> = {
+  first: T
+  rest: T[]
+}
+
+type AtLeast2Array<T> = NonEmptyArray<T> & { second: T }
+type AtLeast3Array<T> = NonEmptyArray<T> & { third: T }
+```
+
+## Rationale
+
+Programs are about collecting, transforming, and/or displaying data. Often, when building applications, the model (i.e., types) is an afterthought. Modeling can help eliminate the need for tests that handle impossible states and make programs reflect reality.
+
+Writing code with correct models reduces the amount of needed unit tests, runtime checks and most importantly it reduces mental overhead.
+
+[Testing is good, impossible is better](https://www.youtube.com/watch?v=IcgmSRJHu_8)
