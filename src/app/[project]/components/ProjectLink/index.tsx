@@ -6,11 +6,11 @@ import Image from 'next/image'
 
 export const ProjectLink = ({ project }: { project: Project }) => {
   return (
-    <Link href={`/${project.id}`}>
-      <Stack vertical alignItems="flex-start">
-        <time style={{ width: '6.5rem', flexShrink: 0 }}>
-          {formatDate(project.date)}
-        </time>
+    <Stack vertical alignItems="flex-start">
+      <time style={{ width: '6.5rem', flexShrink: 0 }}>
+        {formatDate(project.date)}
+      </time>
+      <Link href={`/${project.id}`}>
         <Stack vertical alignItems="flex-start">
           <Image
             alt=""
@@ -26,7 +26,7 @@ export const ProjectLink = ({ project }: { project: Project }) => {
             <h4>{project.name}</h4>{' '}
           </Stack>
         </Stack>
-      </Stack>
-    </Link>
+      </Link>
+    </Stack>
   )
 }

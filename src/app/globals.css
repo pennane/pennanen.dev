@@ -70,8 +70,8 @@ a {
   letter-spacing: -0.05rem;
 }
 
-a time {
-  font-weight: initial;
+a:hover {
+  text-decoration: underline;
 }
 
 @media (prefers-color-scheme: dark) {
