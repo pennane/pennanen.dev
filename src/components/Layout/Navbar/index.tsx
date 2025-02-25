@@ -34,19 +34,24 @@ const Navbar = () => {
         <Stack vertical>
           <Link
             href="https://github.com/pennane"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             target="_blank"
             className={styles.brand}
+            aria-label="Visit Arttu Pennanen's GitHub profile"
           >
             <GithubIcon height={ICON_SIZE} />
+            <span className="sr-only">(opens in a new tab)</span>
           </Link>
+
           <Link
             href="https://www.linkedin.com/in/arttu-pennanen/"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             target="_blank"
             className={styles.brand}
+            aria-label="Visit Arttu Pennanen's LinkedIn profile"
           >
             <LinkedinIcon height={ICON_SIZE} />
+            <span className="sr-only">(opens in a new tab)</span>
           </Link>
         </Stack>
       </Stack>
