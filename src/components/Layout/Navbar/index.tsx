@@ -16,7 +16,7 @@ const Navbar = () => {
         alignItems="center"
       >
         <Stack vertical alignItems="center" gap={Gap.large}>
-          <Link href="/">
+          <Link href="/" style={{ marginLeft: '-.125rem' }}>
             <Stack vertical alignItems="center">
               <Image
                 alt=""
