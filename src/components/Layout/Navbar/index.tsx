@@ -38,9 +38,12 @@ const Navbar = () => {
             target="_blank"
             className={styles.brand}
             aria-label="Visit Arttu Pennanen's GitHub profile"
+            aria-describedby="github-link-description"
           >
             <GithubIcon height={ICON_SIZE} />
-            <span className="sr-only">(opens in a new tab)</span>
+            <span id="github-link-description" className="sr-only">
+              (opens in a new tab)
+            </span>
           </Link>
 
           <Link
@@ -49,9 +52,12 @@ const Navbar = () => {
             target="_blank"
             className={styles.brand}
             aria-label="Visit Arttu Pennanen's LinkedIn profile"
+            aria-describedby="linkedin-link-description"
           >
             <LinkedinIcon height={ICON_SIZE} />
-            <span className="sr-only">(opens in a new tab)</span>
+            <span id="linkedin-link-description" className="sr-only">
+              (opens in a new tab)
+            </span>
           </Link>
         </Stack>
       </Stack>
