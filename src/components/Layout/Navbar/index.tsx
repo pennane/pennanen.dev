@@ -11,7 +11,7 @@ const Navbar = () => {
     <nav className={styles.nav}>
       <Stack
         vertical
-        gap={{ column: Gap.xLarge, row: Gap.medium }}
+        gap={{ column: Gap.large, row: Gap.medium }}
         justifyContent="space-between"
         alignItems="center"
       >
