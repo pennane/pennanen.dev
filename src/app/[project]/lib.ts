@@ -2,20 +2,26 @@ import fs from 'fs'
 import path from 'path'
 
 import { z } from 'zod'
-import { parseDateString } from '../lib'
+import { formatDate, parseDateString } from '../lib'
 
 const ProjectConfigSchema = z.object({
   id: z.string(),
   url: z.string().nullish(),
   date: z.union([z.string(), z.number()]).nullish(),
-  name: z.object({
-    en: z.string().nullish(),
-    fi: z.string().nullish()
-  }),
-  description: z.object({
-    en: z.string().nullish(),
-    fi: z.string().nullish()
-  }),
+  name: z
+    .object({
+      en: z.string().nullish(),
+      fi: z.string().nullish()
+    })
+    .nullish()
+    .default({}),
+  description: z
+    .object({
+      en: z.string().nullish(),
+      fi: z.string().nullish()
+    })
+    .nullish()
+    .default({}),
   icon: z.string().nullish(),
   largeImage: z.string().nullish(),
   images: z.array(z.string()).nullish(),
@@ -80,7 +86,8 @@ const readConfig = (id: string): ProjectConfig => {
     const input = JSON.parse(file) as Record<string, unknown>
 
     return ProjectConfigSchema.parse(Object.assign(input, { id }))
-  } catch {
+  } catch (e) {
+    console.log(e)
     return emptyConfig(id)
   }
 }
@@ -91,8 +98,8 @@ export const parseConfig = (config: ProjectConfig): Project => {
     url: config.url || undefined,
     date: parseDateString(config.date)?.getTime() || undefined,
     ignoreDate: config.ignoreDate,
-    name: config.name.en || config.name.fi || config.id,
-    description: config.description.en || config.description.fi || undefined,
+    name: config.name?.en || config.name?.fi || config.id,
+    description: config.description?.en || config.description?.fi || undefined,
     pretext: config.pretext || undefined,
     icon: config.icon || undefined,
     images: config.images || [],
@@ -119,3 +126,12 @@ export function getProjectById(id: string) {
   if (!config) return null
   return parseConfig(config)
 }
+
+export const groupEntries = (projects: Project[]) =>
+  Object.entries(
+    Object.groupBy(
+      projects,
+      (project) =>
+        formatDate(project.date)?.split(' ').at(-1) || 'Undated (2015-2018)'
+    )
+  ).sort((a, b) => Number(b[0]) - Number(a[0]))

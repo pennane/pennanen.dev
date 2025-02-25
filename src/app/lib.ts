@@ -13,7 +13,8 @@ const formatter = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric'
 })
 
-export function formatDate(date: number | Date | undefined | null) {
-  if (!date) return ''
-  return formatter.format(date)
+export function formatDate(date: string | number | Date | undefined | null) {
+  const parsed = typeof date === 'string' ? parseDateString(date) : date
+  if (!parsed) return ''
+  return formatter.format(parsed)
 }

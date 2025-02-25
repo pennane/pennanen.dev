@@ -1,14 +1,12 @@
-import { Stack } from '../../components/Stack'
-import { ProjectLink } from '../[project]/components/ProjectLink'
+import { ProjectGroups } from '../../components/ProjectGroups'
+import { Gap, Stack } from '../../components/Stack'
 
 import { getProjects } from '../[project]/lib'
 
 const Page = () => {
   return (
-    <Stack>
-      {getProjects().map((post) => (
-        <ProjectLink key={post.id} project={post} />
-      ))}
+    <Stack gap={Gap.large}>
+      <ProjectGroups projects={getProjects()} />
     </Stack>
   )
 }

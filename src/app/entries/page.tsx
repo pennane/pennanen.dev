@@ -6,11 +6,9 @@ import { BlogLink } from './components/BlogLink'
 export default function Blog() {
   return (
     <Stack className={styles.page}>
-      <Stack>
-        {getBlogPosts().map((post) => (
-          <BlogLink key={post.slug} post={post} />
-        ))}
-      </Stack>
+      {getBlogPosts().map((post) => (
+        <BlogLink key={post.slug} post={post} />
+      ))}
     </Stack>
   )
 }
