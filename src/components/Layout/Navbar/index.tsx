@@ -10,14 +10,14 @@ const Navbar = () => {
   return (
     <nav className={styles.nav}>
       <Stack
-        vertical
+        horizontal
         gap={{ column: Gap.large, row: Gap.medium }}
         justifyContent="space-between"
         alignItems="center"
       >
-        <Stack vertical alignItems="center" gap={Gap.large}>
+        <Stack horizontal alignItems="center" gap={Gap.large}>
           <Link href="/" style={{ marginLeft: '-.125rem' }}>
-            <Stack vertical alignItems="center">
+            <Stack horizontal alignItems="center">
               <Image
                 alt=""
                 src={'/icons/favicon-96.png'}
@@ -31,7 +31,7 @@ const Navbar = () => {
           <Link href="/projects">projects</Link>
         </Stack>
 
-        <Stack vertical>
+        <Stack horizontal>
           <Link
             href="https://github.com/pennane"
             rel="noopener noreferrer"

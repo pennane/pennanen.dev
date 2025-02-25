@@ -12,7 +12,7 @@ export enum Gap {
 }
 
 type StackProps = {
-  vertical?: boolean
+  horizontal?: boolean
   alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline'
   justifyContent?:
     | 'flex-start'
@@ -28,7 +28,7 @@ type StackProps = {
 } & React.HTMLAttributes<HTMLDivElement>
 
 export const Stack: React.FC<StackProps> = ({
-  vertical = false,
+  horizontal = false,
   alignItems = 'baseline',
   justifyContent = 'flex-start',
   wrap = false,
@@ -38,7 +38,7 @@ export const Stack: React.FC<StackProps> = ({
   className,
   ...rest
 }) => {
-  const direction = vertical ? 'flex-row' : 'flex-col'
+  const direction = horizontal ? 'flex-row' : 'flex-col'
   const wrapClass =
     wrap === true
       ? 'flex-wrap'

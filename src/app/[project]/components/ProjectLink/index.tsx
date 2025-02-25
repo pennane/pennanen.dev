@@ -6,12 +6,12 @@ import Image from 'next/image'
 
 export const ProjectLink = ({ project }: { project: Project }) => {
   return (
-    <Stack vertical alignItems="flex-start">
+    <Stack horizontal alignItems="flex-start">
       <time style={{ width: '6.5rem', flexShrink: 0 }}>
         {formatDate(project.date)}
       </time>
       <Link href={`/${project.id}`}>
-        <Stack vertical alignItems="flex-start">
+        <Stack horizontal alignItems="flex-start">
           <Image
             alt=""
             src={

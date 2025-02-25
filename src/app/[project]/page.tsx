@@ -19,7 +19,7 @@ export async function generateMetadata({
     return
   }
   const ogImage = await generateProjectImage(project)
-  const title = project.name
+  const title = 'Arttu Pennanen - ' + project.name
   const description = project.description
   const publishedTime = parseDateString(project.date)?.toISOString()
 
@@ -64,7 +64,7 @@ export default async function Page({
             <h1>{project.name}</h1>
             {date && <time>{formatDate(date)}</time>}
           </Stack>
-          <Stack vertical alignItems="center">
+          <Stack horizontal alignItems="center">
             <div>
               <Image
                 width={48}
@@ -112,7 +112,7 @@ export default async function Page({
         </Stack>
       )}
       {project.images[0] && (
-        <Stack>
+        <Stack alignItems="stretch">
           {project.images.map((url, i) => (
             <div key={project.id + i} className={styles.image}>
               {url.endsWith('.mp4') && (
