@@ -86,8 +86,7 @@ const readConfig = (id: string): ProjectConfig => {
     const input = JSON.parse(file) as Record<string, unknown>
 
     return ProjectConfigSchema.parse(Object.assign(input, { id }))
-  } catch (e) {
-    console.log(e)
+  } catch {
     return emptyConfig(id)
   }
 }
@@ -127,11 +126,14 @@ export function getProjectById(id: string) {
   return parseConfig(config)
 }
 
-export const groupEntries = (projects: Project[]) =>
+export const groupEntries = <T>(
+  projects: T[],
+  getDate: (x: T) => Parameters<typeof formatDate>[0]
+) =>
   Object.entries(
     Object.groupBy(
       projects,
       (project) =>
-        formatDate(project.date)?.split(' ').at(-1) || 'Undated (2015-2018)'
+        formatDate(getDate(project))?.split(' ').at(-1) || 'Undated (2015-2018)'
     )
   ).sort((a, b) => Number(b[0]) - Number(a[0]))

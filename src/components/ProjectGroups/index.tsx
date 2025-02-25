@@ -1,22 +1,29 @@
-import { FC } from 'react'
-import { groupEntries, Project } from '../../app/[project]/lib'
-import { ProjectLink } from '../../app/[project]/components/ProjectLink'
+import { groupEntries } from '../../app/[project]/lib'
 import styles from './project-groups.module.css'
+import { WrapInBox } from '../WrapInBox'
+import { formatDate } from '../../app/lib'
+import { ReactNode } from 'react'
 
-export const ProjectGroups: FC<{ projects: Project[] }> = ({ projects }) => {
+export const ItemGroups = <T,>({
+  items,
+  render,
+  getDate
+}: {
+  items: T[]
+  getDate: (x: T) => Parameters<typeof formatDate>[0]
+  render: (item: T) => ReactNode
+}) => {
   return (
     <div className={styles.groups}>
-      {groupEntries(projects).map(([key, projects]) => (
+      {groupEntries(items, getDate).map(([key, item]) => (
         <section className={styles.group} key={key}>
           <header className={styles.header}>
-            <h3>{key}</h3>
+            <WrapInBox>
+              <h3>{key}</h3>
+            </WrapInBox>
           </header>
 
-          <div className={styles.list}>
-            {projects!.map((project) => (
-              <ProjectLink key={project.id} project={project} />
-            ))}
-          </div>
+          <div className={styles.list}>{item!.map(render)}</div>
         </section>
       ))}
     </div>

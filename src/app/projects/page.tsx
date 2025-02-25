@@ -1,12 +1,17 @@
-import { ProjectGroups } from '../../components/ProjectGroups'
+import { ItemGroups } from '../../components/ProjectGroups'
 import { Gap, Stack } from '../../components/Stack'
+import { ProjectLink } from '../[project]/components/ProjectLink'
 
 import { getProjects } from '../[project]/lib'
 
 const Page = () => {
   return (
     <Stack gap={Gap.large}>
-      <ProjectGroups projects={getProjects()} />
+      <ItemGroups
+        items={getProjects()}
+        getDate={(x) => x.date}
+        render={(project) => <ProjectLink project={project} key={project.id} />}
+      />
     </Stack>
   )
 }

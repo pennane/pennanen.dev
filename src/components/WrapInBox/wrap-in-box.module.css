@@ -1,0 +1,23 @@
+.box::before {
+  color: var(--accent);
+  content: '';
+  height: 33%;
+  width: 101%;
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+  position: absolute;
+  bottom: -0.15rem;
+  left: -0.25rem;
+}
+
+.box::after {
+  color: var(--accent);
+  content: '';
+  height: 33%;
+  width: 101%;
+  border-top: 1px solid;
+  border-right: 1px solid;
+  position: absolute;
+  top: -0.15rem;
+  right: -0.25rem;
+}
