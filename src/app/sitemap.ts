@@ -22,7 +22,7 @@ export default async function sitemap() {
       : undefined
   }))
 
-  const routes = ['', '/uncurated', '/entries'].map((route) => ({
+  const routes = ['', '/uncurated', '/entries', '/projects'].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: formatDateForSitemap(new Date())
   }))
