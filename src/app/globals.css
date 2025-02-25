@@ -1,12 +1,13 @@
 :root {
   color-scheme: light dark;
   --hue: 218;
+  --dark-accent-hue: 215.16;
   --background-light: hsl(var(--hue) 100% 98% / 1);
   --background-dark: hsl(var(--hue) 100% 4% / 1);
   --foreground-secondary-light: hsl(var(--hue) 100% 24% / 1);
   --foreground-secondary-dark: hsl(var(--hue) 100% 88% / 1);
   --accent-light: hsl(var(--hue) 100% 50%);
-  --accent-dark: hsl(var(--hue) 100% 58%);
+  --accent-dark: hsl(var(--dark-accent-hue) 100% 50%);
   --line-color-light: hsl(var(--hue) 100% 11% / 0.05);
   --line-color-dark: hsl(var(--hue) 100% 50% / 0.08);
   --background: light-dark(var(--background-light), var(--background-dark));
