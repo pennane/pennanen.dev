@@ -4,7 +4,11 @@ date: '23.02.2025'
 draft: 'true'
 ---
 
-# HMMM
+What if instead of just Promise.race, there would be Promise.races :D?
+
+Handling a collection of promises as fast as possible. Once a promise resolves, it is handled ASAP.
+
+Consider:
 
 ```ts
 export async function* racePromises<A, B>(f: (x: A) => Promise<B>, xs: A[]) {
@@ -27,38 +31,8 @@ export async function* racePromises<A, B>(f: (x: A) => Promise<B>, xs: A[]) {
 ```
 
 ```ts
-export async function* racePromisesWithMaxConcurrency<A, B>(
-  concurrency: number,
-  f: (x: A) => Promise<B>,
-  xs: A[]
-) {
-  if (concurrency < 1) {
-    throw new Error('Concurrency limit cannot be less than 1')
-  }
-
-  const size = xs.length
-  const pool = new Map<number, Promise<readonly [number, B]>>()
-
-  let startedPromises = 0
-
-  function queueNext() {
-    const i = startedPromises++
-    pool.set(
-      i,
-      f(xs[i]).then((v) => [i, v] as const)
-    )
-  }
-
-  Array.from({ length: Math.min(concurrency, size) }).forEach(queueNext)
-
-  while (pool.size) {
-    const [key, value] = await Promise.race(pool.values())
-    pool.delete(key)
-    yield value
-
-    if (startedPromises >= size) continue
-
-    queueNext()
-  }
+for await (const x of racePromises(heavyAsyncTaskFn, tasks)) {
+  // handle the result of heavyAsyncTaskFn as soon as results are available
+  // instead of waiting for all promises to resolve with something like await Promise.all(promises)
 }
 ```
