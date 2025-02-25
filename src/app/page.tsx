@@ -14,11 +14,12 @@ export default function Page() {
         </Stack>
 
         <p>
-          Writing code that can not break. Currently at{' '}
+          Writing code that can not break. Currently building large-scale
+          integrated systems at{' '}
           <Link href="https://hoxhunt.com/" rel="noreferrer" target="_blank">
             Hoxhunt
           </Link>
-          .{' '}
+          . Alumni of{' '}
           <Link
             href="https://www.metropolia.fi/en"
             rel="noreferrer"
@@ -26,8 +27,11 @@ export default function Page() {
           >
             Metropolia
           </Link>{' '}
-          alumni. Here on this website, I post about some of the problems
-          I&apos;ve fought.
+          with BEng in Software.
+        </p>
+        <p>
+          I thrive on building fail-proof systems enjoyed by developers and end
+          users.
         </p>
       </Stack>
       <Entries />
