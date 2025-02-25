@@ -5,6 +5,7 @@ type Metadata = {
   title?: string
   date?: string
   summary?: string
+  draft?: boolean
 }
 
 export type Post = {
@@ -21,7 +22,12 @@ export function parseFrontmatterContent(frontMatterBlock: string): Metadata {
     const [key, ...valueArr] = line.split(': ')
     let value = valueArr.join(': ').trim()
     value = value.replace(/^['"](.*)['"]$/, '$1')
-    metadata[key.trim() as keyof Metadata] = value
+    const metadataKey = key.trim() as keyof Metadata
+    if (metadataKey === 'draft') {
+      metadata.draft = value.toLowerCase() === 'true'
+    } else {
+      metadata[metadataKey] = value
+    }
   }
 
   return metadata
@@ -61,5 +67,11 @@ function getMdxData(dir: string) {
 }
 
 export function getBlogPosts() {
+  return getMdxData(path.join(process.cwd(), 'src', 'content')).filter(
+    (post) => !post.metadata.draft
+  )
+}
+
+export function getBlogPostsWithDrafts() {
   return getMdxData(path.join(process.cwd(), 'src', 'content'))
 }

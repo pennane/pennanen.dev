@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { generatePostImage } from '../../../meta/image'
 import { parseDateString } from '../../lib'
 import { baseUrl } from '../../sitemap'
-import { getBlogPosts } from '../lib'
+import { getBlogPostsWithDrafts } from '../lib'
 
 export async function generateMetadata({
   params
@@ -10,7 +10,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata | undefined> {
   const slug = (await params).slug
-  const post = getBlogPosts().find((post) => post.slug === slug)
+  const post = getBlogPostsWithDrafts().find((post) => post.slug === slug)
 
   if (!post) {
     return
@@ -57,7 +57,7 @@ export default async function Page({
 }
 
 export function generateStaticParams() {
-  return getBlogPosts().map(({ slug }) => ({ slug }))
+  return getBlogPostsWithDrafts().map(({ slug }) => ({ slug }))
 }
 
 export const dynamicParams = false
