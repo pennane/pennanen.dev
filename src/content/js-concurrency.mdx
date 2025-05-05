@@ -37,7 +37,7 @@ async function* racePromises<T>(promises: Promise<T>[]) {
 }
 ```
 
-The implementation might look a bit intimidating, but in essence: boom -- promises, handled are as soon as they resolve.
+The implementation might look a bit intimidating, but in essence: boom -- promises, handled as soon as they resolve.
 
 ```ts
 for await (const x of racePromises(someApiCallPromises)) {
