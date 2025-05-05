@@ -1,13 +1,13 @@
-import styles from './page.module.css'
+import Link from 'next/link'
 import { Gap, Stack } from '../components/Stack'
 import { Projects } from './[project]/components/Projects'
 import { Entries } from './entries/components/Entries'
-import Link from 'next/link'
+import styles from './page.module.css'
 
 export default function Page() {
   return (
-    <Stack className={styles.page} gap={Gap.xLarge}>
-      <Stack horizontal alignItems="flex-end" gap={Gap.large} wrap>
+    <Stack className={styles.page} gap={Gap.mega}>
+      <Stack gap={Gap.large}>
         <Stack gap={Gap.none}>
           <h1>Arttu Pennanen</h1>
           <h2>Software Engineer</h2>
@@ -18,6 +18,10 @@ export default function Page() {
           integrated systems at{' '}
           <Link href="https://hoxhunt.com/" rel="noreferrer" target="_blank">
             Hoxhunt
+          </Link>
+          . Studying MSc at{' '}
+          <Link href="https://www.aalto.fi/en" rel="noreferrer" target="_blank">
+            Aalto
           </Link>
           . Alumni of{' '}
           <Link
@@ -34,8 +38,15 @@ export default function Page() {
           users.
         </p>
       </Stack>
-      <Entries />
-      <Projects />
+      <Stack
+        horizontal
+        wrap="wrap-reverse"
+        className={styles.split}
+        gap={{ column: Gap.large, row: Gap.large }}
+      >
+        <Projects />
+        <Entries />
+      </Stack>
     </Stack>
   )
 }

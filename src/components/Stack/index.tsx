@@ -1,5 +1,5 @@
-import React from 'react'
 import clsx from 'clsx'
+import React from 'react'
 
 export enum Gap {
   none = '0',
@@ -27,6 +27,12 @@ type StackProps = {
   children: React.ReactNode
 } & React.HTMLAttributes<HTMLDivElement>
 
+const parseWrap = (wrap: boolean | 'wrap' | 'wrap-reverse') => {
+  if (wrap === true) return 'flex-wrap'
+  if (!wrap) return 'no-wrap'
+  return `flex-${wrap}`
+}
+
 export const Stack: React.FC<StackProps> = ({
   horizontal = false,
   alignItems = 'baseline',
@@ -39,12 +45,7 @@ export const Stack: React.FC<StackProps> = ({
   ...rest
 }) => {
   const direction = horizontal ? 'flex-row' : 'flex-col'
-  const wrapClass =
-    wrap === true
-      ? 'flex-wrap'
-      : wrap === 'wrap-reverse'
-      ? 'flex-wrap-reverse'
-      : 'flex-nowrap'
+  const wrapClass = parseWrap(wrap)
   const flexDirection = reverse ? `${direction}-reverse` : direction
 
   let gapStyle = {}

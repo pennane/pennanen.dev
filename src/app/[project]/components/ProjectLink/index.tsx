@@ -1,15 +1,13 @@
-import Link from 'next/link'
-import { Project } from '../../lib'
-import { formatDate } from '../../../lib'
-import { Gap, Stack } from '../../../../components/Stack'
 import Image from 'next/image'
+import Link from 'next/link'
+import { Gap, Stack } from '../../../../components/Stack'
+import { formatDate } from '../../../lib'
+import { Project } from '../../lib'
 
 export const ProjectLink = ({ project }: { project: Project }) => {
   return (
-    <Stack horizontal alignItems="flex-start">
-      <time style={{ width: '6.5rem', flexShrink: 0 }}>
-        {formatDate(project.date)}
-      </time>
+    <Stack horizontal alignItems="flex-start" gap={Gap.small}>
+      <time>{formatDate(project.date)}</time>
       <Link href={`/${project.id}`}>
         <Stack horizontal alignItems="flex-start">
           <Image

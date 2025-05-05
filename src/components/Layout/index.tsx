@@ -1,8 +1,8 @@
-import Navbar from './Navbar'
-import Footer from './Footer'
 import { Gap, Stack } from '../Stack'
-import styles from './layout.module.css'
 import BackgroundLines from './BackgroundLines'
+import Footer from './Footer'
+import styles from './layout.module.css'
+import Navbar from './Navbar'
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
