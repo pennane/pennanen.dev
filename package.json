@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "browserlist": [
+    "> 0.2% and not dead"
+  ],
   "dependencies": {
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
