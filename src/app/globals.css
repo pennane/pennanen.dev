@@ -5,7 +5,9 @@
   --background-light: hsl(var(--hue) 100% 98% / 1);
   --background-dark: hsl(var(--hue) 100% 4% / 1);
   --foreground-secondary-light: hsl(var(--hue) 100% 24% / 1);
-  --foreground-secondary-dark: hsl(var(--hue) 100% 88% / 1);
+  --foreground-secondary-dark: hsl(var(--hue) 100% 92% / 1);
+  --link-color-light: hsl(var(--hue) 100% 32% /1);
+  --link-color-dark: hsl(var(--hue) 100% 77% /1);
   --accent-light: hsl(var(--hue) 100% 50%);
   --accent-dark: hsl(var(--dark-accent-hue) 100% 50%);
   --line-color-light: hsl(var(--hue) 100% 11% / 0.05);
@@ -16,6 +18,7 @@
     var(--foreground-secondary-light),
     var(--foreground-secondary-dark)
   );
+  --link-color: light-dark(var(--link-color-light), var(--link-color-dark));
   --accent: light-dark(var(--accent-light), var(--accent-dark));
   --line-color: light-dark(var(--line-color-light), var(--line-color-dark));
 }
@@ -100,7 +103,7 @@ a:hover {
 }
 
 time {
-  width: 6.5rem;
+  width: 6.25rem;
   flex-shrink: 0;
 }
 

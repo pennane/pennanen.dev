@@ -21,7 +21,7 @@ export const ProjectLink = ({ project }: { project: Project }) => {
             height={24}
           />
           <Stack gap={Gap.none} wrap>
-            <h4>{project.name}</h4>{' '}
+            <h4 style={{ whiteSpace: 'nowrap' }}>{project.name}</h4>
           </Stack>
         </Stack>
       </Link>

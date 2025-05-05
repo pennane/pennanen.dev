@@ -1,7 +1,7 @@
+import { GithubIcon, LinkedinIcon } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Gap, Stack } from '../../Stack'
-import Image from 'next/image'
-import { GithubIcon, LinkedinIcon } from 'lucide-react'
 import styles from './navbar.module.css'
 
 const ICON_SIZE = 18
@@ -27,8 +27,12 @@ const Navbar = () => {
               <span>pennanen.dev</span>
             </Stack>
           </Link>
-          <Link href="/entries">entries</Link>
-          <Link href="/projects">projects</Link>
+          <Link className={styles.link} href="/entries">
+            entries
+          </Link>
+          <Link className={styles.link} href="/projects">
+            projects
+          </Link>
         </Stack>
 
         <Stack horizontal>

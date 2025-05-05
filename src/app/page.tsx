@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { A } from '../components/A'
 import { Gap, Stack } from '../components/Stack'
 import { Projects } from './[project]/components/Projects'
 import { Entries } from './entries/components/Entries'
@@ -6,7 +6,7 @@ import styles from './page.module.css'
 
 export default function Page() {
   return (
-    <Stack className={styles.page} gap={Gap.mega}>
+    <Stack className={styles.page} gap={Gap.large}>
       <Stack gap={Gap.large}>
         <Stack gap={Gap.none}>
           <h1>Arttu Pennanen</h1>
@@ -16,36 +16,34 @@ export default function Page() {
         <p>
           Writing code that can not break. Currently building large-scale
           integrated systems at{' '}
-          <Link href="https://hoxhunt.com/" rel="noreferrer" target="_blank">
+          <A href="https://hoxhunt.com/" rel="noreferrer" target="_blank">
             Hoxhunt
-          </Link>
+          </A>
           . Studying MSc at{' '}
-          <Link href="https://www.aalto.fi/en" rel="noreferrer" target="_blank">
+          <A href="https://www.aalto.fi/en" rel="noreferrer" target="_blank">
             Aalto
-          </Link>
+          </A>
           . Alumni of{' '}
-          <Link
+          <A
             href="https://www.metropolia.fi/en"
             rel="noreferrer"
             target="_blank"
           >
             Metropolia
-          </Link>{' '}
+          </A>{' '}
           with BEng in Software.
         </p>
         <p>
-          I thrive on building fail-proof systems enjoyed by developers and end
-          users.
+          I focus on building reliable systems that serve both developers and
+          end users.
         </p>
       </Stack>
       <Stack
-        horizontal
-        wrap="wrap-reverse"
         className={styles.split}
         gap={{ column: Gap.large, row: Gap.large }}
       >
-        <Projects />
         <Entries />
+        <Projects />
       </Stack>
     </Stack>
   )

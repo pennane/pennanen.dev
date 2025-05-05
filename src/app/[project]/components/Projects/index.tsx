@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { A } from '../../../../components/A'
 import { Stack } from '../../../../components/Stack'
 import { getProjects } from '../../lib'
 import { ProjectLink } from '../ProjectLink'
@@ -13,7 +13,9 @@ export const Projects = () => {
           <ProjectLink key={project.id} project={project} />
         ))}
       </Stack>
-      <Link href="/uncurated">rest of stuff</Link>
+      <A style={{ marginTop: '.25rem' }} href="/uncurated">
+        rest of stuff
+      </A>
     </Stack>
   )
 }

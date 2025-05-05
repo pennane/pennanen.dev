@@ -1,11 +1,12 @@
+import { Metadata } from 'next'
 import Image from 'next/image'
+import { A } from '../../components/A'
 import { Stack } from '../../components/Stack'
+import { generateProjectImage } from '../../meta/image'
 import { formatDate, parseDateString } from '../lib'
+import { baseUrl } from '../sitemap'
 import { getProjectById, getProjects } from './lib'
 import styles from './page.module.css'
-import { Metadata } from 'next'
-import { baseUrl } from '../sitemap'
-import { generateProjectImage } from '../../meta/image'
 
 export async function generateMetadata({
   params
@@ -78,24 +79,24 @@ export default async function Page({
               />
             </div>
             {project.url && project.url.includes('github.com') && (
-              <a href={project.url} rel="noreferrer">
+              <A href={project.url} rel="noreferrer">
                 View source <span>[{project.url}]</span>
-              </a>
+              </A>
             )}
             {project.url && project.url.includes('pennanen.dev') && (
-              <a href={project.url} rel="noreferrer">
+              <A href={project.url} rel="noreferrer">
                 Open project <span>[{project.url}]</span>
-              </a>
+              </A>
             )}
             {project.url &&
               !project.url.includes('github.com') &&
               !project.url.includes('pennanen.dev') && (
-                <a href={project.url} rel="noreferrer">
+                <A href={project.url} rel="noreferrer">
                   Open outbound link <span>[{project.url}]</span>
-                </a>
+                </A>
               )}
             {!project.url && (
-              <a href={`/sub/${project.id}/index.html`}>Launch project</a>
+              <A href={`/sub/${project.id}/index.html`}>Launch project</A>
             )}
           </Stack>
           <p>{project.description}</p>
@@ -147,9 +148,9 @@ export default async function Page({
       )}
       {project.github && (
         <Stack>
-          <a href={project.github} rel="noreferrer">
+          <A href={project.github} rel="noreferrer">
             View source
-          </a>
+          </A>
         </Stack>
       )}
     </Stack>

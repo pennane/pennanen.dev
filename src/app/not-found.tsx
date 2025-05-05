@@ -1,7 +1,7 @@
 import Image from 'next/image'
-import Link from 'next/link'
-import style from './not-found.module.css'
+import { A } from '../components/A'
 import { Gap, Stack } from '../components/Stack'
+import style from './not-found.module.css'
 
 export default function NotFound() {
   return (
@@ -12,9 +12,9 @@ export default function NotFound() {
         </Stack>
       </header>
       <Stack>
-        <Link href="/" className={style['link']}>
+        <A href="/" className={style['link']}>
           To home
-        </Link>
+        </A>
       </Stack>
       <div className={style['background']}>
         <Image

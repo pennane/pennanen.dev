@@ -1,13 +1,8 @@
-import type { Metadata } from 'next'
-import { Fira_Code, Inter } from 'next/font/google'
-import './globals.css'
-import Layout from '../components/Layout'
 import 'highlight.js/styles/github-dark.css'
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap'
-})
+import type { Metadata } from 'next'
+import { Fira_Code } from 'next/font/google'
+import Layout from '../components/Layout'
+import './globals.css'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const firacodeMono = Fira_Code({
@@ -33,7 +28,7 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
         <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
       </head>
-      <body className={`${inter.className}`}>
+      <body>
         <Layout>{children}</Layout>
       </body>
     </html>
