@@ -8,7 +8,7 @@ export const BlogLink = ({ post }: { post: Post }) => {
     <Stack horizontal alignItems="flex-start">
       <time>{formatDate(parseDateString(post.metadata.date))}</time>
       <Link href={`/entries/${post.slug}`} key={post.slug}>
-        <h4 style={{ whiteSpace: 'nowrap' }}>{post.metadata.title}</h4>
+        <h4>{post.metadata.title}</h4>
       </Link>
     </Stack>
   )
