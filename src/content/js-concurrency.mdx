@@ -1,14 +1,22 @@
 ---
-title: 'Handling promises first come first serve'
+title: 'Promises first come, first serve'
 date: '05.05.2025'
 draft: 'false'
 ---
 
-What if instead of just `Promise.race`, we had `Promise.races` :D?
+In JavaScript we have this thing called a Promise. A data-structure which is found in some kind of shape or form in a myriad of programming languages to handle tasks happening at some point in the future.
 
-Handling a collection of promises as fast as possible. Once a promise resolves, it can be handled ASAP.
+Promise is far from perfect but has the ability to use it as a hammer for many different problems.
 
-Consider:
+When working with multiple asynchronous tasks, in JS one common approach is to use `Promise.all()`. It allows to run several independent operations in parallel, which can seem efficient at first glance. However, a downside of this method is that we must wait for all the initiated promises to resolve before we can begin processing any of their results.
+
+`Promise.race()` solves issues in the problem set, but isn't really a definitive solution by itself.
+
+So what if instead of just `Promise.race`, we had `Promise.races` :D? Where individual promises from a collection are resolved as fast as possible.
+
+So once a promise resolves, it can be handled ASAP.
+
+This can be very well implemented, though. Consider:
 
 ```ts
 async function* racePromises<T>(promises: Promise<T>[]) {
@@ -27,18 +35,24 @@ async function* racePromises<T>(promises: Promise<T>[]) {
 }
 ```
 
-Boom -- promises, handled as soon as they resolve.
+The implementation might look a bit intimidating, but in essence: boom -- promises, handled are as soon as they resolve.
 
 ```ts
 for await (const x of racePromises(someApiCallPromises)) {
   // handle each result as soon as it's available,
-  // instead of waiting for all with something like Promise.all(promises)
+  // instead of waiting for all to resolve with something like Promise.all(someApiCallPromises)
 }
 ```
 
-One thing to solve here is error handling. When this kind of use-case is encountered, it is highly likely that the underlying promises very well may throw.
+Having `racePromises` be a generator is obviously not "optimal optimal" as commonly JavaScript developers do not really play with generators unless they really have to.
 
-The generator can simply be composed further with same semantics as `Promise.allSettled`.
+But the generator / iterators are gaining popularity, as can be seen from the nice set of landed and upcoming ECMAScript proposals (such as [iterator helpers](https://github.com/tc39/proposal-iterator-helpers), [async iterator helpers](https://github.com/tc39/proposal-async-iterator-helpers) and [joint iteration](https://github.com/tc39/proposal-joint-iteration)).
+
+But back to the issue at hand. There is one thing to solve with the first come, first serve Promise handling -- arising errors. When this kind of first come, first-serve use case is called for, it is highly likely that the underlying promises very well may throw.
+
+In that case the generator can simply be composed further with familiar JavaScript promise semantics.
+
+Creating an `asSettled` function which wraps a promise to the `PromiseSettledResult` interface and composing it with the `racePromises`.
 
 ```ts
 const asSettled = <T>(promise: Promise<T>) =>
@@ -54,7 +68,11 @@ const asSettled = <T>(promise: Promise<T>) =>
 
 const racePromisesSettled = <T>(promises: Promise<T>[]) =>
   racePromises(promises.map(asSettled))
+```
 
+Proper functional ergonomics with proper speed!
+
+```ts
 for await (const result of racePromisesSettled(someApiCallPromises)) {
   if (result.status === 'rejected') {
     // handle error from result.reason
@@ -64,9 +82,7 @@ for await (const result of racePromisesSettled(someApiCallPromises)) {
 }
 ```
 
-Proper functional ergonomics with proper speed!
-
-The `asSettled` function itself opens up Go-style error handling -- or in other words it allows errors as values Similar to the kind of thing the [ECMAScript Try Operator](https://github.com/arthurfiorette/proposal-try-operator) is pushing toward.
+The `asSettled` function itself opens up Go-style error handling -- or in other words it allows errors as values. A similar theme as the [Try Operator](https://github.com/arthurfiorette/proposal-try-operator) proposal is pushing toward.
 
 But instead of adding the functionality with new syntax, we are just using existing JavaScript semantics (`PromiseSettledResult`).
 
