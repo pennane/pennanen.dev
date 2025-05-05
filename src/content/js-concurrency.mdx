@@ -1,26 +1,23 @@
 ---
 title: 'Handling promises first come first serve'
-date: '23.02.2025'
-draft: 'true'
+date: '05.05.2025'
+draft: 'false'
 ---
 
-What if instead of just Promise.race, there would be Promise.races :D?
+What if instead of just `Promise.race`, we had `Promise.races` :D?
 
-Handling a collection of promises as fast as possible. Once a promise resolves, it is handled ASAP.
+Handling a collection of promises as fast as possible. Once a promise resolves, it can be handled ASAP.
 
 Consider:
 
 ```ts
-export async function* racePromises<A, B>(f: (x: A) => Promise<B>, xs: A[]) {
-  const size = xs.length
-  const pool = new Map<number, Promise<readonly [number, B]>>()
-
-  for (const [i, x] of xs.entries()) {
-    pool.set(
+async function* racePromises<T>(promises: Promise<T>[]) {
+  const pool = new Map(
+    promises.map((promise, i) => [
       i,
-      f(xs[i]).then((v) => [i, v] as const)
-    )
-  }
+      promise.then((value) => [i, value] as const)
+    ])
+  )
 
   while (pool.size) {
     const [key, value] = await Promise.race(pool.values())
@@ -30,9 +27,47 @@ export async function* racePromises<A, B>(f: (x: A) => Promise<B>, xs: A[]) {
 }
 ```
 
+Boom -- promises, handled as soon as they resolve.
+
 ```ts
-for await (const x of racePromises(heavyAsyncTaskFn, tasks)) {
-  // handle the result of heavyAsyncTaskFn as soon as results are available
-  // instead of waiting for all promises to resolve with something like await Promise.all(promises)
+for await (const x of racePromises(someApiCalls, tasks)) {
+  // handle each result as soon as it's available,
+  // instead of waiting for all with something like Promise.all(promises)
 }
 ```
+
+One thing to solve here is error handling. When this kind of use-case is encountered, it is highly likely that the underlying promises very well may throw.
+
+The generator can simply be composed further with same semantics as `Promise.allSettled`.
+
+```ts
+const asSettled = <T>(promise: Promise<T>) =>
+  promise
+    .then((value) => ({
+      status: 'fulfilled' as const,
+      value
+    }))
+    .catch((reason) => ({
+      status: 'rejected' as const,
+      reason
+    }))
+
+const racePromisesSettled = <T>(promises: Promise<T>[]) =>
+  racePromises(promises.map(asSettled))
+
+for await (const result of racePromisesSettled(someApiCalls, tasks)) {
+  if (result.status === 'rejected') {
+    // handle error from result.reason
+    continue
+  }
+  // do something with result.value
+}
+```
+
+Proper functional ergonomics with proper speed!
+
+The `asSettled` function itself opens up Go-style error handling -- or in other words it allows errors as values Similar to the kind of thing the [ECMAScript Try Operator](https://github.com/arthurfiorette/proposal-try-operator) is pushing toward.
+
+But instead of adding the functionality with new syntax, we are just using existing JavaScript semantics (`PromiseSettledResult`).
+
+The DX potential is already there. It just needs to be reached for.
