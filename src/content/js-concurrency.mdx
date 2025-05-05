@@ -30,7 +30,7 @@ async function* racePromises<T>(promises: Promise<T>[]) {
 Boom -- promises, handled as soon as they resolve.
 
 ```ts
-for await (const x of racePromises(someApiCalls, tasks)) {
+for await (const x of racePromises(someApiCallPromises)) {
   // handle each result as soon as it's available,
   // instead of waiting for all with something like Promise.all(promises)
 }
@@ -55,7 +55,7 @@ const asSettled = <T>(promise: Promise<T>) =>
 const racePromisesSettled = <T>(promises: Promise<T>[]) =>
   racePromises(promises.map(asSettled))
 
-for await (const result of racePromisesSettled(someApiCalls, tasks)) {
+for await (const result of racePromisesSettled(someApiCallPromises)) {
   if (result.status === 'rejected') {
     // handle error from result.reason
     continue
