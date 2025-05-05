@@ -15,9 +15,9 @@ const Navbar = () => {
         justifyContent="space-between"
         alignItems="center"
       >
-        <Stack horizontal alignItems="center" gap={Gap.large}>
+        <Stack horizontal alignItems="flex-start" gap={Gap.large}>
           <Link href="/" style={{ marginLeft: '-.125rem' }}>
-            <Stack horizontal alignItems="center">
+            <Stack horizontal alignItems="flex-start">
               <Image
                 alt=""
                 src={'/icons/favicon-96.png'}

@@ -4,13 +4,13 @@ import { Fira_Code, Inter } from 'next/font/google'
 import Layout from '../components/Layout'
 import './globals.css'
 
-const inter = Inter({
+export const inter = Inter({
   subsets: ['latin'],
+  variable: '--font-inter',
   display: 'swap'
 })
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const firacodeMono = Fira_Code({
+export const firaCode = Fira_Code({
   subsets: ['latin'],
   display: 'block'
 })
@@ -33,7 +33,7 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
         <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
       </head>
-      <body className={`${inter.className}`}>
+      <body>
         <Layout>{children}</Layout>
       </body>
     </html>
