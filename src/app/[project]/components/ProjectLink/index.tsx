@@ -9,7 +9,7 @@ export const ProjectLink = ({ project }: { project: Project }) => {
     <Stack horizontal alignItems="flex-start" gap={Gap.small}>
       <time>{formatDate(project.date)}</time>
       <Link href={`/${project.id}`}>
-        <Stack horizontal alignItems="flex-start">
+        <Stack horizontal alignItems="center">
           <Image
             alt=""
             src={
