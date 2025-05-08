@@ -1,10 +1,10 @@
 ---
 title: 'Blocking Promises Examples'
 date: '08.05.2025'
-summary: 'Promises block the event loop. Only way to be unblocking is to jump out of the main thread.'
+summary: 'Promises block the event loop. Only way to be unblocking is to jump out of the main thread!'
 ---
 
-Promises do not magically unblock the event loop. To fight it use of setTimeout, Worker, and non-blocking fs APIs.
+Promises do not magically unblock the event loop. To fight it use setTimeout, Worker, and other actualyl non-blocking APIs.
 
 Off the main thread! ([good podcast btw](https://offthemainthread.tech/))
 
@@ -16,8 +16,8 @@ Off the main thread! ([good podcast btw](https://offthemainthread.tech/))
 export function wait() {
   let start = Date.now()
   while (Date.now() - start < 5000) {}
-// good old sync function
-// event loop is frozen until 5s has passed
+  // good old sync function
+  // event loop is frozen until 5s has passed
   return true
 }
 ```
@@ -29,19 +29,18 @@ export function wait() {
   return new Promise((resolve) => {
     let start = Date.now()
     while (Date.now() - start < 5000) {}
-// wrapping in a promise wont help
-// the work is still done in main thread 
+    // wrapping in a promise wont help
+    // the work is still done in main thread
     resolve(true)
   })
 }
 ```
 
-
 ❌ blocks event loop
 
 ```ts
 function hardSyncWork() {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     let start = Date.now()
     while (Date.now() - start < 5000) {}
     resolve(true)
@@ -51,7 +50,7 @@ function hardSyncWork() {
 export function wait() {
   return new Promise((resolve) => hardSyncWork().then(resolve))
   // No matter how many promises there are,
-  // the work will stay blocking 
+  // the work will stay blocking
 }
 ```
 
@@ -61,8 +60,8 @@ export function wait() {
 export function wait() {
   return new Promise((resolve) => {
     setTimeout(() => resolve(true), 5000)
-// first non blocking fn!
-// setTimeout is non blocking, it pushes tasks to macrotask queue
+    // first non blocking fn!
+    // setTimeout is non blocking, it pushes tasks to macrotask queue
   })
 }
 ```
@@ -76,7 +75,7 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 
 export let wait = null
-// Crazy way to convert actually blocking work to non blockin :ooo 
+// Crazy way to convert actually blocking work to non blockin :ooo
 
 if (isMainThread) {
   wait = function () {
@@ -87,9 +86,9 @@ if (isMainThread) {
 } else {
   let start = Date.now()
   while (Date.now() - start < 5000) {}
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// non blocking real work as its executed in a worker
-// (off the main thread)
+  //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  // non blocking real work as its executed in a worker
+  // (off the main thread)
   parentPort.postMessage(true)
 }
 ```
@@ -101,7 +100,7 @@ import fs from 'node:fs'
 
 export function read() {
   fs.writeFileSync('temp.txt', 'long string')
-// writeFileSync blocks by design.
+  // writeFileSync blocks by design.
   return true
 }
 ```
@@ -114,8 +113,8 @@ import fs from 'node:fs'
 export function read() {
   return new Promise((resolve) => {
     fs.writeFileSync('temp.txt', 'long string')
-// running writeFileSync in a promise does not help.
-// the function is blocking by design.
+    // running writeFileSync in a promise does not help.
+    // the function is blocking by design.
     resolve(true)
   })
 }
@@ -129,9 +128,9 @@ import fs from 'node:fs'
 export function read() {
   return new Promise((resolve) => {
     fs.writeFile('temp.txt', 'long string', {}, () => resolve(true))
-// Promises are really just syntactic sugar.
-// Conceptually callback functions + pushed to microtask queue
-// This is non blocking :)
+    // Promises are really just syntactic sugar.
+    // Conceptually callback functions + pushed to microtask queue
+    // This is non blocking :)
   })
 }
 ```
@@ -143,11 +142,10 @@ import fs from 'node:fs/promises'
 
 export function read() {
   return fs.writeFile('temp.txt', 'long string')
-// fs/promises functions are non blocking
-// but this is not because of promises.
-// its because it uses nonblocking C-lang bound functions internally
+  // fs/promises functions are non blocking
+  // but this is not because of promises.
+  // its because it uses nonblocking C-lang bound functions internally
 }
 ```
-
 
 Bye!
