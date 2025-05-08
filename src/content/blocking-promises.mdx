@@ -1,0 +1,134 @@
+---
+title: 'Blocking Promises Examples'
+date: '08.05.2025'
+summary: 'Promises block the event loop. Only way to be unblocking is to jump out of the main thread.'
+---
+
+Promises do not magically unblock the event loop. To fight it use of setTimeout, Worker, and non-blocking fs APIs.
+
+Off the main thread! ([good podcast btw](https://offthemainthread.tech/))
+
+## Some examples which block or dont block the event loop
+
+❌ blocks event loop
+
+```ts
+export function wait() {
+  let start = Date.now()
+  while (Date.now() - start < 5000) {}
+// good old sync function
+// event loop is frozen until 5s has passed
+  return true
+}
+```
+
+❌ blocks event loop
+
+```ts
+export function wait() {
+  return new Promise((resolve) => {
+    let start = Date.now()
+    while (Date.now() - start < 5000) {}
+// wrapping in a promise wont help
+// the work is still done in main thread 
+    resolve(true)
+  })
+}
+```
+
+✅ does not block event loop
+
+```ts
+export function wait() {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(true), 5000)
+// first non blocking fn!
+// setTimeout is non blocking, it pushes tasks to macrotask queue
+  })
+}
+```
+
+✅ does not block event loop
+
+```ts
+import { Worker, isMainThread, parentPort } from 'node:worker_threads'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+
+export let wait = null
+// Crazy way to convert actually blocking work to non blockin :ooo 
+
+if (isMainThread) {
+  wait = function () {
+    return new Promise((resolve) =>
+      new Worker(__filename).on('message', resolve)
+    )
+  }
+} else {
+  let start = Date.now()
+  while (Date.now() - start < 5000) {}
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// non blocking real work as its executed in a worker
+// (off the main thread)
+  parentPort.postMessage(true)
+}
+```
+
+❌ blocks event loop
+
+```ts
+import fs from 'node:fs'
+
+export function read() {
+  fs.writeFileSync('temp.txt', 'long string')
+// writeFileSync blocks by design.
+  return true
+}
+```
+
+❌ blocks event loop
+
+```ts
+import fs from 'node:fs'
+
+export function read() {
+  return new Promise((resolve) => {
+    fs.writeFileSync('temp.txt', 'long string')
+// running writeFileSync in a promise does not help.
+// the function is blocking by design.
+    resolve(true)
+  })
+}
+```
+
+✅ does not block event loop
+
+```ts
+import fs from 'node:fs'
+
+export function read() {
+  return new Promise((resolve) => {
+    fs.writeFile('temp.txt', 'long string', {}, () => resolve(true))
+// Promises are really just syntactic sugar.
+// Conceptually callback functions + pushed to microtask queue
+// This is non blocking :)
+  })
+}
+```
+
+✅ does not block event loop
+
+```ts
+import fs from 'node:fs/promises'
+
+export function read() {
+  return fs.writeFile('temp.txt', 'long string')
+// fs/promises functions are non blocking
+// but this is not because of promises.
+// its because it uses nonblocking C-lang bound functions internally
+}
+```
+
+
+Bye!
