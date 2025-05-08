@@ -36,6 +36,25 @@ export function wait() {
 }
 ```
 
+
+❌ blocks event loop
+
+```ts
+function hardSyncWork() {
+  return new Promise(resolve => {
+    let start = Date.now()
+    while (Date.now() - start < 5000) {}
+    resolve(true)
+  })
+}
+
+export function wait() {
+  return new Promise((resolve) => hardSyncWork().then(resolve))
+  // No matter how many promises there are,
+  // the work will stay blocking 
+}
+```
+
 ✅ does not block event loop
 
 ```ts
