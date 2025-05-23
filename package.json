@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint"
   },
-  "browserlist": [
+  "browserslist": [
     "> 0.2% and not dead"
   ],
   "dependencies": {
