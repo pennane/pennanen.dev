@@ -66,6 +66,9 @@ export function wait() {
 }
 ```
 
+### worker threads inline example
+
+
 ✅ does not block event loop
 
 ```ts
@@ -92,6 +95,8 @@ if (isMainThread) {
   parentPort.postMessage(true)
 }
 ```
+
+### other node examples
 
 ❌ blocks event loop
 
