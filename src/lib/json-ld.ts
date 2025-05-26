@@ -1,18 +1,18 @@
 import {
   BlogPosting,
   CreativeWork,
-  SoftwareSourceCode,
-  WebPage,
-  WithContext,
   Graph,
   Person,
-  WebSite
+  SoftwareSourceCode,
+  WebPage,
+  WebSite,
+  WithContext
 } from 'schema-dts'
-import { getFullPostImageUrl } from '../meta/image'
-import { parseDateString } from '../app/lib'
-import { baseUrl } from '../app/sitemap'
 import { Project } from '../app/[project]/lib'
 import { Post } from '../app/entries/lib'
+import { parseDateString } from '../app/lib'
+import { baseUrl } from '../app/sitemap'
+import { getFullPostImageUrl } from '../meta/image'
 
 const createAuthor = (): Person => ({
   '@type': 'Person',
@@ -36,7 +36,9 @@ const createSoftwareSourceCode = (project: Project): SoftwareSourceCode => ({
   description: project.description || '',
   codeRepository: project.github,
   url: `${baseUrl}/${project.id}`,
-  image: project.largeImage ? `${baseUrl}/${project.largeImage}` : undefined,
+  image: project.largeImage
+    ? `${baseUrl}/sub/${project.id}/${project.largeImage}`
+    : undefined,
   author: createAuthor(),
   dateCreated: project.ignoreDate
     ? undefined
@@ -49,7 +51,9 @@ const createCreativeWork = (project: Project): CreativeWork => ({
   name: project.name,
   description: project.description || '',
   url: `${baseUrl}/${project.id}`,
-  image: project.largeImage ? `${baseUrl}/${project.largeImage}` : undefined,
+  image: project.largeImage
+    ? `${baseUrl}/sub/${project.id}/${project.largeImage}`
+    : undefined,
   author: createAuthor(),
   dateCreated: parseDateString(project.date)?.toISOString(),
   isPartOf: createIsPartOf()
