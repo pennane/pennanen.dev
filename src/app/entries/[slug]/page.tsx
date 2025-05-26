@@ -53,7 +53,11 @@ export default async function Page({
   const slug = (await params).slug
   const { default: Post } = await import(`@/content/${slug}.mdx`)
 
-  return <Post />
+  return (
+    <article>
+      <Post />
+    </article>
+  )
 }
 
 export function generateStaticParams() {
