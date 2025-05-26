@@ -1,11 +1,13 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
+import { CreativeWork, SoftwareSourceCode, WithContext } from 'schema-dts'
 import { A } from '../../components/A'
+import { JsonLd } from '../../components/JsonLd'
 import { Stack } from '../../components/Stack'
 import { generateProjectImage } from '../../meta/image'
 import { formatDate, parseDateString } from '../lib'
 import { baseUrl } from '../sitemap'
-import { getProjectById, getProjects } from './lib'
+import { getProjectById, getProjects, Project } from './lib'
 import styles from './page.module.css'
 
 export async function generateMetadata({
@@ -48,6 +50,60 @@ export async function generateMetadata({
   }
 }
 
+const generateSourceCodeJsonLd = (project: Project) => {
+  const jsonLd: WithContext<SoftwareSourceCode> = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    name: project.name,
+    description: project.description || '',
+    codeRepository: project.github,
+    url: baseUrl + '/' + project.id,
+    image: project.largeImage ? `${baseUrl}/${project.largeImage}` : undefined,
+    author: {
+      '@type': 'Person',
+      name: 'Arttu Pennanen'
+    },
+    dateCreated: project.ignoreDate
+      ? undefined
+      : new Date(project.date!).toISOString(),
+    isPartOf: {
+      '@type': 'CreativeWork',
+      name: 'pennanen.dev'
+    }
+  }
+  return jsonLd
+}
+
+const generateCreativeWorkJsonLd = (project: Project) => {
+  const datePublished = parseDateString(project.date)?.toISOString()
+  const jsonLd: WithContext<CreativeWork> = {
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWork',
+    name: project.name,
+    description: project.description || '',
+    url: baseUrl + '/' + project.id,
+    image: project.largeImage ? `${baseUrl}/${project.largeImage}` : undefined,
+    author: {
+      '@type': 'Person',
+      name: 'Arttu Pennanen'
+    },
+    dateCreated: datePublished,
+    isPartOf: {
+      '@type': 'CreativeWork',
+      name: 'pennanen.dev'
+    }
+  }
+  return jsonLd
+}
+
+export const generateProjectJsonLd = (project: Project) => {
+  if (project.github) {
+    return generateSourceCodeJsonLd(project)
+  } else {
+    return generateCreativeWorkJsonLd(project)
+  }
+}
+
 export default async function Page({
   params
 }: {
@@ -56,6 +112,7 @@ export default async function Page({
   const id = (await params).project
   const project = getProjectById(id)!
   const date = project.date ? new Date(project.date) : null
+  const jsonld = generateProjectJsonLd(project)
 
   return (
     <Stack>
@@ -153,6 +210,7 @@ export default async function Page({
           </A>
         </Stack>
       )}
+      <JsonLd object={jsonld} />
     </Stack>
   )
 }

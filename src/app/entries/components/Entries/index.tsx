@@ -12,6 +12,7 @@ export const Entries = () => {
           <BlogLink key={post.slug} post={post} />
         ))}
       </Stack>
+      {}
     </Stack>
   )
 }

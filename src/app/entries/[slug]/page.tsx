@@ -1,8 +1,10 @@
 import { Metadata } from 'next'
-import { generatePostImage } from '../../../meta/image'
+import { BlogPosting, WithContext } from 'schema-dts'
+import { JsonLd } from '../../../components/JsonLd'
+import { getFullPostImageUrl } from '../../../meta/image'
 import { parseDateString } from '../../lib'
 import { baseUrl } from '../../sitemap'
-import { getBlogPostsWithDrafts } from '../lib'
+import { getBlogPostsWithDrafts, Post } from '../lib'
 
 export async function generateMetadata({
   params
@@ -16,7 +18,7 @@ export async function generateMetadata({
     return
   }
 
-  const ogImage = await generatePostImage(post)
+  const ogImage = getFullPostImageUrl(post)
   const title = post.metadata.title
   const description = post.metadata.summary
   const publishedTime = parseDateString(post.metadata.date)?.toISOString()
@@ -32,7 +34,7 @@ export async function generateMetadata({
       url: `${baseUrl}/entries/${post.slug}`,
       images: [
         {
-          url: `${baseUrl}/meta/${ogImage}`
+          url: ogImage
         }
       ]
     },
@@ -40,9 +42,35 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: [`${baseUrl}/meta/${ogImage}`]
+      images: [ogImage]
     }
   }
+}
+
+export const generatePostJsonLd = (post: Post) => {
+  const datePublished = parseDateString(post.metadata.date)?.toISOString()
+  const jsonLd: WithContext<BlogPosting> = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.metadata.title,
+    description: post.metadata.summary,
+    datePublished,
+    author: {
+      '@type': 'Person',
+      name: 'Arttu Pennanen'
+    },
+    image: getFullPostImageUrl(post),
+    url: `${baseUrl}/entries/${post.slug}`,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${baseUrl}/entries/${post.slug}`
+    },
+    isPartOf: {
+      '@type': 'CreativeWork',
+      name: 'pennanen.dev'
+    }
+  }
+  return jsonLd
 }
 
 export default async function Page({
@@ -52,10 +80,13 @@ export default async function Page({
 }) {
   const slug = (await params).slug
   const { default: Post } = await import(`@/content/${slug}.mdx`)
+  const post = getBlogPostsWithDrafts().find((p) => p.slug === slug)!
+  const jsonLd = generatePostJsonLd(post)
 
   return (
     <article>
       <Post />
+      {jsonLd && <JsonLd object={jsonLd} />}
     </article>
   )
 }

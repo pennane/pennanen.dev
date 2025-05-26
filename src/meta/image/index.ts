@@ -1,15 +1,16 @@
-import path from 'path'
-import fs from 'fs'
 import {
+  CanvasRenderingContext2D,
   createCanvas,
   Image,
   loadImage,
-  registerFont,
-  CanvasRenderingContext2D
+  registerFont
 } from 'canvas'
-import { wrapText, drawImageProp } from './lib'
+import fs from 'fs'
+import path from 'path'
 import { Project } from '../../app/[project]/lib'
 import { Post } from '../../app/entries/lib'
+import { baseUrl } from '../../app/sitemap'
+import { drawImageProp, wrapText } from './lib'
 
 const ASSET_PATH = path.join(process.cwd(), 'public')
 const META_PATH = path.join(ASSET_PATH, 'meta')
@@ -304,6 +305,14 @@ async function computePostImage({
   })
 }
 
+const getPostImageUrl = (post: Post) => {
+  return `${post.slug.replace(/[| .-]/g, '_').toLowerCase()}.jpg` as const
+}
+
+export const getFullPostImageUrl = (post: Post) => {
+  return `${baseUrl}/meta/${getPostImageUrl(post)}` as const
+}
+
 export async function generatePostImage(post: Post) {
   ensureMetaDirectory()
   const buffer = await computePostImage({
@@ -311,6 +320,6 @@ export async function generatePostImage(post: Post) {
     date: post.metadata.date,
     summary: post.metadata.summary
   })
-  const fileName = `${post.slug.replace(/[| .-]/g, '_').toLowerCase()}.jpg`
+  const fileName = getPostImageUrl(post)
   return saveImage(fileName, buffer)
 }
