@@ -1,2 +1,4 @@
 User-agent: *
-Allow: /*.html$
+Allow: /
+
+Sitemap: https://pennanen.dev/sitemap.xml
