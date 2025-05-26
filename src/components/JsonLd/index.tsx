@@ -1,10 +1,6 @@
-import { Thing, WithContext } from 'schema-dts'
+import { Graph, Thing, WithContext } from 'schema-dts'
 
-export const JsonLd = <T extends Thing>({
-  object
-}: {
-  object: WithContext<T>
-}) => {
+export const JsonLd = ({ object }: { object: WithContext<Thing> | Graph }) => {
   return (
     <script
       type="application/ld+json"

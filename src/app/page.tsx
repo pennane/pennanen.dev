@@ -1,10 +1,16 @@
 import { A } from '../components/A'
 import { Gap, Stack } from '../components/Stack'
+import { JsonLd } from '../components/JsonLd'
+import { generateHomepageJsonLd } from '../lib/json-ld'
 import { Projects } from './[project]/components/Projects'
+import { getFeaturedProjects } from './[project]/lib'
 import { Entries } from './entries/components/Entries'
+import { getBlogPosts } from './entries/lib'
 import styles from './page.module.css'
 
 export default function Page() {
+  const jsonLd = generateHomepageJsonLd(getFeaturedProjects(), getBlogPosts())
+
   return (
     <Stack className={styles.page} gap={Gap.large}>
       <Stack gap={Gap.large}>
@@ -45,6 +51,7 @@ export default function Page() {
         <Entries />
         <Projects />
       </Stack>
+      <JsonLd object={jsonLd} />
     </Stack>
   )
 }

@@ -120,6 +120,10 @@ export function getProjects() {
     })
 }
 
+export function getFeaturedProjects() {
+  return getProjects().filter((p) => !p.ignoreInListing)
+}
+
 export function getProjectById(id: string) {
   const config = readConfig(id)
   if (!config) return null

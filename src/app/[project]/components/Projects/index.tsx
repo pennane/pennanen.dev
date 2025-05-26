@@ -1,10 +1,10 @@
 import { A } from '../../../../components/A'
 import { Stack } from '../../../../components/Stack'
-import { getProjects } from '../../lib'
+import { getFeaturedProjects } from '../../lib'
 import { ProjectLink } from '../ProjectLink'
 
 export const Projects = () => {
-  const projects = getProjects().filter((p) => !p.ignoreInListing)
+  const projects = getFeaturedProjects()
   return (
     <Stack>
       <h3>Projects</h3>
