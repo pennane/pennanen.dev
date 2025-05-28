@@ -1,0 +1,22 @@
+{
+    "url": "https://midi-barsec.pennanen.dev/",
+    "date": "28.5.2025",
+    "name": {
+        "en": "Midibarsec",
+        "fi": null
+    },
+    "description": {
+        "en": "Play and visualize midi files in the browser.",
+        "fi": null
+    },
+    "github": "https://github.com/pennane/midi-barsec",
+    "pretext": "<br>Midi files are awesome! This thing parses them from scratch, plays them out - and does so without dependencies.<br><br>Built this thing to learn about how .midi files are made, what they consist of and what you can do with them.<br><br>Midi barsec can run any midi its given and playing it back in a fresh retro style!<br><br>(who knew that midi files can contain lyrics)<br>",
+    "ignoreInListing": false,
+    "icon": "icon.png",
+    "largeImage": "large.png",
+    "images": [
+        "1.png",
+        "radial.png",
+        "icon.png"
+    ]
+}
