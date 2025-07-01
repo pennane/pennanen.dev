@@ -1,0 +1,52 @@
+.toggle {
+  background: none;
+  border: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  color: var(--accent);
+  margin-bottom: -0.1rem;
+  height: 2rem;
+  width: 2rem;
+  transition: all 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+.notMounted {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(0);
+  transition: transform 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+.toggle svg {
+  --size: 1rem;
+  width: var(--size);
+  height: var(--size);
+}
+
+.toggle:hover {
+  color: var(--accent);
+}
+
+.toggle:hover svg {
+  transform: scale(1.05);
+}
+
+html[data-color-scheme='dark'] .toggle {
+  color: #e0c80f;
+}
+
+html[data-color-scheme='dark'] .toggle .iconContainer {
+  transform: rotate(370deg);
+}
+
+html[data-color-scheme='dark'] .toggle:hover {
+  color: #ffe000;
+}

@@ -5,6 +5,7 @@ export enum Gap {
   none = '0',
   tiny = '0.125rem',
   small = '0.25rem',
+  mSmall = '0.75rem',
   medium = '0.5rem',
   large = '1rem',
   xLarge = '2rem',

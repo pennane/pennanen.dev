@@ -23,6 +23,14 @@
   --line-color: light-dark(var(--line-color-light), var(--line-color-dark));
 }
 
+html[data-color-scheme='light'] {
+  color-scheme: light;
+}
+
+html[data-color-scheme='dark'] {
+  color-scheme: dark;
+}
+
 html {
   scrollbar-gutter: stable;
   scroll-padding-top: 1.5rem;

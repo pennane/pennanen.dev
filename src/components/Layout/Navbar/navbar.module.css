@@ -2,6 +2,16 @@
   width: 100%;
 }
 
+.navItem > a {
+  display: flex;
+  align-items: center;
+  height: 2rem;
+}
+
+.logoStack {
+  height: 1rem;
+}
+
 .brand {
   color: var(--accent);
   display: inline-flex;
