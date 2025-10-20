@@ -1,0 +1,19 @@
+{
+    "url": null,
+    "date": "18.11.2024",
+    "name": {
+        "en": "Bachelor's thesis",
+        "fi": "Insinöörityö"
+    },
+    "description": {
+        "en": "Evaluating Pragmatic Application of Functional Programming",
+        "fi": null
+    },
+    "pretext": "Bachelor's thesis at Metropolia University of Applied Sciences.<br> (written in Finnish)",
+    "ignoreInListing": true,
+    "ignoreDate": false,
+    "icon": "img.png",
+    "largeImage": "img.png",
+    "notAuthor": false,
+    "github": "https://urn.fi/URN:NBN:fi:amk-2024111828665"
+}

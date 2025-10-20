@@ -98,6 +98,10 @@ h1 {
   line-height: 1;
 }
 
+img {
+  object-fit: contain;
+}
+
 a {
   line-height: 1;
   color: inherit;
