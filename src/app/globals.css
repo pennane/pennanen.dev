@@ -65,9 +65,9 @@ body {
   transition: background-color 0.3s;
 }
 
-body.not-found main,
-body.not-found nav {
-  background-color: initial;
+body:has(.not-found) main,
+body:has(.not-found) nav {
+  background-color: transparent !important;
 }
 
 pre,

@@ -5,7 +5,7 @@ import style from './not-found.module.css'
 
 export default function NotFound() {
   return (
-    <Stack className={style.main} gap={Gap.none}>
+    <Stack className={`${style.main} not-found`} gap={Gap.none}>
       <header>
         <Stack className={style['header']}>
           <h1>404 - Not found</h1>
