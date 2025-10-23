@@ -1,25 +1,37 @@
 :root {
   color-scheme: light dark;
-  --hue: 218;
-  --dark-accent-hue: 215.16;
-  --background-light: hsl(var(--hue) 100% 98% / 1);
-  --background-dark: hsl(var(--hue) 100% 4% / 1);
-  --foreground-secondary-light: hsl(var(--hue) 100% 24% / 1);
-  --foreground-secondary-dark: hsl(var(--hue) 100% 92% / 1);
-  --link-color-light: hsl(var(--hue) 100% 32% /1);
-  --link-color-dark: hsl(var(--hue) 100% 77% /1);
-  --accent-light: hsl(var(--hue) 100% 50%);
-  --accent-dark: hsl(var(--dark-accent-hue) 100% 50%);
-  --line-color-light: hsl(var(--hue) 100% 11% / 0.05);
-  --line-color-dark: hsl(var(--hue) 100% 50% / 0.08);
+  --hue: 215;
+  --dark-accent-hue: var(--hue);
+  --background-light: hsl(var(--hue) 100% 98%);
+  --background-dark: hsl(var(--hue) 76% 8%);
+  --foreground-light: hsl(var(--hue) 100% 15%);
+  --foreground-dark: hsl(var(--hue) 90% 87% / 1);
+  --foreground-secondary-light: hsl(var(--hue) 90% 20%);
+  --foreground-secondary-dark: hsl(var(--hue) 100% 89% / 1);
+  --accent-light: hsl(var(--hue) 80% 32%);
+  --accent-dark: hsl(var(--dark-accent-hue) 100% 70%);
+  --accent-light-secondary: hsl(var(--hue) 90% 42%);
+  --accent-dark-secondary: hsl(var(--dark-accent-hue) 100% 74%);
+  --line-color-light: hsl(var(--hue) 100% 11% / 0.08);
+  --line-color-dark: hsl(var(--hue) 100% 50% / 0.06);
   --background: light-dark(var(--background-light), var(--background-dark));
-  --foreground: light-dark(var(--background-dark), var(--background-light));
+  --foreground: light-dark(var(--foreground-light), var(--foreground-dark));
   --foreground-secondary: light-dark(
     var(--foreground-secondary-light),
     var(--foreground-secondary-dark)
   );
-  --link-color: light-dark(var(--link-color-light), var(--link-color-dark));
   --accent: light-dark(var(--accent-light), var(--accent-dark));
+  --accent-2: light-dark(
+    var(--accent-light-secondary),
+    var(--accent-dark-secondary)
+  );
+  --blah: linear-gradient(
+    to right,
+    var(--foreground),
+    var(--foreground-secondary)
+  );
+  --gradient: linear-gradient(to right, var(--accent), var(--accent-2));
+  --link-color: var(--accent);
   --line-color: light-dark(var(--line-color-light), var(--line-color-dark));
 }
 
@@ -92,6 +104,11 @@ h5,
 h6 {
   font-family: var(--font-inter);
   letter-spacing: -0.05rem;
+  color: var(--foreground-secondary);
+  color: transparent;
+  background: var(--blah);
+  background-clip: text;
+  line-height: 1.5;
 }
 
 h1 {

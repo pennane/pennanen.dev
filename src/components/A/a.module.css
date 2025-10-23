@@ -1,6 +1,12 @@
 .link {
-  color: var(--link-color);
-  text-decoration: none;
-  font-weight: 550;
-  letter-spacing: -0.05rem;
+  color: transparent;
+  background: var(--gradient);
+  background-clip: text;
+  padding: 0 0.05rem;
+  margin: 0 -0.05rem;
+}
+
+.link:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--accent); /* fallback */
 }
