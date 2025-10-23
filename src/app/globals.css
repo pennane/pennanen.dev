@@ -25,7 +25,7 @@
     var(--accent-light-secondary),
     var(--accent-dark-secondary)
   );
-  --blah: linear-gradient(
+  --heading-gradient: linear-gradient(
     to right,
     var(--foreground),
     var(--foreground-secondary)
@@ -106,7 +106,7 @@ h6 {
   letter-spacing: -0.05rem;
   color: var(--foreground-secondary);
   color: transparent;
-  background: var(--blah);
+  background: var(--heading-gradient);
   background-clip: text;
   line-height: 1.5;
 }
@@ -158,7 +158,7 @@ article h1 {
 }
 
 .hljs {
-  background-color: light-dark(#0d1117, transparent) !important;
+  background-color: var(--background-dark);
   border: 1px solid hsl(var(--hue) 80% 30% / 25%);
 }
 

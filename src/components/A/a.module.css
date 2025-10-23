@@ -4,6 +4,7 @@
   background-clip: text;
   padding: 0 0.05rem;
   margin: 0 -0.05rem;
+  line-height: 1.5;
 }
 
 .link:hover {
