@@ -9,3 +9,7 @@
   object-fit: contain;
   position: relative !important;
 }
+
+.pretext {
+  margin-top: 1.25rem;
+}

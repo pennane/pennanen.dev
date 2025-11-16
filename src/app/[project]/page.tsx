@@ -3,11 +3,11 @@ import Image from 'next/image'
 import { A } from '../../components/A'
 import { JsonLd } from '../../components/JsonLd'
 import { Stack } from '../../components/Stack'
+import { generateProjectJsonLd } from '../../lib/json-ld'
 import { generateProjectImage } from '../../meta/image'
 import { formatDate, parseDateString } from '../lib'
 import { baseUrl } from '../sitemap'
 import { getProjectById, getProjects } from './lib'
-import { generateProjectJsonLd } from '../../lib/json-ld'
 import styles from './page.module.css'
 
 export async function generateMetadata({
@@ -107,7 +107,7 @@ export default async function Page({
       </header>
 
       {project.pretext && (
-        <Stack>
+        <Stack className={styles['pretext']}>
           <p
             dangerouslySetInnerHTML={{
               __html: project.pretext
