@@ -12,12 +12,13 @@
     "github": null,
     "pretext": "Together two friends and I built a website that helps finding restrooms from the vicinity. The website was built as a part of web technology course at Metropolia University of Applied Sciences. The website uses only plain Javascript as opposed to React-like libraries. ",
     "icon": "logo.png",
-    "largeImage": "hl.png",
+    "largeImage": "hl-real.jpg",
     "images": [
-        "hl0.jpg",
+        "hl-real.jpg",
         "hl1.jpg",
+        "hl3.png",
         "hl2.png",
-        "hl3.png"
+        "hl0.jpg"
     ],
     "notAuthor": true,
     "ignoreInListing": false
