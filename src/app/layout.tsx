@@ -2,9 +2,9 @@
 import 'highlight.js/styles/github-dark.css'
 import type { Metadata } from 'next'
 import { Fira_Code, Inter } from 'next/font/google'
+import Script from 'next/script'
 import Layout from '../components/Layout'
 import './globals.css'
-import Script from 'next/script'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,8 +32,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
-        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icons/favicon-180.png" />
+        <link rel="manifest" href="/site.webmanifest" />
         <Script id="theme-init" strategy="beforeInteractive">
           {`
             (function () {
