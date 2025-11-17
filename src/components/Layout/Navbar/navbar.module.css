@@ -1,5 +1,7 @@
 .nav {
   width: 100%;
+  overflow-x: scroll;
+  overflow-y: hidden;
 }
 
 .navItem > a {
@@ -15,7 +17,4 @@
 .brand {
   color: var(--accent);
   display: inline-flex;
-}
-
-.link {
 }

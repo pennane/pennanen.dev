@@ -20,7 +20,7 @@ const Navbar = () => {
         horizontal
         gap={{ column: Gap.large, row: Gap.medium }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems="normal"
       >
         <Stack horizontal alignItems="flex-start" gap={Gap.large}>
           <NavItem>

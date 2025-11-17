@@ -14,7 +14,13 @@ export enum Gap {
 
 type StackProps = {
   horizontal?: boolean
-  alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline'
+  alignItems?:
+    | 'flex-start'
+    | 'center'
+    | 'flex-end'
+    | 'stretch'
+    | 'baseline'
+    | 'normal'
   justifyContent?:
     | 'flex-start'
     | 'center'
