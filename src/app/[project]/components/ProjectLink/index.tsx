@@ -6,7 +6,7 @@ import { Project } from '../../lib'
 
 export const ProjectLink = ({ project }: { project: Project }) => {
   return (
-    <Stack horizontal alignItems="flex-start" gap={Gap.small}>
+    <Stack horizontal alignItems="center" gap={Gap.small}>
       <time>{formatDate(project.date)}</time>
       <Link href={`/${project.id}`}>
         <Stack horizontal alignItems="center">

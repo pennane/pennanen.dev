@@ -3,12 +3,12 @@
 }
 
 .layout {
-  max-width: 550px;
+  max-width: 600px;
   width: 100%;
 }
 .main {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 1rem;
   max-width: 100%;
 }

@@ -30,7 +30,7 @@ type StackProps = {
     | 'space-evenly'
   wrap?: boolean | 'wrap' | 'wrap-reverse'
   reverse?: boolean
-  gap?: Gap | { row: Gap; column: Gap }
+  gap?: Gap | string | { row: Gap | string; column: Gap | string }
   children: React.ReactNode
 } & React.HTMLAttributes<HTMLDivElement>
 

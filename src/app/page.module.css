@@ -1,3 +1,20 @@
+.page {
+  flex-direction: row;
+}
+
+.head {
+  flex-grow: 0.6;
+  flex-shrink: 1;
+  flex-basis: 0%;
+}
+
+.doings {
+  flex-grow: 0.5;
+  flex-shrink: 1;
+  flex-basis: 0%;
+  gap: 1.5rem;
+}
+
 .page h1 {
   font-size: 1rem;
 }
@@ -31,8 +48,11 @@
 @media (max-width: 340px) {
   .profile-image {
     --size: 5lh;
-    /* margin: 0;
-    float: unset;
-    margin-block-end: 0.25lh; */
+  }
+}
+
+@media (max-width: 650px) {
+  .page {
+    flex-direction: column;
   }
 }

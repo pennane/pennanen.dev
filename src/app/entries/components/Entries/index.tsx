@@ -7,7 +7,7 @@ export const Entries = () => {
   return (
     <Stack>
       <h3>Entries</h3>
-      <Stack>
+      <Stack gap={'.75rem'}>
         {projects.map((post) => (
           <BlogLink key={post.slug} post={post} />
         ))}
