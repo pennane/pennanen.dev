@@ -33,10 +33,11 @@
   float: inline-end;
   height: var(--size);
   width: var(--size);
+  transform: rotate(-1.5deg);
   object-fit: cover;
   margin-inline-start: 0.5lh;
   margin-inline-end: 0.75lh;
-  margin-block: 0.125lh;
+  margin-block: 0;
   mix-blend-mode: luminosity;
   border: 6px ridge
     light-dark(
