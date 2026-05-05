@@ -1,0 +1,84 @@
+.wall {
+  pointer-events: none;
+  position: absolute;
+  backface-visibility: hidden;
+  border: 1px solid hsl(0deg 0% 56% / 20%);
+  animation: wall-fade 0.3s ease-out 0.5s forwards;
+}
+
+@keyframes wall-fade {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Back wall sits at z = -depth. Projected scale = P / (P + D). */
+.back {
+  inset: 0;
+  transform: translateZ(calc(-1 * var(--scene-depth)));
+  background: radial-gradient(
+    hsl(var(--hue) 60% 50% / 0) 0%,
+    hsl(var(--hue) 80% 30% / 0.2) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--hue) 80% 30% / 0.18),
+    inset 0 0 80px hsl(var(--hue) 80% 30% / 0.08);
+}
+
+/* Side walls: length = depth, rotated 90° to land their far edge on the back wall plane. */
+.left {
+  top: 0;
+  left: calc(-1 * var(--scene-depth));
+  width: calc(2 * var(--scene-depth));
+  height: 100%;
+  transform-origin: var(--scene-depth) center;
+  transform: rotateY(90deg);
+  background: linear-gradient(
+    to right,
+    hsl(var(--hue) 60% 50% / 0) 0%,
+    hsl(var(--hue) 80% 30% / 0.2) 100%
+  );
+}
+
+.right {
+  top: 0;
+  right: calc(-1 * var(--scene-depth));
+  width: calc(2 * var(--scene-depth));
+  height: 100%;
+  transform-origin: var(--scene-depth) center;
+  transform: rotateY(-90deg);
+  background: linear-gradient(
+    to left,
+    hsl(var(--hue) 60% 50% / 0) 0%,
+    hsl(var(--hue) 80% 30% / 0.2) 100%
+  );
+}
+
+.floor {
+  bottom: calc(-1 * var(--scene-depth));
+  left: 0;
+  width: 100%;
+  height: calc(2 * var(--scene-depth));
+  transform-origin: center var(--scene-depth);
+  transform: rotateX(90deg);
+  background: linear-gradient(
+    to top,
+    hsl(var(--hue) 60% 50% / 0) 0%,
+    hsl(var(--hue) 80% 30% / 0.2) 100%
+  );
+}
+
+.ceiling {
+  top: calc(-1 * var(--scene-depth));
+  left: 0;
+  width: 100%;
+  height: calc(2 * var(--scene-depth));
+  transform-origin: center var(--scene-depth);
+  transform: rotateX(-90deg);
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--hue) 60% 50% / 0) 0%,
+    hsl(var(--hue) 80% 30% / 0.2) 100%
+  );
+}

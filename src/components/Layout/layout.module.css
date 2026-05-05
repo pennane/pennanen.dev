@@ -1,5 +1,11 @@
 .wrapper {
-  margin: 2rem;
+  padding: 2rem;
+  pointer-events: all;
+  gap: 0.5rem;
+  transform: translateZ(calc(-1 * var(--scene-depth)));
+  height: 97vh;
+  overflow: scroll;
+  box-sizing: border-box;
 }
 
 .layout {

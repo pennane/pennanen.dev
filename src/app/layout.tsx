@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { Fira_Code, Inter } from 'next/font/google'
 import Script from 'next/script'
 import Layout from '../components/Layout'
+import Room from '../components/Layout/Room'
 import './globals.css'
 
 const inter = Inter({
@@ -52,6 +53,7 @@ export default function RootLayout({
         </Script>
       </head>
       <body>
+        <Room></Room>
         <Layout>{children}</Layout>
       </body>
     </html>
