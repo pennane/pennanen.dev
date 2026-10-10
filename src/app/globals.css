@@ -156,6 +156,10 @@ article {
   max-width: 100%;
 }
 
+article > header {
+  margin-bottom: .5rem;
+}
+
 article h1 {
   font-size: 2rem;
 }

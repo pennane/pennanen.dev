@@ -1,0 +1,7 @@
+/* Same structure and height as the project title row with its 44px icon,
+   so the meta line sits at the same distance below the title on both pages */
+.titleRow {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}

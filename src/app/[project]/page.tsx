@@ -1,9 +1,9 @@
-import { Code, Globe, LucideIcon } from 'lucide-react'
+import { Code, Globe } from 'lucide-react'
 import { Metadata } from 'next'
 import Image from 'next/image'
-import { A } from '../../components/A'
 import { JsonLd } from '../../components/JsonLd'
-import { Stack } from '../../components/Stack'
+import { Lede, MetaLine, MetaLink } from '../../components/MetaLine'
+import { Gap, Stack } from '../../components/Stack'
 import { isUnoptimizable } from '../../lib/images'
 import { generateProjectJsonLd } from '../../lib/json-ld'
 import { getProjectById, getProjects } from '../../lib/projects'
@@ -46,36 +46,6 @@ export async function generateMetadata({
   }
 }
 
-const linkText = (href: string) => {
-  if (!href.includes('://')) {
-    return `pennanen.dev${href.replace(/\/index\.html$/, '')}`
-  }
-  const url = new URL(href)
-  const host = url.host.replace(/^www\./, '')
-  const pathname = url.pathname.replace(/\/$/, '')
-  return host === 'github.com' ? pathname.slice(1) : host + pathname
-}
-
-const MetaLink = ({ href, icon: Icon }: { href: string; icon: LucideIcon }) => {
-  const external = href.includes('://')
-  return (
-    <span className={styles.metaItem}>
-      <Icon size={14} aria-hidden />
-      <A
-        href={href}
-        {...(external && { rel: 'noreferrer', target: '_blank' })}
-      >
-        {linkText(href)}
-        {external && (
-          <span className={styles.arrow} aria-hidden>
-            ↗
-          </span>
-        )}
-      </A>
-    </span>
-  )
-}
-
 export default async function Page({ params }: Params) {
   const id = (await params).project
   const project = (await getProjectById(id))!
@@ -84,9 +54,9 @@ export default async function Page({ params }: Params) {
   )
 
   return (
-    <Stack>
+    <article>
       <header>
-        <Stack>
+        <Stack gap={Gap.mSmall}>
           <Stack horizontal alignItems="center">
             <Image
               className={styles.icon}
@@ -98,26 +68,25 @@ export default async function Page({ params }: Params) {
             />
             <h1>{project.title}</h1>
           </Stack>
-          {(project.date || project.links.live || project.links.source) && (
-            <p className={styles.meta}>
-              {project.date && <time>{formatDate(project.date)}</time>}
-              {project.links.live && (
-                <MetaLink href={project.links.live} icon={Globe} />
-              )}
-              {project.links.source && (
-                <MetaLink href={project.links.source} icon={Code} />
-              )}
-            </p>
-          )}
-          {project.summary && <p>{project.summary}</p>}
+          <Stack gap={Gap.medium}>
+            {project.summary && <Lede>{project.summary}</Lede>}
+            {(project.date || project.links.live || project.links.source) && (
+              <MetaLine>
+                {project.date && <time>{formatDate(project.date)}</time>}
+                {project.links.live && (
+                  <MetaLink href={project.links.live} icon={Globe} />
+                )}
+                {project.links.source && (
+                  <MetaLink href={project.links.source} icon={Code} />
+                )}
+              </MetaLine>
+            )}
+          </Stack>
         </Stack>
       </header>
-
-      <div className={styles.content}>
-        <Content />
-      </div>
+      <Content />
       <JsonLd object={generateProjectJsonLd(project)} />
-    </Stack>
+    </article>
   )
 }
 

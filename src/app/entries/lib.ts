@@ -20,7 +20,7 @@ export type Post = {
   content: string
 }
 
-export function parseFrontmatterContent(frontMatterBlock: string): Metadata {
+function parseFrontmatterContent(frontMatterBlock: string): Metadata {
   const fields: Record<string, string> = {}
 
   for (const line of frontMatterBlock.trim().split('\n')) {

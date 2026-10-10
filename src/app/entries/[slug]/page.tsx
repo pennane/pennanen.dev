@@ -1,10 +1,13 @@
 import { Metadata } from 'next'
 import { JsonLd } from '../../../components/JsonLd'
+import { Lede, MetaLine } from '../../../components/MetaLine'
+import { Stack } from '../../../components/Stack'
 import { generatePostImage, getFullPostImageUrl } from '../../../meta/image'
-import { parseDateString } from '../../lib'
+import { formatDate, parseDateString } from '../../lib'
 import { baseUrl } from '../../sitemap'
 import { getBlogPostsWithDrafts } from '../lib'
 import { generatePostJsonLd } from '../../../lib/json-ld'
+import styles from './page.module.css'
 
 export async function generateMetadata({
   params
@@ -62,6 +65,17 @@ export default async function Page({
 
   return (
     <article>
+      <header>
+        <Stack>
+          <div className={styles.titleRow}>
+            <h1>{post.metadata.title}</h1>
+          </div>
+          <Lede>{post.metadata.summary}</Lede>
+          <MetaLine>
+            <time>{formatDate(post.metadata.date)}</time>
+          </MetaLine>
+        </Stack>
+      </header>
       <Post />
       {jsonLd && <JsonLd object={jsonLd} />}
     </article>
