@@ -49,9 +49,8 @@
 
 .arrow {
   display: inline-block;
-  margin-left: 0.08em;
-  font-size: 0.75em;
-  font-weight: 600;
-  line-height: 0;
-  vertical-align: 0.2em;
+  color: var(--accent-2);
+  margin-left: -0.05rem;
+  margin-right: -0.1rem;
+  vertical-align: 0.05rem;
 }
