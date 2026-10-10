@@ -1,12 +1,18 @@
 import fs from 'fs'
 import path from 'path'
+import { z } from 'zod'
 
-type Metadata = {
-  title?: string
-  date?: string
-  summary?: string
-  draft?: boolean
-}
+const PostMetadataSchema = z.object({
+  title: z.string().min(1),
+  date: z.string().regex(/^\d{1,2}\.\d{1,2}\.\d{4}$/, 'Expected dd.mm.yyyy'),
+  summary: z.string().min(1),
+  draft: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => v === 'true')
+})
+
+type Metadata = z.infer<typeof PostMetadataSchema>
 
 export type Post = {
   metadata: Metadata
@@ -15,22 +21,17 @@ export type Post = {
 }
 
 export function parseFrontmatterContent(frontMatterBlock: string): Metadata {
-  const frontMatterLines = frontMatterBlock.trim().split('\n')
-  const metadata: Metadata = {}
+  const fields: Record<string, string> = {}
 
-  for (const line of frontMatterLines) {
+  for (const line of frontMatterBlock.trim().split('\n')) {
     const [key, ...valueArr] = line.split(': ')
-    let value = valueArr.join(': ').trim()
-    value = value.replace(/^['"](.*)['"]$/, '$1')
-    const metadataKey = key.trim() as keyof Metadata
-    if (metadataKey === 'draft') {
-      metadata.draft = value.toLowerCase() === 'true'
-    } else {
-      metadata[metadataKey] = value
-    }
+    fields[key.trim()] = valueArr
+      .join(': ')
+      .trim()
+      .replace(/^['"](.*)['"]$/, '$1')
   }
 
-  return metadata
+  return PostMetadataSchema.parse(fields)
 }
 
 function parseFrontmatter(fileContent: string) {
@@ -49,7 +50,11 @@ function getMdxFiles(dir: string) {
 
 function readMdxFile(filePath: string) {
   const rawContent = fs.readFileSync(filePath, 'utf-8')
-  return parseFrontmatter(rawContent)
+  try {
+    return parseFrontmatter(rawContent)
+  } catch (error) {
+    throw new Error(`Invalid frontmatter in ${filePath}`, { cause: error })
+  }
 }
 
 function getMdxData(dir: string) {

@@ -1,95 +1,58 @@
 import { Image, CanvasRenderingContext2D } from 'canvas'
 
-export function wrapText(
+export function wrapLines(
   context: CanvasRenderingContext2D,
   text: string,
-  x: number,
-  y: number,
   maxWidth: number,
-  lineHeight: number
+  maxLines: number
 ) {
-  const words = text.split(' ')
+  const fits = (line: string) => context.measureText(line).width <= maxWidth
+  const lines: string[] = []
   let line = ''
 
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' '
-    const metrics = context.measureText(testLine)
-    const testWidth = metrics.width
-    if (testWidth > maxWidth && n > 0) {
-      context.fillText(line, x, y)
-      line = words[n] + ' '
-      y += lineHeight
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const candidate = line ? `${line} ${word}` : word
+    if (line && !fits(candidate)) {
+      lines.push(line)
+      line = word
     } else {
-      line = testLine
+      line = candidate
     }
   }
-  context.fillText(line, x, y)
-  return { x, y }
+  if (line) lines.push(line)
+
+  if (lines.length <= maxLines) return lines
+
+  const kept = lines.slice(0, maxLines)
+  let last = kept[maxLines - 1]
+  while (last.includes(' ') && !fits(`${last}…`)) {
+    last = last.slice(0, last.lastIndexOf(' '))
+  }
+  kept[maxLines - 1] = `${last.replace(/[\s\p{P}]+$/u, '')}…`
+  return kept
 }
 
-/**
- * By Ken Fyrstenberg Nilsen
- *
- * drawImageProp(context, image [, x, y, width, height [,offsetX, offsetY]])
- *
- * If image and context are only arguments rectangle will equal canvas
- */
-export function drawImageProp(
-  ctx: CanvasRenderingContext2D,
-  img: Image,
+export function drawImageCover(
+  context: CanvasRenderingContext2D,
+  image: Image,
   x: number,
   y: number,
-  w: number,
-  h: number,
-  offsetX?: number,
-  offsetY?: number
+  width: number,
+  height: number
 ) {
-  if (arguments.length === 2) {
-    x = y = 0
-    w = ctx.canvas.width
-    h = ctx.canvas.height
-  }
+  const scale = Math.max(width / image.width, height / image.height)
+  const sourceWidth = width / scale
+  const sourceHeight = height / scale
 
-  // default offset is center
-  offsetX = typeof offsetX === 'number' ? offsetX : 0.5
-  offsetY = typeof offsetY === 'number' ? offsetY : 0.5
-
-  // keep bounds [0.0, 1.0]
-  if (offsetX < 0) offsetX = 0
-  if (offsetY < 0) offsetY = 0
-  if (offsetX > 1) offsetX = 1
-  if (offsetY > 1) offsetY = 1
-
-  const iw = img.width,
-    ih = img.height,
-    r = Math.min(w / iw, h / ih)
-  let nw = iw * r, // new prop. width
-    nh = ih * r, // new prop. height
-    cx,
-    cy,
-    cw,
-    ch,
-    ar = 1
-
-  // decide which gap to fill
-  if (nw < w) ar = w / nw
-  if (Math.abs(ar - 1) < 1e-14 && nh < h) ar = h / nh // updated
-  nw *= ar
-  nh *= ar
-
-  // calc source rectangle
-  cw = iw / (nw / w)
-  ch = ih / (nh / h)
-
-  cx = (iw - cw) * offsetX
-  cy = (ih - ch) * offsetY
-
-  // make sure source rectangle is valid
-  if (cx < 0) cx = 0
-  if (cy < 0) cy = 0
-  if (cw > iw) cw = iw
-  if (ch > ih) ch = ih
-
-  // fill image in dest. rectangle
-  ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h)
+  context.drawImage(
+    image,
+    (image.width - sourceWidth) / 2,
+    (image.height - sourceHeight) / 2,
+    sourceWidth,
+    sourceHeight,
+    x,
+    y,
+    width,
+    height
+  )
 }

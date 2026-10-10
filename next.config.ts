@@ -20,7 +20,7 @@ const addTitleAndTimestamp = () => {
     if (!matter) return
 
     const metadata = parseFrontmatterContent(matter)
-    const title = metadata?.title || 'Untitled'
+    const title = metadata.title
     const timestamp = formatDate(parseDateString(metadata.date))
 
     const titleNode: Heading = {

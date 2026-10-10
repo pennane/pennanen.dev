@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { JsonLd } from '../../../components/JsonLd'
-import { getFullPostImageUrl } from '../../../meta/image'
+import { generatePostImage, getFullPostImageUrl } from '../../../meta/image'
 import { parseDateString } from '../../lib'
 import { baseUrl } from '../../sitemap'
 import { getBlogPostsWithDrafts } from '../lib'
@@ -18,6 +18,7 @@ export async function generateMetadata({
     return
   }
 
+  await generatePostImage(post)
   const ogImage = getFullPostImageUrl(post)
   const title = post.metadata.title
   const description = post.metadata.summary

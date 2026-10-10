@@ -9,300 +9,176 @@ import fs from 'fs'
 import path from 'path'
 import { Project } from '../../app/[project]/lib'
 import { Post } from '../../app/entries/lib'
+import { formatDate } from '../../app/lib'
 import { baseUrl } from '../../app/sitemap'
-import { drawImageProp, wrapText } from './lib'
+import { drawImageCover, wrapLines } from './lib'
 
 const ASSET_PATH = path.join(process.cwd(), 'public')
 const META_PATH = path.join(ASSET_PATH, 'meta')
 const FONT_PATH = path.join(ASSET_PATH, 'fonts')
-const ICON_PATH = path.join(ASSET_PATH, 'icons')
-const IMAGE_PATH = path.join(ASSET_PATH, 'images')
 
 const FONTS = [
-  { file: 'Inter-Medium.ttf', family: 'Inter', weight: '300' },
+  { file: 'Inter-Regular.ttf', family: 'Inter', weight: '400' },
+  { file: 'Inter-Medium.ttf', family: 'Inter', weight: '500' },
   { file: 'Inter-Bold.ttf', family: 'Inter', weight: '700' }
 ]
 
-FONTS.forEach(({ file, family, weight }) => {
+FONTS.forEach(({ file, weight, family }) =>
   registerFont(path.join(FONT_PATH, file), { family, weight })
-})
-
-const loadAsset = async (filePath: string) =>
-  loadImage(fs.readFileSync(filePath))
+)
 
 const ASSETS = {
-  logo: loadAsset(path.join(ICON_PATH, 'icon-white-128.png')),
-  darkLogo: loadAsset(path.join(ICON_PATH, 'icon-black-128.png')),
-  bg: loadAsset(path.join(IMAGE_PATH, 'metabg.png'))
+  logo: loadImage(path.join(ASSET_PATH, 'icons', 'icon-white-128.png')),
+  bg: loadImage(path.join(ASSET_PATH, 'images', 'metabg.png'))
 }
 
-const createCanvasContext = (width: number, height: number) => {
-  const canvas = createCanvas(width, height)
-  return { canvas, context: canvas.getContext('2d') }
+const WIDTH = 1200
+const HEIGHT = 630
+const PANEL_WIDTH = 600
+const PADDING = 48
+const CONTENT_WIDTH = PANEL_WIDTH - PADDING * 2
+const LOGO_SIZE = 32
+const TITLE_GAP = 24
+
+type TextStyle = {
+  font: string
+  color: string
+  lineHeight: number
+  maxLines: number
 }
 
-const drawText = (
-  context: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  lineHeight: number,
-  font: string,
-  color: string,
-  align: CanvasTextAlign = 'center'
-) => {
-  context.font = font
-  context.fillStyle = color
-  context.textAlign = align
-  context.textBaseline = 'top'
-  return wrapText(context, text, x, y, maxWidth, lineHeight)
+const BRAND: TextStyle = {
+  font: '500 24px Inter',
+  color: 'rgba(255, 255, 255, 0.8)',
+  lineHeight: 32,
+  maxLines: 1
 }
 
-const generateImageBuffer = async (
-  width: number,
-  height: number,
-  format: 'image/png' | 'image/jpeg',
-  draw: (context: CanvasRenderingContext2D) => Promise<void>
-) => {
-  const { canvas, context } = createCanvasContext(width, height)
-  await draw(context)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const buffer = canvas.toBuffer(format as any)
-  return buffer
+const TITLE: TextStyle = {
+  font: '700 60px Inter',
+  color: '#4980ff',
+  lineHeight: 64,
+  maxLines: 3
 }
 
-async function computeMainPageImage(title?: string, description?: string) {
-  return generateImageBuffer(1200, 630, 'image/png', async (context) => {
-    context.drawImage(await ASSETS.bg, 0, 0, 1200, 630)
-    context.fillStyle = 'rgba(255, 255, 255, 0.5)'
-    context.fillRect(0, 0, 1200, 630)
-
-    context.drawImage(await ASSETS.darkLogo, 40, 40, 32, 32)
-
-    let headingY = 210
-    if (title) {
-      headingY = drawText(
-        context,
-        title,
-        600,
-        headingY,
-        960,
-        69.6,
-        '700 48pt Inter',
-        '#004dff'
-      ).y
-    }
-
-    if (description) {
-      drawText(
-        context,
-        description,
-        600,
-        headingY + 96,
-        960,
-        33,
-        '300 22pt Inter',
-        '#004dff'
-      )
-    }
-  })
+const DESCRIPTION: TextStyle = {
+  font: '400 28px Inter',
+  color: '#9fbcff',
+  lineHeight: 38,
+  maxLines: 5
 }
 
-async function computeProjectImage({
-  title,
-  image,
-  description,
-  notAuthor
-}: {
-  title?: string
-  image?: Image
+const FOOTER: TextStyle = {
+  font: '500 24px Inter',
+  color: 'rgba(255, 255, 255, 0.9)',
+  lineHeight: 32,
+  maxLines: 1
+}
+
+type Card = {
+  title: string
   description?: string
-  notAuthor: boolean
-}) {
-  return generateImageBuffer(1200, 630, 'image/jpeg', async (context) => {
-    if (image) {
-      drawImageProp(context, image, 0, 0, 1200, 630)
-    } else {
-      context.drawImage(await ASSETS.bg, 0, 0, 1200, 630)
-    }
+  footer?: string
+  image?: Image
+}
 
-    context.fillStyle = 'rgba(0, 0, 0, 0.86)'
-    context.fillRect(0, 0, 600, 630)
-    context.drawImage(await ASSETS.logo, 40, 40, 32, 32)
+const layoutText = (
+  context: CanvasRenderingContext2D,
+  text: string | undefined,
+  style: TextStyle
+) => {
+  if (!text) return { lines: [], height: 0 }
+  context.font = style.font
+  const lines = wrapLines(context, text, CONTENT_WIDTH, style.maxLines)
+  return { lines, height: lines.length * style.lineHeight }
+}
 
-    drawText(
-      context,
-      'pennanen.dev',
-      82,
-      38,
-      300,
-      520,
-      '300 18pt Inter',
-      'rgba(255, 255, 255, 0.8)',
-      'left'
+const drawLines = (
+  context: CanvasRenderingContext2D,
+  lines: string[],
+  style: TextStyle,
+  top: number
+) => {
+  context.font = style.font
+  context.fillStyle = style.color
+  context.textAlign = 'left'
+  context.textBaseline = 'middle'
+  lines.forEach((line, i) => {
+    context.fillText(
+      line,
+      PADDING,
+      top + i * style.lineHeight + style.lineHeight / 2
     )
-
-    let headingY = 190
-    if (title) {
-      headingY = drawText(
-        context,
-        title,
-        40,
-        headingY,
-        520,
-        69.6,
-        '700 48pt Inter',
-        '#4980ff',
-        'left'
-      ).y
-    }
-
-    if (description) {
-      drawText(
-        context,
-        description,
-        40,
-        headingY + 80,
-        520,
-        33,
-        '300 22pt Inter',
-        '#9fbcff',
-        'left'
-      )
-    }
-
-    if (!notAuthor) {
-      drawText(
-        context,
-        'Arttu Pennanen',
-        40,
-        headingY + 350,
-        520,
-        30,
-        '300 20pt Inter',
-        'rgba(255, 255, 255, 0.95)',
-        'left'
-      )
-    }
   })
 }
 
-const ensureMetaDirectory = () => {
-  if (!fs.existsSync(META_PATH)) fs.mkdirSync(META_PATH)
+async function renderCard({ title, description, footer, image }: Card) {
+  const canvas = createCanvas(WIDTH, HEIGHT)
+  const context = canvas.getContext('2d')
+
+  drawImageCover(context, image ?? (await ASSETS.bg), 0, 0, WIDTH, HEIGHT)
+  context.fillStyle = 'rgba(0, 0, 0, 0.86)'
+  context.fillRect(0, 0, PANEL_WIDTH, HEIGHT)
+
+  context.drawImage(await ASSETS.logo, PADDING, PADDING, LOGO_SIZE, LOGO_SIZE)
+  context.font = BRAND.font
+  context.fillStyle = BRAND.color
+  context.textBaseline = 'middle'
+  context.fillText(
+    'pennanen.dev',
+    PADDING + LOGO_SIZE + 12,
+    PADDING + LOGO_SIZE / 2
+  )
+
+  const footerTop = HEIGHT - PADDING - FOOTER.lineHeight
+  if (footer) drawLines(context, [footer], FOOTER, footerTop)
+
+  // Title and description are centered between the brand row and the footer
+  const titleBlock = layoutText(context, title, TITLE)
+  const descriptionBlock = layoutText(context, description, DESCRIPTION)
+  const gap = descriptionBlock.height ? TITLE_GAP : 0
+  const areaTop = PADDING + LOGO_SIZE
+  const areaHeight = footerTop - areaTop
+  const top =
+    areaTop +
+    (areaHeight - titleBlock.height - gap - descriptionBlock.height) / 2
+
+  drawLines(context, titleBlock.lines, TITLE, top)
+  drawLines(
+    context,
+    descriptionBlock.lines,
+    DESCRIPTION,
+    top + titleBlock.height + gap
+  )
+
+  return canvas.toBuffer('image/jpeg', { quality: 0.9 })
 }
 
 const saveImage = (fileName: string, buffer: Buffer) => {
-  const filePath = path.join(META_PATH, fileName)
-  fs.writeFileSync(filePath, buffer)
+  fs.mkdirSync(META_PATH, { recursive: true })
+  fs.writeFileSync(path.join(META_PATH, fileName), buffer)
   return fileName
 }
 
-export async function generateMainPageImage<
-  T extends { title: string; description?: string }
->(data: T) {
-  ensureMetaDirectory()
-  const buffer = await computeMainPageImage(
-    data.title || 'pennanen.dev',
-    data.description
-  )
-  const fileName = `${data.title.replace(/[| .-]/g, '_').toLowerCase()}.jpg`
-  return saveImage(fileName, buffer)
+const loadProjectImage = async (project: Project) => {
+  if (!project.largeImage) return undefined
+  try {
+    return await loadImage(
+      path.join(ASSET_PATH, 'sub', project.id, project.largeImage)
+    )
+  } catch {
+    return undefined
+  }
 }
 
 export async function generateProjectImage(project: Project) {
-  ensureMetaDirectory()
-  let projectImage: Image | undefined = undefined
-
-  if (project.largeImage) {
-    try {
-      const imageFile = fs.readFileSync(
-        path.join(ASSET_PATH, 'sub', project.id, project.largeImage)
-      )
-      projectImage = await loadImage(imageFile)
-    } catch {}
-  }
-
-  const buffer = await computeProjectImage({
+  const buffer = await renderCard({
+    title: project.name || project.id,
     description: project.description,
-    image: projectImage,
-    notAuthor: !!project.notAuthor,
-    title: project.name || project.id
+    footer: project.notAuthor ? undefined : 'Arttu Pennanen',
+    image: await loadProjectImage(project)
   })
-  return saveImage(`${project.id.toLowerCase()}.png`, buffer)
-}
-
-async function computePostImage({
-  title,
-  date,
-  summary
-}: {
-  title?: string
-  date?: string
-  summary?: string
-}) {
-  return generateImageBuffer(1200, 630, 'image/jpeg', async (context) => {
-    context.drawImage(await ASSETS.bg, 0, 0, 1200, 630)
-
-    context.fillStyle = 'rgba(0, 0, 0, 0.86)'
-    context.fillRect(0, 0, 600, 630)
-    context.drawImage(await ASSETS.logo, 40, 40, 32, 32)
-
-    drawText(
-      context,
-      'pennanen.dev',
-      82,
-      38,
-      300,
-      520,
-      '300 18pt Inter',
-      'rgba(255, 255, 255, 0.8)',
-      'left'
-    )
-
-    let headingY = 190
-
-    if (title) {
-      headingY = drawText(
-        context,
-        title,
-        40,
-        headingY,
-        520,
-        69.6,
-        '700 48pt Inter',
-        '#4980ff',
-        'left'
-      ).y
-    }
-
-    if (summary) {
-      drawText(
-        context,
-        summary,
-        40,
-        headingY + 80,
-        520,
-        33,
-        '300 22pt Inter',
-        '#9fbcff',
-        'left'
-      )
-    }
-    if (date) {
-      drawText(
-        context,
-        date,
-        40,
-        headingY + 350,
-        520,
-        30,
-        '300 20pt Inter',
-        'rgba(255, 255, 255, 0.95)',
-        'left'
-      )
-    }
-  })
+  return saveImage(`${project.id.toLowerCase()}.jpg`, buffer)
 }
 
 const getPostImageUrl = (post: Post) => {
@@ -314,12 +190,10 @@ export const getFullPostImageUrl = (post: Post) => {
 }
 
 export async function generatePostImage(post: Post) {
-  ensureMetaDirectory()
-  const buffer = await computePostImage({
+  const buffer = await renderCard({
     title: post.metadata.title,
-    date: post.metadata.date,
-    summary: post.metadata.summary
+    description: post.metadata.summary,
+    footer: formatDate(post.metadata.date) || undefined
   })
-  const fileName = getPostImageUrl(post)
-  return saveImage(fileName, buffer)
+  return saveImage(getPostImageUrl(post), buffer)
 }
