@@ -1,20 +1,39 @@
 import type { NextConfig } from 'next'
+import path from 'path'
 import createMDX from '@next/mdx'
 import rehypeHighlight from 'rehype-highlight'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeSlug from 'rehype-slug'
+import remarkMdxImages from 'remark-mdx-images'
 import { parseFrontmatterContent } from './src/app/entries/lib'
 import { formatDate, parseDateString } from './src/app/lib'
 import { Heading, Parent } from 'mdast'
 
 const nextConfig: NextConfig = {
-  pageExtensions: ['md', 'mdx', 'ts', 'tsx']
+  pageExtensions: ['md', 'mdx', 'ts', 'tsx'],
+  webpack: (config, { isServer, dev }) => {
+    config.module.rules.push({
+      test: /\.mp4$/,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/media/[name].[hash][ext]',
+        // Server builds write under .next/server, but only .next/static is served.
+        // Same offsets as Next's own image loader.
+        outputPath: isServer ? (dev ? '../' : '../../') : '',
+        publicPath: '/_next/'
+      }
+    })
+    return config
+  }
 }
 
 const addTitleAndTimestamp = () => {
-  return (tree: Parent) => {
+  return (tree: Parent, file: { path: string }) => {
+    if (file.path.includes(`${path.sep}content${path.sep}projects${path.sep}`)) {
+      return
+    }
     const matter = tree.children.find((node) => node.type === 'yaml')?.value
 
     if (!matter) return
@@ -61,6 +80,7 @@ const withMDX = createMDX({
     remarkPlugins: [
       remarkFrontmatter,
       [remarkMdxFrontmatter, { name: 'matter' }],
+      remarkMdxImages,
       addTitleAndTimestamp
     ]
   }

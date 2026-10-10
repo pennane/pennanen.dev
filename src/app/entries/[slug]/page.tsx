@@ -54,7 +54,9 @@ export default async function Page({
   params: Promise<{ slug: string }>
 }) {
   const slug = (await params).slug
-  const { default: Post } = await import(`@/content/${slug}.mdx`)
+  const { default: Post } = await import(
+    /* webpackExclude: /[\\/]projects[\\/]/ */ `@/content/${slug}.mdx`
+  )
   const post = getBlogPostsWithDrafts().find((p) => p.slug === slug)!
   const jsonLd = generatePostJsonLd(post)
 

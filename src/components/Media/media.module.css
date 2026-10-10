@@ -1,0 +1,24 @@
+.media {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.fill {
+  display: block;
+  position: relative;
+}
+
+.fill img {
+  position: relative !important;
+  max-width: 100%;
+  height: auto !important;
+  object-fit: contain;
+}
+
+.embed {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}

@@ -1,4 +1,4 @@
-import { getProjects } from './[project]/lib'
+import { getProjects } from '../lib/projects'
 import { getBlogPosts } from './entries/lib'
 import { parseDateString } from './lib'
 
@@ -15,11 +15,9 @@ export default async function sitemap() {
     lastModified: formatDateForSitemap(parseDateString(post.metadata.date))
   }))
 
-  const projects = getProjects().map((project) => ({
+  const projects = (await getProjects()).map((project) => ({
     url: `${baseUrl}/${project.id}`,
-    lastModified: project.date
-      ? formatDateForSitemap(new Date(project.date))
-      : undefined
+    lastModified: formatDateForSitemap(project.date)
   }))
 
   const routes = ['', '/uncurated', '/entries', '/projects'].map((route) => ({

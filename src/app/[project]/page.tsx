@@ -1,30 +1,30 @@
+import { Code, Globe, LucideIcon } from 'lucide-react'
 import { Metadata } from 'next'
 import Image from 'next/image'
 import { A } from '../../components/A'
 import { JsonLd } from '../../components/JsonLd'
 import { Stack } from '../../components/Stack'
+import { isUnoptimizable } from '../../lib/images'
 import { generateProjectJsonLd } from '../../lib/json-ld'
+import { getProjectById, getProjects } from '../../lib/projects'
 import { generateProjectImage } from '../../meta/image'
-import { formatDate, parseDateString } from '../lib'
+import { formatDate } from '../lib'
 import { baseUrl } from '../sitemap'
-import { getProjectById, getProjects } from './lib'
 import styles from './page.module.css'
+
+type Params = { params: Promise<{ project: string }> }
 
 export async function generateMetadata({
   params
-}: {
-  params: Promise<{ project: string }>
-}): Promise<Metadata | undefined> {
-  const id = (await params).project
-  const project = getProjectById(id)
+}: Params): Promise<Metadata | undefined> {
+  const project = await getProjectById((await params).project)
 
   if (!project) {
     return
   }
-  const ogImage = await generateProjectImage(project)
-  const title = 'Arttu Pennanen - ' + project.name
-  const description = project.description
-  const publishedTime = parseDateString(project.date)?.toISOString()
+  const ogImage = `${baseUrl}/meta/${await generateProjectImage(project)}`
+  const title = 'Arttu Pennanen - ' + project.title
+  const description = project.summary
 
   return {
     title,
@@ -33,136 +33,96 @@ export async function generateMetadata({
       title,
       description,
       type: 'article',
-      publishedTime,
+      publishedTime: project.date?.toISOString(),
       url: `${baseUrl}/${project.id}`,
-      images: [
-        {
-          url: `${baseUrl}/meta/${ogImage}`
-        }
-      ]
+      images: [{ url: ogImage }]
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [`${baseUrl}/meta/${ogImage}`]
+      images: [ogImage]
     }
   }
 }
 
-export default async function Page({
-  params
-}: {
-  params: Promise<{ project: string }>
-}) {
+const linkText = (href: string) => {
+  if (!href.includes('://')) {
+    return `pennanen.dev${href.replace(/\/index\.html$/, '')}`
+  }
+  const url = new URL(href)
+  const host = url.host.replace(/^www\./, '')
+  const pathname = url.pathname.replace(/\/$/, '')
+  return host === 'github.com' ? pathname.slice(1) : host + pathname
+}
+
+const MetaLink = ({ href, icon: Icon }: { href: string; icon: LucideIcon }) => {
+  const external = href.includes('://')
+  return (
+    <span className={styles.metaItem}>
+      <Icon size={14} aria-hidden />
+      <A
+        href={href}
+        {...(external && { rel: 'noreferrer', target: '_blank' })}
+      >
+        {linkText(href)}
+        {external && (
+          <span className={styles.arrow} aria-hidden>
+            ↗
+          </span>
+        )}
+      </A>
+    </span>
+  )
+}
+
+export default async function Page({ params }: Params) {
   const id = (await params).project
-  const project = getProjectById(id)!
-  const date = project.date ? new Date(project.date) : null
-  const jsonld = generateProjectJsonLd(project)
+  const project = (await getProjectById(id))!
+  const { default: Content } = await import(
+    /* webpackExclude: /[\\/]_template[\\/]/ */ `@/content/projects/${id}/index.mdx`
+  )
 
   return (
     <Stack>
       <header>
         <Stack>
-          <Stack>
-            <h1>{project.name}</h1>
-            {date && <time>{formatDate(date)}</time>}
-          </Stack>
           <Stack horizontal alignItems="center">
-            <div>
-              <Image
-                width={48}
-                height={48}
-                alt={project.icon ? `${project.name} icon` : ''}
-                src={
-                  project.icon
-                    ? '/sub/' + project.id + '/' + project.icon
-                    : '/images/placeholder.png'
-                }
-              />
-            </div>
-            {project.url && project.url.includes('github.com') && (
-              <A href={project.url} rel="noreferrer">
-                View source <span>[{project.url}]</span>
-              </A>
-            )}
-            {project.url && project.url.includes('pennanen.dev') && (
-              <A href={project.url} rel="noreferrer">
-                Open project <span>[{project.url}]</span>
-              </A>
-            )}
-            {project.url &&
-              !project.url.includes('github.com') &&
-              !project.url.includes('pennanen.dev') && (
-                <A href={project.url} rel="noreferrer">
-                  Open outbound link <span>[{project.url}]</span>
-                </A>
-              )}
-            {!project.url && (
-              <A href={`/sub/${project.id}/index.html`}>Launch project</A>
-            )}
+            <Image
+              className={styles.icon}
+              width={44}
+              height={44}
+              alt=""
+              src={project.icon}
+              unoptimized={isUnoptimizable(project.icon)}
+            />
+            <h1>{project.title}</h1>
           </Stack>
-          <p>{project.description}</p>
+          {(project.date || project.links.live || project.links.source) && (
+            <p className={styles.meta}>
+              {project.date && <time>{formatDate(project.date)}</time>}
+              {project.links.live && (
+                <MetaLink href={project.links.live} icon={Globe} />
+              )}
+              {project.links.source && (
+                <MetaLink href={project.links.source} icon={Code} />
+              )}
+            </p>
+          )}
+          {project.summary && <p>{project.summary}</p>}
         </Stack>
       </header>
 
-      {project.pretext && (
-        <Stack className={styles['pretext']}>
-          <p
-            dangerouslySetInnerHTML={{
-              __html: project.pretext
-            }}
-          ></p>
-        </Stack>
-      )}
-      {project.images[0] && (
-        <Stack alignItems="stretch">
-          {project.images.map((url, i) => (
-            <div key={project.id + i} className={styles.image}>
-              {url.endsWith('.mp4') && (
-                <video
-                  src={'/sub/' + project.id + '/' + url}
-                  muted={true}
-                  autoPlay={true}
-                  loop={true}
-                />
-              )}
-              {!url.endsWith('.mp4') && url.includes('://') && (
-                <Image
-                  src={url}
-                  alt=""
-                  loading="lazy"
-                  fill
-                  objectFit="contain"
-                />
-              )}
-              {!url.endsWith('.mp4') && !url.includes('://') && (
-                <Image
-                  src={'/sub/' + project.id + '/' + url}
-                  alt=""
-                  loading="lazy"
-                  fill
-                  objectFit="contain"
-                />
-              )}
-            </div>
-          ))}
-        </Stack>
-      )}
-      {project.github && (
-        <Stack>
-          <A href={project.github} rel="noreferrer">
-            View source
-          </A>
-        </Stack>
-      )}
-      <JsonLd object={jsonld} />
+      <div className={styles.content}>
+        <Content />
+      </div>
+      <JsonLd object={generateProjectJsonLd(project)} />
     </Stack>
   )
 }
 
-export function generateStaticParams() {
-  return getProjects().map(({ id }) => ({ project: id }))
+export async function generateStaticParams() {
+  return (await getProjects()).map(({ id }) => ({ project: id }))
 }
 
 export const dynamicParams = false

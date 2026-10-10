@@ -1,8 +1,19 @@
-import { groupEntries } from '../../app/[project]/lib'
 import styles from './project-groups.module.css'
 import { WrapInBox } from '../WrapInBox'
 import { formatDate } from '../../app/lib'
 import { ReactNode } from 'react'
+
+const groupEntries = <T,>(
+  items: T[],
+  getDate: (x: T) => Parameters<typeof formatDate>[0]
+) =>
+  Object.entries(
+    Object.groupBy(
+      items,
+      (item) =>
+        formatDate(getDate(item))?.split(' ').at(-1) || 'Undated (2015-2018)'
+    )
+  ).sort((a, b) => Number(b[0]) - Number(a[0]))
 
 export const ItemGroups = <T,>({
   items,

@@ -2,7 +2,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Gap, Stack } from '../../../../components/Stack'
 import { formatDate } from '../../../lib'
-import { Project } from '../../lib'
+import { isUnoptimizable } from '../../../../lib/images'
+import { Project } from '../../../../lib/projects'
 
 export const ProjectLink = ({ project }: { project: Project }) => {
   return (
@@ -12,16 +13,13 @@ export const ProjectLink = ({ project }: { project: Project }) => {
         <Stack horizontal alignItems="center">
           <Image
             alt=""
-            src={
-              project.icon
-                ? `/sub/${project.id}/${project.icon}`
-                : `/images/placeholder.png`
-            }
+            src={project.icon}
+            unoptimized={isUnoptimizable(project.icon)}
             width={24}
             height={24}
           />
           <Stack gap={Gap.none} wrap>
-            <h4>{project.name}</h4>
+            <h4>{project.title}</h4>
           </Stack>
         </Stack>
       </Link>

@@ -1,10 +1,10 @@
 import { A } from '../../../../components/A'
 import { Stack } from '../../../../components/Stack'
-import { getFeaturedProjects } from '../../lib'
+import { getFeaturedProjects } from '../../../../lib/projects'
 import { ProjectLink } from '../ProjectLink'
 
-export const Projects = () => {
-  const projects = getFeaturedProjects()
+export const Projects = async () => {
+  const projects = await getFeaturedProjects()
   return (
     <Stack>
       <h3>Projects</h3>

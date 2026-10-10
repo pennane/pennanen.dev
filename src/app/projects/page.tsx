@@ -3,10 +3,10 @@ import { Gap, Stack } from '../../components/Stack'
 import { JsonLd } from '../../components/JsonLd'
 import { generateProjectsListingJsonLd } from '../../lib/json-ld'
 import { ProjectLink } from '../[project]/components/ProjectLink'
-import { getProjects } from '../[project]/lib'
+import { getProjects } from '../../lib/projects'
 
-const Page = () => {
-  const projects = getProjects()
+const Page = async () => {
+  const projects = await getProjects()
   const jsonLd = generateProjectsListingJsonLd(projects)
 
   return (

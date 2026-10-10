@@ -1,0 +1,51 @@
+---
+# Copy this folder to src/content/projects/<id>/. The folder name is the URL: pennanen.dev/<id>
+# Folders that start with "_" are skipped.
+
+# Required. The project name.
+title: My project
+
+# Optional. One line for lists and the OG card.
+summary: What it does, in one sentence.
+
+# Optional. YYYY-MM-DD. Without a date, the project goes in the "Undated" group.
+date: 2026-01-31
+
+# Optional, default false. true: home page and /projects. false: /uncurated only.
+featured: false
+
+# Optional. A full URL (https://...) or a /path.
+links:
+  live: https://example.pennanen.dev/
+  source: https://github.com/pennane/example
+
+# Optional. A file in this folder, or a /path in public/.
+# Without an icon, the favicon of links.live is used, then a placeholder.
+icon: icon.png
+
+# Optional. The background of the OG card.
+cover: cover.png
+
+# Optional, default false. true hides "Arttu Pennanen" on the OG card.
+notAuthor: false
+---
+
+Write about the project here in plain Markdown.
+
+{/*
+Examples. They are in a comment because the files do not exist in this template.
+
+An image from this folder:
+
+![Screenshot of the main view](./screenshot.png)
+
+A video from this folder. Put the import at the top of the body:
+
+import demo from './demo.mp4'
+
+<Video src={demo} />
+
+A live demo in an iframe:
+
+<Embed src="https://example.pennanen.dev/" title="Example demo" />
+*/}

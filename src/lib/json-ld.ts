@@ -8,11 +8,11 @@ import {
   WebSite,
   WithContext
 } from 'schema-dts'
-import { Project } from '../app/[project]/lib'
 import { Post } from '../app/entries/lib'
 import { parseDateString } from '../app/lib'
 import { baseUrl } from '../app/sitemap'
-import { getFullPostImageUrl } from '../meta/image'
+import { getFullPostImageUrl, getProjectImageFileName } from '../meta/image'
+import { Project } from './projects'
 
 const createAuthor = (): Person => ({
   '@type': 'Person',
@@ -30,33 +30,25 @@ const createIsPartOf = () => ({
   name: 'pennanen.dev'
 })
 
+const createProjectFields = (project: Project) => ({
+  name: project.title,
+  description: project.summary || '',
+  url: `${baseUrl}/${project.id}`,
+  image: `${baseUrl}/meta/${getProjectImageFileName(project)}`,
+  author: createAuthor(),
+  dateCreated: project.date?.toISOString(),
+  isPartOf: createIsPartOf()
+})
+
 const createSoftwareSourceCode = (project: Project): SoftwareSourceCode => ({
   '@type': 'SoftwareSourceCode',
-  name: project.name,
-  description: project.description || '',
-  codeRepository: project.github,
-  url: `${baseUrl}/${project.id}`,
-  image: project.largeImage
-    ? `${baseUrl}/sub/${project.id}/${project.largeImage}`
-    : undefined,
-  author: createAuthor(),
-  dateCreated: project.ignoreDate
-    ? undefined
-    : new Date(project.date!).toISOString(),
-  isPartOf: createIsPartOf()
+  codeRepository: project.links.source,
+  ...createProjectFields(project)
 })
 
 const createCreativeWork = (project: Project): CreativeWork => ({
   '@type': 'CreativeWork',
-  name: project.name,
-  description: project.description || '',
-  url: `${baseUrl}/${project.id}`,
-  image: project.largeImage
-    ? `${baseUrl}/sub/${project.id}/${project.largeImage}`
-    : undefined,
-  author: createAuthor(),
-  dateCreated: parseDateString(project.date)?.toISOString(),
-  isPartOf: createIsPartOf()
+  ...createProjectFields(project)
 })
 
 const createBlogPosting = (post: Post): BlogPosting => ({
@@ -89,7 +81,7 @@ const createWebPage = (
 })
 
 const selectProjectSchema = (project: Project) =>
-  project.github
+  project.links.source
     ? createSoftwareSourceCode(project)
     : createCreativeWork(project)
 

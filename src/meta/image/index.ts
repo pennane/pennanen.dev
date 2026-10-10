@@ -7,10 +7,10 @@ import {
 } from 'canvas'
 import fs from 'fs'
 import path from 'path'
-import { Project } from '../../app/[project]/lib'
 import { Post } from '../../app/entries/lib'
 import { formatDate } from '../../app/lib'
 import { baseUrl } from '../../app/sitemap'
+import { Project } from '../../lib/projects'
 import { drawImageCover, wrapLines } from './lib'
 
 const ASSET_PATH = path.join(process.cwd(), 'public')
@@ -160,25 +160,17 @@ const saveImage = (fileName: string, buffer: Buffer) => {
   return fileName
 }
 
-const loadProjectImage = async (project: Project) => {
-  if (!project.largeImage) return undefined
-  try {
-    return await loadImage(
-      path.join(ASSET_PATH, 'sub', project.id, project.largeImage)
-    )
-  } catch {
-    return undefined
-  }
-}
+export const getProjectImageFileName = (project: Project) =>
+  `${project.id.toLowerCase()}.jpg` as const
 
 export async function generateProjectImage(project: Project) {
   const buffer = await renderCard({
-    title: project.name || project.id,
-    description: project.description,
+    title: project.title,
+    description: project.summary,
     footer: project.notAuthor ? undefined : 'Arttu Pennanen',
-    image: await loadProjectImage(project)
+    image: project.cover ? await loadImage(project.cover.filePath) : undefined
   })
-  return saveImage(`${project.id.toLowerCase()}.jpg`, buffer)
+  return saveImage(getProjectImageFileName(project), buffer)
 }
 
 const getPostImageUrl = (post: Post) => {
