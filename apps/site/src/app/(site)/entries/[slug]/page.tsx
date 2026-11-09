@@ -1,12 +1,12 @@
 import { Metadata } from 'next'
-import { JsonLd } from '../../../components/JsonLd'
-import { Lede, MetaLine } from '../../../components/MetaLine'
-import { Stack } from '../../../components/Stack'
-import { generatePostImage, getFullPostImageUrl } from '../../../meta/image'
+import { JsonLd } from '../../../../components/JsonLd'
+import { Lede, MetaLine } from '../../../../components/MetaLine'
+import { Stack } from '../../../../components/Stack'
+import { generatePostImage, getFullPostImageUrl } from '../../../../meta/image'
 import { formatDate, parseDateString } from '../../lib'
-import { baseUrl } from '../../sitemap'
+import { baseUrl } from '../../../sitemap'
 import { getBlogPostsWithDrafts } from '../lib'
-import { generatePostJsonLd } from '../../../lib/json-ld'
+import { generatePostJsonLd } from '../../../../lib/json-ld'
 import styles from './page.module.css'
 
 export async function generateMetadata({

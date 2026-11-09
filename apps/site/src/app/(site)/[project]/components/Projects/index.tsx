@@ -1,6 +1,6 @@
-import { A } from '../../../../components/A'
-import { Stack } from '../../../../components/Stack'
-import { getFeaturedProjects } from '../../../../lib/projects'
+import { A } from '../../../../../components/A'
+import { Stack } from '../../../../../components/Stack'
+import { getFeaturedProjects } from '../../../../../lib/projects'
 import { ProjectLink } from '../ProjectLink'
 
 export const Projects = async () => {

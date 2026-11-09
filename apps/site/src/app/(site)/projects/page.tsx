@@ -1,9 +1,9 @@
-import { ItemGroups } from '../../components/ProjectGroups'
-import { Gap, Stack } from '../../components/Stack'
-import { JsonLd } from '../../components/JsonLd'
-import { generateProjectsListingJsonLd } from '../../lib/json-ld'
+import { ItemGroups } from '../../../components/ProjectGroups'
+import { Gap, Stack } from '../../../components/Stack'
+import { JsonLd } from '../../../components/JsonLd'
+import { generateProjectsListingJsonLd } from '../../../lib/json-ld'
 import { ProjectLink } from '../[project]/components/ProjectLink'
-import { getProjects } from '../../lib/projects'
+import { getProjects } from '../../../lib/projects'
 
 const Page = async () => {
   const projects = await getProjects()

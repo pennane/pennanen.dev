@@ -8,8 +8,8 @@ import {
   WebSite,
   WithContext
 } from 'schema-dts'
-import { Post } from '../app/entries/lib'
-import { parseDateString } from '../app/lib'
+import { Post } from '../app/(site)/entries/lib'
+import { parseDateString } from '../app/(site)/lib'
 import { baseUrl } from '../app/sitemap'
 import { getFullPostImageUrl, getProjectImageFileName } from '../meta/image'
 import { Project } from './projects'

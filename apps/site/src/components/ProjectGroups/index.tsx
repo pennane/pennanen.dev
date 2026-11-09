@@ -1,6 +1,6 @@
 import styles from './project-groups.module.css'
 import { WrapInBox } from '../WrapInBox'
-import { formatDate } from '../../app/lib'
+import { formatDate } from '../../app/(site)/lib'
 import { ReactNode } from 'react'
 
 const groupEntries = <T,>(

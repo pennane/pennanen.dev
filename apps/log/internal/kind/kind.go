@@ -34,6 +34,7 @@ const (
 type Kind struct {
 	Name             string                             `json:"name"`
 	Statuses         []string                           `json:"statuses"`
+	StatusesToScore  []string                           `json:"statusesToScore"`
 	Axes             []string                           `json:"axes"`
 	Fields           []Field                            `json:"fields"`
 	UndeclaredFields UndeclaredFields                   `json:"undeclaredFields"`

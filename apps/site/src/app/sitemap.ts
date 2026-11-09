@@ -1,6 +1,6 @@
 import { getProjects } from '../lib/projects'
-import { getBlogPosts } from './entries/lib'
-import { parseDateString } from './lib'
+import { getBlogPosts } from './(site)/entries/lib'
+import { parseDateString } from './(site)/lib'
 
 export const baseUrl = 'https://pennanen.dev'
 

@@ -1,4 +1,4 @@
-import { Stack } from '../../../../components/Stack'
+import { Stack } from '../../../../../components/Stack'
 import { getBlogPosts } from '../../lib'
 import { BlogLink } from '../BlogLink'
 

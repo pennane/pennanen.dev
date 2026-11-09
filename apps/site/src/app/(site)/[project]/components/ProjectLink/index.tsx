@@ -1,9 +1,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Gap, Stack } from '../../../../components/Stack'
+import { Gap, Stack } from '../../../../../components/Stack'
 import { formatDate } from '../../../lib'
-import { isUnoptimizable } from '../../../../lib/images'
-import { Project } from '../../../../lib/projects'
+import { isUnoptimizable } from '../../../../../lib/images'
+import { Project } from '../../../../../lib/projects'
 
 export const ProjectLink = ({ project }: { project: Project }) => {
   return (

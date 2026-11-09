@@ -26,6 +26,7 @@ func init() {
 	register(Kind{
 		Name:             "game",
 		Statuses:         []string{Untriaged, "never-played", "idled", "playing", "played", "finished", "dropped"},
+		StatusesToScore:  []string{"playing", "played", "finished", "dropped"},
 		Axes:             []string{Enjoyment, Quality},
 		UndeclaredFields: RejectUndeclaredFields,
 		Fields: []Field{
@@ -50,6 +51,7 @@ func init() {
 	register(Kind{
 		Name:             "thing",
 		Statuses:         []string{Untriaged, "seen"},
+		StatusesToScore:  []string{"seen"},
 		Axes:             []string{Enjoyment, Quality},
 		UndeclaredFields: AcceptUndeclaredFields,
 		Fields: []Field{

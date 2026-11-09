@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Stack } from '../../../../components/Stack'
+import { Stack } from '../../../../../components/Stack'
 import { formatDate, parseDateString } from '../../../lib'
 import { Post } from '../../lib'
 import styles from './bloglink.module.css'

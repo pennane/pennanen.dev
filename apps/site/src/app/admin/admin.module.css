@@ -1,0 +1,52 @@
+.shell {
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+  padding: max(1rem, env(safe-area-inset-top)) 1rem
+    max(1rem, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.shell button,
+.shell input {
+  font: inherit;
+  color: inherit;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 20rem;
+  margin: 20vh auto 0;
+}
+
+.login h1 {
+  font-size: 1.25rem;
+  background: var(--heading-gradient);
+  background-clip: text;
+  color: transparent;
+}
+
+.login input,
+.login button {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--line-color);
+  background: transparent;
+}
+
+.login input {
+  border-color: color-mix(in srgb, var(--foreground) 25%, transparent);
+}
+
+.login button {
+  background: var(--accent);
+  color: var(--background);
+  border: none;
+  cursor: pointer;
+}
+
+.error {
+  color: light-dark(hsl(0 70% 40%), hsl(0 90% 75%));
+}
