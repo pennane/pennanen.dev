@@ -68,6 +68,28 @@
   color: var(--accent);
 }
 
+.bulkPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bulkList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.bulkList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line-color);
+}
+
 .card {
   display: flex;
   flex-direction: column;

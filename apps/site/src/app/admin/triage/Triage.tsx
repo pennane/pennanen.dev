@@ -230,18 +230,37 @@ export const Triage = ({
       </nav>
 
       {bulkStatus && countByFilter[filter] > 0 && (
-        <button
-          className={styles.bulk}
-          data-armed={bulkArmed === filter}
-          onClick={() => bulk(filter as Hint)}
-        >
-          {bulkArmed === filter
-            ? `Tap again: mark ${countByFilter[filter]} as ${bulkStatus}`
-            : `Mark all ${countByFilter[filter]} as ${bulkStatus}`}
-        </button>
+        <section className={styles.bulkPanel}>
+          <button
+            className={styles.bulk}
+            data-armed={bulkArmed === filter}
+            onClick={() => bulk(filter as Hint)}
+          >
+            {bulkArmed === filter
+              ? `Tap again: mark these ${countByFilter[filter]} as ${bulkStatus}`
+              : `Mark all ${countByFilter[filter]} as ${bulkStatus}…`}
+          </button>
+          {bulkArmed === filter && (
+            <>
+              <ul className={styles.bulkList}>
+                {visible.map((card) => (
+                  <li key={card.id}>
+                    <span>{card.title}</span>
+                    {card.playtimeMinutes !== undefined && (
+                      <span className={styles.count}>{formatPlaytime(card.playtimeMinutes)}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <button className={styles.quiet} onClick={() => setBulkArmed(undefined)}>
+                cancel
+              </button>
+            </>
+          )}
+        </section>
       )}
 
-      {current ? (
+      {bulkArmed ? null : current ? (
         <article className={styles.card} key={current.id}>
           <CardFace card={current} />
           {step.phase === 'status' ? (
