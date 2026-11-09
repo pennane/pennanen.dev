@@ -19,7 +19,7 @@ export type TriageCard = {
   hint?: Hint
 }
 
-type Filter = 'everything' | Hint | 'unsure'
+type Filter = 'everything' | Hint | 'no-hint'
 
 type Step = { phase: 'status' } | { phase: 'score'; status: string }
 
@@ -40,17 +40,19 @@ const ENJOYMENT_PRESETS = [
 const HINT_LABELS: Record<Hint, string> = {
   'likely-played': 'looks played',
   'likely-idled': 'looks idled',
-  'likely-never-played': 'never launched'
+  'likely-never-played': 'never launched',
+  'likely-not-a-game': 'not a game'
 }
 
 const BULK_STATUS_FOR_HINT: Partial<Record<Hint, string>> = {
   'likely-idled': 'idled',
-  'likely-never-played': 'never-played'
+  'likely-never-played': 'never-played',
+  'likely-not-a-game': 'dismissed'
 }
 
 const matches = (filter: Filter) => (card: TriageCard) =>
   filter === 'everything' ||
-  (filter === 'unsure' ? card.hint === undefined : card.hint === filter)
+  (filter === 'no-hint' ? card.hint === undefined : card.hint === filter)
 
 const formatPlaytime = (minutes: number) => {
   if (minutes < 60) return `${minutes} min`
@@ -105,12 +107,13 @@ export const Triage = ({
   const countByFilter = useMemo(() => {
     const counts: Record<Filter, number> = {
       everything: queue.length,
-      unsure: 0,
+      'no-hint': 0,
       'likely-played': 0,
       'likely-idled': 0,
-      'likely-never-played': 0
+      'likely-never-played': 0,
+      'likely-not-a-game': 0
     }
-    for (const card of queue) counts[card.hint ?? 'unsure']++
+    for (const card of queue) counts[card.hint ?? 'no-hint']++
     return counts
   }, [queue])
 
@@ -201,7 +204,7 @@ export const Triage = ({
   }, [step, statuses, choose, commit, skip, undo])
   useKeys(keys)
 
-  const bulkStatus = filter !== 'everything' && filter !== 'unsure' && BULK_STATUS_FOR_HINT[filter]
+  const bulkStatus = filter !== 'everything' && filter !== 'no-hint' && BULK_STATUS_FOR_HINT[filter]
 
   return (
     <div className={styles.triage}>
@@ -213,7 +216,16 @@ export const Triage = ({
       </header>
 
       <nav className={styles.filters}>
-        {(['everything', 'likely-played', 'unsure', 'likely-idled', 'likely-never-played'] as const).map((f) => (
+        {(
+          [
+            'everything',
+            'likely-played',
+            'no-hint',
+            'likely-idled',
+            'likely-never-played',
+            'likely-not-a-game'
+          ] as const
+        ).map((f) => (
           <button
             key={f}
             className={styles.filter}
@@ -223,7 +235,7 @@ export const Triage = ({
               setBulkArmed(undefined)
             }}
           >
-            {f === 'everything' ? 'all' : f === 'unsure' ? 'unsure' : HINT_LABELS[f]}{' '}
+            {f === 'everything' ? 'all' : f === 'no-hint' ? 'no hint' : HINT_LABELS[f]}{' '}
             <span className={styles.count}>{countByFilter[f]}</span>
           </button>
         ))}

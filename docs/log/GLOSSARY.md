@@ -23,8 +23,14 @@ and the bottle is in Margaux.
 scores, tags, notes, a blurb, and a visibility.
 
 **Status** — where ap is with the item, regardless of what ap thought of it.
-Each kind has its own set. Every kind starts at `untriaged`. For `game`:
-`untriaged`, `never-played`, `idled`, `playing`, `played`, `finished`, `dropped`.
+Each kind has its own set. Every kind starts at `untriaged` and can end at
+`dismissed`. For `game`: `untriaged`, `never-played`, `idled`, `maybe-played`,
+`playing`, `played`, `finished`, `dropped`, `dismissed`. `maybe-played` is the
+honest answer when ap can't remember.
+
+**Dismissed** — the status for something that doesn't belong in the log at all,
+like Wallpaper Engine in a Steam library. The item is kept so sync won't bring
+it back, but it never shows on public pages.
 
 **Axis** — one dimension something can be scored on: `enjoyment` (did I like
 it), `quality` (is it well made). They are independent: a masterpiece can
@@ -66,7 +72,8 @@ For games, the IGDB ID. Optional: an item with no identity is just ap's.
 screen where imports get sorted into played, idled, never played.
 
 **Hint** — the importer's guess during triage (`likely-idled`,
-`likely-played`). Hints suggest; they never set a status.
+`likely-played`, `likely-never-played`, `likely-not-a-game`). Hints suggest;
+they never set a status.
 
 **Sync** — pulling fresh claims from a source. Steam syncs nightly and on demand.
 

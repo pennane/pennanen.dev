@@ -48,6 +48,7 @@ const NoHint Hint = ""
 const (
 	SourceAP   = "ap"
 	Untriaged  = "untriaged"
+	Dismissed  = "dismissed"
 	Enjoyment  = "enjoyment"
 	Quality    = "quality"
 	FieldTitle = "title"
@@ -120,7 +121,10 @@ func isWebURL(s string) bool {
 
 var registry = map[string]Kind{}
 
-func register(k Kind) { registry[k.Name] = k }
+func register(k Kind) {
+	k.Statuses = append(k.Statuses, Dismissed)
+	registry[k.Name] = k
+}
 
 func Get(name string) (Kind, bool) {
 	k, ok := registry[name]

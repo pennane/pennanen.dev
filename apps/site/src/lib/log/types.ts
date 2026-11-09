@@ -1,4 +1,8 @@
-export type Hint = 'likely-idled' | 'likely-played' | 'likely-never-played'
+export type Hint =
+  | 'likely-idled'
+  | 'likely-played'
+  | 'likely-never-played'
+  | 'likely-not-a-game'
 
 export type Visibility = 'private' | 'public'
 

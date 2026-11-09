@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
@@ -40,7 +41,9 @@ func (s *Server) publicItems(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]PublicItem, 0, len(views))
 	for _, v := range views {
-		items = append(items, publicItem(v))
+		if isPublic(v) {
+			items = append(items, publicItem(v))
+		}
 	}
 	writeJSON(w, http.StatusOK, items)
 }
@@ -94,7 +97,7 @@ func (s *Server) publicRefs(r *http.Request, moments []store.Moment) (map[int64]
 }
 
 func isPublic(v store.ItemView) bool {
-	return v.Entry != nil && v.Entry.Visibility == store.Public
+	return v.Entry != nil && v.Entry.Visibility == store.Public && v.Entry.Status != kind.Dismissed
 }
 
 func publicItem(v store.ItemView) PublicItem {

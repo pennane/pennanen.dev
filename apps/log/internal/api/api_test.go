@@ -96,3 +96,20 @@ func TestPublicShowsOnlyWhatIsPublic(t *testing.T) {
 }
 
 func itoa(n int64) string { b, _ := json.Marshal(n); return string(b) }
+
+func TestDismissedStaysOffPublicPages(t *testing.T) {
+	srv := newServer(t)
+	_, body := call(t, srv, "POST", "/admin/items", token, `{"kind":"game","title":"Wallpaper Engine"}`)
+	var created struct{ ID int64 }
+	json.Unmarshal([]byte(body), &created)
+
+	if status, body := call(t, srv, "PATCH", "/admin/items/"+itoa(created.ID)+"/entry", token, `{"status":"dismissed","visibility":"public"}`); status != http.StatusOK {
+		t.Fatalf("dismiss: %d %s", status, body)
+	}
+	if status, _ := call(t, srv, "GET", "/public/items/game/wallpaper-engine", "", ""); status != http.StatusNotFound {
+		t.Errorf("dismissed item visible: %d", status)
+	}
+	if _, body := call(t, srv, "GET", "/public/items", "", ""); strings.Contains(body, "wallpaper-engine") {
+		t.Errorf("dismissed item listed: %s", body)
+	}
+}
