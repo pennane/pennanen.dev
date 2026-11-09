@@ -1,0 +1,24 @@
+[Unit]
+Description=things as ap saw them
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/log/log
+EnvironmentFile=/opt/log/.env
+Environment=LOG_DB=/var/lib/log/log.db
+Environment=LOG_ADDR=127.0.0.1:3005
+Environment=TZ=Europe/Helsinki
+DynamicUser=yes
+StateDirectory=log
+Restart=on-failure
+RestartSec=5
+MemoryMax=96M
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

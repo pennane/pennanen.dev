@@ -1,0 +1,52 @@
+name: log
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: [apps/log/**, .github/workflows/log.yml]
+  push:
+    branches: [main]
+    paths: [apps/log/**, .github/workflows/log.yml]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/log
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/log/go.mod
+          cache-dependency-path: apps/log/go.sum
+
+      - run: go vet ./...
+      - run: go test ./...
+
+      - name: Build
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o log ./cmd/log
+
+      - name: Deploy
+        if: github.event_name != 'pull_request'
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          VPS_HOST_KEY: ${{ vars.VPS_HOST_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "$VPS_HOST_KEY" >> ~/.ssh/known_hosts
+          scp log deploy/log.service root@"$VPS_HOST":/tmp/
+          ssh root@"$VPS_HOST" bash -s <<'REMOTE'
+            set -e
+            install -d /opt/log
+            install -m 755 /tmp/log /opt/log/log
+            install -m 644 /tmp/log.service /etc/systemd/system/log.service
+            rm /tmp/log /tmp/log.service
+            systemctl daemon-reload
+            systemctl enable log
+            systemctl restart log
+          REMOTE
