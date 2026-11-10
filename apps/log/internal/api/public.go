@@ -35,19 +35,28 @@ type PublicRank struct {
 	Of    int `json:"of"`
 }
 
-func publicRanks(views []store.ItemView, isPublic publicRule) map[int64]PublicRank {
-	var ranked []store.ItemView
-	for _, v := range views {
-		if isPublic(v) && v.Entry.Rank > 0 {
-			ranked = append(ranked, v)
-		}
-	}
-	slices.SortFunc(ranked, func(a, b store.ItemView) int { return cmp.Compare(a.Entry.Rank, b.Entry.Rank) })
+func (s *Server) publicRanks(r *http.Request, kindName string) (map[int64]PublicRank, error) {
 	ranks := map[int64]PublicRank{}
-	for i, v := range ranked {
-		ranks[v.ID] = PublicRank{Place: i + 1, Of: len(ranked)}
+	k, known := kind.Get(kindName)
+	if !known {
+		return ranks, nil
 	}
-	return ranks
+	shows, err := s.entryRule(r)
+	if err != nil {
+		return nil, err
+	}
+	standings, err := s.Store.Standings(r.Context(), k)
+	if err != nil {
+		return nil, err
+	}
+	shown := slices.DeleteFunc(standings, func(st store.Standing) bool {
+		return st.Rank == 0 || !shows(k.Name, st.Status, st.Visibility)
+	})
+	slices.SortFunc(shown, func(a, b store.Standing) int { return cmp.Compare(a.Rank, b.Rank) })
+	for i, st := range shown {
+		ranks[st.ItemID] = PublicRank{Place: i + 1, Of: len(shown)}
+	}
+	return ranks, nil
 }
 
 func withRank(item PublicItem, rank PublicRank, ranked bool) PublicItem {
@@ -99,24 +108,33 @@ func (s *Server) publicPresentation(w http.ResponseWriter, r *http.Request) {
 
 type publicRule func(store.ItemView) bool
 
-func (s *Server) publicRule(r *http.Request) (publicRule, error) {
+type entryRule func(kindName, status string, visibility store.Visibility) bool
+
+func (s *Server) entryRule(r *http.Request) (entryRule, error) {
 	kinds, err := s.Store.AllKindSettings(r.Context())
 	if err != nil {
 		return nil, err
 	}
-	return func(v store.ItemView) bool {
-		if v.Entry == nil {
-			return false
-		}
-		switch v.Entry.Visibility {
+	return func(kindName, status string, visibility store.Visibility) bool {
+		switch visibility {
 		case store.Public:
-			return v.Entry.Status != kind.Dismissed
+			return status != kind.Dismissed
 		case store.Auto:
-			settings, known := kinds[v.Kind]
-			return known && settings.Shows(v.Entry.Status)
+			settings, known := kinds[kindName]
+			return known && settings.Shows(status)
 		default:
 			return false
 		}
+	}, nil
+}
+
+func (s *Server) publicRule(r *http.Request) (publicRule, error) {
+	shows, err := s.entryRule(r)
+	if err != nil {
+		return nil, err
+	}
+	return func(v store.ItemView) bool {
+		return v.Entry != nil && shows(v.Kind, v.Entry.Status, v.Entry.Visibility)
 	}, nil
 }
 
@@ -126,12 +144,17 @@ func (s *Server) publicItems(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
-	views, err := s.Store.ListItems(r.Context(), store.ItemFilter{Kind: r.URL.Query().Get("kind")})
+	kindName := r.URL.Query().Get("kind")
+	views, err := s.Store.ListItems(r.Context(), store.ItemFilter{Kind: kindName})
 	if err != nil {
 		respond(w, 0, nil, err)
 		return
 	}
-	ranks := publicRanks(views, isPublic)
+	ranks, err := s.publicRanks(r, kindName)
+	if err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
 	items := make([]PublicItem, 0, len(views))
 	for _, v := range views {
 		if isPublic(v) {
@@ -156,12 +179,12 @@ func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
-	kindViews, err := s.Store.ListItems(r.Context(), store.ItemFilter{Kind: view.Kind})
+	ranks, err := s.publicRanks(r, view.Kind)
 	if err != nil {
 		respond(w, 0, nil, err)
 		return
 	}
-	rank, ranked := publicRanks(kindViews, isPublic)[view.ID]
+	rank, ranked := ranks[view.ID]
 	item := withRank(publicItem(view), rank, ranked)
 	refs, err := s.publicRefs(r, view.Moments, isPublic)
 	if err != nil {

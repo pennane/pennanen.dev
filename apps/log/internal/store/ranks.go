@@ -211,3 +211,34 @@ func (s *Store) attachRanks(ctx context.Context, views []ItemView) error {
 	}
 	return nil
 }
+
+type Standing struct {
+	ItemID     int64
+	Status     string
+	Visibility Visibility
+	Rank       int
+}
+
+func (s *Store) Standings(ctx context.Context, k kind.Kind) ([]Standing, error) {
+	ranks, err := s.ranksOf(ctx, k)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT e.item_id, e.status, e.visibility FROM entry e JOIN item i ON i.id = e.item_id
+		WHERE i.kind = ?`, k.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var standings []Standing
+	for rows.Next() {
+		var st Standing
+		if err := rows.Scan(&st.ItemID, &st.Status, &st.Visibility); err != nil {
+			return nil, err
+		}
+		st.Rank = ranks[st.ItemID]
+		standings = append(standings, st)
+	}
+	return standings, rows.Err()
+}
