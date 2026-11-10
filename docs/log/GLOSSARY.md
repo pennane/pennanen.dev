@@ -10,7 +10,8 @@ It has a kind and a title, and that's about it. Opinions live elsewhere.
 
 **Kind** — what sort of item it is (`game`, `thing`, later `tabletop`, `wine`…).
 A kind decides the item's fields, its statuses, and which source gives it
-an identity. Kinds are defined in code; which axes a kind uses is set in admin. `thing` is the catch-all
+an identity. Kinds are defined in code; which axes a kind uses, its **title**
+(`games`) and its **description** are set in admin. `thing` is the catch-all
 kind: free-form fields, nothing checked, so an odd item never blocks you.
 
 **Relation** — a named link between two items. _Margaux 2015 is a
@@ -121,5 +122,4 @@ status), `public` (always) or `private` (never). Prose has no visibility of
 its own; it follows its entry.
 
 **Tier list** — a kind's shown entries laid out by division on one axis,
-best division first; entries with no score on that axis are left off. It is
-curated: no filters, only a choice of axis.
+best division first; entries with no score on that axis are left off.

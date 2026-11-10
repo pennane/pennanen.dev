@@ -4,7 +4,14 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { Gap, Stack } from '../../../../components/Stack'
 import { logPublic } from '../../../../lib/log/public-api'
-import { isPublicKind, kindPlural, PUBLIC_KINDS, toListed } from '../../../../lib/log/present'
+import {
+  isPublicKind,
+  kindTitle,
+  plainText,
+  PUBLIC_KINDS,
+  toListed
+} from '../../../../lib/log/present'
+import { Prose } from '../components/Prose'
 import logStyles from '../components/log.module.css'
 import { DefaultBoard, KindBrowser } from './KindBrowser'
 
@@ -19,16 +26,25 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { kind } = await params
   if (!isPublicKind(kind)) return {}
+  const presentation = await logPublic.presentation()
+  const title = kindTitle(presentation, kind)
+  const description = plainText(presentation.kinds[kind]?.description ?? '')
   return {
-    title: `${kindPlural(kind)} as ap saw them`,
-    description: `The ${kindPlural(kind)} in Arttu Pennanen's log.`
+    title: `${title} as ap saw them`,
+    description: description || `The ${title} in Arttu Pennanen's log.`
   }
 }
 
 export default async function KindPage({ params }: { params: Params }) {
   const { kind } = await params
   if (!isPublicKind(kind)) notFound()
-  const [listed, { untriaged }] = await Promise.all([logPublic.items(kind), logPublic.kind(kind)])
+  const [listed, { untriaged }, presentation] = await Promise.all([
+    logPublic.items(kind),
+    logPublic.kind(kind),
+    logPublic.presentation()
+  ])
+  const title = kindTitle(presentation, kind)
+  const description = presentation.kinds[kind]?.description.trim() ?? ''
   const items = listed.map(toListed)
 
   return (
@@ -37,7 +53,8 @@ export default async function KindPage({ params }: { params: Params }) {
         <Link href="/log">log</Link>
         <span aria-hidden>/</span>
       </nav>
-      <h1>{kindPlural(kind)}</h1>
+      <h1>{title}</h1>
+      {description && <Prose markdown={description} />}
       {items.length === 0 ? (
         <p className={logStyles.empty}>Nothing here yet.</p>
       ) : (
@@ -47,7 +64,7 @@ export default async function KindPage({ params }: { params: Params }) {
       )}
       {untriaged > 0 && (
         <p className={logStyles.unsorted}>
-          and {untriaged} {kindPlural(kind)} still unsorted
+          and {untriaged} {title} still unsorted
         </p>
       )}
     </Stack>

@@ -11,7 +11,15 @@ import {
   TIME_SPENT_LABELS,
   type TimeSpent
 } from '../../../lib/log/present'
-import type { Axis, Division, Entry, EntryChange, Kind, Visibility } from '../../../lib/log/types'
+import type {
+  Axis,
+  Division,
+  Entry,
+  EntryChange,
+  FieldValue,
+  Kind,
+  Visibility
+} from '../../../lib/log/types'
 import { SaveStatus, useKeys } from '../_queue/card'
 import { Compare, compareKeys, type Comparing } from '../_queue/Compare'
 import {
@@ -27,7 +35,13 @@ import {
 import { useSaveQueue } from '../_queue/useSaveQueue'
 import dynamic from 'next/dynamic'
 import { Prose } from '../../(site)/log/components/Prose'
-import { changeEntry, findItemLinks, imageUploadTicket, placeEntry } from '../actions'
+import {
+  changeEntry,
+  changeLastPlayed,
+  findItemLinks,
+  imageUploadTicket,
+  placeEntry
+} from '../actions'
 import styles from './editor.module.css'
 
 const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
@@ -65,10 +79,11 @@ export type EntrySubject = {
   cover: string | undefined
   publicPath: string
   entry: Entry
+  lastPlayed: FieldValue
 }
 
 export const Editor = ({
-  subject: { itemId, title, cover, publicPath, entry },
+  subject: { itemId, title, cover, publicPath, entry, lastPlayed },
   kind,
   knownTags,
   ranked,
@@ -242,6 +257,17 @@ export const Editor = ({
         />
       </Section>
 
+      {kind.fields.some((field) => field.name === LAST_PLAYED_FIELD) && (
+        <LastPlayed
+          initial={lastPlayed}
+          onSave={(date, show) =>
+            saves.enqueue(`last played → ${date ?? "steam's"}`, async () =>
+              show(await changeLastPlayed(itemId, date))
+            )
+          }
+        />
+      )}
+
       <TextField
         label="blurb"
         hint="public, a line or two for others"
@@ -278,6 +304,72 @@ export const Editor = ({
         </button>
       </Section>
     </div>
+  )
+}
+
+const LAST_PLAYED_FIELD = 'last_played'
+
+const PARTIAL_DATE = /^\d{4}(-\d{2}(-\d{2})?)?$/
+
+const SOURCE_NOTES: Record<string, string> = { ap: 'set by you', steam: 'from steam' }
+
+const today = () => {
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
+const LastPlayed = ({
+  initial,
+  onSave
+}: {
+  initial: FieldValue
+  onSave: (date: string | null, show: (saved: FieldValue) => void) => void
+}) => {
+  const [saved, setSaved] = useState(initial)
+  const [text, setText] = useState(initial.value ?? '')
+  const show = (next: FieldValue) => {
+    setSaved(next)
+    setText(next.value ?? '')
+  }
+  const commit = (date: string) => {
+    const trimmed = date.trim()
+    if (trimmed === (saved.value ?? '') || !PARTIAL_DATE.test(trimmed)) return
+    setText(trimmed)
+    onSave(trimmed, show)
+  }
+  const invalid = text.trim() !== '' && !PARTIAL_DATE.test(text.trim())
+  return (
+    <Section label="last played">
+      <div className={styles.chips}>
+        <input
+          className={styles.tagInput}
+          value={text}
+          placeholder="2024, 2024-03 or 2024-03-05"
+          aria-invalid={invalid}
+          onChange={(event) => setText(event.target.value)}
+          onBlur={() => commit(text)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') commit(text)
+          }}
+        />
+        <button type="button" className={styles.chip} onClick={() => commit(today())}>
+          today
+        </button>
+        {saved.source === 'ap' && (
+          <button type="button" className={styles.chip} onClick={() => onSave(null, show)}>
+            use steam&apos;s
+          </button>
+        )}
+      </div>
+      <p className={styles.quiet}>
+        {invalid
+          ? 'write a year, year-month or year-month-day'
+          : saved.source
+            ? (SOURCE_NOTES[saved.source] ?? `from ${saved.source}`)
+            : 'not known'}
+      </p>
+    </Section>
   )
 }
 

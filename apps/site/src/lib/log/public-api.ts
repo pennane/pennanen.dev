@@ -37,7 +37,11 @@ const publicItemSchema = z.object({
   prose: z
     .string()
     .nullish()
-    .transform((prose) => prose ?? '')
+    .transform((prose) => prose ?? ''),
+  proseWords: z
+    .number()
+    .nullish()
+    .transform((words) => words ?? 0)
 })
 
 const publicKindSchema = z.object({ name: z.string(), untriaged: z.number() })
@@ -64,6 +68,14 @@ const presentationSchema = z.object({
   ),
   kinds: z.record(
     z.object({
+      title: z
+        .string()
+        .nullish()
+        .transform((title) => title ?? ''),
+      description: z
+        .string()
+        .nullish()
+        .transform((description) => description ?? ''),
       statusesShown: z.array(z.string()),
       axes: z.array(z.string())
     })

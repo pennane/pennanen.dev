@@ -79,6 +79,8 @@ export const logAdmin = {
   },
   changeEntry: (itemId: number, change: EntryChange) =>
     call<ItemView>(`/admin/items/${itemId}/entry`, send('PATCH', change)),
+  changeFields: (itemId: number, changes: Record<string, unknown>) =>
+    call<ItemView>(`/admin/items/${itemId}/fields`, send('PATCH', changes)),
   changeEntries: (itemIds: number[], change: EntryChange) =>
     call<void>('/admin/entries/change', send('POST', { itemIds, change })),
   steamSync: () => call<SteamSyncReport>('/admin/sync/steam'),

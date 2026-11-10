@@ -73,6 +73,8 @@ const bandOrder = (key: string) => PLAYTIME_BANDS.findIndex((band) => band.key =
 
 const alphabetical = (a: string, b: string) => a.localeCompare(b)
 
+const HAS_VISIONS = '+visions'
+
 const SCORE_PREFIX = 'score-'
 
 export const axisKey = (axis: Axis) => SCORE_PREFIX + axis.key
@@ -121,9 +123,13 @@ export const facetsFor = (
   {
     key: 'tag',
     name: 'tag',
-    valuesOf: (item) => [...new Set(item.tags.flatMap(tagWithAncestors))],
-    labelOf: (value) => tagTitle(value) ?? tagLabel(value),
-    order: alphabetical
+    valuesOf: (item) => [
+      ...(item.proseWords > 0 ? [HAS_VISIONS] : []),
+      ...new Set(item.tags.flatMap(tagWithAncestors))
+    ],
+    labelOf: (value) =>
+      value === HAS_VISIONS ? 'has visions' : (tagTitle(value) ?? tagLabel(value)),
+    order: (a, b) => Number(b === HAS_VISIONS) - Number(a === HAS_VISIONS) || alphabetical(a, b)
   }
 ]
 

@@ -13,6 +13,16 @@ export const isPublicKind = (kind: string): kind is PublicKind => Object.hasOwn(
 
 export const kindPlural = (kind: PublicKind) => KIND_PLURALS[kind]
 
+export const kindTitle = (presentation: Presentation, kind: PublicKind) =>
+  presentation.kinds[kind]?.title.trim() || kindPlural(kind)
+
+export const plainText = (markdown: string) =>
+  markdown
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_#>`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
 type Fields = Record<string, unknown>
 
 export const textField = (fields: Fields, name: string) => {
@@ -158,6 +168,7 @@ export type ListedItem = {
   genres: string[]
   developers: string[]
   playtimeMinutes: number | undefined
+  proseWords: number
 }
 
 export const toListed = (item: PublicItem): ListedItem => ({
@@ -174,11 +185,11 @@ export const toListed = (item: PublicItem): ListedItem => ({
   released: textField(item.fields, 'released'),
   genres: listField(item.fields, 'genres'),
   developers: listField(item.fields, 'developers'),
-  playtimeMinutes: numberField(item.fields, 'playtime_minutes')
+  playtimeMinutes: numberField(item.fields, 'playtime_minutes'),
+  proseWords: item.proseWords
 })
 
 export const byTitle = (a: ListedItem, b: ListedItem) => a.title.localeCompare(b.title)
-
 
 const placeOf = (item: ListedItem) => item.rank?.place ?? Number.MAX_SAFE_INTEGER
 

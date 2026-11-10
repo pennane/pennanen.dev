@@ -3,8 +3,17 @@
 import { requireAdmin } from '../../lib/admin/require-admin'
 import { logAdmin } from '../../lib/log/admin-api'
 import { itemPath, textField } from '../../lib/log/present'
-import type { Axis, EntryChange, ItemLink, KindSettings } from '../../lib/log/types'
+import type {
+  Axis,
+  EntryChange,
+  FieldValue,
+  ItemLink,
+  ItemView,
+  KindSettings
+} from '../../lib/log/types'
 import type { EntrySubject } from './entries/Editor'
+
+const LAST_PLAYED = 'last_played'
 
 export async function changeEntry(itemId: number, change: EntryChange) {
   await requireAdmin()
@@ -20,8 +29,19 @@ export async function openEntry(itemId: number): Promise<EntrySubject> {
     title: textField(item.verdicts.values, 'title') ?? item.slug,
     cover: textField(item.verdicts.values, 'cover') ?? textField(item.verdicts.values, 'image'),
     publicPath: `/log/${item.kind}/${item.slug}`,
-    entry: item.entry
+    entry: item.entry,
+    lastPlayed: lastPlayedOf(item)
   }
+}
+
+const lastPlayedOf = (item: ItemView): FieldValue => ({
+  value: textField(item.verdicts.values, LAST_PLAYED),
+  source: item.verdicts.sourceOf[LAST_PLAYED]
+})
+
+export async function changeLastPlayed(itemId: number, date: string | null) {
+  await requireAdmin()
+  return lastPlayedOf(await logAdmin.changeFields(itemId, { [LAST_PLAYED]: date }))
 }
 
 export async function placeEntry(itemId: number, division: string, index: number) {

@@ -17,6 +17,7 @@ import {
   searchFor,
   sortItems,
   splitsItems,
+  type Facet,
   type View
 } from './view'
 
@@ -52,45 +53,17 @@ const Switch = <T extends string>({
   </div>
 )
 
-export const KindBrowser = ({ items, kind }: { items: ListedItem[]; kind: string }) => {
-  const axes = useKindAxes(kind)
+const useFacets = (items: ListedItem[], kind: string, axes: Axis[]) => {
   const { kinds } = usePresentation()
   const tagTitle = useTagTitle()
-  const facets = facetsFor(axes, kinds[kind]?.statusesShown ?? [], tagTitle).filter((facet) =>
+  return facetsFor(axes, kinds[kind]?.statusesShown ?? [], tagTitle).filter((facet) =>
     splitsItems(facet, items)
-  )
-  const view = parseView(useSearchParams(), axes, facets)
-  const change = (next: View) =>
-    window.history.replaceState(null, '', `${window.location.pathname}${searchFor(next, axes)}`)
-  const axis = axes.find((a) => a.key === view.axis)
-
-  return (
-    <div className={styles.browser}>
-      <div className={styles.bar}>
-        <Switch
-          label="view"
-          options={MODES.map((mode) => ({ value: mode, label: MODE_LABELS[mode] }))}
-          chosen={view.mode}
-          onChoose={(mode) => change({ ...view, mode })}
-        />
-        {view.mode === 'tiers' && axes.length > 1 && (
-          <Switch
-            label="axis"
-            options={axes.map((a) => ({ value: a.key, label: a.name }))}
-            chosen={view.axis}
-            onChoose={(key) => change({ ...view, axis: key })}
-          />
-        )}
-      </div>
-      {view.mode === 'tiers' && axis && <TierBoard items={items} axis={axis} />}
-      {view.mode === 'list' && (
-        <ListView items={items} axes={axes} facets={facets} view={view} onChange={change} />
-      )}
-    </div>
   )
 }
 
-const ListView = ({
+const NO_PARAMS = new URLSearchParams()
+
+const Browser = ({
   items,
   axes,
   facets,
@@ -99,42 +72,70 @@ const ListView = ({
 }: {
   items: ListedItem[]
   axes: Axis[]
-  facets: ReturnType<typeof facetsFor>
+  facets: Facet[]
   view: View
   onChange: (view: View) => void
 }) => {
+  const axis = axes.find((a) => a.key === view.axis)
+  const filtered = filterItems(items, view, facets)
   const columns = columnsFor(axes)
-  const shown = sortItems(filterItems(items, view, facets), view.sort, columns)
-  return (
-    <>
-      <Toolbar items={items} facets={facets} view={view} onChange={onChange} />
-      <p className={styles.count}>
-        {shown.length === items.length ? `${items.length}` : `${shown.length} of ${items.length}`}
-      </p>
-      <ItemTable
-        items={shown}
-        axes={axes}
-        columns={columns}
-        sort={view.sort}
-        onSort={(sort) => onChange({ ...view, sort })}
-      />
-    </>
-  )
-}
-
-export const DefaultBoard = ({ items, kind }: { items: ListedItem[]; kind: string }) => {
-  const [axis] = useKindAxes(kind)
   return (
     <div className={styles.browser}>
       <div className={styles.bar}>
         <Switch
           label="view"
           options={MODES.map((mode) => ({ value: mode, label: MODE_LABELS[mode] }))}
-          chosen="tiers"
-          onChoose={() => undefined}
+          chosen={view.mode}
+          onChoose={(mode) => onChange({ ...view, mode })}
         />
+        {view.mode === 'tiers' && axes.length > 1 && (
+          <Switch
+            label="axis"
+            options={axes.map((a) => ({ value: a.key, label: a.name }))}
+            chosen={view.axis}
+            onChoose={(key) => onChange({ ...view, axis: key })}
+          />
+        )}
       </div>
-      {axis && <TierBoard items={items} axis={axis} />}
+      <Toolbar items={items} facets={facets} view={view} onChange={onChange} />
+      <p className={styles.count}>
+        {filtered.length === items.length
+          ? `${items.length}`
+          : `${filtered.length} of ${items.length}`}
+      </p>
+      {view.mode === 'tiers' && axis && <TierBoard items={filtered} axis={axis} />}
+      {view.mode === 'list' && (
+        <ItemTable
+          items={sortItems(filtered, view.sort, columns)}
+          axes={axes}
+          columns={columns}
+          sort={view.sort}
+          onSort={(sort) => onChange({ ...view, sort })}
+        />
+      )}
     </div>
+  )
+}
+
+export const KindBrowser = ({ items, kind }: { items: ListedItem[]; kind: string }) => {
+  const axes = useKindAxes(kind)
+  const facets = useFacets(items, kind, axes)
+  const view = parseView(useSearchParams(), axes, facets)
+  const change = (next: View) =>
+    window.history.replaceState(null, '', `${window.location.pathname}${searchFor(next, axes)}`)
+  return <Browser items={items} axes={axes} facets={facets} view={view} onChange={change} />
+}
+
+export const DefaultBoard = ({ items, kind }: { items: ListedItem[]; kind: string }) => {
+  const axes = useKindAxes(kind)
+  const facets = useFacets(items, kind, axes)
+  return (
+    <Browser
+      items={items}
+      axes={axes}
+      facets={facets}
+      view={parseView(NO_PARAMS, axes, facets)}
+      onChange={() => undefined}
+    />
   )
 }

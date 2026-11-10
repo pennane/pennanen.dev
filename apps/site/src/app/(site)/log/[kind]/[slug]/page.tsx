@@ -12,7 +12,7 @@ import {
   freeFormFields,
   isPublicKind,
   itemPath,
-  kindPlural,
+  kindTitle,
   pictureOf,
   statusLabel,
   textField,
@@ -136,7 +136,10 @@ export default async function ItemPage({ params }: { params: Params }) {
   if (!item || !isPublicKind(item.kind)) notFound()
   const picture = pictureOf(item)
   const extras = freeFormFields(item.fields)
-  const neighbours = await neighboursOf(item)
+  const [neighbours, presentation] = await Promise.all([
+    neighboursOf(item),
+    logPublic.presentation()
+  ])
 
   return (
     <article>
@@ -145,7 +148,7 @@ export default async function ItemPage({ params }: { params: Params }) {
           <nav className={logStyles.crumbs}>
             <Link href="/log">log</Link>
             <span aria-hidden>/</span>
-            <Link href={`/log/${item.kind}`}>{kindPlural(item.kind)}</Link>
+            <Link href={`/log/${item.kind}`}>{kindTitle(presentation, item.kind)}</Link>
             <span aria-hidden>/</span>
           </nav>
           <Neighbours {...neighbours} place="top" />

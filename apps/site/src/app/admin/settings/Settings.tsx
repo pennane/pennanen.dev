@@ -202,6 +202,24 @@ export const KindSettingsForm = ({
     <article className={styles.kind}>
       <h2 className={styles.kindName}>{kind}</h2>
 
+      <Section label="title" hint="the heading on its public page">
+        <input
+          className={styles.input}
+          value={settings.title}
+          aria-invalid={settings.title.trim() === ''}
+          onChange={(event) => change({ title: event.target.value })}
+        />
+      </Section>
+
+      <Section label="description" hint="markdown, shown under the title">
+        <textarea
+          className={editor.text}
+          rows={4}
+          value={settings.description}
+          onChange={(event) => change({ description: event.target.value })}
+        />
+      </Section>
+
       <Section
         label="shown on public pages"
         hint="entries set to auto show when their status is picked here"

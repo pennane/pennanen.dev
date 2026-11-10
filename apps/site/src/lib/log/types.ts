@@ -9,6 +9,8 @@ export type Division = { key: string; name: string }
 export type Axis = { key: string; name: string; divisions: Division[] }
 
 export type KindSettings = {
+  title: string
+  description: string
   statusesShown: string[]
   axes: string[]
 }
@@ -26,6 +28,7 @@ export type Kind = {
   statusesShown: string[]
   rankedAxis: string
   axes: Axis[]
+  fields: { name: string; type: string }[]
 }
 
 export type Entry = {
@@ -50,6 +53,8 @@ export type ListedEntry = {
   rank?: number
   tags: string[]
 }
+
+export type FieldValue = { value: string | undefined; source: string | undefined }
 
 export type ItemView = {
   id: number
