@@ -99,11 +99,20 @@ const MatchButton = ({ initial }: { initial?: IGDBMatchReport }) => {
       title={report?.problems.at(-1)}
       onClick={async () => setReport(await startIGDBMatch())}
     >
-      {matching
-        ? `matching… ${report.matched} of ${report.checked}`
-        : report?.state === 'failed'
-          ? 'match failed, retry'
-          : 'match steam games'}
+      {matchLabel(report)}
     </button>
   )
+}
+
+const matchLabel = (report: IGDBMatchReport | undefined) => {
+  switch (report?.state) {
+    case 'matching':
+      return `matching… ${report.matched} of ${report.checked}`
+    case 'failed':
+      return 'match failed, retry'
+    case 'matched':
+      return `last run matched ${report.matched} of ${report.checked} · run again`
+    default:
+      return 'match steam games'
+  }
 }
