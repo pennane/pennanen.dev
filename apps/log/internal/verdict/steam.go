@@ -14,10 +14,10 @@ type SteamOwnedGame struct {
 }
 
 type SteamStoreDetails struct {
-	Name             string   `json:"name"`
-	HeaderImage      string   `json:"header_image"`
-	Developers       []string `json:"developers"`
-	Genres           []struct {
+	Name        string   `json:"name"`
+	HeaderImage string   `json:"header_image"`
+	Developers  []string `json:"developers"`
+	Genres      []struct {
 		Description string `json:"description"`
 	} `json:"genres"`
 	Categories []struct {
