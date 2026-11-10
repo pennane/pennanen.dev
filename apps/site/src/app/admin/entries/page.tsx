@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 const DEFAULT_KIND = 'game'
 const NOT_YET_TRIAGED = 'untriaged'
 const NEVER_PUBLIC = 'dismissed'
-const VISIBILITIES: Visibility[] = ['private', 'public']
+const VISIBILITIES: Visibility[] = ['auto', 'public', 'private']
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
@@ -68,6 +68,7 @@ export default async function EntriesPage({
         key={kind.name}
         entries={entries}
         statuses={kind.statuses.filter((s) => s !== NOT_YET_TRIAGED && s !== NEVER_PUBLIC)}
+        statusesShown={kind.statusesShown}
         initial={{
           status: single(params.status),
           visibility: VISIBILITIES.find((v) => v === visibility),

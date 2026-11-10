@@ -65,7 +65,8 @@ const QUEUES = [
   { href: '/admin/rate', label: 'rate' },
   { href: '/admin/add', label: 'add' },
   { href: '/admin/match', label: 'match' },
-  { href: '/admin/entries', label: 'entries' }
+  { href: '/admin/entries', label: 'entries' },
+  { href: '/admin/settings', label: 'settings' }
 ] as const
 
 export const QueueHeader = ({

@@ -61,7 +61,26 @@ const fetchPublic = (path: string) =>
 const failure = (response: Response) =>
   new Error(`log api ${response.url} answered ${response.status}`)
 
+const scoreWordSchema = z.object({ from: z.number(), word: z.string() })
+
+const presentationSchema = z.object({
+  kinds: z.record(
+    z.object({
+      statusesShown: z.array(z.string()),
+      axisLabels: z.record(z.string()),
+      scoreDisplay: z.enum(['number', 'word', 'both']),
+      scoreWords: z.array(scoreWordSchema)
+    })
+  ),
+  tagTitles: z.record(z.string())
+})
+
 export const logPublic = {
+  presentation: async () => {
+    const response = await fetchPublic('/public/presentation')
+    if (!response.ok) throw failure(response)
+    return presentationSchema.parse(await response.json())
+  },
   kind: async (kind: string) => {
     const response = await fetchPublic(`/public/kinds/${encodeURIComponent(kind)}`)
     if (!response.ok) throw failure(response)

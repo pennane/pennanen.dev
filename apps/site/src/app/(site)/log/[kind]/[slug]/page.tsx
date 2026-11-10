@@ -78,15 +78,17 @@ const PICTURE_HEIGHT = 215
 
 const Facts = ({ item }: { item: PublicItem }) => {
   const released = textField(item.fields, 'released')
+  const lastPlayed = textField(item.fields, 'last_played')
   const link = textField(item.fields, 'link')
   return (
     <MetaLine>
       <span>{statusLabel(item.status)}</span>
       {orderedScores(item.scores).map(({ axis, score }) => (
-        <Score key={axis} axis={axis} score={score} />
+        <Score key={axis} kind={item.kind} axis={axis} score={score} />
       ))}
       {released && <span>{formatPartialDate(released)}</span>}
       {item.timeSpent && <span>{TIME_SPENT_LABELS[item.timeSpent]}</span>}
+      {lastPlayed && <span>last played {formatPartialDate(lastPlayed)}</span>}
       {link && <MetaLink href={link} icon={Link2} />}
     </MetaLine>
   )
@@ -94,7 +96,7 @@ const Facts = ({ item }: { item: PublicItem }) => {
 
 const byNewest = (a: PublicMoment, b: PublicMoment) => b.at.localeCompare(a.at)
 
-const Moments = ({ moments }: { moments: PublicMoment[] }) => (
+const Moments = ({ kind, moments }: { kind: string; moments: PublicMoment[] }) => (
   <section>
     <Stack gap={Gap.large} alignItems="stretch">
       <header>
@@ -108,7 +110,7 @@ const Moments = ({ moments }: { moments: PublicMoment[] }) => (
             <time dateTime={moment.at}>{formatPartialDate(moment.at)}</time>
             <div className={styles.momentBody}>
               {moment.note && <p>{moment.note}</p>}
-              <Scores scores={moment.scores} />
+              <Scores kind={kind} scores={moment.scores} />
               {moment.refs.length > 0 && (
                 <p className={styles.refs}>
                   {moment.refs.map((ref) => (
@@ -171,7 +173,7 @@ export default async function ItemPage({ params }: { params: Params }) {
           ))}
         </dl>
       )}
-      {item.moments.length > 0 && <Moments moments={item.moments} />}
+      {item.moments.length > 0 && <Moments kind={item.kind} moments={item.moments} />}
     </article>
   )
 }

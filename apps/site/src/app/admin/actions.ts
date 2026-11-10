@@ -2,7 +2,7 @@
 
 import { requireAdmin } from '../../lib/admin/require-admin'
 import { logAdmin } from '../../lib/log/admin-api'
-import type { EntryChange, NewMoment } from '../../lib/log/types'
+import type { EntryChange, KindSettings, NewMoment } from '../../lib/log/types'
 
 export async function changeEntry(itemId: number, change: EntryChange) {
   await requireAdmin()
@@ -70,4 +70,14 @@ export async function startSteamSync() {
 export async function steamSyncStatus() {
   await requireAdmin()
   return logAdmin.steamSync()
+}
+
+export async function saveKindSettings(kind: string, settings: KindSettings) {
+  await requireAdmin()
+  return logAdmin.putKindSettings(kind, settings)
+}
+
+export async function saveTagTitles(titles: Record<string, string>) {
+  await requireAdmin()
+  return logAdmin.putTagTitles(titles)
 }

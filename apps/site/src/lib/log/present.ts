@@ -168,3 +168,19 @@ export const byTitle = (a: ListedItem, b: ListedItem) =>
 
 export const byScore = (a: ListedItem, b: ListedItem) =>
   headlineScore(b) - headlineScore(a) || byTitle(a, b)
+
+export const scoreWordFor = (score: number, words: { from: number; word: string }[]) =>
+  words.findLast((w) => w.from <= score)?.word
+
+export type Presence = 'shown' | 'hidden'
+
+const NEVER_SHOWN = 'dismissed'
+
+export const presenceOf = (
+  entry: { status: string; visibility: 'auto' | 'public' | 'private' },
+  statusesShown: string[]
+): Presence => {
+  if (entry.status === NEVER_SHOWN || entry.visibility === 'private') return 'hidden'
+  if (entry.visibility === 'public') return 'shown'
+  return statusesShown.includes(entry.status) ? 'shown' : 'hidden'
+}

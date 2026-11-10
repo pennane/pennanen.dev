@@ -9,6 +9,7 @@ import {
   type ListedItem
 } from '../../../../lib/log/present'
 import { ItemList } from '../components/ItemRow'
+import { useTagTitle } from '../components/PresentationContext'
 import styles from './kind.module.css'
 import {
   applyView,
@@ -75,6 +76,7 @@ export const KindBrowser = ({
   path: string
 }) => {
   const view = parseView(useSearchParams())
+  const titleOf = useTagTitle()
   const statuses = statusesIn(items)
   const tags = tagsIn(items)
   const shown = applyView(items, view)
@@ -114,7 +116,7 @@ export const KindBrowser = ({
             choices={[
               { label: 'any', view: { ...view, tag: undefined } },
               ...tags.map(({ value, count }) => ({
-                label: tagLabel(value),
+                label: titleOf(value) ?? tagLabel(value),
                 count,
                 view: { ...view, tag: value }
               }))

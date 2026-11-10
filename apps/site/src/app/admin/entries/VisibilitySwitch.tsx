@@ -1,16 +1,24 @@
 'use client'
 
-import { Eye, EyeOff } from 'lucide-react'
+import { CircleDashed, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
+import type { Presence } from '../../../lib/log/present'
 import type { Visibility } from '../../../lib/log/types'
 import styles from './entries.module.css'
 
-const OTHER: Record<Visibility, Visibility> = {
-  private: 'public',
-  public: 'private'
+const NEXT: Record<Visibility, Visibility> = {
+  auto: 'public',
+  public: 'private',
+  private: 'auto'
 }
 
-const ICONS = { private: EyeOff, public: Eye }
+const ICONS: Record<Visibility, typeof Eye> = { auto: CircleDashed, public: Eye, private: EyeOff }
+
+export const VISIBILITY_LABELS: Record<Visibility, string> = {
+  auto: 'auto',
+  public: 'always',
+  private: 'never'
+}
 
 const ICON_SIZE = 14
 
@@ -18,9 +26,11 @@ type Save = { state: 'idle' } | { state: 'failed'; wanted: Visibility }
 
 export const VisibilitySwitch = ({
   visibility,
+  presence,
   onChange
 }: {
   visibility: Visibility
+  presence: Presence
   onChange: (visibility: Visibility) => Promise<void>
 }) => {
   const [save, setSave] = useState<Save>({ state: 'idle' })
@@ -42,11 +52,12 @@ export const VisibilitySwitch = ({
         type="button"
         className={styles.visibility}
         data-visibility={visibility}
-        aria-label={`${visibility}, make ${OTHER[visibility]}`}
-        onClick={() => choose(OTHER[visibility])}
+        data-presence={presence}
+        aria-label={`${VISIBILITY_LABELS[visibility]}, make ${VISIBILITY_LABELS[NEXT[visibility]]}`}
+        onClick={() => choose(NEXT[visibility])}
       >
         <Icon size={ICON_SIZE} aria-hidden />
-        {visibility}
+        {visibility === 'auto' ? `auto · ${presence}` : VISIBILITY_LABELS[visibility]}
       </button>
       {save.state === 'failed' && (
         <button

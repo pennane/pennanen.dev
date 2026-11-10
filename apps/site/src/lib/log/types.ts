@@ -6,7 +6,23 @@ export type Hint =
   | 'likely-never-played'
   | 'likely-not-a-game'
 
-export type Visibility = 'private' | 'public'
+export type Visibility = 'auto' | 'public' | 'private'
+
+export type ScoreDisplay = 'number' | 'word' | 'both'
+
+export type ScoreWord = { from: number; word: string }
+
+export type KindSettings = {
+  statusesShown: string[]
+  axisLabels: Record<string, string>
+  scoreDisplay: ScoreDisplay
+  scoreWords: ScoreWord[]
+}
+
+export type Presentation = {
+  kinds: Record<string, KindSettings>
+  tagTitles: Record<string, string>
+}
 
 export type Kind = {
   name: string

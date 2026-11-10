@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 import {
+  presenceOf,
   statusLabel,
   tagLabel,
   TIME_SPENT_CHOICES,
@@ -23,7 +24,11 @@ import { useSaveQueue } from '../../_queue/useSaveQueue'
 import { addMoment, changeEntry, deleteMoment } from '../../actions'
 import styles from './editor.module.css'
 
-const VISIBILITIES: Visibility[] = ['public', 'private']
+const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
+  { value: 'auto', label: 'auto, by status' },
+  { value: 'public', label: 'always shown' },
+  { value: 'private', label: 'never shown' }
+]
 const MOMENT_VISIBILITIES: { value: MomentVisibility; label: string }[] = [
   { value: 'inherit', label: 'same as entry' },
   { value: 'private', label: 'private' }
@@ -61,7 +66,7 @@ export const Editor = ({
   const save = (label: string, change: EntryChange) =>
     saves.enqueue(label, () => changeEntry(itemId, change))
 
-  const shown = kind.statusesShown.includes(status) && visibility === 'public'
+  const presence = presenceOf({ status, visibility }, kind.statusesShown)
 
   return (
     <div className={styles.editor}>
@@ -79,7 +84,7 @@ export const Editor = ({
       )}
       <h1 className={styles.title}>{title}</h1>
       <p className={styles.where}>
-        {shown ? (
+        {presence === 'shown' ? (
           <a href={publicPath} target="_blank" rel="noreferrer">
             shown at {publicPath}
           </a>
@@ -103,7 +108,7 @@ export const Editor = ({
 
       <Section label="visibility">
         <Chips
-          options={VISIBILITIES.map((v) => ({ value: v, label: v }))}
+          options={VISIBILITY_CHOICES}
           chosen={visibility}
           onChoose={(next) => {
             setVisibility(next)

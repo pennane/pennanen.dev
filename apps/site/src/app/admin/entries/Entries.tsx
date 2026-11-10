@@ -3,11 +3,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { statusLabel, tagIsWithin, tagLabel, tagWithAncestors } from '../../../lib/log/present'
+import {
+  presenceOf,
+  statusLabel,
+  tagIsWithin,
+  tagLabel,
+  tagWithAncestors
+} from '../../../lib/log/present'
 import type { Visibility } from '../../../lib/log/types'
 import { changeEntry } from '../actions'
 import styles from './entries.module.css'
-import { VisibilitySwitch } from './VisibilitySwitch'
+import { VISIBILITY_LABELS, VisibilitySwitch } from './VisibilitySwitch'
 
 export type ListedEntry = {
   id: number
@@ -25,7 +31,7 @@ type Filter = {
   tag: string | undefined
 }
 
-const VISIBILITIES: Visibility[] = ['private', 'public']
+const VISIBILITIES: Visibility[] = ['auto', 'public', 'private']
 
 const matches = (entry: ListedEntry, { status, visibility, tag }: Filter, query: string) =>
   (!status || entry.status === status) &&
@@ -54,10 +60,12 @@ const syncUrl = (filter: Filter) => {
 export const Entries = ({
   entries: initialEntries,
   statuses,
+  statusesShown,
   initial
 }: {
   entries: ListedEntry[]
   statuses: string[]
+  statusesShown: string[]
   initial: Filter
 }) => {
   const [entries, setEntries] = useState(initialEntries)
@@ -115,7 +123,7 @@ export const Entries = ({
       <Choices
         chosen={filter.visibility}
         anyLabel="anyone"
-        options={VISIBILITIES.map((v) => ({ value: v, label: v }))}
+        options={VISIBILITIES.map((v) => ({ value: v, label: VISIBILITY_LABELS[v] }))}
         onChoose={(visibility) => choose({ visibility })}
       />
       {tags.length > 0 && (
@@ -149,6 +157,7 @@ export const Entries = ({
               </div>
               <VisibilitySwitch
                 visibility={entry.visibility}
+                presence={presenceOf(entry, statusesShown)}
                 onChange={(visibility) => changeVisibility(entry, visibility)}
               />
             </li>

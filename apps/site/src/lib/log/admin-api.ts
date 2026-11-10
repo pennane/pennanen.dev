@@ -6,7 +6,9 @@ import type {
   ItemDetail,
   ItemView,
   Kind,
+  KindSettings,
   NewMoment,
+  Presentation,
   SteamSyncReport
 } from './types'
 
@@ -44,6 +46,11 @@ const send = (method: string, body: unknown): RequestInit => ({
 
 export const logAdmin = {
   kinds: () => call<Kind[]>('/admin/kinds'),
+  settings: () => call<Presentation>('/admin/settings'),
+  putKindSettings: (kind: string, settings: KindSettings) =>
+    call<KindSettings>(`/admin/settings/kinds/${encodeURIComponent(kind)}`, send('PUT', settings)),
+  putTagTitles: (titles: Record<string, string>) =>
+    call<Record<string, string>>('/admin/settings/tag-titles', send('PUT', titles)),
   items: (filter: Record<string, string>) =>
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
   createItem: (kind: string, title: string) =>
