@@ -1,6 +1,6 @@
 # 4. Sources make claims; verdicts are picked when read
 
-**Status:** accepted · 2026-11-09
+**Status:** accepted · 2026-11-09 · amended by [ADR 15](./0015-inherited-verdicts.md), [ADR 17](./0017-outside-takes-set-statuses.md) and [ADR 19](./0019-observations.md)
 
 ## Context
 

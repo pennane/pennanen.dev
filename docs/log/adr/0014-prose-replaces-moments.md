@@ -1,7 +1,8 @@
 # 14. Prose replaces moments
 
 **Status:** accepted · 2026-11-10 · amends [ADR 1](./0001-sqlite-on-the-vps.md),
-[ADR 5](./0005-kinds-defined-in-code.md) and [ADR 6](./0006-isr-with-revalidate.md)
+[ADR 5](./0005-kinds-defined-in-code.md) and [ADR 6](./0006-isr-with-revalidate.md) ·
+amended by [ADR 20](./0020-mentions.md)
 
 ## Context
 

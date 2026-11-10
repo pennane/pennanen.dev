@@ -13,6 +13,10 @@ A kind decides the item's fields, its statuses, and which source gives it
 an identity. Kinds are defined in code; which axes a kind uses, its **title**
 (`games`) and its **description** are set in admin. `thing` is the catch-all
 kind: free-form fields, nothing checked, so an odd item never blocks you.
+A `wine` is what every year of it shares; a `vintage` is one bottling of a
+wine, of a single year or **non-vintage** (blended across years, like most
+Champagne). Every bottle ap drinks is a vintage, so all bottles rank
+together; a wine itself is only ever logged as `want`.
 
 **Relation** — a named link between two items. _Margaux 2015 is a
 `vintage-of` Château Margaux, which is `part-of` Margaux._ Follow the links
@@ -23,12 +27,21 @@ and the bottle is in Margaux.
 **Entry** — ap's take on one item. At most one per item. Holds a status,
 scores, tags, a blurb, and a visibility.
 
+**Logged / known** — an item with an entry is logged: it's in ap's log. An
+item with no entry is only known: a sync came across it (an album in a top
+list, the wine behind a vintage) but nobody put it in the log. Not the same
+as `dismissed`, which is logged and ruled out.
+
 **Status** — where ap is with the item, regardless of what ap thought of it.
 Each kind has its own set. Every kind starts at `untriaged` and can end at
 `dismissed`. For `game`: `untriaged`, `never-played`, `maybe-played`,
 `playing`, `played`, `finished`, `dropped`, `dismissed`. `maybe-played` is the
 honest answer when ap can't remember. Each kind has **shown statuses**, set
 in admin: an `auto` entry shows publicly when its status is one of them.
+`want` is the status for something ap means to get to, from a watchlist,
+to-read shelf or wishlist; it isn't shown by default.
+A status is **set by** ap or by a source's sync. A sync changes only a
+status it set itself; once ap sets one, no sync touches it again.
 
 **Dismissed** — the status for something that doesn't belong in the log at all,
 like Wallpaper Engine in a Steam library. The item is kept so sync won't bring
@@ -38,7 +51,12 @@ it back, but it never shows on public pages.
 `quality`. Axes are their own thing: made, named and ordered in admin, and
 shared by every kind that uses them. Each kind picks its axes; a kind with no
 axes can't be scored. An axis has a key, set once, and a name, which ap can
-change.
+change. Axes come in three sorts. **Own** axes are ap's, and only ap
+sets them. An **outside** axis is ap's rating on another site
+(`letterboxd`, `vivino`). A **crowd** axis is a site's public average.
+Outside and crowd axes are read from claims, never set by hand and never
+ranked. An outside axis suggests a division when ap rates on an own axis; a
+crowd axis only shows.
 
 **Prestige** — the axis that orders things: how high something stands for
 ap, all told, from how much it gave to how it stuck. Not quality: a
@@ -80,6 +98,10 @@ with images and links to other items, shown on the entry's public page
 exactly when the entry is. Pages call it _visions_; each passage in it is a
 vision, such as a dated paragraph _2024-03 replayed, still great_.
 
+**Mention** — a link to another item written in prose. _Realm of the Mad God
+goes with Pendulum._ Mentions are ap's links; relations are what sources say.
+Together they make the graph of items.
+
 ## Sources
 
 **Source** — somewhere item data comes from: Steam, IGDB, or ap by hand.
@@ -87,9 +109,23 @@ vision, such as a dated paragraph _2024-03 replayed, still great_.
 **Claim** — what one source says about an item, kept exactly as received.
 Never edited; a re-sync replaces only that source's claim.
 
+**Outside take** — ap's take recorded on another site: Letterboxd stars, a
+Goodreads shelf and review, a Vivino rating and tasting note. Kept as claims
+from its own source (`letterboxd-take`, `vivino-take`), apart from what the
+site says about the thing itself. Shown alongside the entry, never merged into
+it. Private parts, like the price paid, show only in admin.
+
+**Observation** — something a source said at one moment, kept for good:
+_Pendulum in the 4-week top 5 on 2026-03-14_, _watched Heat again on
+2026-02-01_. Claims say how things are now; observations say what happened
+when.
+
 **Verdict** — the claim that wins for a field. Sources are ranked per field;
 the highest-ranked one with a value wins. ap's own override ranks first,
 always. _Steam claims 412h, IGDB claims nothing, so the verdict is 412h._
+Some fields are **inherited**: when no source of the item itself has a
+value, the verdict comes from the item it's related to, one step away. _A
+vintage with no grapes of its own shows its wine's grapes._
 
 **Identity** — the external ID that says two claims are about the same item.
 For games, the IGDB ID. Optional: an item with no identity is just ap's.
@@ -114,6 +150,11 @@ pick a division, then answer _better or worse than X?_ until it has a rank.
 **Hint** — the importer's guess during triage (`likely-idled`,
 `likely-played`, `likely-never-played`, `likely-not-a-game`). Hints suggest;
 they never set a status.
+
+**Suggestion** — a known item that ap might want to log, such as a saved
+album, or an album by an artist ap has logged. Suggestions wait in admin
+until ap looks; they never fill a queue. Dismissing one logs it as
+`dismissed`, so it isn't suggested again.
 
 **Sync** — pulling fresh claims from a source. Steam syncs nightly and on demand.
 

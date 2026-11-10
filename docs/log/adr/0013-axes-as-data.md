@@ -2,7 +2,8 @@
 
 **Status:** accepted · 2026-11-10 · supersedes the axis labels of
 [ADR 11](./0011-presentation-settings.md) and the axis words of
-[ADR 12](./0012-divisions-and-ranks.md) · amends [ADR 5](./0005-kinds-defined-in-code.md)
+[ADR 12](./0012-divisions-and-ranks.md) · amends [ADR 5](./0005-kinds-defined-in-code.md) ·
+amended by [ADR 18](./0018-axis-sorts.md)
 
 ## Context
 
