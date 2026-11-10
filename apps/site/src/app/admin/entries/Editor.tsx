@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import {
+  divisionName,
   presenceOf,
   statusLabel,
   tagLabel,
@@ -11,6 +12,7 @@ import {
   type TimeSpent
 } from '../../../lib/log/present'
 import type {
+  Axis,
   Division,
   Entry,
   EntryChange,
@@ -19,9 +21,20 @@ import type {
   MomentVisibility,
   Visibility
 } from '../../../lib/log/types'
-import { SaveStatus } from '../_queue/card'
+import { SaveStatus, useKeys } from '../_queue/card'
+import { Compare, compareKeys, type Comparing } from '../_queue/Compare'
+import {
+  divisionOf,
+  neighboursIn,
+  ranksIn,
+  startSearch,
+  type Placement,
+  type Ranked,
+  type Rival,
+  type Search
+} from '../_queue/placing'
 import { useSaveQueue } from '../_queue/useSaveQueue'
-import { addMoment, changeEntry, deleteMoment } from '../actions'
+import { addMoment, changeEntry, deleteMoment, placeEntry } from '../actions'
 import styles from './editor.module.css'
 
 const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
@@ -52,14 +65,18 @@ export const Editor = ({
   subject: { itemId, title, cover, publicPath, entry, moments: initialMoments },
   kind,
   knownTags,
+  ranked,
   onClose,
-  onChange
+  onChange,
+  onPlace
 }: {
   subject: EntrySubject
   kind: Kind
   knownTags: string[]
+  ranked: Ranked
   onClose: () => void
   onChange: (change: EntryChange) => void
+  onPlace: (rival: Rival, placement: Placement) => void
 }) => {
   const [status, setStatus] = useState(entry.status)
   const [visibility, setVisibility] = useState(entry.visibility)
@@ -124,20 +141,36 @@ export const Editor = ({
         />
       </Section>
 
-      {kind.axes.map((axis) => (
-        <DivisionPicker
-          key={axis.key}
-          label={axis.name}
-          divisions={axis.divisions}
-          initial={entry.scores[axis.key]}
-          rank={axis.key === kind.rankedAxis ? entry.rank : undefined}
-          onSave={(division) =>
-            save(`${axis.name} → ${division ?? 'none'}`, {
-              scores: { [axis.key]: division ?? null }
-            })
-          }
-        />
-      ))}
+      {kind.axes.map((axis) =>
+        axis.key === kind.rankedAxis ? (
+          <RankedPicker
+            key={axis.key}
+            axis={axis}
+            rival={{ id: itemId, title, cover }}
+            ranked={ranked}
+            onPlace={(placement) => {
+              onPlace({ id: itemId, title, cover }, placement)
+              const where = `${divisionName(axis, placement.division)} #${placement.index + 1}`
+              saves.enqueue(`${axis.name} → ${where}`, () =>
+                placeEntry(itemId, placement.division, placement.index)
+              )
+            }}
+            onClear={() => save(`${axis.name} → none`, { scores: { [axis.key]: null } })}
+          />
+        ) : (
+          <DivisionPicker
+            key={axis.key}
+            label={axis.name}
+            divisions={axis.divisions}
+            initial={entry.scores[axis.key]}
+            onSave={(division) =>
+              save(`${axis.name} → ${division ?? 'none'}`, {
+                scores: { [axis.key]: division ?? null }
+              })
+            }
+          />
+        )
+      )}
 
       <Section label="time spent">
         <Chips
@@ -227,23 +260,99 @@ const Chips = <T extends string>({
 
 const NO_DIVISION = ''
 
+const NO_KEYS = {}
+
+const neighbourLine = (ranked: Ranked, id: number) => {
+  const neighbours = neighboursIn(ranked, id)
+  if (!neighbours) return undefined
+  const { above, below } = neighbours
+  if (above && below) return `below ${above.title} · above ${below.title}`
+  if (below) return `top of all, above ${below.title}`
+  if (above) return `bottom of all, below ${above.title}`
+  return 'the only one ranked'
+}
+
+const RankedPicker = ({
+  axis,
+  rival,
+  ranked,
+  onPlace,
+  onClear
+}: {
+  axis: Axis
+  rival: Rival
+  ranked: Ranked
+  onPlace: (placement: Placement) => void
+  onClear: () => void
+}) => {
+  const [search, setSearch] = useState<Search>()
+  const division = divisionOf(ranked, rival.id)
+  const rank = ranksIn(ranked).get(rival.id)
+
+  const place = (placement: Placement) => {
+    setSearch(undefined)
+    onPlace(placement)
+  }
+
+  const begin = (key: string) => {
+    const started = startSearch(ranked, key, rival.id)
+    if (started.high === 0) place({ division: key, index: 0 })
+    else setSearch(started)
+  }
+
+  const comparing: Comparing | undefined = search && {
+    ranked,
+    search,
+    id: rival.id,
+    divisionName: divisionName(axis, search.division),
+    onSearch: setSearch,
+    onPlace: place,
+    onBack: () => setSearch(undefined)
+  }
+  useKeys(comparing ? compareKeys(comparing) : NO_KEYS)
+
+  return (
+    <Section label={rank === undefined ? axis.name : `${axis.name} · #${rank}`}>
+      {comparing ? (
+        <Compare {...comparing} />
+      ) : (
+        <>
+          <Chips
+            options={[
+              ...axis.divisions.map((d) => ({ value: d.key, label: d.name })),
+              { value: NO_DIVISION, label: NO_SCORE }
+            ]}
+            chosen={division ?? NO_DIVISION}
+            onChoose={(next) => (next === NO_DIVISION ? onClear() : begin(next))}
+          />
+          {division && (
+            <p className={styles.standing}>
+              <span>{neighbourLine(ranked, rival.id)}</span>
+              <button type="button" className={styles.quiet} onClick={() => begin(division)}>
+                re-place in {divisionName(axis, division)}
+              </button>
+            </p>
+          )}
+        </>
+      )}
+    </Section>
+  )
+}
+
 const DivisionPicker = ({
   label,
   divisions,
   initial,
-  rank,
   onSave
 }: {
   label: string
   divisions: Division[]
   initial: string | undefined
-  rank: number | undefined
   onSave: (division: string | undefined) => void
 }) => {
   const [chosen, setChosen] = useState(initial ?? NO_DIVISION)
-  const [shownRank, setShownRank] = useState(rank)
   return (
-    <Section label={shownRank === undefined ? label : `${label} · #${shownRank}`}>
+    <Section label={label}>
       <Chips
         options={[
           ...divisions.map((d) => ({ value: d.key, label: d.name })),
@@ -252,7 +361,6 @@ const DivisionPicker = ({
         chosen={chosen}
         onChoose={(next) => {
           setChosen(next)
-          setShownRank(undefined)
           onSave(next === NO_DIVISION ? undefined : next)
         }}
       />

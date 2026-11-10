@@ -15,6 +15,8 @@ import {
 } from '../../../lib/log/present'
 import type { EntryChange, Kind, ListedEntry, Visibility } from '../../../lib/log/types'
 import { changeEntry, openEntry } from '../actions'
+import { useRanked } from '../_queue/Compare'
+import { ranksIn, toRanked, type Placement, type Rival } from '../_queue/placing'
 import { Editor, type EntrySubject } from './Editor'
 import styles from './entries.module.css'
 import { VISIBILITY_LABELS, VisibilitySwitch } from './VisibilitySwitch'
@@ -68,7 +70,6 @@ const applyChange = (entry: ListedEntry, change: EntryChange): ListedEntry => ({
   status: change.status ?? entry.status,
   visibility: change.visibility ?? entry.visibility,
   scores: change.scores ? withScores(entry.scores, change.scores) : entry.scores,
-  rank: change.scores || change.status === DISMISSED ? undefined : entry.rank,
   tags: [
     ...entry.tags.filter((t) => !change.removeTags?.includes(t)),
     ...(change.addTags ?? []).filter((t) => !entry.tags.includes(t))
@@ -101,6 +102,8 @@ export const Entries = ({
   initiallyOpen: number | undefined
 }) => {
   const [entries, setEntries] = useState(initialEntries)
+  const { ranked, place, unplace } = useRanked(toRanked(kind, initialEntries))
+  const ranks = useMemo(() => ranksIn(ranked), [ranked])
   const [filter, setFilter] = useState(initial)
   const [query, setQuery] = useState('')
   const [panel, setPanel] = useState<Panel>(
@@ -134,8 +137,21 @@ export const Entries = ({
 
   const allTags = useMemo(() => tagsByUse(entries).map(([tag]) => tag), [entries])
 
-  const patchEntry = (id: number, change: EntryChange) =>
+  const patchEntry = (id: number, change: EntryChange) => {
     setEntries((all) => all.map((e) => (e.id === id ? applyChange(e, change) : e)))
+    if (change.status === DISMISSED || change.scores?.[kind.rankedAxis] === null) unplace(id)
+  }
+
+  const placeEntry = (rival: Rival, placement: Placement) => {
+    place(rival, placement)
+    setEntries((all) =>
+      all.map((e) =>
+        e.id === rival.id
+          ? { ...e, scores: { ...e.scores, [kind.rankedAxis]: placement.division } }
+          : e
+      )
+    )
+  }
 
   const tags = useMemo(() => {
     const counted = tagsByUse(entries.filter((e) => matches(e, { ...filter, tag: undefined }, '')))
@@ -237,7 +253,7 @@ export const Entries = ({
                     {statusLabel(entry.status)}
                     {entry.scores[PRESTIGE] !== undefined &&
                       ` · ${divisionName(findAxis(kind.axes, PRESTIGE), entry.scores[PRESTIGE])}`}
-                    {entry.rank !== undefined && ` #${entry.rank}`}
+                    {ranks.has(entry.id) && ` #${ranks.get(entry.id)}`}
                     {entry.tags.length > 0 && ` · ${entry.tags.map(tagLabel).join(', ')}`}
                   </span>
                 </div>
@@ -268,7 +284,9 @@ export const Entries = ({
             kind={kind}
             knownTags={allTags}
             onClose={() => showPanel(CLOSED)}
+            ranked={ranked}
             onChange={(change) => patchEntry(panel.id, change)}
+            onPlace={placeEntry}
           />
         )}
       </aside>

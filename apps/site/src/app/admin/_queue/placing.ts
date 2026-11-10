@@ -70,3 +70,19 @@ export const withoutRival = (ranked: Ranked, id: number): Ranked =>
       rivals.filter((r) => r.id !== id)
     ])
   )
+
+export const ranksIn = (ranked: Ranked) =>
+  new Map(
+    Object.values(ranked)
+      .flat()
+      .map((rival, i) => [rival.id, i + 1])
+  )
+
+export const divisionOf = (ranked: Ranked, id: number) =>
+  Object.entries(ranked).find(([, rivals]) => rivals.some((r) => r.id === id))?.[0]
+
+export const neighboursIn = (ranked: Ranked, id: number) => {
+  const order = Object.values(ranked).flat()
+  const at = order.findIndex((r) => r.id === id)
+  return at < 0 ? undefined : { above: order[at - 1], below: order[at + 1] }
+}

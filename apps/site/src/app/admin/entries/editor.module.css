@@ -165,3 +165,13 @@
   opacity: 0.4;
   cursor: default;
 }
+
+.standing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0 0;
+  color: var(--foreground-secondary);
+  font-size: 0.875rem;
+}

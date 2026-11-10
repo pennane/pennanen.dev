@@ -48,6 +48,7 @@ export const useKeys = (handlers: Record<string, () => void>) => {
     const onKey = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return
       if (event.target instanceof HTMLInputElement) return
+      if (event.target instanceof HTMLTextAreaElement) return
       const handler = handlers[event.key]
       if (!handler) return
       event.preventDefault()
