@@ -27,12 +27,27 @@
 
 .neighbours {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1rem;
+  font-size: 0.875rem;
+}
+
+.neighboursTop {
+  margin-top: -0.5rem;
+}
+
+.neighboursBottom {
   margin-top: 2rem;
   padding-top: 1rem;
   border-top: 1px solid var(--line-color);
-  font-size: 0.875rem;
+}
+
+.previous,
+.next {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .previous {

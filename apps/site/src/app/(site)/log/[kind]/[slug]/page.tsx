@@ -106,8 +106,18 @@ const neighboursOf = async (item: PublicItem) => {
   return { previous: linkTo(at - 1), next: linkTo(at + 1) }
 }
 
-const Neighbours = ({ previous, next }: { previous?: Neighbour; next?: Neighbour }) => (
-  <nav className={styles.neighbours}>
+const NEIGHBOURS_PLACES = { top: styles.neighboursTop, bottom: styles.neighboursBottom }
+
+const Neighbours = ({
+  previous,
+  next,
+  place
+}: {
+  previous?: Neighbour
+  next?: Neighbour
+  place: keyof typeof NEIGHBOURS_PLACES
+}) => (
+  <nav className={`${styles.neighbours} ${NEIGHBOURS_PLACES[place]}`}>
     {previous && (
       <Link href={previous.href} rel="prev" className={styles.previous}>
         ← {previous.title}
@@ -138,6 +148,7 @@ export default async function ItemPage({ params }: { params: Params }) {
             <Link href={`/log/${item.kind}`}>{kindPlural(item.kind)}</Link>
             <span aria-hidden>/</span>
           </nav>
+          <Neighbours {...neighbours} place="top" />
           {picture && (
             <Image
               className={styles.picture}
@@ -168,7 +179,7 @@ export default async function ItemPage({ params }: { params: Params }) {
         </dl>
       )}
       {item.prose.trim() && <Visions prose={item.prose} />}
-      <Neighbours {...neighbours} />
+      <Neighbours {...neighbours} place="bottom" />
     </article>
   )
 }

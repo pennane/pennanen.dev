@@ -18,7 +18,11 @@ import {
   type View
 } from './view'
 
-type Choice = { label: string; count?: number; view: View }
+type Counted = { value: string; count: number }
+
+type Choice = { label: string; count?: Count; view: View }
+
+type Count = { shown: number; widest: number }
 
 const ChoiceRow = ({
   name,
@@ -44,11 +48,22 @@ const ChoiceRow = ({
                 href={href}
                 replace
                 scroll={false}
-                className={clsx(styles.choice, href === currentHref && styles.chosen)}
+                className={clsx(
+                  styles.choice,
+                  href === currentHref && styles.chosen,
+                  count?.shown === 0 && styles.nothing
+                )}
                 aria-current={href === currentHref ? 'true' : undefined}
               >
                 {label}
-                {count !== undefined && <span className={styles.count}>{count}</span>}
+                {count && (
+                  <span
+                    className={styles.count}
+                    style={{ minWidth: `${String(count.widest).length}ch` }}
+                  >
+                    {count.shown}
+                  </span>
+                )}
               </Link>
             </li>
           )
@@ -60,19 +75,30 @@ const ChoiceRow = ({
 
 const MIN_TO_BE_WORTH_FILTERING = 2
 
-const keepChosen = (counts: { value: string; count: number }[], chosen: string | undefined) =>
+const keepChosen = (counts: Counted[], chosen: string | undefined) =>
   !chosen || counts.some((c) => c.value === chosen)
     ? counts
     : [...counts, { value: chosen, count: 0 }]
 
+const countedWithin = (all: Counted[], narrowed: Counted[]) =>
+  all.map(({ value, count }) => ({
+    value,
+    count: {
+      shown: narrowed.find((n) => n.value === value)?.count ?? 0,
+      widest: count
+    }
+  }))
+
 export const KindBrowser = ({ items, path }: { items: ListedItem[]; path: string }) => {
   const view = parseView(useSearchParams())
   const titleOf = useTagTitle()
-  const statuses = keepChosen(
-    statusesIn(applyView(items, { ...view, status: undefined })),
-    view.status
+  const allStatuses = keepChosen(statusesIn(items), view.status)
+  const allTags = keepChosen(tagsIn(items), view.tag)
+  const statuses = countedWithin(
+    allStatuses,
+    statusesIn(applyView(items, { ...view, status: undefined }))
   )
-  const tags = keepChosen(tagsIn(applyView(items, { ...view, tag: undefined })), view.tag)
+  const tags = countedWithin(allTags, tagsIn(applyView(items, { ...view, tag: undefined })))
   const shown = applyView(items, view)
 
   return (
@@ -87,7 +113,7 @@ export const KindBrowser = ({ items, path }: { items: ListedItem[]; path: string
             view: { ...view, sort }
           }))}
         />
-        {statusesIn(items).length >= MIN_TO_BE_WORTH_FILTERING && (
+        {allStatuses.length >= MIN_TO_BE_WORTH_FILTERING && (
           <ChoiceRow
             name="status"
             path={path}
@@ -102,7 +128,7 @@ export const KindBrowser = ({ items, path }: { items: ListedItem[]; path: string
             ]}
           />
         )}
-        {(tags.length > 0 || view.tag) && (
+        {allTags.length > 0 && (
           <ChoiceRow
             name="tag"
             path={path}
