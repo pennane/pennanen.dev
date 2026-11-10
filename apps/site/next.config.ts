@@ -9,6 +9,13 @@ import remarkMdxImages from 'remark-mdx-images'
 
 const nextConfig: NextConfig = {
   pageExtensions: ['md', 'mdx', 'ts', 'tsx'],
+  outputFileTracingIncludes: {
+    '/log/[kind]/[slug]/*': [
+      './public/fonts/Inter-{Regular,Medium,Bold}.ttf',
+      './public/icons/icon-white-128.png',
+      './public/images/metabg.png'
+    ]
+  },
   webpack: (config, { isServer, dev }) => {
     config.module.rules.push({
       test: /\.mp4$/,

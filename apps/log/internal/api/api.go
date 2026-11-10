@@ -31,6 +31,8 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("GET /public/items", s.publicItems)
 	mux.HandleFunc("GET /public/items/{kind}/{slug}", s.publicItem)
+	mux.HandleFunc("GET /public/rankings", s.publicRankings)
+	mux.HandleFunc("GET /public/rankings/{slug}", s.publicRanking)
 
 	admin := http.NewServeMux()
 	admin.HandleFunc("GET /admin/kinds", s.kinds)
@@ -45,6 +47,12 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("DELETE /admin/moments/{id}", s.deleteMoment)
 	admin.HandleFunc("POST /admin/relations", s.addRelation)
 	admin.HandleFunc("DELETE /admin/relations", s.removeRelation)
+	admin.HandleFunc("GET /admin/rankings", s.listRankings)
+	admin.HandleFunc("POST /admin/rankings", s.createRanking)
+	admin.HandleFunc("GET /admin/rankings/{id}", s.getRanking)
+	admin.HandleFunc("PATCH /admin/rankings/{id}", s.changeRanking)
+	admin.HandleFunc("PUT /admin/rankings/{id}/order", s.putRankingOrder)
+	admin.HandleFunc("DELETE /admin/rankings/{id}", s.deleteRanking)
 	admin.HandleFunc("GET /admin/sync/steam", s.steamSyncStatus)
 	admin.HandleFunc("POST /admin/sync/steam", s.startSteamSync)
 	admin.HandleFunc("POST /admin/backup", s.backupNow)

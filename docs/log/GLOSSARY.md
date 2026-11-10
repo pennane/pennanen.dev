@@ -42,7 +42,19 @@ be scored.
 **Tag** — a free-form label ap puts on an entry: `favorite`, `comfort`,
 `formative`. Nest with a slash for precision: `favorite/all-time`. Tags are
 ap's, so they live on entries; what an item *is* (`co-op`, `jam-game`) is a
-claim, not a tag.
+claim, not a tag. `another-shot` marks something ap wants to try again,
+whatever its status.
+
+**Ranking** — ap's hand-picked, ordered list of items: "games I want to single
+out". Any kinds may mix. Always public, at `/log/ranking/<slug>`. Separate from
+scores; neither changes the other.
+
+**Tier** — a named group inside a ranking (`S`, `all-time`). A ranking is
+either `numbered` (one plain order) or `tiered` (tiers in order, each holding
+its own order).
+
+**Placement** — one item's spot in a ranking, with an optional one-line note
+about why it sits there.
 
 **Notes** — private markdown. Only ap sees it.
 

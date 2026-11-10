@@ -27,6 +27,7 @@ type Triaged = { cards: TriageCard[] }
 
 const UNTRIAGED = 'untriaged'
 const ENJOYMENT = 'enjoyment'
+const ANOTHER_SHOT = 'another-shot'
 const STEAM_TRADING_CARDS = 'Steam Trading Cards'
 const SYNC_POLL_MS = 3000
 
@@ -89,6 +90,7 @@ export const Triage = ({
   const [filter, setFilter] = useState<Filter>('everything')
   const [step, setStep] = useState<Step>({ phase: 'status' })
   const [bulkArmed, setBulkArmed] = useState<Hint>()
+  const [tagToAdd, setTagToAdd] = useState<typeof ANOTHER_SHOT>()
   const saves = useSaveQueue()
   const settledIds = useRef(new Set<number>())
 
@@ -125,6 +127,7 @@ export const Triage = ({
       setHistory((h) => [...h, { cards: triaged }])
       setStep({ phase: 'status' })
       setBulkArmed(undefined)
+      setTagToAdd(undefined)
       saves.enqueue(label, save)
     },
     [saves]
@@ -136,11 +139,12 @@ export const Triage = ({
       settle([current], `${current.title} → ${status}`, () =>
         changeEntry(current.id, {
           status,
-          ...(enjoyment === undefined ? {} : { scores: { [ENJOYMENT]: enjoyment } })
+          ...(enjoyment === undefined ? {} : { scores: { [ENJOYMENT]: enjoyment } }),
+          ...(tagToAdd ? { addTags: [tagToAdd] } : {})
         })
       )
     },
-    [current, settle]
+    [current, settle, tagToAdd]
   )
 
   const choose = useCallback(
@@ -155,6 +159,7 @@ export const Triage = ({
     if (!current) return
     setQueue((q) => [...q.filter((c) => c.id !== current.id), current])
     setStep({ phase: 'status' })
+    setTagToAdd(undefined)
   }, [current])
 
   const undo = useCallback(() => {
@@ -166,7 +171,11 @@ export const Triage = ({
     const ids = last.cards.map((c) => c.id)
     ids.forEach((id) => settledIds.current.delete(id))
     saves.enqueue(`undo ${last.cards.length}`, () =>
-      changeEntries(ids, { status: UNTRIAGED, scores: { [ENJOYMENT]: null } })
+      changeEntries(ids, {
+        status: UNTRIAGED,
+        scores: { [ENJOYMENT]: null },
+        removeTags: [ANOTHER_SHOT]
+      })
     )
   }, [history, saves])
 
@@ -189,8 +198,17 @@ export const Triage = ({
     [bulkArmed, queue, settle]
   )
 
+  const toggleAnotherShot = useCallback(
+    () => setTagToAdd((tag) => (tag ? undefined : ANOTHER_SHOT)),
+    []
+  )
+
   const keys = useMemo(() => {
-    const handlers: Record<string, () => void> = { s: skip, z: undo }
+    const handlers: Record<string, () => void> = {
+      s: skip,
+      z: undo,
+      a: toggleAnotherShot
+    }
     if (step.phase === 'status') {
       statuses.forEach((status, i) => (handlers[String(i + 1)] = () => choose(status)))
     } else {
@@ -201,7 +219,7 @@ export const Triage = ({
       handlers.Escape = () => setStep({ phase: 'status' })
     }
     return handlers
-  }, [step, statuses, choose, commit, skip, undo])
+  }, [step, statuses, choose, commit, skip, undo, toggleAnotherShot])
   useKeys(keys)
 
   const bulkStatus = filter !== 'everything' && filter !== 'no-hint' && BULK_STATUS_FOR_HINT[filter]
@@ -306,6 +324,13 @@ export const Triage = ({
               </button>
             </div>
           )}
+          <button
+            className={styles.filter}
+            aria-pressed={tagToAdd === ANOTHER_SHOT}
+            onClick={toggleAnotherShot}
+          >
+            <kbd>a</kbd> worth another shot
+          </button>
         </article>
       ) : (
         <p className={styles.empty}>

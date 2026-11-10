@@ -121,7 +121,12 @@ func isWebURL(s string) bool {
 
 var registry = map[string]Kind{}
 
+const ReservedForRankings = "ranking"
+
 func register(k Kind) {
+	if k.Name == ReservedForRankings {
+		panic(fmt.Sprintf("kind name %q is reserved for rankings", k.Name))
+	}
 	k.Statuses = append(k.Statuses, Dismissed)
 	registry[k.Name] = k
 }

@@ -44,7 +44,12 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `POST /admin/items/{id}/moments` | `{at, note, visibility, scores, refs, scoresEffect}` |
 | `DELETE /admin/moments/{id}` | |
 | `POST`/`DELETE /admin/relations` | `{fromId, type, toId}` |
+| `GET`/`POST /admin/rankings` | list / create `{name, description}` |
+| `GET`/`PATCH`/`DELETE /admin/rankings/{id}` | ranking with its items / `{name, description}` / remove |
+| `PUT /admin/rankings/{id}/order` | `{layout: "numbered", placements}` or `{layout: "tiered", tiers: [{name, placements}]}`; placement is `{itemId, note}` |
 | `GET`/`POST /admin/sync/steam` | sync status / start |
 | `POST /admin/backup` | back up now |
 | `GET /public/items?kind=` | public entries |
 | `GET /public/items/{kind}/{slug}` | one public entry with its visible moments |
+| `GET /public/rankings` | all rankings |
+| `GET /public/rankings/{slug}` | one ranking; each placement has `kind, title, cover, note`, and `page` when the entry is public |

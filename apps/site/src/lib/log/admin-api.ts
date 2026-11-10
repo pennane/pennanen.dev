@@ -1,3 +1,4 @@
+import { requiredEnv } from './env'
 import type { EntryChange, ItemView, Kind, SteamSyncReport } from './types'
 
 class LogApiError extends Error {
@@ -7,12 +8,6 @@ class LogApiError extends Error {
   ) {
     super(message)
   }
-}
-
-const requiredEnv = (name: string) => {
-  const value = process.env[name]
-  if (!value) throw new Error(`${name} is not set`)
-  return value
 }
 
 const call = async <T>(path: string, init: RequestInit = {}): Promise<T> => {

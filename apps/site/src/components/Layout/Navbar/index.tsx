@@ -50,6 +50,11 @@ const Navbar = () => {
               projects
             </Link>
           </NavItem>
+          <NavItem>
+            <Link className={styles.link} href="/log">
+              log
+            </Link>
+          </NavItem>
         </Stack>
 
         <Stack horizontal alignItems="center" gap={Gap.mSmall}>

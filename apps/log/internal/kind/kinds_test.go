@@ -30,3 +30,12 @@ func TestEveryKindCanBeDismissed(t *testing.T) {
 		}
 	}
 }
+
+func TestRankingIsNotAKindName(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("registered a kind named ranking")
+		}
+	}()
+	register(Kind{Name: ReservedForRankings})
+}

@@ -1,0 +1,51 @@
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.choiceRow {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.choiceName {
+  color: var(--foreground-secondary);
+  opacity: 0.7;
+}
+
+.choices {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.choice {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--line-color);
+  border-radius: 0.2rem;
+  font-weight: 500;
+  color: var(--foreground-secondary);
+  white-space: nowrap;
+}
+
+.choice:hover {
+  text-decoration: none;
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.chosen {
+  color: var(--background);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.empty {
+  color: var(--foreground-secondary);
+  opacity: 0.8;
+}
