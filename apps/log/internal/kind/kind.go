@@ -33,6 +33,7 @@ const (
 
 type Kind struct {
 	Name             string                             `json:"name"`
+	DefaultTitle     string                             `json:"-"`
 	Statuses         []string                           `json:"statuses"`
 	StatusesToScore  []string                           `json:"statusesToScore"`
 	StatusesShown    []string                           `json:"statusesShown"`

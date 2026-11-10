@@ -3,6 +3,7 @@ package store_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -132,5 +133,31 @@ func TestSlugify(t *testing.T) {
 		if got := store.Slugify(in); got != want {
 			t.Errorf("Slugify(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestKindTitleAndDescriptionAreKeptAndATitleIsOwed(t *testing.T) {
+	s := openStore(t)
+	ctx := context.Background()
+	game, _ := kind.Get("game")
+
+	settings, err := s.KindSettings(ctx, game)
+	if err != nil || settings.Title != "games" || settings.Description != "" {
+		t.Fatalf("defaults = %+v, %v", settings, err)
+	}
+
+	settings.Title = "videogames"
+	settings.Description = "what I **played**"
+	if _, err := s.SetKindSettings(ctx, game, settings); err != nil {
+		t.Fatalf("set: %v", err)
+	}
+	kept, _ := s.KindSettings(ctx, game)
+	if kept.Title != "videogames" || kept.Description != "what I **played**" {
+		t.Errorf("kept = %+v", kept)
+	}
+
+	settings.Title = "  "
+	if _, err := s.SetKindSettings(ctx, game, settings); !errors.Is(err, store.ErrInvalid) {
+		t.Errorf("blank title accepted: %v", err)
 	}
 }

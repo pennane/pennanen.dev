@@ -117,7 +117,7 @@ func TestDivisionsMustExistAndStayWhileUsed(t *testing.T) {
 		t.Errorf("removed an axis in use: %v", err)
 	}
 	game, _ := kind.Get("game")
-	if _, err := s.SetKindSettings(ctx, game, store.KindSettings{Axes: []string{kind.Prestige}}); !errors.Is(err, store.ErrConflict) {
+	if _, err := s.SetKindSettings(ctx, game, store.KindSettings{Title: "games", Axes: []string{kind.Prestige}}); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("game dropped an axis in use: %v", err)
 	}
 }

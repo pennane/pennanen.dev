@@ -133,7 +133,11 @@ func (s *Server) putKindSettings(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, store.ErrNotFound)
 		return
 	}
-	var body store.KindSettings
+	body, err := s.Store.KindSettings(r.Context(), k)
+	if err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
 	if !readJSON(w, r, &body) {
 		return
 	}

@@ -96,6 +96,32 @@ func TestPublicShowsOnlyWhatIsPublic(t *testing.T) {
 	}
 }
 
+func TestPublicListCountsProseWordsWithoutTheProse(t *testing.T) {
+	srv := newServer(t)
+	createGame(t, srv, "Outer Wilds", `{"status":"finished","prose":"the **ending** made me  cry\n\nagain"}`)
+	createGame(t, srv, "Hades", `{"status":"finished"}`)
+
+	_, body := call(t, srv, "GET", "/public/items?kind=game", "", "")
+	var items []struct {
+		Slug       string
+		Prose      string
+		ProseWords int
+	}
+	if err := json.Unmarshal([]byte(body), &items); err != nil {
+		t.Fatalf("list: %v %s", err, body)
+	}
+	words := map[string]int{}
+	for _, item := range items {
+		if item.Prose != "" {
+			t.Errorf("list carries prose for %s", item.Slug)
+		}
+		words[item.Slug] = item.ProseWords
+	}
+	if words["outer-wilds"] != 6 || words["hades"] != 0 {
+		t.Errorf("prose words = %v", words)
+	}
+}
+
 func itoa(n int64) string { b, _ := json.Marshal(n); return string(b) }
 
 func TestDismissedStaysOffPublicPages(t *testing.T) {

@@ -36,7 +36,7 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `GET /admin/kinds` | kind definitions, shown statuses and the axes each kind uses, with their divisions |
 | `GET /admin/settings` | axes, per-kind settings and tag titles |
 | `PUT /admin/settings/axes` | every axis `[{key, name, divisions: [{key, name}]}]` in order, divisions best first; a new axis or division without a key gets one from its name; `prestige` stays, and an axis or division in use cannot be removed |
-| `PUT /admin/settings/kinds/{kind}` | `{statusesShown, axes}`: shown statuses and the axis keys the kind uses, in order; a ranked kind keeps `prestige`, and an axis with scores cannot be dropped |
+| `PUT /admin/settings/kinds/{kind}` | `{title, description, statusesShown, axes}`, any left out stay as they are: the title its pages show, a Markdown description, shown statuses and the axis keys the kind uses, in order; a title is required; a ranked kind keeps `prestige`, and an axis with scores cannot be dropped |
 | `PUT /admin/settings/tag-titles` | `{tag: title}` |
 | `GET /admin/entries?kind=` | triaged, undismissed entries with only what the admin list shows, `rank` on ranked ones |
 | `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=&needs=score` | items with verdicts and entries; `needs=score` lists played entries with no score, `needs=match` (with `kind`) unmatched ones |
@@ -58,7 +58,7 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `POST /admin/images/ticket` | `{ticket, path}`: lets a browser upload images for 10 minutes |
 | `POST /images` | `Authorization: Ticket <ticket>`, the image as the body (jpg, png, webp or gif, at most 10 MB); `{name}`, named by its content |
 | `GET /images/{name}` | an uploaded image, cached forever |
-| `GET /public/items?kind=` | public entries; ranked ones carry `rank: {place, of}` counted among public entries |
+| `GET /public/items?kind=` | public entries; ranked ones carry `rank: {place, of}` counted among public entries; each carries `proseWords`, not the prose |
 | `GET /public/items/{kind}/{slug}` | one public entry with its prose |
 | `GET /public/kinds/{kind}` | `{name, untriaged}` |
 | `GET /public/presentation` | axes, per-kind settings and tag titles |

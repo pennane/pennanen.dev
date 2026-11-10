@@ -39,6 +39,7 @@ const (
 func init() {
 	register(Kind{
 		Name:             "game",
+		DefaultTitle:     "games",
 		Statuses:         []string{Untriaged, "never-played", "maybe-played", "playing", "played", "finished", "dropped"},
 		StatusesToScore:  []string{"playing", "played", "finished", "dropped"},
 		StatusesShown:    []string{"maybe-played", "playing", "played", "finished", "dropped"},
@@ -68,6 +69,7 @@ func init() {
 
 	register(Kind{
 		Name:             "thing",
+		DefaultTitle:     "things",
 		Statuses:         []string{Untriaged, "seen"},
 		StatusesToScore:  []string{"seen"},
 		StatusesShown:    []string{"seen"},

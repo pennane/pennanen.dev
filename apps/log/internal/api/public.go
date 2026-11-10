@@ -4,23 +4,25 @@ import (
 	"cmp"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 )
 
 type PublicItem struct {
-	Kind      string            `json:"kind"`
-	Slug      string            `json:"slug"`
-	Fields    map[string]any    `json:"fields"`
-	Status    string            `json:"status"`
-	Scores    map[string]string `json:"scores"`
-	Rank      *PublicRank       `json:"rank,omitempty"`
-	Tags      []string          `json:"tags"`
-	Blurb     string            `json:"blurb"`
-	TimeSpent store.TimeSpent   `json:"timeSpent,omitempty"`
-	UpdatedAt string            `json:"updatedAt"`
-	Prose     string            `json:"prose,omitempty"`
+	Kind       string            `json:"kind"`
+	Slug       string            `json:"slug"`
+	Fields     map[string]any    `json:"fields"`
+	Status     string            `json:"status"`
+	Scores     map[string]string `json:"scores"`
+	Rank       *PublicRank       `json:"rank,omitempty"`
+	Tags       []string          `json:"tags"`
+	Blurb      string            `json:"blurb"`
+	TimeSpent  store.TimeSpent   `json:"timeSpent,omitempty"`
+	UpdatedAt  string            `json:"updatedAt"`
+	Prose      string            `json:"prose,omitempty"`
+	ProseWords int               `json:"proseWords"`
 }
 
 type PublicRank struct {
@@ -184,14 +186,15 @@ func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
 
 func publicItem(v store.ItemView) PublicItem {
 	return PublicItem{
-		Kind:      v.Kind,
-		Slug:      v.Slug,
-		Fields:    v.Verdicts.Values,
-		Status:    v.Entry.Status,
-		Scores:    v.Entry.Scores,
-		Tags:      v.Entry.Tags,
-		Blurb:     v.Entry.Blurb,
-		TimeSpent: v.Entry.TimeSpent,
-		UpdatedAt: v.Entry.UpdatedAt,
+		Kind:       v.Kind,
+		Slug:       v.Slug,
+		Fields:     v.Verdicts.Values,
+		Status:     v.Entry.Status,
+		Scores:     v.Entry.Scores,
+		Tags:       v.Entry.Tags,
+		Blurb:      v.Entry.Blurb,
+		TimeSpent:  v.Entry.TimeSpent,
+		UpdatedAt:  v.Entry.UpdatedAt,
+		ProseWords: len(strings.Fields(v.Entry.Prose)),
 	}
 }

@@ -27,6 +27,8 @@ type Axis struct {
 type Axes []Axis
 
 type KindSettings struct {
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
 	StatusesShown []string `json:"statusesShown"`
 	Axes          []string `json:"axes"`
 }
@@ -174,6 +176,7 @@ func (s *Store) refuseDroppingScored(ctx context.Context, axes Axes) error {
 
 func DefaultKindSettings(k kind.Kind) KindSettings {
 	return KindSettings{
+		Title:         k.DefaultTitle,
 		StatusesShown: slices.Clone(k.StatusesShown),
 		Axes:          slices.Clone(k.DefaultAxes),
 	}
@@ -230,6 +233,9 @@ func (s *Store) SetKindSettings(ctx context.Context, k kind.Kind, settings KindS
 }
 
 func validKindSettings(k kind.Kind, axes Axes, settings KindSettings) error {
+	if strings.TrimSpace(settings.Title) == "" {
+		return fmt.Errorf("%w: %s needs a title", ErrInvalid, k.Name)
+	}
 	for _, status := range settings.StatusesShown {
 		if !k.HasStatus(status) || status == kind.Untriaged || status == kind.Dismissed {
 			return fmt.Errorf("%w: %q is not a status %s can show", ErrInvalid, status, k.Name)
