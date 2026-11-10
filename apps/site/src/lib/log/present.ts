@@ -153,6 +153,11 @@ export type ListedItem = {
   rank: Rank | undefined
   tags: string[]
   lastPlayed: string | undefined
+  poster: string | undefined
+  released: string | undefined
+  genres: string[]
+  developers: string[]
+  playtimeMinutes: number | undefined
 }
 
 export const toListed = (item: PublicItem): ListedItem => ({
@@ -164,15 +169,16 @@ export const toListed = (item: PublicItem): ListedItem => ({
   scores: item.scores,
   rank: item.rank,
   tags: item.tags,
-  lastPlayed: textField(item.fields, 'last_played')
+  lastPlayed: textField(item.fields, 'last_played'),
+  poster: textField(item.fields, 'poster'),
+  released: textField(item.fields, 'released'),
+  genres: listField(item.fields, 'genres'),
+  developers: listField(item.fields, 'developers'),
+  playtimeMinutes: numberField(item.fields, 'playtime_minutes')
 })
 
 export const byTitle = (a: ListedItem, b: ListedItem) => a.title.localeCompare(b.title)
 
-const NEVER_PLAYED = ''
-
-export const byLastPlayed = (a: ListedItem, b: ListedItem) =>
-  (b.lastPlayed ?? NEVER_PLAYED).localeCompare(a.lastPlayed ?? NEVER_PLAYED) || byTitle(a, b)
 
 const placeOf = (item: ListedItem) => item.rank?.place ?? Number.MAX_SAFE_INTEGER
 

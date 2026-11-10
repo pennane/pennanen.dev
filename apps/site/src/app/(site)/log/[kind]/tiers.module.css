@@ -1,0 +1,118 @@
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 0.25rem;
+  background: #111;
+}
+
+.tier {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 3px;
+  min-height: 4.6rem;
+}
+
+.label {
+  display: grid;
+  place-items: center;
+  padding: 0.25rem;
+  color: #111;
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 2px;
+  padding: 2px;
+  background: #1c1c1c;
+}
+
+.tile {
+  position: relative;
+  display: block;
+  width: 3.4rem;
+  aspect-ratio: 3 / 4;
+  background: #333;
+}
+
+.tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.titleTile {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 0.2rem;
+  overflow: hidden;
+  color: #ddd;
+  font-size: 0.55rem;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.caption {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 50%;
+  translate: -50% 0;
+  z-index: 2;
+  max-width: 12rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.2rem;
+  background: #f2f2f2;
+  color: #111;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.tile:hover,
+.tile:focus-visible,
+.tile[data-caption='shown'] {
+  z-index: 1;
+  outline: 2px solid #f2f2f2;
+  outline-offset: -2px;
+  text-decoration: none;
+}
+
+.tile:hover .caption,
+.tile:focus-visible .caption,
+.tile[data-caption='shown'] .caption {
+  visibility: visible;
+}
+
+.nothing {
+  color: var(--foreground-secondary);
+}
+
+@media (max-width: 420px) {
+  .tier {
+    grid-template-columns: 2.5rem 1fr;
+    min-height: 4rem;
+  }
+
+  .label {
+    font-size: 1rem;
+  }
+
+  .tile {
+    width: 2.9rem;
+  }
+}

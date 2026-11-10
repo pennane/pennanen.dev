@@ -1,67 +1,45 @@
-.controls {
+.browser {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 0.5rem;
+}
+
+.switch {
+  display: inline-flex;
+  border: 1px solid var(--line-color);
+  border-radius: 0.25rem;
+  overflow: hidden;
   font-size: 0.875rem;
 }
 
-.choiceRow {
-  display: grid;
-  grid-template-columns: 3.25rem 1fr;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.choiceName {
+.switch button {
+  padding: 0.25rem 0.75rem;
+  border: none;
+  background: transparent;
   color: var(--foreground-secondary);
-  opacity: 0.7;
-}
-
-.choices {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
-.choice {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  letter-spacing: normal;
-  line-height: 1.2;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--line-color);
-  border-radius: 0.2rem;
+  font: inherit;
   font-weight: 500;
-  color: var(--foreground-secondary);
-  white-space: nowrap;
+  cursor: pointer;
 }
 
-.choice:hover {
-  text-decoration: none;
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+.switch button + button {
+  border-left: 1px solid var(--line-color);
 }
 
-.chosen {
+.switch button[aria-pressed='true'] {
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-.nothing {
-  opacity: 0.45;
 }
 
 .count {
-  display: inline-block;
-  text-align: right;
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.55;
-}
-
-.empty {
+  font-size: 0.75rem;
   color: var(--foreground-secondary);
-  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
 }

@@ -5,10 +5,8 @@ import { Suspense } from 'react'
 import { Gap, Stack } from '../../../../components/Stack'
 import { logPublic } from '../../../../lib/log/public-api'
 import { isPublicKind, kindPlural, PUBLIC_KINDS, toListed } from '../../../../lib/log/present'
-import { ItemList } from '../components/ItemRow'
 import logStyles from '../components/log.module.css'
-import { KindBrowser } from './KindBrowser'
-import { applyView, DEFAULT_VIEW } from './view'
+import { DefaultBoard, KindBrowser } from './KindBrowser'
 
 type Params = Promise<{ kind: string }>
 
@@ -32,7 +30,6 @@ export default async function KindPage({ params }: { params: Params }) {
   if (!isPublicKind(kind)) notFound()
   const [listed, { untriaged }] = await Promise.all([logPublic.items(kind), logPublic.kind(kind)])
   const items = listed.map(toListed)
-  const path = `/log/${kind}`
 
   return (
     <Stack gap={Gap.large} alignItems="stretch">
@@ -44,8 +41,8 @@ export default async function KindPage({ params }: { params: Params }) {
       {items.length === 0 ? (
         <p className={logStyles.empty}>Nothing here yet.</p>
       ) : (
-        <Suspense fallback={<ItemList items={applyView(items, DEFAULT_VIEW)} />}>
-          <KindBrowser items={items} path={path} />
+        <Suspense fallback={<DefaultBoard items={items} kind={kind} />}>
+          <KindBrowser items={items} kind={kind} />
         </Suspense>
       )}
       {untriaged > 0 && (

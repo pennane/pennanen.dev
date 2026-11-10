@@ -119,3 +119,7 @@ they never set a status.
 **Visibility** — whether an entry shows publicly: `auto` (default, by its
 status), `public` (always) or `private` (never). Prose has no visibility of
 its own; it follows its entry.
+
+**Tier list** — a kind's shown entries laid out by division on one axis,
+best division first; entries with no score on that axis are left off. It is
+curated: no filters, only a choice of axis.
