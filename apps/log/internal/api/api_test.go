@@ -282,3 +282,26 @@ func TestTimeSpentIsApsWord(t *testing.T) {
 		t.Errorf("unsaid: %s", body)
 	}
 }
+
+func TestSettingsDecideWhatShows(t *testing.T) {
+	srv := newServer(t)
+	createGame(t, srv, "Forgotten", `{"status":"maybe-played"}`)
+	createGame(t, srv, "Backlog", `{"status":"never-played"}`)
+	createGame(t, srv, "Wanted", `{"status":"never-played","visibility":"public"}`)
+
+	settings := `{"statusesShown":["played","never-played"],"axisLabels":{"enjoyment":"liked"},"scoreDisplay":"both","scoreWords":[{"from":80,"word":"loved"},{"from":0,"word":"meh"}]}`
+	if status, body := call(t, srv, "PUT", "/admin/settings/kinds/game", token, settings); status != http.StatusOK || !strings.Contains(body, `"scoreWords":[{"from":0,"word":"meh"},{"from":80,"word":"loved"}]`) {
+		t.Fatalf("put settings: %d %s", status, body)
+	}
+	_, body := call(t, srv, "GET", "/public/items?kind=game", "", "")
+	if strings.Contains(body, `"slug":"forgotten"`) || !strings.Contains(body, `"slug":"backlog"`) || !strings.Contains(body, `"slug":"wanted"`) {
+		t.Errorf("shown after settings: %s", body)
+	}
+	if status, _ := call(t, srv, "PUT", "/admin/settings/kinds/game", token, `{"statusesShown":["dismissed"],"scoreDisplay":"number"}`); status != http.StatusUnprocessableEntity {
+		t.Errorf("dismissed shown: %d", status)
+	}
+	call(t, srv, "PUT", "/admin/settings/tag-titles", token, `{"Another Shot":"worth another shot"}`)
+	if _, body := call(t, srv, "GET", "/public/presentation", "", ""); !strings.Contains(body, `"tagTitles":{"another-shot":"worth another shot"}`) || !strings.Contains(body, `"axisLabels":{"enjoyment":"liked","quality":"quality"}`) {
+		t.Errorf("presentation: %s", body)
+	}
+}

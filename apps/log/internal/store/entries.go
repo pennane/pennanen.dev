@@ -30,8 +30,8 @@ func (s *Store) ChangeEntries(ctx context.Context, itemIDs []int64, change Entry
 }
 
 func normalizedChange(change EntryChange) (EntryChange, error) {
-	if change.Visibility != nil && *change.Visibility != Private && *change.Visibility != Public {
-		return change, fmt.Errorf("%w: visibility must be private or public", ErrInvalid)
+	if change.Visibility != nil && !slices.Contains(Visibilities, *change.Visibility) {
+		return change, fmt.Errorf("%w: visibility must be one of %v", ErrInvalid, Visibilities)
 	}
 	if change.TimeSpent != nil && *change.TimeSpent != TimeSpentUnsaid && !slices.Contains(TimeSpentChoices, *change.TimeSpent) {
 		return change, fmt.Errorf("%w: time spent must be one of %v, or empty to unsay it", ErrInvalid, TimeSpentChoices)

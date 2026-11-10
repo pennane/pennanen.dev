@@ -49,8 +49,55 @@ func (s *Server) publicKind(w http.ResponseWriter, r *http.Request) {
 	respond(w, http.StatusOK, PublicKind{Name: k.Name, Untriaged: untriaged}, err)
 }
 
+type Presentation struct {
+	Kinds     map[string]store.KindSettings `json:"kinds"`
+	TagTitles store.TagTitles               `json:"tagTitles"`
+}
+
+func (s *Server) presentation(r *http.Request) (Presentation, error) {
+	kinds, err := s.Store.AllKindSettings(r.Context())
+	if err != nil {
+		return Presentation{}, err
+	}
+	titles, err := s.Store.TagTitles(r.Context())
+	return Presentation{Kinds: kinds, TagTitles: titles}, err
+}
+
+func (s *Server) publicPresentation(w http.ResponseWriter, r *http.Request) {
+	presentation, err := s.presentation(r)
+	respond(w, http.StatusOK, presentation, err)
+}
+
+type publicRule func(store.ItemView) bool
+
+func (s *Server) publicRule(r *http.Request) (publicRule, error) {
+	kinds, err := s.Store.AllKindSettings(r.Context())
+	if err != nil {
+		return nil, err
+	}
+	return func(v store.ItemView) bool {
+		if v.Entry == nil {
+			return false
+		}
+		switch v.Entry.Visibility {
+		case store.Public:
+			return v.Entry.Status != kind.Dismissed
+		case store.Auto:
+			settings, known := kinds[v.Kind]
+			return known && settings.Shows(v.Entry.Status)
+		default:
+			return false
+		}
+	}, nil
+}
+
 func (s *Server) publicItems(w http.ResponseWriter, r *http.Request) {
-	views, err := s.Store.ListItems(r.Context(), store.ItemFilter{Kind: r.URL.Query().Get("kind"), Visibility: store.Public})
+	isPublic, err := s.publicRule(r)
+	if err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
+	views, err := s.Store.ListItems(r.Context(), store.ItemFilter{Kind: r.URL.Query().Get("kind")})
 	if err != nil {
 		respond(w, 0, nil, err)
 		return
@@ -65,6 +112,11 @@ func (s *Server) publicItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
+	isPublic, err := s.publicRule(r)
+	if err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
 	view, err := s.Store.GetItemBySlug(r.Context(), r.PathValue("kind"), r.PathValue("slug"))
 	if err == nil && !isPublic(view) {
 		err = store.ErrNotFound
@@ -74,7 +126,7 @@ func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	item := publicItem(view)
-	refs, err := s.publicRefs(r, view.Moments)
+	refs, err := s.publicRefs(r, view.Moments, isPublic)
 	if err != nil {
 		respond(w, 0, nil, err)
 		return
@@ -94,7 +146,7 @@ func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, item)
 }
 
-func (s *Server) publicRefs(r *http.Request, moments []store.Moment) (map[int64]PublicRef, error) {
+func (s *Server) publicRefs(r *http.Request, moments []store.Moment, isPublic publicRule) (map[int64]PublicRef, error) {
 	var ids []int64
 	for _, m := range moments {
 		ids = append(ids, m.Refs...)
@@ -110,14 +162,6 @@ func (s *Server) publicRefs(r *http.Request, moments []store.Moment) (map[int64]
 		}
 	}
 	return refs, nil
-}
-
-func isPublic(v store.ItemView) bool {
-	if v.Entry == nil || v.Entry.Visibility != store.Public {
-		return false
-	}
-	k, known := kind.Get(v.Kind)
-	return known && k.Shows(v.Entry.Status)
 }
 
 func publicItem(v store.ItemView) PublicItem {

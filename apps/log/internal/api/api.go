@@ -35,11 +35,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /public/items", s.publicItems)
 	mux.HandleFunc("GET /public/items/{kind}/{slug}", s.publicItem)
 	mux.HandleFunc("GET /public/kinds/{kind}", s.publicKind)
+	mux.HandleFunc("GET /public/presentation", s.publicPresentation)
 	mux.HandleFunc("GET /public/rankings", s.publicRankings)
 	mux.HandleFunc("GET /public/rankings/{slug}", s.publicRanking)
 
 	admin := http.NewServeMux()
 	admin.HandleFunc("GET /admin/kinds", s.kinds)
+	admin.HandleFunc("GET /admin/settings", s.publicPresentation)
+	admin.HandleFunc("PUT /admin/settings/kinds/{kind}", s.putKindSettings)
+	admin.HandleFunc("PUT /admin/settings/tag-titles", s.putTagTitles)
 	admin.HandleFunc("GET /admin/items", s.listItems)
 	admin.HandleFunc("POST /admin/items", s.createItem)
 	admin.HandleFunc("GET /admin/items/{id}", s.getItem)
@@ -83,7 +87,45 @@ func (s *Server) requireAdmin(next http.Handler) http.Handler {
 }
 
 func (s *Server) kinds(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, kind.All())
+	settings, err := s.Store.AllKindSettings(r.Context())
+	if err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
+	kinds := kind.All()
+	for i, k := range kinds {
+		kinds[i].StatusesShown = settings[k.Name].StatusesShown
+	}
+	writeJSON(w, http.StatusOK, kinds)
+}
+
+func (s *Server) putKindSettings(w http.ResponseWriter, r *http.Request) {
+	k, known := kind.Get(r.PathValue("kind"))
+	if !known {
+		respond(w, 0, nil, store.ErrNotFound)
+		return
+	}
+	var body store.KindSettings
+	if !readJSON(w, r, &body) {
+		return
+	}
+	settings, err := s.Store.SetKindSettings(r.Context(), k, body)
+	if err == nil {
+		s.changed()
+	}
+	respond(w, http.StatusOK, settings, err)
+}
+
+func (s *Server) putTagTitles(w http.ResponseWriter, r *http.Request) {
+	var body store.TagTitles
+	if !readJSON(w, r, &body) {
+		return
+	}
+	titles, err := s.Store.SetTagTitles(r.Context(), body)
+	if err == nil {
+		s.changed()
+	}
+	respond(w, http.StatusOK, titles, err)
 }
 
 func (s *Server) listItems(w http.ResponseWriter, r *http.Request) {

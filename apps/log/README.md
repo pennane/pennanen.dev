@@ -33,7 +33,10 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 
 | | |
 |---|---|
-| `GET /admin/kinds` | kind definitions |
+| `GET /admin/kinds` | kind definitions, shown statuses from settings |
+| `GET /admin/settings` | per-kind settings and tag titles |
+| `PUT /admin/settings/kinds/{kind}` | shown statuses, axis labels, score display and words |
+| `PUT /admin/settings/tag-titles` | `{tag: title}` |
 | `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=&needs=score` | items with verdicts and entries; `needs=score` lists played entries with no score, `needs=match` (with `kind`) unmatched ones |
 | `POST /admin/items` | `{kind, title, fields}` |
 | `GET /admin/items/{id}` | item with claims, moments, relations |
@@ -57,5 +60,6 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `GET /public/items?kind=` | public entries |
 | `GET /public/items/{kind}/{slug}` | one public entry with its visible moments |
 | `GET /public/kinds/{kind}` | `{name, untriaged}` |
+| `GET /public/presentation` | per-kind settings and tag titles |
 | `GET /public/rankings` | all rankings |
 | `GET /public/rankings/{slug}` | one ranking; each placement has `kind, title, cover, note`, and `page` when the entry is public |

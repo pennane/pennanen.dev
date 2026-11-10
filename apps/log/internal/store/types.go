@@ -16,11 +16,14 @@ var (
 type Visibility string
 
 const (
+	Auto    Visibility = "auto"
 	Private Visibility = "private"
 	Public  Visibility = "public"
 )
 
-const NewEntryVisibility = Public
+var Visibilities = []Visibility{Auto, Public, Private}
+
+const NewEntryVisibility = Auto
 
 type TimeSpent string
 

@@ -26,8 +26,8 @@ scores, tags, notes, a blurb, and a visibility.
 Each kind has its own set. Every kind starts at `untriaged` and can end at
 `dismissed`. For `game`: `untriaged`, `never-played`, `maybe-played`,
 `playing`, `played`, `finished`, `dropped`, `dismissed`. `maybe-played` is the
-honest answer when ap can't remember. Each kind also lists the statuses it
-**shows** publicly; for `game` those are the ones where ap played it.
+honest answer when ap can't remember. Each kind has **shown statuses**, set
+in admin: an `auto` entry shows publicly when its status is one of them.
 
 **Dismissed** — the status for something that doesn't belong in the log at all,
 like Wallpaper Engine in a Steam library. The item is kept so sync won't bring
@@ -38,14 +38,20 @@ it), `quality` (is it well made). They are independent: a masterpiece can
 bore, trash can delight. Each kind lists its axes; a kind with no axes can't
 be scored.
 
+**Axis label** — what public pages call an axis. The axis keeps its key.
+
 **Score** — a number from 0 to 100 on one axis. Always optional; nothing is owed.
+
+**Score word** — a word shown for a score range, like `loved` from 88 up. A
+kind shows scores as a number, a word, or both.
 
 **Tag** — a free-form label ap puts on an entry: `favorite`, `comfort`,
 `formative`. Nest with a slash for precision: `favorite/all-time`. Tags are
 ap's, so they live on entries; what an item *is* (`co-op`, `jam-game`) is a
 claim, not a tag. `another-shot` marks something ap wants to try again,
 whatever its status. `idled` marks a game ap ran for trading cards, whether or
-not ap also played it.
+not ap also played it. A tag's **title** is what public pages show for it;
+the tag itself is its id.
 
 **Ranking** — ap's hand-picked, ordered list of items: "games I want to single
 out". Any kinds may mix. Always public, at `/log/ranking/<slug>`. Separate from
@@ -106,7 +112,7 @@ they never set a status.
 
 **Sync** — pulling fresh claims from a source. Steam syncs nightly and on demand.
 
-**Visibility** — who can see an entry: `public` (default) or `private`;
-later maybe `unlisted` (reachable by link, not listed). A moment is `inherit`
+**Visibility** — whether an entry shows publicly: `auto` (default, by its
+status), `public` (always) or `private` (never). A moment is `inherit`
 (default, same as its entry) or `private`, so it can never be more visible
 than its entry.

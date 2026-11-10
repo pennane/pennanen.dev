@@ -134,6 +134,11 @@ func (s *Server) publicRanking(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
+	isPublic, err := s.publicRule(r)
+	if err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
 	views, err := s.Store.GetItems(r.Context(), placedItemIDs(ranking))
 	if err != nil {
 		respond(w, 0, nil, err)
