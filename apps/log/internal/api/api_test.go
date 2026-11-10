@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/api"
 	"github.com/pennane/pennanen.dev/apps/log/internal/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 )
 
@@ -24,7 +26,8 @@ func newServer(t *testing.T) *httptest.Server {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	srv := httptest.NewServer((&api.Server{Store: store.New(d), AdminToken: token}).Handler())
+	pictures := &images.Store{Dir: t.TempDir()}
+	srv := httptest.NewServer((&api.Server{Store: store.New(d), AdminToken: token, Images: pictures}).Handler())
 	t.Cleanup(srv.Close)
 	return srv
 }
@@ -72,20 +75,18 @@ func TestPublicShowsOnlyWhatIsPublic(t *testing.T) {
 	}
 
 	call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token,
-		`{"status":"finished","visibility":"public","blurb":"go play it","scores":{"prestige":"s"},"addTags":["favorite/all-time"]}`)
-	call(t, srv, "POST", "/admin/items/"+id+"/moments", token, `{"at":"2024-01-02","note":"public moment"}`)
-	call(t, srv, "POST", "/admin/items/"+id+"/moments", token, `{"at":"2024-01-03","note":"private moment","visibility":"private"}`)
+		`{"status":"finished","visibility":"public","blurb":"go play it","prose":"**2024-01-02** the ending","scores":{"prestige":"s"},"addTags":["favorite/all-time"]}`)
 
 	status, body = call(t, srv, "GET", "/public/items/game/outer-wilds", "", "")
 	if status != http.StatusOK {
 		t.Fatalf("public: %d %s", status, body)
 	}
-	for _, leaked := range []string{"private moment", "claims"} {
+	for _, leaked := range []string{"claims"} {
 		if strings.Contains(body, leaked) {
 			t.Errorf("public item leaks %q: %s", leaked, body)
 		}
 	}
-	for _, shown := range []string{"go play it", "public moment", `"prestige":"s"`, "favorite/all-time"} {
+	for _, shown := range []string{"go play it", "the ending", `"prestige":"s"`, "favorite/all-time"} {
 		if !strings.Contains(body, shown) {
 			t.Errorf("public item misses %q: %s", shown, body)
 		}
@@ -271,5 +272,47 @@ func TestPublicRankCountsOnlyPublicEntries(t *testing.T) {
 	_, body = call(t, srv, "GET", "/public/items/game/celeste", "", "")
 	if !strings.Contains(body, `"rank":{"place":1,"of":2}`) {
 		t.Errorf("celeste after move: %s", body)
+	}
+}
+
+func uploadImage(t *testing.T, srv *httptest.Server, ticket string, body []byte) (int, string) {
+	t.Helper()
+	req, _ := http.NewRequest("POST", srv.URL+"/images", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Ticket "+ticket)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	b, _ := io.ReadAll(res.Body)
+	return res.StatusCode, string(b)
+}
+
+func TestImagesUploadWithATicketAndServePublicly(t *testing.T) {
+	srv := newServer(t)
+	gif := []byte("GIF89a\x01\x00\x01\x00\x00\x00\x00;")
+
+	if status, _ := uploadImage(t, srv, "123.forged", gif); status != http.StatusUnauthorized {
+		t.Errorf("forged ticket: %d", status)
+	}
+	status, body := call(t, srv, "POST", "/admin/images/ticket", token, "")
+	if status != http.StatusOK {
+		t.Fatalf("ticket: %d %s", status, body)
+	}
+	var ticket api.UploadTicket
+	json.Unmarshal([]byte(body), &ticket)
+
+	if status, _ := uploadImage(t, srv, ticket.Ticket, []byte("not an image")); status != http.StatusUnprocessableEntity {
+		t.Errorf("text upload: %d", status)
+	}
+	status, body = uploadImage(t, srv, ticket.Ticket, gif)
+	if status != http.StatusCreated {
+		t.Fatalf("upload: %d %s", status, body)
+	}
+	var uploaded api.UploadedImage
+	json.Unmarshal([]byte(body), &uploaded)
+	status, body = call(t, srv, "GET", "/images/"+uploaded.Name, "", "")
+	if status != http.StatusOK || body != string(gif) {
+		t.Errorf("serve %s: %d", uploaded.Name, status)
 	}
 }

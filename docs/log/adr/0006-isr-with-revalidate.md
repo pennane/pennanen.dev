@@ -1,6 +1,6 @@
 # 6. Public pages use ISR, revalidated by the VPS
 
-**Status:** accepted · 2026-11-09
+**Status:** accepted · 2026-11-09 · prose: [ADR 14](./0014-prose-replaces-moments.md)
 
 ## Context
 

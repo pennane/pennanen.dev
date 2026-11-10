@@ -104,20 +104,21 @@ func TestEntryRulesFollowKind(t *testing.T) {
 	}
 }
 
-func TestMomentsKeepTheirRefs(t *testing.T) {
+func TestProseIsKeptUntilChanged(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
 	id, _ := s.CreateItem(ctx, "game", "Outer Wilds", nil)
-	other, _ := s.CreateItem(ctx, "thing", "Rainy weekend", nil)
-	if _, err := s.AddMoment(ctx, id, store.NewMoment{At: "2024-03-01", Note: "replayed", Refs: []int64{other}}); err != nil {
+	prose := "## the ending\n\n![](/log/images/abc.png) still thinking about it"
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{Prose: &prose}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.AddMoment(ctx, id, store.NewMoment{At: "2025-01-01", Note: "again"}); err != nil {
+	blurb := "go play it"
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{Blurb: &blurb}); err != nil {
 		t.Fatal(err)
 	}
 	v, _ := s.GetItem(ctx, id)
-	if len(v.Moments) != 2 || v.Moments[1].Refs[0] != other {
-		t.Errorf("entry %+v moments %+v", v.Entry, v.Moments)
+	if v.Entry.Prose != prose {
+		t.Errorf("prose = %q", v.Entry.Prose)
 	}
 }
 

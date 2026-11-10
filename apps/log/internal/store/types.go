@@ -38,13 +38,6 @@ const (
 
 var TimeSpentChoices = []TimeSpent{NotEnough, ABit, JustRight, ALot, TooMuch}
 
-type MomentVisibility string
-
-const (
-	InheritFromEntry MomentVisibility = "inherit"
-	MomentPrivate    MomentVisibility = "private"
-)
-
 type Item struct {
 	ID        int64  `json:"id"`
 	Kind      string `json:"kind"`
@@ -56,20 +49,12 @@ type Entry struct {
 	Status     string            `json:"status"`
 	Visibility Visibility        `json:"visibility"`
 	Blurb      string            `json:"blurb"`
+	Prose      string            `json:"prose"`
 	TimeSpent  TimeSpent         `json:"timeSpent,omitempty"`
 	Scores     map[string]string `json:"scores"`
 	Rank       int               `json:"rank,omitempty"`
 	Tags       []string          `json:"tags"`
 	UpdatedAt  string            `json:"updatedAt"`
-}
-
-type Moment struct {
-	ID         int64            `json:"id"`
-	ItemID     int64            `json:"itemId"`
-	At         string           `json:"at"`
-	Note       string           `json:"note"`
-	Visibility MomentVisibility `json:"visibility"`
-	Refs       []int64          `json:"refs"`
 }
 
 type Relation struct {
@@ -84,7 +69,6 @@ type ItemView struct {
 	Entry     *Entry           `json:"entry"`
 	Hint      kind.Hint        `json:"hint,omitempty"`
 	Claims    []verdict.Claim  `json:"claims,omitempty"`
-	Moments   []Moment         `json:"moments,omitempty"`
 	Relations []Relation       `json:"relations,omitempty"`
 }
 
@@ -92,17 +76,11 @@ type EntryChange struct {
 	Status     *string            `json:"status"`
 	Visibility *Visibility        `json:"visibility"`
 	Blurb      *string            `json:"blurb"`
+	Prose      *string            `json:"prose"`
 	TimeSpent  *TimeSpent         `json:"timeSpent"`
 	Scores     map[string]*string `json:"scores"`
 	AddTags    []string           `json:"addTags"`
 	RemoveTags []string           `json:"removeTags"`
-}
-
-type NewMoment struct {
-	At         string           `json:"at"`
-	Note       string           `json:"note"`
-	Visibility MomentVisibility `json:"visibility"`
-	Refs       []int64          `json:"refs"`
 }
 
 type ItemFilter struct {

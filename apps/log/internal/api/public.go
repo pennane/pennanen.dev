@@ -7,7 +7,6 @@ import (
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 type PublicItem struct {
@@ -21,13 +20,7 @@ type PublicItem struct {
 	Blurb     string            `json:"blurb"`
 	TimeSpent store.TimeSpent   `json:"timeSpent,omitempty"`
 	UpdatedAt string            `json:"updatedAt"`
-	Moments   []PublicMoment    `json:"moments,omitempty"`
-}
-
-type PublicMoment struct {
-	At   string      `json:"at"`
-	Note string      `json:"note"`
-	Refs []PublicRef `json:"refs"`
+	Prose     string            `json:"prose,omitempty"`
 }
 
 type PublicRank struct {
@@ -64,12 +57,6 @@ func withRank(item PublicItem, rank PublicRank, ranked bool) PublicItem {
 		item.Rank = &rank
 	}
 	return item
-}
-
-type PublicRef struct {
-	Kind  string `json:"kind"`
-	Slug  string `json:"slug"`
-	Title string `json:"title"`
 }
 
 type PublicKind struct {
@@ -191,42 +178,8 @@ func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
 	}
 	rank, ranked := ranks[view.ID]
 	item := withRank(publicItem(view), rank, ranked)
-	refs, err := s.publicRefs(r, view.Moments, isPublic)
-	if err != nil {
-		respond(w, 0, nil, err)
-		return
-	}
-	for _, m := range view.Moments {
-		if m.Visibility == store.MomentPrivate {
-			continue
-		}
-		pm := PublicMoment{At: m.At, Note: m.Note, Refs: []PublicRef{}}
-		for _, id := range m.Refs {
-			if ref, shown := refs[id]; shown {
-				pm.Refs = append(pm.Refs, ref)
-			}
-		}
-		item.Moments = append(item.Moments, pm)
-	}
+	item.Prose = view.Entry.Prose
 	writeJSON(w, http.StatusOK, item)
-}
-
-func (s *Server) publicRefs(r *http.Request, moments []store.Moment, isPublic publicRule) (map[int64]PublicRef, error) {
-	var ids []int64
-	for _, m := range moments {
-		ids = append(ids, m.Refs...)
-	}
-	views, err := s.Store.GetItems(r.Context(), ids)
-	if err != nil {
-		return nil, err
-	}
-	refs := map[int64]PublicRef{}
-	for _, v := range views {
-		if isPublic(v) {
-			refs[v.ID] = PublicRef{Kind: v.Kind, Slug: v.Slug, Title: verdict.Title(v.Verdicts)}
-		}
-	}
-	return refs, nil
 }
 
 func publicItem(v store.ItemView) PublicItem {

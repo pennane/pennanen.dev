@@ -10,6 +10,7 @@ import (
 const (
 	lastNumberScoreVersion = 6
 	lastPerKindAxesVersion = 7
+	lastMomentsVersion     = 8
 )
 
 func openAt(t *testing.T, version int) *sql.DB {
@@ -166,5 +167,53 @@ func TestDivisionsBecomeTiersOnSharedAxes(t *testing.T) {
 	wantAxes := `[{"key":"prestige","name":"prestige","divisions":` + tiers + `},{"key":"quality","name":"laatu","divisions":` + tiers + `}]`
 	if settings["axes"] != wantAxes {
 		t.Errorf("axes = %s", settings["axes"])
+	}
+}
+
+func TestShownMomentsBecomeProseAndAllAreArchived(t *testing.T) {
+	ctx := context.Background()
+	d := openAt(t, lastMomentsVersion)
+	if _, err := d.ExecContext(ctx, `
+		INSERT INTO item (id, kind, slug) VALUES (1, 'game', 'hades'), (2, 'game', 'celeste'), (3, 'game', 'fez');
+		INSERT INTO entry (item_id, status) VALUES (1, 'finished'), (2, 'finished'), (3, 'finished');
+		INSERT INTO moment (id, item_id, at, note, visibility) VALUES
+			(1, 1, '2023-05-01', 'first run', 'inherit'),
+			(2, 1, '2024-03-01', 'replayed, still great', 'inherit'),
+			(3, 1, '2024-04-01', 'only for me', 'private'),
+			(4, 2, '2022-01-01', 'secret', 'private'),
+			(5, 3, '2021-01-01', '', 'inherit');
+		INSERT INTO moment_ref (moment_id, item_id) VALUES (2, 2);`); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+
+	want := map[string]string{
+		"hades":   "**2024-03-01** replayed, still great\n\n**2023-05-01** first run",
+		"celeste": "",
+		"fez":     "",
+	}
+	for slug, prose := range want {
+		var got string
+		if err := d.QueryRowContext(ctx, `SELECT e.prose FROM entry e JOIN item i ON i.id = e.item_id WHERE i.slug = ?`, slug).Scan(&got); err != nil {
+			t.Fatal(err)
+		}
+		if got != prose {
+			t.Errorf("%s prose = %q, want %q", slug, got, prose)
+		}
+	}
+	var archived, archivedRefs int
+	d.QueryRowContext(ctx, `SELECT count(*) FROM moment_archive`).Scan(&archived)
+	d.QueryRowContext(ctx, `SELECT count(*) FROM moment_ref_archive`).Scan(&archivedRefs)
+	if archived != 5 || archivedRefs != 1 {
+		t.Errorf("archived %d moments and %d refs, want 5 and 1", archived, archivedRefs)
+	}
+	for _, gone := range []string{"moment", "moment_ref"} {
+		var n int
+		d.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, gone).Scan(&n)
+		if n != 0 {
+			t.Errorf("table %s still exists", gone)
+		}
 	}
 }

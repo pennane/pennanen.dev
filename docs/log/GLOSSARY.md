@@ -74,8 +74,10 @@ playtime stays private, and public pages show only this, when ap says it.
 
 **Blurb** — public text, written for others, shown on the item's page.
 
-**Moment** — a dated note on an entry: _replayed 2024, still great_. May
-point at other items.
+**Prose** — what ap writes about an entry: one formatted document per entry,
+with images and links to other items, shown on the entry's public page
+exactly when the entry is. Pages call it _visions_; each passage in it is a
+vision, such as a dated paragraph _2024-03 replayed, still great_.
 
 ## Sources
 
@@ -115,6 +117,5 @@ they never set a status.
 **Sync** — pulling fresh claims from a source. Steam syncs nightly and on demand.
 
 **Visibility** — whether an entry shows publicly: `auto` (default, by its
-status), `public` (always) or `private` (never). A moment is `inherit`
-(default, same as its entry) or `private`, so it can never be more visible
-than its entry.
+status), `public` (always) or `private` (never). Prose has no visibility of
+its own; it follows its entry.

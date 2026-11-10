@@ -40,7 +40,7 @@ func (b *Backup) Run(ctx context.Context) (string, error) {
 		return "", err
 	}
 	key := "backups/log-" + time.Now().UTC().Format("2006-01-02T150405Z") + ".db.gz"
-	return key, b.Target.put(ctx, key, compressed)
+	return key, b.Target.Put(ctx, key, compressed, "application/gzip")
 }
 
 func gzipFile(path string) ([]byte, error) {
@@ -60,13 +60,13 @@ func gzipFile(path string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (r R2) put(ctx context.Context, key string, body []byte) error {
+func (r R2) Put(ctx context.Context, key string, body []byte, contentType string) error {
 	endpoint := fmt.Sprintf("https://%s.r2.cloudflarestorage.com/%s/%s", r.AccountID, r.Bucket, key)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/gzip")
+	req.Header.Set("Content-Type", contentType)
 	sum := sha256.Sum256(body)
 	Sign(req, hex.EncodeToString(sum[:]), Credentials{
 		AccessKeyID:     r.AccessKeyID,

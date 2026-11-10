@@ -16,6 +16,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/backup"
 	"github.com/pennane/pennanen.dev/apps/log/internal/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
+	"github.com/pennane/pennanen.dev/apps/log/internal/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/jobs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/revalidate"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
@@ -48,7 +49,13 @@ func run() error {
 		Debounce: 5 * time.Second,
 	}
 
-	server := &api.Server{Store: st, AdminToken: os.Getenv("LOG_ADMIN_TOKEN"), Changed: notifier.Changed}
+	imageDir := env("LOG_IMAGES", filepath.Join(filepath.Dir(dbPath), "images"))
+	if err := os.MkdirAll(imageDir, 0o755); err != nil {
+		return fmt.Errorf("image directory: %w", err)
+	}
+	pictures := &images.Store{Dir: imageDir}
+
+	server := &api.Server{Store: st, AdminToken: os.Getenv("LOG_ADMIN_TOKEN"), Changed: notifier.Changed, Images: pictures}
 	if server.AdminToken == "" {
 		slog.Warn("LOG_ADMIN_TOKEN is empty; admin endpoints will refuse every request")
 	}
@@ -82,6 +89,7 @@ func run() error {
 	if target, configured := r2FromEnv(); configured {
 		b := &backup.Backup{DB: database, ScratchDir: filepath.Dir(dbPath), Target: target}
 		server.Backup = b.Run
+		pictures.Mirror = target.Put
 		daily = append(daily, jobs.Job{Name: "backup", Run: func(ctx context.Context) error {
 			key, err := b.Run(ctx)
 			if err == nil {

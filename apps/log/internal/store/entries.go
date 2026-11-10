@@ -107,10 +107,11 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 			status = coalesce(?, status),
 			visibility = coalesce(?, visibility),
 			blurb = coalesce(?, blurb),
+			prose = coalesce(?, prose),
 			time_spent = CASE WHEN ? IS NULL THEN time_spent ELSE nullif(?, '') END,
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 		WHERE item_id = ?`,
-		change.Status, change.Visibility, change.Blurb, change.TimeSpent, change.TimeSpent, itemID); err != nil {
+		change.Status, change.Visibility, change.Blurb, change.Prose, change.TimeSpent, change.TimeSpent, itemID); err != nil {
 		return err
 	}
 	if change.Status != nil && *change.Status == kind.Dismissed {

@@ -11,7 +11,7 @@ partly public at `/log`. Words: [GLOSSARY](./GLOSSARY.md). Decisions: [adr/](./a
 2. **Identity** — IGDB matching for games; manual-match queue for misses ([ADR 10](./adr/0010-igdb.md)).
 3. **Admin** — `/admin` PWA: triage (with bulk actions) first, then the
    add-anything search box with one-tap prestige, then entry editing.
-4. **Public** — `/log`, `/log/game`, `/log/game/<slug>`.
+4. **Public** — `/log`, `/log/game`, `/log/game/<slug>` with ap's prose ([ADR 14](./adr/0014-prose-replaces-moments.md)).
 5. **Ranks** — prestige divisions and a strict order per kind ([ADR 12](./adr/0012-divisions-and-ranks.md)); axes set in admin ([ADR 13](./adr/0013-axes-as-data.md)).
 6. **Rating** — public by default, triage then rate ([ADR 9](./adr/0009-public-by-default.md)); what shows and how is set in admin ([ADR 11](./adr/0011-presentation-settings.md)).
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
+	"github.com/pennane/pennanen.dev/apps/log/internal/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
@@ -23,6 +24,7 @@ type Server struct {
 	IGDB       *igdb.Client
 	IGDBMatch  *igdb.Matcher
 	Backup     func(ctx context.Context) (string, error)
+	Images     *images.Store
 	Changed    func()
 }
 
@@ -36,6 +38,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /public/items/{kind}/{slug}", s.publicItem)
 	mux.HandleFunc("GET /public/kinds/{kind}", s.publicKind)
 	mux.HandleFunc("GET /public/presentation", s.publicPresentation)
+	mux.HandleFunc("GET /images/{name}", s.serveImage)
+	mux.HandleFunc("OPTIONS /images", s.uploadPreflight)
+	mux.HandleFunc("POST /images", s.uploadImage)
 
 	admin := http.NewServeMux()
 	admin.HandleFunc("GET /admin/kinds", s.kinds)
@@ -52,8 +57,6 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("PUT /admin/items/{id}/place", s.placeEntry)
 	admin.HandleFunc("GET /admin/entries", s.listEntries)
 	admin.HandleFunc("POST /admin/entries/change", s.changeEntries)
-	admin.HandleFunc("POST /admin/items/{id}/moments", s.addMoment)
-	admin.HandleFunc("DELETE /admin/moments/{id}", s.deleteMoment)
 	admin.HandleFunc("POST /admin/relations", s.addRelation)
 	admin.HandleFunc("DELETE /admin/relations", s.removeRelation)
 	admin.HandleFunc("GET /admin/igdb/search", s.searchIGDB)
@@ -65,6 +68,7 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("GET /admin/sync/steam", s.steamSyncStatus)
 	admin.HandleFunc("POST /admin/sync/steam", s.startSteamSync)
 	admin.HandleFunc("POST /admin/backup", s.backupNow)
+	admin.HandleFunc("POST /admin/images/ticket", s.uploadTicket)
 	mux.Handle("/admin/", s.requireAdmin(admin))
 
 	return mux
@@ -229,24 +233,6 @@ func (s *Server) changeEntries(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mutated(w, s.Store.ChangeEntries(r.Context(), body.ItemIDs, body.Change))
-}
-
-func (s *Server) addMoment(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
-	var m store.NewMoment
-	if !ok || !readJSON(w, r, &m) {
-		return
-	}
-	_, err := s.Store.AddMoment(r.Context(), id, m)
-	s.mutatedItem(w, r, id, err)
-}
-
-func (s *Server) deleteMoment(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
-	if !ok {
-		return
-	}
-	s.mutated(w, s.Store.DeleteMoment(r.Context(), id))
 }
 
 func (s *Server) addRelation(w http.ResponseWriter, r *http.Request) {
