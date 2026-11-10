@@ -9,6 +9,7 @@ import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion'
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { readImageWidth, withImageWidth } from '../../../lib/log/image-width'
 import type { ItemLink } from '../../../lib/log/types'
 import styles from './editor.module.css'
 
@@ -59,6 +60,32 @@ const LinkPicker = forwardRef<PickerHandle, SuggestionProps<ItemLink>>(function 
       ))}
     </ul>
   )
+})
+
+const SMALLEST_IMAGE_PX = 80
+
+const titlePart = (title: unknown) => (typeof title === 'string' && title ? ` "${title}"` : '')
+
+const ResizableImage = Image.extend({
+  parseMarkdown: (token, helpers) => {
+    const { src, width } = readImageWidth(token.href ?? '')
+    return helpers.createNode('image', { src, width, title: token.title, alt: token.text })
+  },
+  renderMarkdown: (node) => {
+    const href = withImageWidth({
+      src: node.attrs?.src ?? '',
+      width: node.attrs?.width ?? undefined
+    })
+    return `![${node.attrs?.alt ?? ''}](${href}${titlePart(node.attrs?.title)})`
+  }
+}).configure({
+  resize: {
+    enabled: true,
+    directions: ['left', 'right'],
+    minWidth: SMALLEST_IMAGE_PX,
+    minHeight: SMALLEST_IMAGE_PX,
+    alwaysPreserveAspectRatio: true
+  }
 })
 
 const placeBelow = (element: Element, rect: DOMRect | null | undefined) => {
@@ -132,7 +159,7 @@ export const ProseEditor = ({ initial, onSave, onImage, findLinks }: ProseEditor
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({ link: { openOnClick: false, autolink: true } }),
-      Image,
+      ResizableImage,
       Markdown,
       FileHandler.configure({
         allowedMimeTypes: IMAGE_TYPES,
