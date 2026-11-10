@@ -56,6 +56,7 @@ export const ranksOf = (sections: Section[]) => {
 }
 
 export const spotBefore = (sections: Section[], id: number, target: number): Spot | undefined => {
+  if (id === target) return spotOf(sections, id)
   const section = sections.find((s) => s.ids.includes(target))
   if (!section) return undefined
   return { division: section.division.key, index: section.ids.filter((x) => x !== id).indexOf(target) }

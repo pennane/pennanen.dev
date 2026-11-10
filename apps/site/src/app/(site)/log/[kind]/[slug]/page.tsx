@@ -61,7 +61,7 @@ export async function generateMetadata({
   const description = summaryOf(item)
   return {
     metadataBase: new URL(baseUrl),
-    title: `${title} · things as ap saw them`,
+    title: `${title} as ap saw it`,
     description,
     openGraph: {
       title,

@@ -31,7 +31,7 @@ export async function generateMetadata({
   const { kind } = await params
   if (!isPublicKind(kind)) return {}
   return {
-    title: `${kindPlural(kind)} · things as ap saw them`,
+    title: `${kindPlural(kind)} as ap saw them`,
     description: `The ${kindPlural(kind)} in Arttu Pennanen's log.`
   }
 }

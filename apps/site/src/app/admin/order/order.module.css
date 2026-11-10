@@ -45,6 +45,10 @@
   top: 0;
   z-index: 1;
   background: var(--background);
+  background-clip: border-box;
+  color: var(--foreground);
+  margin-bottom: 0;
+  line-height: 1.4;
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
