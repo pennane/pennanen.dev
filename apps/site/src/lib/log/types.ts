@@ -32,6 +32,7 @@ export type Entry = {
   status: string
   visibility: Visibility
   blurb: string
+  prose: string
   timeSpent?: TimeSpent
   scores: Record<string, string>
   rank?: number
@@ -60,27 +61,15 @@ export type ItemView = {
   hint?: Hint
 }
 
-export type MomentVisibility = 'inherit' | 'private'
+export type UploadTicket = { ticket: string; url: string }
 
-export type Moment = {
-  id: number
-  at: string
-  note: string
-  visibility: MomentVisibility
-}
-
-export type ItemDetail = ItemView & { moments?: Moment[] }
-
-export type NewMoment = {
-  at: string
-  note: string
-  visibility: MomentVisibility
-}
+export type ItemLink = { title: string; href: string }
 
 export type EntryChange = {
   status?: string
   visibility?: Visibility
   blurb?: string
+  prose?: string
   timeSpent?: TimeSpent | ''
   scores?: Record<string, string | null>
   addTags?: string[]

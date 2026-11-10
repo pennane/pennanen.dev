@@ -25,39 +25,6 @@
   opacity: 0.7;
 }
 
-.moments {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.moment {
-  display: flex;
-  align-items: baseline;
-  gap: 0.25rem;
-}
-
-.moment time {
-  font-size: 0.875rem;
-  color: var(--foreground-secondary);
-}
-
-.momentBody {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  line-height: 1.4;
-  font-size: 0.95rem;
-}
-
-.refs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
 .neighbours {
   display: grid;
   grid-template-columns: 1fr 1fr;

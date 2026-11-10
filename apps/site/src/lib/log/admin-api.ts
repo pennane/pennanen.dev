@@ -3,15 +3,14 @@ import type {
   EntryChange,
   IGDBMatchReport,
   IGDBResult,
-  ItemDetail,
   ItemView,
   ListedEntry,
   Kind,
   Axis,
   KindSettings,
-  NewMoment,
   Presentation,
-  SteamSyncReport
+  SteamSyncReport,
+  UploadTicket
 } from './types'
 
 class LogApiError extends Error {
@@ -71,11 +70,13 @@ export const logAdmin = {
     call<ItemView>(`/admin/items/${itemId}/igdb/none`, { method: 'PUT' }),
   igdbMatch: () => call<IGDBMatchReport>('/admin/sync/igdb'),
   startIGDBMatch: () => call<IGDBMatchReport>('/admin/sync/igdb', { method: 'POST' }),
-  item: (itemId: number) => call<ItemDetail>(`/admin/items/${itemId}`),
-  addMoment: (itemId: number, moment: NewMoment) =>
-    call<ItemDetail>(`/admin/items/${itemId}/moments`, send('POST', moment)),
-  deleteMoment: (momentId: number) =>
-    call<void>(`/admin/moments/${momentId}`, { method: 'DELETE' }),
+  item: (itemId: number) => call<ItemView>(`/admin/items/${itemId}`),
+  uploadTicket: async (): Promise<UploadTicket> => {
+    const { ticket, path } = await call<{ ticket: string; path: string }>('/admin/images/ticket', {
+      method: 'POST'
+    })
+    return { ticket, url: requiredEnv('LOG_API_URL') + path }
+  },
   changeEntry: (itemId: number, change: EntryChange) =>
     call<ItemView>(`/admin/items/${itemId}/entry`, send('PATCH', change)),
   changeEntries: (itemIds: number[], change: EntryChange) =>

@@ -2,8 +2,8 @@
 
 import { requireAdmin } from '../../lib/admin/require-admin'
 import { logAdmin } from '../../lib/log/admin-api'
-import { textField } from '../../lib/log/present'
-import type { Axis, EntryChange, KindSettings, NewMoment } from '../../lib/log/types'
+import { itemPath, textField } from '../../lib/log/present'
+import type { Axis, EntryChange, ItemLink, KindSettings } from '../../lib/log/types'
 import type { EntrySubject } from './entries/Editor'
 
 export async function changeEntry(itemId: number, change: EntryChange) {
@@ -20,8 +20,7 @@ export async function openEntry(itemId: number): Promise<EntrySubject> {
     title: textField(item.verdicts.values, 'title') ?? item.slug,
     cover: textField(item.verdicts.values, 'cover') ?? textField(item.verdicts.values, 'image'),
     publicPath: `/log/${item.kind}/${item.slug}`,
-    entry: item.entry,
-    moments: item.moments ?? []
+    entry: item.entry
   }
 }
 
@@ -35,15 +34,23 @@ export async function changeEntries(itemIds: number[], change: EntryChange) {
   await logAdmin.changeEntries(itemIds, change)
 }
 
-export async function addMoment(itemId: number, moment: NewMoment) {
+export async function imageUploadTicket() {
   await requireAdmin()
-  const item = await logAdmin.addMoment(itemId, moment)
-  return item.moments ?? []
+  return logAdmin.uploadTicket()
 }
 
-export async function deleteMoment(momentId: number) {
+const ITEM_LINKS_SHOWN = 8
+
+export async function findItemLinks(query: string): Promise<ItemLink[]> {
   await requireAdmin()
-  await logAdmin.deleteMoment(momentId)
+  const items = await logAdmin.items({ q: query })
+  return items
+    .filter((item) => item.entry)
+    .slice(0, ITEM_LINKS_SHOWN)
+    .map((item) => ({
+      title: textField(item.verdicts.values, 'title') ?? item.slug,
+      href: itemPath(item)
+    }))
 }
 
 export async function searchIGDB(query: string) {

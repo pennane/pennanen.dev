@@ -11,16 +11,7 @@ import {
   TIME_SPENT_LABELS,
   type TimeSpent
 } from '../../../lib/log/present'
-import type {
-  Axis,
-  Division,
-  Entry,
-  EntryChange,
-  Kind,
-  Moment,
-  MomentVisibility,
-  Visibility
-} from '../../../lib/log/types'
+import type { Axis, Division, Entry, EntryChange, Kind, Visibility } from '../../../lib/log/types'
 import { SaveStatus, useKeys } from '../_queue/card'
 import { Compare, compareKeys, type Comparing } from '../_queue/Compare'
 import {
@@ -34,7 +25,9 @@ import {
   type Search
 } from '../_queue/placing'
 import { useSaveQueue } from '../_queue/useSaveQueue'
-import { addMoment, changeEntry, deleteMoment, placeEntry } from '../actions'
+import dynamic from 'next/dynamic'
+import { Prose } from '../../(site)/log/components/Prose'
+import { changeEntry, findItemLinks, imageUploadTicket, placeEntry } from '../actions'
 import styles from './editor.module.css'
 
 const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
@@ -42,15 +35,29 @@ const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
   { value: 'public', label: 'always shown' },
   { value: 'private', label: 'never shown' }
 ]
-const MOMENT_VISIBILITIES: { value: MomentVisibility; label: string }[] = [
-  { value: 'inherit', label: 'same as entry' },
-  { value: 'private', label: 'private' }
-]
 const UNTRIAGED = 'untriaged'
 const UNSAID = ''
 const NO_SCORE = '–'
 
-const today = () => new Date().toISOString().slice(0, 10)
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
+const ProseEditor = dynamic(() => import('./ProseEditor').then((m) => m.ProseEditor), {
+  ssr: false
+})
+
+type Writing = 'reading' | 'writing'
+
+const uploadImage = async (file: File) => {
+  const { ticket, url } = await imageUploadTicket()
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Ticket ${ticket}`, 'Content-Type': file.type },
+    body: file
+  })
+  const body = (await response.json().catch(() => ({}))) as { name?: string; error?: string }
+  if (!response.ok || !body.name) throw new Error(body.error ?? `upload failed: ${response.status}`)
+  return `/log/images/${body.name}`
+}
 
 export type EntrySubject = {
   itemId: number
@@ -58,11 +65,10 @@ export type EntrySubject = {
   cover: string | undefined
   publicPath: string
   entry: Entry
-  moments: Moment[]
 }
 
 export const Editor = ({
-  subject: { itemId, title, cover, publicPath, entry, moments: initialMoments },
+  subject: { itemId, title, cover, publicPath, entry },
   kind,
   knownTags,
   ranked,
@@ -82,7 +88,9 @@ export const Editor = ({
   const [visibility, setVisibility] = useState(entry.visibility)
   const [tags, setTags] = useState(entry.tags)
   const [timeSpent, setTimeSpent] = useState<TimeSpent | typeof UNSAID>(entry.timeSpent ?? UNSAID)
-  const [moments, setMoments] = useState(initialMoments)
+  const [prose, setProse] = useState(entry.prose)
+  const [writing, setWriting] = useState<Writing>('reading')
+  const [imageProblem, setImageProblem] = useState<string>()
   const saves = useSaveQueue()
 
   const save = (label: string, change: EntryChange) => {
@@ -91,6 +99,54 @@ export const Editor = ({
   }
 
   const presence = presenceOf({ status, visibility }, kind.statusesShown)
+
+  const saveProse = (markdown: string) => {
+    if (markdown === prose) return
+    setProse(markdown)
+    save('visions', { prose: markdown })
+  }
+
+  const addImage = (file: File, insert: (src: string) => void) => {
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageProblem(`${file.name} is over 10 MB`)
+      return
+    }
+    setImageProblem(undefined)
+    saves.enqueue(`image ${file.name}`, async () => insert(await uploadImage(file)))
+  }
+
+  if (writing === 'writing') {
+    return (
+      <div
+        className={styles.writing}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && !event.defaultPrevented) setWriting('reading')
+        }}
+      >
+        <header className={styles.header}>
+          <button type="button" className={styles.quiet} onClick={() => setWriting('reading')}>
+            ← done
+          </button>
+          <SaveStatus state={saves.state} />
+        </header>
+        <div className={styles.writingBody}>
+          {cover && (
+            <div className={styles.cover}>
+              <Image src={cover} alt="" width={460} height={215} unoptimized />
+            </div>
+          )}
+          <h1 className={styles.title}>{title}</h1>
+          {imageProblem && <p className={styles.problem}>{imageProblem}</p>}
+          <ProseEditor
+            initial={prose}
+            onSave={saveProse}
+            onImage={addImage}
+            findLinks={findItemLinks}
+          />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.editor}>
@@ -209,19 +265,17 @@ export const Editor = ({
         />
       </Section>
 
-      <Section label="moments">
-        <Moments
-          moments={moments}
-          onAdd={(moment) =>
-            saves.enqueue(`moment ${moment.at}`, async () =>
-              setMoments(await addMoment(itemId, moment))
-            )
-          }
-          onDelete={(id) => {
-            setMoments((m) => m.filter((x) => x.id !== id))
-            saves.enqueue('delete moment', () => deleteMoment(id))
-          }}
-        />
+      <Section label="visions">
+        {prose.trim() ? (
+          <div className={styles.visions}>
+            <Prose markdown={prose} />
+          </div>
+        ) : (
+          <p className={styles.quiet}>nothing written yet</p>
+        )}
+        <button type="button" className={styles.add} onClick={() => setWriting('writing')}>
+          write
+        </button>
       </Section>
     </div>
   )
@@ -451,63 +505,6 @@ const Tags = ({
           <option key={tag} value={tag} label={tagLabel(tag)} />
         ))}
       </datalist>
-    </div>
-  )
-}
-
-const Moments = ({
-  moments,
-  onAdd,
-  onDelete
-}: {
-  moments: Moment[]
-  onAdd: (moment: { at: string; note: string; visibility: MomentVisibility }) => void
-  onDelete: (id: number) => void
-}) => {
-  const [at, setAt] = useState(today)
-  const [note, setNote] = useState('')
-  const [visibility, setVisibility] = useState<MomentVisibility>('inherit')
-  return (
-    <div className={styles.moments}>
-      {moments.map((m) => (
-        <div key={m.id} className={styles.moment}>
-          <span className={styles.momentDate}>{m.at}</span>
-          <span className={styles.momentNote}>
-            {m.note}
-            {m.visibility === 'private' && <span className={styles.quiet}> · private</span>}
-          </span>
-          <button type="button" className={styles.quiet} onClick={() => onDelete(m.id)}>
-            delete
-          </button>
-        </div>
-      ))}
-      <div className={styles.newMoment}>
-        <input
-          type="date"
-          className={styles.date}
-          value={at}
-          onChange={(e) => setAt(e.target.value)}
-        />
-        <textarea
-          className={styles.text}
-          rows={2}
-          value={note}
-          placeholder="replayed it, still great"
-          onChange={(e) => setNote(e.target.value)}
-        />
-        <Chips options={MOMENT_VISIBILITIES} chosen={visibility} onChoose={setVisibility} />
-        <button
-          type="button"
-          className={styles.add}
-          disabled={!at || !note.trim()}
-          onClick={() => {
-            onAdd({ at, note: note.trim(), visibility })
-            setNote('')
-          }}
-        >
-          add moment
-        </button>
-      </div>
     </div>
   )
 }

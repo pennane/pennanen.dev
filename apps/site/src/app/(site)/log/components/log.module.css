@@ -127,3 +127,28 @@
   opacity: 0.8;
   font-size: 0.875rem;
 }
+
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.prose > * {
+  margin: 0;
+}
+
+.prose blockquote {
+  padding-left: 1rem;
+  border-left: 3px solid var(--line-color);
+  color: var(--foreground-secondary);
+}
+
+.proseImage {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}

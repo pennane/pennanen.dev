@@ -20,8 +20,9 @@ import {
   titleOf,
   toListed
 } from '../../../../../lib/log/present'
-import { logPublic, type PublicItem, type PublicMoment } from '../../../../../lib/log/public-api'
+import { logPublic, type PublicItem } from '../../../../../lib/log/public-api'
 import { baseUrl } from '../../../../sitemap'
+import { Prose } from '../../components/Prose'
 import { ScoreParts } from '../../components/Scores'
 import { Tags } from '../../components/Tags'
 import logStyles from '../../components/log.module.css'
@@ -80,35 +81,15 @@ const Facts = ({ item }: { item: PublicItem }) => {
   )
 }
 
-const byNewest = (a: PublicMoment, b: PublicMoment) => b.at.localeCompare(a.at)
-
-const Moments = ({ moments }: { moments: PublicMoment[] }) => (
+const Visions = ({ prose }: { prose: string }) => (
   <section>
     <Stack gap={Gap.large} alignItems="stretch">
       <header>
         <WrapInBox>
-          <h3>moments</h3>
+          <h3>visions</h3>
         </WrapInBox>
       </header>
-      <ol className={styles.moments}>
-        {moments.toSorted(byNewest).map((moment) => (
-          <li key={`${moment.at}${moment.note}`} className={styles.moment}>
-            <time dateTime={moment.at}>{formatPartialDate(moment.at)}</time>
-            <div className={styles.momentBody}>
-              {moment.note && <p>{moment.note}</p>}
-              {moment.refs.length > 0 && (
-                <p className={styles.refs}>
-                  {moment.refs.map((ref) => (
-                    <Link key={itemPath(ref)} href={itemPath(ref)}>
-                      {ref.title}
-                    </Link>
-                  ))}
-                </p>
-              )}
-            </div>
-          </li>
-        ))}
-      </ol>
+      <Prose markdown={prose} />
     </Stack>
   </section>
 )
@@ -186,7 +167,7 @@ export default async function ItemPage({ params }: { params: Params }) {
           ))}
         </dl>
       )}
-      {item.moments.length > 0 && <Moments moments={item.moments} />}
+      {item.prose.trim() && <Visions prose={item.prose} />}
       <Neighbours {...neighbours} />
     </article>
   )

@@ -14,15 +14,6 @@ const rankSchema = z
   .nullish()
   .transform((rank) => rank ?? undefined)
 
-const momentSchema = z.object({
-  at: z.string(),
-  note: z.string(),
-  refs: z
-    .array(z.object({ kind: z.string(), slug: z.string(), title: z.string() }))
-    .nullish()
-    .transform((refs) => refs ?? [])
-})
-
 const publicItemSchema = z.object({
   kind: z.string(),
   slug: z.string(),
@@ -43,16 +34,15 @@ const publicItemSchema = z.object({
     .nullish()
     .transform((value) => (isTimeSpent(value) ? value : undefined)),
   updatedAt: z.string(),
-  moments: z
-    .array(momentSchema)
+  prose: z
+    .string()
     .nullish()
-    .transform((moments) => moments ?? [])
+    .transform((prose) => prose ?? '')
 })
 
 const publicKindSchema = z.object({ name: z.string(), untriaged: z.number() })
 
 export type PublicItem = z.infer<typeof publicItemSchema>
-export type PublicMoment = z.infer<typeof momentSchema>
 
 const NOT_FOUND = 404
 

@@ -9,6 +9,10 @@ import remarkMdxImages from 'remark-mdx-images'
 
 const nextConfig: NextConfig = {
   pageExtensions: ['md', 'mdx', 'ts', 'tsx'],
+  rewrites: async () =>
+    process.env.LOG_API_URL
+      ? [{ source: '/log/images/:name', destination: `${process.env.LOG_API_URL}/images/:name` }]
+      : [],
   eslint: { ignoreDuringBuilds: true },
   outputFileTracingIncludes: {
     '/log/[kind]/[slug]/*': [
