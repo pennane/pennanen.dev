@@ -9,8 +9,8 @@ disagrees with the code, one of them is wrong.
 It has a kind and a title, and that's about it. Opinions live elsewhere.
 
 **Kind** — what sort of item it is (`game`, `thing`, later `tabletop`, `wine`…).
-A kind decides the item's fields, its axes, its statuses, and which source
-gives it an identity. Kinds are defined in code. `thing` is the catch-all
+A kind decides the item's fields, its statuses, and which source gives it
+an identity. Kinds are defined in code; which axes a kind uses is set in admin. `thing` is the catch-all
 kind: free-form fields, nothing checked, so an odd item never blocks you.
 
 **Relation** — a named link between two items. *Margaux 2015 is a
@@ -33,22 +33,30 @@ in admin: an `auto` entry shows publicly when its status is one of them.
 like Wallpaper Engine in a Steam library. The item is kept so sync won't bring
 it back, but it never shows on public pages.
 
-**Axis** — one dimension something can be scored on: `enjoyment` (did I like
-it), `quality` (is it well made). They are independent: a masterpiece can
-bore, trash can delight. Each kind lists its axes; a kind with no axes can't
-be scored.
+**Axis** — one dimension something can be scored on, such as `prestige` and
+`quality`. Axes are their own thing: made, named and ordered in admin, and
+shared by every kind that uses them. Each kind picks its axes; a kind with no
+axes can't be scored. An axis has a key, set once, and a name, which ap can
+change.
 
-**Axis label** — what public pages call an axis. The axis keeps its key.
+**Prestige** — the axis that orders things: how high something stands for
+ap, all told, from how much it gave to how it stuck. Not quality: a
+masterpiece can bore, trash can delight. Prestige is the one axis with ranks,
+and every kind that ranks uses it.
+
+**Quality** — the axis for how well made something is, whatever ap thought
+of it.
 
 **Score** — the division an entry sits in on one axis. Always optional;
 nothing is owed.
 
-**Division** — a named slice of an axis, in order from best: `loved`, `liked`,
-`fine`, `meh`, `disliked` for enjoyment. Each axis has its own divisions, as
-many as it needs, set in admin. There is no number behind a division.
+**Division** — a named slice of an axis, in order from best. An axis starts
+with tiers: `S`, `A`, `B`, `C`, `D`, `F`. Each axis has its own divisions, as
+many as it needs, renamed or reordered in admin. There is no number behind a
+division.
 
-**Rank** — an entry's place in its kind's enjoyment order, counted from the
-top across all divisions. Strict: no two entries share a rank. Only enjoyment
+**Rank** — an entry's place in its kind's prestige order, counted from the
+top across all divisions. Strict: no two entries share a rank. Only prestige
 has ranks; other axes have divisions alone. Games rank against games, never
 against wine. Public pages never show the number; they order by it.
 

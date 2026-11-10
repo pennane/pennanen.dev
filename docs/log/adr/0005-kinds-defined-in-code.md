@@ -1,6 +1,6 @@
 # 5. Kinds are defined in code, data is generic
 
-**Status:** accepted · 2026-11-09
+**Status:** accepted · 2026-11-09 · axes moved to admin by [ADR 13](./0013-axes-as-data.md)
 
 ## Context
 Games first, but books, music, tabletop, wine (regions, grapes, vintages)

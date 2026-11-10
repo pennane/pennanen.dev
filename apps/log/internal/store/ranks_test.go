@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"maps"
+	"slices"
 	"testing"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
@@ -38,31 +39,31 @@ func ranks(t *testing.T, s *store.Store) map[int64]int {
 	return got
 }
 
-func enjoyed(division string) store.EntryChange {
-	return store.EntryChange{Status: ptr("finished"), Scores: map[string]*string{kind.Enjoyment: &division}}
+func inTier(division string) store.EntryChange {
+	return store.EntryChange{Status: ptr("finished"), Scores: map[string]*string{kind.Prestige: &division}}
 }
 
 func TestRanksRunThroughDivisionsInOrder(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
 	g := rankedGames(t, s, "Meh One", "Loved One", "Loved Two", "Liked One")
-	for title, division := range map[string]string{"Meh One": "meh", "Liked One": "liked"} {
-		if err := s.ChangeEntry(ctx, g[title], enjoyed(division)); err != nil {
+	for title, division := range map[string]string{"Meh One": "c", "Liked One": "a"} {
+		if err := s.ChangeEntry(ctx, g[title], inTier(division)); err != nil {
 			t.Fatal(err)
 		}
 	}
-	s.ChangeEntry(ctx, g["Loved One"], enjoyed("loved"))
-	s.ChangeEntry(ctx, g["Loved Two"], enjoyed("loved"))
+	s.ChangeEntry(ctx, g["Loved One"], inTier("s"))
+	s.ChangeEntry(ctx, g["Loved Two"], inTier("s"))
 
 	want := map[int64]int{g["Loved One"]: 1, g["Loved Two"]: 2, g["Liked One"]: 3, g["Meh One"]: 4}
 	if got := ranks(t, s); !maps.Equal(got, want) {
 		t.Errorf("ranks = %v, want %v", got, want)
 	}
 
-	if err := s.Place(ctx, g["Meh One"], "loved", 0); err != nil {
+	if err := s.Place(ctx, g["Meh One"], "s", 0); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Place(ctx, g["Loved One"], "loved", store.AtBottom); err != nil {
+	if err := s.Place(ctx, g["Loved One"], "s", store.AtBottom); err != nil {
 		t.Fatal(err)
 	}
 	want = map[int64]int{g["Meh One"]: 1, g["Loved Two"]: 2, g["Loved One"]: 3, g["Liked One"]: 4}
@@ -70,7 +71,7 @@ func TestRanksRunThroughDivisionsInOrder(t *testing.T) {
 		t.Errorf("after moves ranks = %v, want %v", got, want)
 	}
 
-	s.ChangeEntry(ctx, g["Loved Two"], enjoyed("loved"))
+	s.ChangeEntry(ctx, g["Loved Two"], inTier("s"))
 	if got := ranks(t, s); !maps.Equal(got, want) {
 		t.Errorf("same division moved it: %v", got)
 	}
@@ -88,23 +89,35 @@ func TestDivisionsMustExistAndStayWhileUsed(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
 	g := rankedGames(t, s, "Hades")
-	if err := s.ChangeEntry(ctx, g["Hades"], enjoyed("sublime")); !errors.Is(err, store.ErrInvalid) {
+	if err := s.ChangeEntry(ctx, g["Hades"], inTier("sublime")); !errors.Is(err, store.ErrInvalid) {
 		t.Errorf("unknown division: %v", err)
 	}
 	if err := s.Place(ctx, g["Hades"], "sublime", 0); !errors.Is(err, store.ErrInvalid) {
 		t.Errorf("placed into unknown division: %v", err)
 	}
-	if err := s.ChangeEntry(ctx, g["Hades"], enjoyed("loved")); err != nil {
+	if err := s.ChangeEntry(ctx, g["Hades"], inTier("s")); err != nil {
 		t.Fatal(err)
 	}
-	game, _ := kind.Get("game")
-	settings, _ := s.KindSettings(ctx, game)
-	settings.Divisions[kind.Enjoyment] = settings.Divisions[kind.Enjoyment][1:]
-	if _, err := s.SetKindSettings(ctx, game, settings); !errors.Is(err, store.ErrConflict) {
+	axes, _ := s.Axes(ctx)
+	prestige := &axes[slices.IndexFunc(axes, func(a store.Axis) bool { return a.Key == kind.Prestige })]
+	tiers := prestige.Divisions
+	prestige.Divisions = tiers[1:]
+	if _, err := s.SetAxes(ctx, axes); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("removed a division in use: %v", err)
 	}
-	settings.Divisions[kind.Enjoyment] = append([]store.Division{{Key: "loved", Name: "all-time"}}, settings.Divisions[kind.Enjoyment]...)
-	if _, err := s.SetKindSettings(ctx, game, settings); err != nil {
+	prestige.Divisions = append([]store.Division{{Key: "s", Name: "all-time"}}, tiers[1:]...)
+	if _, err := s.SetAxes(ctx, axes); err != nil {
 		t.Errorf("renaming a division: %v", err)
+	}
+	if err := s.ChangeEntry(ctx, g["Hades"], store.EntryChange{Scores: map[string]*string{kind.Quality: ptr("a")}}); err != nil {
+		t.Fatal(err)
+	}
+	withoutQuality := slices.DeleteFunc(slices.Clone(axes), func(a store.Axis) bool { return a.Key == kind.Quality })
+	if _, err := s.SetAxes(ctx, withoutQuality); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("removed an axis in use: %v", err)
+	}
+	game, _ := kind.Get("game")
+	if _, err := s.SetKindSettings(ctx, game, store.KindSettings{Axes: []string{kind.Prestige}}); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("game dropped an axis in use: %v", err)
 	}
 }

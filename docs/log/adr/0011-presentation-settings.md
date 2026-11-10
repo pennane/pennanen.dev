@@ -1,6 +1,6 @@
 # 11. What shows, and how, is set in admin
 
-**Status:** accepted · 2026-11-10 · refines [ADR 9](./0009-public-by-default.md) · score words and score display superseded by [ADR 12](./0012-divisions-and-ranks.md)
+**Status:** accepted · 2026-11-10 · refines [ADR 9](./0009-public-by-default.md) · score words and score display superseded by [ADR 12](./0012-divisions-and-ranks.md) · axis labels superseded by [ADR 13](./0013-axes-as-data.md)
 
 ## Context
 ADR 9 fixed in code which statuses each kind shows, and the score axes showed

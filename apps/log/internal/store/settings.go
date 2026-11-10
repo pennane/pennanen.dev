@@ -18,34 +18,35 @@ type Division struct {
 	Name string `json:"name"`
 }
 
+type Axis struct {
+	Key       string     `json:"key"`
+	Name      string     `json:"name"`
+	Divisions []Division `json:"divisions"`
+}
+
+type Axes []Axis
+
 type KindSettings struct {
-	StatusesShown []string              `json:"statusesShown"`
-	AxisLabels    map[string]string     `json:"axisLabels"`
-	Divisions     map[string][]Division `json:"divisions"`
+	StatusesShown []string `json:"statusesShown"`
+	Axes          []string `json:"axes"`
 }
 
 type TagTitles map[string]string
 
-func divisionsNamed(names ...string) []Division {
-	divisions := make([]Division, len(names))
-	for i, name := range names {
-		divisions[i] = Division{Key: name, Name: name}
-	}
-	return divisions
+var tiers = []Division{
+	{Key: "s", Name: "S"},
+	{Key: "a", Name: "A"},
+	{Key: "b", Name: "B"},
+	{Key: "c", Name: "C"},
+	{Key: "d", Name: "D"},
+	{Key: "f", Name: "F"},
 }
 
-var defaultDivisions = map[string][]Division{
-	kind.Enjoyment: divisionsNamed("loved", "liked", "fine", "meh", "disliked"),
-	kind.Quality:   divisionsNamed("masterpiece", "great", "solid", "rough", "broken"),
-}
-
-var fallbackDivisions = divisionsNamed("good", "fine", "bad")
-
-func defaultDivisionsOf(axis string) []Division {
-	if divisions, known := defaultDivisions[axis]; known {
-		return slices.Clone(divisions)
+func defaultAxes() Axes {
+	return Axes{
+		{Key: kind.Prestige, Name: kind.Prestige, Divisions: slices.Clone(tiers)},
+		{Key: kind.Quality, Name: kind.Quality, Divisions: slices.Clone(tiers)},
 	}
-	return slices.Clone(fallbackDivisions)
 }
 
 var defaultTagTitles = TagTitles{
@@ -53,101 +54,74 @@ var defaultTagTitles = TagTitles{
 	"idled":        "idled",
 }
 
-const tagTitlesKey = "tag-titles"
+const (
+	tagTitlesKey = "tag-titles"
+	axesKey      = "axes"
+)
 
 func kindSettingsKey(k kind.Kind) string { return "kind:" + k.Name }
 
-func DefaultKindSettings(k kind.Kind) KindSettings {
-	labels := map[string]string{}
-	divisions := map[string][]Division{}
-	for _, axis := range k.Axes {
-		labels[axis] = axis
-		divisions[axis] = defaultDivisionsOf(axis)
+func (a Axes) Find(key string) (Axis, bool) {
+	i := slices.IndexFunc(a, func(axis Axis) bool { return axis.Key == key })
+	if i < 0 {
+		return Axis{}, false
 	}
-	return KindSettings{
-		StatusesShown: slices.Clone(k.StatusesShown),
-		AxisLabels:    labels,
-		Divisions:     divisions,
-	}
+	return a[i], true
 }
 
-func (ks KindSettings) Shows(status string) bool { return slices.Contains(ks.StatusesShown, status) }
+func (a Axes) Has(key string) bool {
+	_, found := a.Find(key)
+	return found
+}
 
-func (ks KindSettings) DivisionIndex(axis, key string) (int, bool) {
-	i := slices.IndexFunc(ks.Divisions[axis], func(d Division) bool { return d.Key == key })
+func (a Axes) DivisionIndex(axis, division string) (int, bool) {
+	found, _ := a.Find(axis)
+	i := slices.IndexFunc(found.Divisions, func(d Division) bool { return d.Key == division })
 	return i, i >= 0
 }
 
-func (s *Store) KindSettings(ctx context.Context, k kind.Kind) (KindSettings, error) {
-	settings := DefaultKindSettings(k)
-	if _, err := s.readSetting(ctx, kindSettingsKey(k), &settings); err != nil {
-		return settings, err
-	}
-	for _, axis := range k.Axes {
-		if settings.AxisLabels[axis] == "" {
-			settings.AxisLabels[axis] = axis
-		}
-		if len(settings.Divisions[axis]) == 0 {
-			settings.Divisions[axis] = defaultDivisionsOf(axis)
-		}
-	}
-	return settings, nil
+func (s *Store) Axes(ctx context.Context) (Axes, error) {
+	axes := defaultAxes()
+	_, err := s.readSetting(ctx, axesKey, &axes)
+	return axes, err
 }
 
-func (s *Store) AllKindSettings(ctx context.Context) (map[string]KindSettings, error) {
-	all := map[string]KindSettings{}
-	for _, k := range kind.All() {
-		settings, err := s.KindSettings(ctx, k)
+func (s *Store) SetAxes(ctx context.Context, axes Axes) (Axes, error) {
+	axes, err := validAxes(axes)
+	if err != nil {
+		return axes, err
+	}
+	if err := s.refuseDroppingScored(ctx, axes); err != nil {
+		return axes, err
+	}
+	return axes, s.writeSetting(ctx, axesKey, axes)
+}
+
+func validAxes(axes Axes) (Axes, error) {
+	out := make(Axes, 0, len(axes))
+	for _, axis := range axes {
+		axis.Name = strings.TrimSpace(axis.Name)
+		axis.Key = keyFrom(axis.Key)
+		if axis.Key == "" {
+			axis.Key = keyFrom(axis.Name)
+		}
+		if axis.Name == "" || axis.Key == "" {
+			return nil, fmt.Errorf("%w: each axis needs a name", ErrInvalid)
+		}
+		if out.Has(axis.Key) {
+			return nil, fmt.Errorf("%w: two axes share the key %q", ErrInvalid, axis.Key)
+		}
+		divisions, err := validDivisions(axis.Key, axis.Divisions)
 		if err != nil {
 			return nil, err
 		}
-		all[k.Name] = settings
+		axis.Divisions = divisions
+		out = append(out, axis)
 	}
-	return all, nil
-}
-
-func (s *Store) SetKindSettings(ctx context.Context, k kind.Kind, settings KindSettings) (KindSettings, error) {
-	settings, err := validKindSettings(k, settings)
-	if err != nil {
-		return settings, err
+	if !out.Has(kind.Prestige) {
+		return nil, fmt.Errorf("%w: %s orders things and can't be removed", ErrInvalid, kind.Prestige)
 	}
-	if err := s.refuseDroppingUsedDivisions(ctx, k, settings); err != nil {
-		return settings, err
-	}
-	return settings, s.writeSetting(ctx, kindSettingsKey(k), settings)
-}
-
-func validKindSettings(k kind.Kind, settings KindSettings) (KindSettings, error) {
-	for _, status := range settings.StatusesShown {
-		if !k.HasStatus(status) || status == kind.Untriaged || status == kind.Dismissed {
-			return settings, fmt.Errorf("%w: %q is not a status %s can show", ErrInvalid, status, k.Name)
-		}
-	}
-	labels := map[string]string{}
-	for axis, label := range settings.AxisLabels {
-		if !k.HasAxis(axis) {
-			return settings, fmt.Errorf("%w: %s has no axis %q", ErrInvalid, k.Name, axis)
-		}
-		if label = strings.TrimSpace(label); label != "" {
-			labels[axis] = label
-		}
-	}
-	settings.AxisLabels = labels
-	divisions := map[string][]Division{}
-	for _, axis := range k.Axes {
-		valid, err := validDivisions(axis, settings.Divisions[axis])
-		if err != nil {
-			return settings, err
-		}
-		divisions[axis] = valid
-	}
-	for axis := range settings.Divisions {
-		if !k.HasAxis(axis) {
-			return settings, fmt.Errorf("%w: %s has no axis %q", ErrInvalid, k.Name, axis)
-		}
-	}
-	settings.Divisions = divisions
-	return settings, nil
+	return out, nil
 }
 
 func validDivisions(axis string, divisions []Division) ([]Division, error) {
@@ -157,9 +131,9 @@ func validDivisions(axis string, divisions []Division) ([]Division, error) {
 	out := make([]Division, 0, len(divisions))
 	for _, d := range divisions {
 		d.Name = strings.TrimSpace(d.Name)
-		d.Key = DivisionKey(d.Key)
+		d.Key = keyFrom(d.Key)
 		if d.Key == "" {
-			d.Key = DivisionKey(d.Name)
+			d.Key = keyFrom(d.Name)
 		}
 		if d.Name == "" || d.Key == "" {
 			return nil, fmt.Errorf("%w: each %s division needs a name", ErrInvalid, axis)
@@ -172,14 +146,12 @@ func validDivisions(axis string, divisions []Division) ([]Division, error) {
 	return out, nil
 }
 
-func DivisionKey(text string) string {
+func keyFrom(text string) string {
 	return strings.Join(strings.Fields(strings.ToLower(strings.ReplaceAll(text, "/", " "))), "-")
 }
 
-func (s *Store) refuseDroppingUsedDivisions(ctx context.Context, k kind.Kind, settings KindSettings) error {
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT s.axis, s.division, count(*) FROM score s JOIN item i ON i.id = s.item_id
-		WHERE i.kind = ? GROUP BY s.axis, s.division`, k.Name)
+func (s *Store) refuseDroppingScored(ctx context.Context, axes Axes) error {
+	rows, err := s.db.QueryContext(ctx, `SELECT axis, division, count(*) FROM score GROUP BY axis, division`)
 	if err != nil {
 		return err
 	}
@@ -190,8 +162,109 @@ func (s *Store) refuseDroppingUsedDivisions(ctx context.Context, k kind.Kind, se
 		if err := rows.Scan(&axis, &division, &entries); err != nil {
 			return err
 		}
-		if _, kept := settings.DivisionIndex(axis, division); !kept {
-			return fmt.Errorf("%w: %d %s entries sit in %s %q; move them before removing it", ErrConflict, entries, k.Name, axis, division)
+		if !axes.Has(axis) {
+			return fmt.Errorf("%w: %d entries are scored on %s; clear them before removing it", ErrConflict, entries, axis)
+		}
+		if _, kept := axes.DivisionIndex(axis, division); !kept {
+			return fmt.Errorf("%w: %d entries sit in %s %q; move them before removing it", ErrConflict, entries, axis, division)
+		}
+	}
+	return rows.Err()
+}
+
+func DefaultKindSettings(k kind.Kind) KindSettings {
+	return KindSettings{
+		StatusesShown: slices.Clone(k.StatusesShown),
+		Axes:          slices.Clone(k.DefaultAxes),
+	}
+}
+
+func (ks KindSettings) Shows(status string) bool { return slices.Contains(ks.StatusesShown, status) }
+func (ks KindSettings) Uses(axis string) bool    { return slices.Contains(ks.Axes, axis) }
+
+func (s *Store) KindSettings(ctx context.Context, k kind.Kind) (KindSettings, error) {
+	axes, err := s.Axes(ctx)
+	if err != nil {
+		return KindSettings{}, err
+	}
+	return s.kindSettings(ctx, k, axes)
+}
+
+func (s *Store) kindSettings(ctx context.Context, k kind.Kind, axes Axes) (KindSettings, error) {
+	settings := DefaultKindSettings(k)
+	if _, err := s.readSetting(ctx, kindSettingsKey(k), &settings); err != nil {
+		return settings, err
+	}
+	settings.Axes = slices.DeleteFunc(settings.Axes, func(axis string) bool { return !axes.Has(axis) })
+	return settings, nil
+}
+
+func (s *Store) AllKindSettings(ctx context.Context) (map[string]KindSettings, error) {
+	axes, err := s.Axes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	all := map[string]KindSettings{}
+	for _, k := range kind.All() {
+		settings, err := s.kindSettings(ctx, k, axes)
+		if err != nil {
+			return nil, err
+		}
+		all[k.Name] = settings
+	}
+	return all, nil
+}
+
+func (s *Store) SetKindSettings(ctx context.Context, k kind.Kind, settings KindSettings) (KindSettings, error) {
+	axes, err := s.Axes(ctx)
+	if err != nil {
+		return settings, err
+	}
+	if err := validKindSettings(k, axes, settings); err != nil {
+		return settings, err
+	}
+	if err := s.refuseDroppingKindAxes(ctx, k, settings); err != nil {
+		return settings, err
+	}
+	return settings, s.writeSetting(ctx, kindSettingsKey(k), settings)
+}
+
+func validKindSettings(k kind.Kind, axes Axes, settings KindSettings) error {
+	for _, status := range settings.StatusesShown {
+		if !k.HasStatus(status) || status == kind.Untriaged || status == kind.Dismissed {
+			return fmt.Errorf("%w: %q is not a status %s can show", ErrInvalid, status, k.Name)
+		}
+	}
+	for i, axis := range settings.Axes {
+		if !axes.Has(axis) {
+			return fmt.Errorf("%w: there is no axis %q", ErrInvalid, axis)
+		}
+		if slices.Contains(settings.Axes[:i], axis) {
+			return fmt.Errorf("%w: %s uses %q twice", ErrInvalid, k.Name, axis)
+		}
+	}
+	if k.RankedAxis != "" && !settings.Uses(k.RankedAxis) {
+		return fmt.Errorf("%w: %s ranks by %s, so it keeps that axis", ErrInvalid, k.Name, k.RankedAxis)
+	}
+	return nil
+}
+
+func (s *Store) refuseDroppingKindAxes(ctx context.Context, k kind.Kind, settings KindSettings) error {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT s.axis, count(*) FROM score s JOIN item i ON i.id = s.item_id
+		WHERE i.kind = ? GROUP BY s.axis`, k.Name)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var axis string
+		var entries int
+		if err := rows.Scan(&axis, &entries); err != nil {
+			return err
+		}
+		if !settings.Uses(axis) {
+			return fmt.Errorf("%w: %d %s entries are scored on %s; clear them before removing it", ErrConflict, entries, k.Name, axis)
 		}
 	}
 	return rows.Err()

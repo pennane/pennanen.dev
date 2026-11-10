@@ -40,6 +40,7 @@ func (s *Server) Handler() http.Handler {
 	admin := http.NewServeMux()
 	admin.HandleFunc("GET /admin/kinds", s.kinds)
 	admin.HandleFunc("GET /admin/settings", s.publicPresentation)
+	admin.HandleFunc("PUT /admin/settings/axes", s.putAxes)
 	admin.HandleFunc("PUT /admin/settings/kinds/{kind}", s.putKindSettings)
 	admin.HandleFunc("PUT /admin/settings/tag-titles", s.putTagTitles)
 	admin.HandleFunc("GET /admin/items", s.listItems)
@@ -82,11 +83,15 @@ func (s *Server) requireAdmin(next http.Handler) http.Handler {
 
 type adminKind struct {
 	kind.Kind
-	AxisLabels map[string]string           `json:"axisLabels"`
-	Divisions  map[string][]store.Division `json:"divisions"`
+	Axes store.Axes `json:"axes"`
 }
 
 func (s *Server) kinds(w http.ResponseWriter, r *http.Request) {
+	axes, err := s.Store.Axes(r.Context())
+	if err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
 	settings, err := s.Store.AllKindSettings(r.Context())
 	if err != nil {
 		respond(w, 0, nil, err)
@@ -95,9 +100,27 @@ func (s *Server) kinds(w http.ResponseWriter, r *http.Request) {
 	kinds := []adminKind{}
 	for _, k := range kind.All() {
 		k.StatusesShown = settings[k.Name].StatusesShown
-		kinds = append(kinds, adminKind{Kind: k, AxisLabels: settings[k.Name].AxisLabels, Divisions: settings[k.Name].Divisions})
+		used := store.Axes{}
+		for _, key := range settings[k.Name].Axes {
+			if axis, found := axes.Find(key); found {
+				used = append(used, axis)
+			}
+		}
+		kinds = append(kinds, adminKind{Kind: k, Axes: used})
 	}
 	writeJSON(w, http.StatusOK, kinds)
+}
+
+func (s *Server) putAxes(w http.ResponseWriter, r *http.Request) {
+	var body store.Axes
+	if !readJSON(w, r, &body) {
+		return
+	}
+	axes, err := s.Store.SetAxes(r.Context(), body)
+	if err == nil {
+		s.changed()
+	}
+	respond(w, http.StatusOK, axes, err)
 }
 
 func (s *Server) putKindSettings(w http.ResponseWriter, r *http.Request) {

@@ -33,9 +33,10 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 
 | | |
 |---|---|
-| `GET /admin/kinds` | kind definitions, shown statuses from settings |
-| `GET /admin/settings` | per-kind settings and tag titles |
-| `PUT /admin/settings/kinds/{kind}` | shown statuses, axis labels, divisions per axis `{axis: [{key, name}]}` best first; a division in use cannot be removed |
+| `GET /admin/kinds` | kind definitions, shown statuses and the axes each kind uses, with their divisions |
+| `GET /admin/settings` | axes, per-kind settings and tag titles |
+| `PUT /admin/settings/axes` | every axis `[{key, name, divisions: [{key, name}]}]` in order, divisions best first; a new axis or division without a key gets one from its name; `prestige` stays, and an axis or division in use cannot be removed |
+| `PUT /admin/settings/kinds/{kind}` | `{statusesShown, axes}`: shown statuses and the axis keys the kind uses, in order; a ranked kind keeps `prestige`, and an axis with scores cannot be dropped |
 | `PUT /admin/settings/tag-titles` | `{tag: title}` |
 | `GET /admin/entries?kind=` | triaged, undismissed entries with only what the admin list shows, `rank` on ranked ones |
 | `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=&needs=score` | items with verdicts and entries; `needs=score` lists played entries with no score, `needs=match` (with `kind`) unmatched ones |
@@ -59,4 +60,4 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `GET /public/items?kind=` | public entries; ranked ones carry `rank: {place, of}` counted among public entries |
 | `GET /public/items/{kind}/{slug}` | one public entry with its visible moments |
 | `GET /public/kinds/{kind}` | `{name, untriaged}` |
-| `GET /public/presentation` | per-kind settings and tag titles |
+| `GET /public/presentation` | axes, per-kind settings and tag titles |

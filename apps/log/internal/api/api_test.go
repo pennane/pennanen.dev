@@ -72,7 +72,7 @@ func TestPublicShowsOnlyWhatIsPublic(t *testing.T) {
 	}
 
 	call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token,
-		`{"status":"finished","visibility":"public","blurb":"go play it","scores":{"enjoyment":"loved"},"addTags":["favorite/all-time"]}`)
+		`{"status":"finished","visibility":"public","blurb":"go play it","scores":{"prestige":"s"},"addTags":["favorite/all-time"]}`)
 	call(t, srv, "POST", "/admin/items/"+id+"/moments", token, `{"at":"2024-01-02","note":"public moment"}`)
 	call(t, srv, "POST", "/admin/items/"+id+"/moments", token, `{"at":"2024-01-03","note":"private moment","visibility":"private"}`)
 
@@ -85,7 +85,7 @@ func TestPublicShowsOnlyWhatIsPublic(t *testing.T) {
 			t.Errorf("public item leaks %q: %s", leaked, body)
 		}
 	}
-	for _, shown := range []string{"go play it", "public moment", `"enjoyment":"loved"`, "favorite/all-time"} {
+	for _, shown := range []string{"go play it", "public moment", `"prestige":"s"`, "favorite/all-time"} {
 		if !strings.Contains(body, shown) {
 			t.Errorf("public item misses %q: %s", shown, body)
 		}
@@ -161,7 +161,7 @@ func TestPlayedGamesArePublicByDefault(t *testing.T) {
 
 func TestNeedsScoreListsPlayedGamesWithoutScores(t *testing.T) {
 	srv := newServer(t)
-	createGame(t, srv, "Rated", `{"status":"finished","scores":{"enjoyment":"liked"}}`)
+	createGame(t, srv, "Rated", `{"status":"finished","scores":{"prestige":"a"}}`)
 	createGame(t, srv, "Unrated", `{"status":"played"}`)
 	createGame(t, srv, "Forgotten", `{"status":"maybe-played"}`)
 	_, body := call(t, srv, "GET", "/admin/items?needs=score", token, "")
@@ -197,26 +197,36 @@ func TestSettingsDecideWhatShows(t *testing.T) {
 	createGame(t, srv, "Backlog", `{"status":"never-played"}`)
 	createGame(t, srv, "Wanted", `{"status":"never-played","visibility":"public"}`)
 
-	settings := `{"statusesShown":["played","never-played"],"axisLabels":{"enjoyment":"liked"},"divisions":{"enjoyment":[{"name":"All Time"},{"key":"fine","name":"fine"}],"quality":[{"key":"good","name":"good"}]}}`
-	if status, body := call(t, srv, "PUT", "/admin/settings/kinds/game", token, settings); status != http.StatusOK || !strings.Contains(body, `"enjoyment":[{"key":"all-time","name":"All Time"},{"key":"fine","name":"fine"}]`) {
+	settings := `{"statusesShown":["played","never-played"],"axes":["prestige"]}`
+	if status, body := call(t, srv, "PUT", "/admin/settings/kinds/game", token, settings); status != http.StatusOK || !strings.Contains(body, `"axes":["prestige"]`) {
 		t.Fatalf("put settings: %d %s", status, body)
 	}
 	_, body := call(t, srv, "GET", "/public/items?kind=game", "", "")
 	if strings.Contains(body, `"slug":"forgotten"`) || !strings.Contains(body, `"slug":"backlog"`) || !strings.Contains(body, `"slug":"wanted"`) {
 		t.Errorf("shown after settings: %s", body)
 	}
-	if status, _ := call(t, srv, "PUT", "/admin/settings/kinds/game", token, `{"statusesShown":["dismissed"],"divisions":{"enjoyment":[{"name":"a"}],"quality":[{"name":"b"}]}}`); status != http.StatusUnprocessableEntity {
+	if status, _ := call(t, srv, "PUT", "/admin/settings/kinds/game", token, `{"statusesShown":["dismissed"],"axes":["prestige"]}`); status != http.StatusUnprocessableEntity {
 		t.Errorf("dismissed shown: %d", status)
 	}
+	if status, _ := call(t, srv, "PUT", "/admin/settings/kinds/game", token, `{"statusesShown":["played"],"axes":["quality"]}`); status != http.StatusUnprocessableEntity {
+		t.Errorf("game dropped prestige: %d", status)
+	}
+	axes := `[{"key":"prestige","name":"nautinto","divisions":[{"name":"All Time"},{"key":"b","name":"b"}]},{"name":"Replay Value","divisions":[{"name":"yes"}]}]`
+	if status, body := call(t, srv, "PUT", "/admin/settings/axes", token, axes); status != http.StatusOK || !strings.Contains(body, `{"key":"replay-value","name":"Replay Value","divisions":[{"key":"yes","name":"yes"}]}`) {
+		t.Fatalf("put axes: %d %s", status, body)
+	}
+	if status, _ := call(t, srv, "PUT", "/admin/settings/axes", token, `[{"key":"quality","name":"quality","divisions":[{"name":"s"}]}]`); status != http.StatusUnprocessableEntity {
+		t.Errorf("removed prestige: %d", status)
+	}
 	call(t, srv, "PUT", "/admin/settings/tag-titles", token, `{"Another Shot":"worth another shot"}`)
-	if _, body := call(t, srv, "GET", "/public/presentation", "", ""); !strings.Contains(body, `"tagTitles":{"another-shot":"worth another shot"}`) || !strings.Contains(body, `"axisLabels":{"enjoyment":"liked","quality":"quality"}`) {
+	if _, body := call(t, srv, "GET", "/public/presentation", "", ""); !strings.Contains(body, `"tagTitles":{"another-shot":"worth another shot"}`) || !strings.Contains(body, `"name":"nautinto"`) {
 		t.Errorf("presentation: %s", body)
 	}
 }
 
 func TestEntriesListOnlyTriagedAndKeepsItSmall(t *testing.T) {
 	srv := newServer(t)
-	createGame(t, srv, "Hades", `{"status":"finished","blurb":"long public text","scores":{"enjoyment":"loved"},"addTags":["comfort"]}`)
+	createGame(t, srv, "Hades", `{"status":"finished","blurb":"long public text","scores":{"prestige":"s"},"addTags":["comfort"]}`)
 	createGame(t, srv, "Wallpaper Engine", `{"status":"dismissed"}`)
 	call(t, srv, "POST", "/admin/items", token, `{"kind":"game","title":"Untouched"}`)
 
@@ -233,7 +243,7 @@ func TestEntriesListOnlyTriagedAndKeepsItSmall(t *testing.T) {
 	if err := json.Unmarshal([]byte(body), &entries); err != nil {
 		t.Fatal(err)
 	}
-	if len(entries) != 1 || entries[0].Title != "Hades" || entries[0].Scores["enjoyment"] != "loved" || entries[0].Rank != 1 || entries[0].Tags[0] != "comfort" {
+	if len(entries) != 1 || entries[0].Title != "Hades" || entries[0].Scores["prestige"] != "s" || entries[0].Rank != 1 || entries[0].Tags[0] != "comfort" {
 		t.Errorf("entries: %s", body)
 	}
 	if strings.Contains(body, "long public text") || strings.Contains(body, "verdicts") {
@@ -243,15 +253,15 @@ func TestEntriesListOnlyTriagedAndKeepsItSmall(t *testing.T) {
 
 func TestPublicRankCountsOnlyPublicEntries(t *testing.T) {
 	srv := newServer(t)
-	createGame(t, srv, "Secret Favourite", `{"status":"finished","visibility":"private","scores":{"enjoyment":"loved"}}`)
-	createGame(t, srv, "Hades", `{"status":"finished","scores":{"enjoyment":"liked"}}`)
-	celeste := createGame(t, srv, "Celeste", `{"status":"finished","scores":{"enjoyment":"liked"}}`)
+	createGame(t, srv, "Secret Favourite", `{"status":"finished","visibility":"private","scores":{"prestige":"s"}}`)
+	createGame(t, srv, "Hades", `{"status":"finished","scores":{"prestige":"a"}}`)
+	celeste := createGame(t, srv, "Celeste", `{"status":"finished","scores":{"prestige":"a"}}`)
 
 	_, body := call(t, srv, "GET", "/public/items/game/celeste", "", "")
 	if !strings.Contains(body, `"rank":{"place":2,"of":2}`) {
 		t.Errorf("celeste: %s", body)
 	}
-	if status, body := call(t, srv, "PUT", "/admin/items/"+celeste+"/place", token, `{"division":"liked","index":0}`); status != http.StatusNoContent {
+	if status, body := call(t, srv, "PUT", "/admin/items/"+celeste+"/place", token, `{"division":"a","index":0}`); status != http.StatusNoContent {
 		t.Fatalf("place: %d %s", status, body)
 	}
 	_, body = call(t, srv, "GET", "/public/items?kind=game", "", "")

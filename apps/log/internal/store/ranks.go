@@ -26,11 +26,11 @@ func (s *Store) Place(ctx context.Context, itemID int64, division string, index 
 	if k.RankedAxis == "" {
 		return fmt.Errorf("%w: %s has no ranked axis", ErrInvalid, k.Name)
 	}
-	settings, err := s.KindSettings(ctx, k)
+	axes, err := s.Axes(ctx)
 	if err != nil {
 		return err
 	}
-	if _, known := settings.DivisionIndex(k.RankedAxis, division); !known {
+	if _, known := axes.DivisionIndex(k.RankedAxis, division); !known {
 		return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, k.RankedAxis, division)
 	}
 	return s.inTx(ctx, func(tx *sql.Tx) error {
@@ -80,12 +80,13 @@ func removeRankedScore(ctx context.Context, tx *sql.Tx, k kind.Kind, itemID int6
 }
 
 func clearScores(ctx context.Context, tx *sql.Tx, k kind.Kind, itemID int64) error {
-	for _, axis := range k.Axes {
-		if err := setScore(ctx, tx, k, itemID, axis, nil); err != nil {
+	if k.RankedAxis != "" {
+		if err := setScore(ctx, tx, k, itemID, k.RankedAxis, nil); err != nil {
 			return err
 		}
 	}
-	return nil
+	_, err := tx.ExecContext(ctx, `DELETE FROM score WHERE item_id = ?`, itemID)
+	return err
 }
 
 func currentSpot(ctx context.Context, tx *sql.Tx, itemID int64, axis string) (spot, bool, error) {
@@ -151,7 +152,7 @@ func (s *Store) ranksOf(ctx context.Context, k kind.Kind) (map[int64]int, error)
 	if k.RankedAxis == "" {
 		return ranks, nil
 	}
-	settings, err := s.KindSettings(ctx, k)
+	axes, err := s.Axes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +170,7 @@ func (s *Store) ranksOf(ctx context.Context, k kind.Kind) (map[int64]int, error)
 		if err := rows.Scan(&row.itemID, &division, &row.position); err != nil {
 			return nil, err
 		}
-		index, known := settings.DivisionIndex(k.RankedAxis, division)
+		index, known := axes.DivisionIndex(k.RankedAxis, division)
 		row.division = index
 		if !known {
 			row.division = math.MaxInt

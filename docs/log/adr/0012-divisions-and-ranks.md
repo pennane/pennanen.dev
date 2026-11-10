@@ -1,7 +1,8 @@
 # 12. Scores are divisions; enjoyment is a rank
 
 **Status:** accepted · 2026-11-10 · supersedes [ADR 8](./0008-rankings.md) and
-the score words and score display of [ADR 11](./0011-presentation-settings.md)
+the score words and score display of [ADR 11](./0011-presentation-settings.md) ·
+axis names and default divisions superseded by [ADR 13](./0013-axes-as-data.md)
 
 ## Context
 Scores were numbers from 0 to 100. Triage could only give four of them

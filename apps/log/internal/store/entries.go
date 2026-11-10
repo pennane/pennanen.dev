@@ -19,13 +19,17 @@ func (s *Store) ChangeEntries(ctx context.Context, itemIDs []int64, change Entry
 	if err != nil {
 		return err
 	}
+	axes, err := s.Axes(ctx)
+	if err != nil {
+		return err
+	}
 	settings, err := s.AllKindSettings(ctx)
 	if err != nil {
 		return err
 	}
 	return s.inTx(ctx, func(tx *sql.Tx) error {
 		for _, id := range itemIDs {
-			if err := changeEntry(ctx, tx, settings, id, change); err != nil {
+			if err := changeEntry(ctx, tx, axes, settings, id, change); err != nil {
 				return fmt.Errorf("item %d: %w", id, err)
 			}
 		}
@@ -42,7 +46,7 @@ func normalizedChange(change EntryChange) (EntryChange, error) {
 	}
 	for axis, division := range change.Scores {
 		if division != nil {
-			key := DivisionKey(*division)
+			key := keyFrom(*division)
 			change.Scores[axis] = &key
 		}
 	}
@@ -79,7 +83,7 @@ func normalizedTags(tags []string) ([]string, error) {
 	return out, nil
 }
 
-func changeEntry(ctx context.Context, tx *sql.Tx, settings map[string]KindSettings, itemID int64, change EntryChange) error {
+func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string]KindSettings, itemID int64, change EntryChange) error {
 	k, err := lookupKind(ctx, tx, itemID)
 	if err != nil {
 		return err
@@ -88,10 +92,10 @@ func changeEntry(ctx context.Context, tx *sql.Tx, settings map[string]KindSettin
 		return fmt.Errorf("%w: %s has no status %q", ErrInvalid, k.Name, *change.Status)
 	}
 	for axis, division := range change.Scores {
-		if !k.HasAxis(axis) {
+		if !settings[k.Name].Uses(axis) {
 			return fmt.Errorf("%w: %s has no axis %q", ErrInvalid, k.Name, axis)
 		}
-		if _, known := settings[k.Name].DivisionIndex(axis, deref(division)); division != nil && !known {
+		if _, known := axes.DivisionIndex(axis, deref(division)); division != nil && !known {
 			return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, axis, *division)
 		}
 	}

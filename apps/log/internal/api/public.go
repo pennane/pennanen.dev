@@ -88,17 +88,22 @@ func (s *Server) publicKind(w http.ResponseWriter, r *http.Request) {
 }
 
 type Presentation struct {
+	Axes      store.Axes                    `json:"axes"`
 	Kinds     map[string]store.KindSettings `json:"kinds"`
 	TagTitles store.TagTitles               `json:"tagTitles"`
 }
 
 func (s *Server) presentation(r *http.Request) (Presentation, error) {
+	axes, err := s.Store.Axes(r.Context())
+	if err != nil {
+		return Presentation{}, err
+	}
 	kinds, err := s.Store.AllKindSettings(r.Context())
 	if err != nil {
 		return Presentation{}, err
 	}
 	titles, err := s.Store.TagTitles(r.Context())
-	return Presentation{Kinds: kinds, TagTitles: titles}, err
+	return Presentation{Axes: axes, Kinds: kinds, TagTitles: titles}, err
 }
 
 func (s *Server) publicPresentation(w http.ResponseWriter, r *http.Request) {

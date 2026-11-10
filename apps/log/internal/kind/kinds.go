@@ -42,8 +42,8 @@ func init() {
 		Statuses:         []string{Untriaged, "never-played", "maybe-played", "playing", "played", "finished", "dropped"},
 		StatusesToScore:  []string{"playing", "played", "finished", "dropped"},
 		StatusesShown:    []string{"maybe-played", "playing", "played", "finished", "dropped"},
-		Axes:             []string{Enjoyment, Quality},
-		RankedAxis:       Enjoyment,
+		DefaultAxes:      []string{Prestige, Quality},
+		RankedAxis:       Prestige,
 		UndeclaredFields: RejectUndeclaredFields,
 		IdentitySource:   SourceIGDB,
 		Fields: []Field{
@@ -71,8 +71,8 @@ func init() {
 		Statuses:         []string{Untriaged, "seen"},
 		StatusesToScore:  []string{"seen"},
 		StatusesShown:    []string{"seen"},
-		Axes:             []string{Enjoyment, Quality},
-		RankedAxis:       Enjoyment,
+		DefaultAxes:      []string{Prestige, Quality},
+		RankedAxis:       Prestige,
 		UndeclaredFields: AcceptUndeclaredFields,
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text},

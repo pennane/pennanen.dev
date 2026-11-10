@@ -87,7 +87,7 @@ func TestEntryRulesFollowKind(t *testing.T) {
 		t.Error("accepted an undeclared axis")
 	}
 	if err := s.ChangeEntry(ctx, id, store.EntryChange{
-		Scores:  map[string]*string{kind.Enjoyment: ptr("loved")},
+		Scores:  map[string]*string{kind.Prestige: ptr("s")},
 		AddTags: []string{" Favorite / All Time "},
 	}); err != nil {
 		t.Fatal(err)
@@ -96,7 +96,7 @@ func TestEntryRulesFollowKind(t *testing.T) {
 		t.Error("game accepted an undeclared field")
 	}
 	favorites, _ := s.ListItems(ctx, store.ItemFilter{Tag: "favorite"})
-	if len(favorites) != 1 || favorites[0].Entry.Tags[0] != "favorite/all-time" || favorites[0].Entry.Scores[kind.Enjoyment] != "loved" {
+	if len(favorites) != 1 || favorites[0].Entry.Tags[0] != "favorite/all-time" || favorites[0].Entry.Scores[kind.Prestige] != "s" {
 		t.Errorf("favorites = %+v", favorites)
 	}
 	if favorites[0].Verdicts.Values["mood"] != "foggy" {
