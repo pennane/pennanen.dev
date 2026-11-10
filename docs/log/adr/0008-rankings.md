@@ -1,6 +1,6 @@
 # 8. Rankings are hand-picked, ordered and always public
 
-**Status:** accepted · 2026-11-10
+**Status:** superseded by [ADR 12](./0012-divisions-and-ranks.md) · 2026-11-10
 
 ## Context
 Scores answer "how good was it". ap also wants to say "these, in this order":

@@ -20,7 +20,7 @@ and the bottle is in Margaux.
 ## Takes
 
 **Entry** — ap's take on one item. At most one per item. Holds a status,
-scores, tags, notes, a blurb, and a visibility.
+scores, tags, a blurb, and a visibility.
 
 **Status** — where ap is with the item, regardless of what ap thought of it.
 Each kind has its own set. Every kind starts at `untriaged` and can end at
@@ -40,10 +40,18 @@ be scored.
 
 **Axis label** — what public pages call an axis. The axis keeps its key.
 
-**Score** — a number from 0 to 100 on one axis. Always optional; nothing is owed.
+**Score** — the division an entry sits in on one axis. Always optional;
+nothing is owed.
 
-**Score word** — a word shown for a score range, like `loved` from 88 up. A
-kind shows scores as a number, a word, or both.
+**Division** — a named slice of an axis, in order from best: `loved`, `liked`,
+`fine`, `meh`, `disliked` for enjoyment. Each axis has its own divisions, as
+many as it needs, set in admin. There is no number behind a division.
+
+**Rank** — an entry's place in its kind's enjoyment order, counted from the
+top across all divisions: *loved · #14 of 214 games*. Strict: no two entries
+share a rank. Only enjoyment has ranks; other axes have divisions alone. Games
+rank against games, never against wine. Public pages count only entries that
+show publicly.
 
 **Tag** — a free-form label ap puts on an entry: `favorite`, `comfort`,
 `formative`. Nest with a slash for precision: `favorite/all-time`. Tags are
@@ -53,22 +61,9 @@ whatever its status. `idled` marks a game ap ran for trading cards, whether or
 not ap also played it. A tag's **title** is what public pages show for it;
 the tag itself is its id.
 
-**Ranking** — ap's hand-picked, ordered list of items: "games I want to single
-out". Any kinds may mix. Always public, at `/log/ranking/<slug>`. Separate from
-scores; neither changes the other.
-
-**Tier** — a named group inside a ranking (`S`, `all-time`). A ranking is
-either `numbered` (one plain order) or `tiered` (tiers in order, each holding
-its own order).
-
-**Placement** — one item's spot in a ranking, with an optional one-line note
-about why it sits there.
-
 **Time spent** — ap's word on how long it took: `not-enough`, `a-bit`,
 `just-right`, `a-lot`, `too-much`. A judgment, not a measurement: Steam's
 playtime stays private, and public pages show only this, when ap says it.
-
-**Notes** — private markdown. Only ap sees it.
 
 **Blurb** — public text, written for others, shown on the item's page.
 
@@ -104,7 +99,8 @@ has nothing.
 **Triage** — moving an entry out of `untriaged`. The fast, one-at-a-time
 screen where imports get sorted into played, never played, and so on.
 
-**Rating** — giving a shown entry its scores, one card at a time, after triage.
+**Rating** — giving a shown entry its scores, one card at a time, after triage:
+pick a division, then answer *better or worse than X?* until it has a rank.
 
 **Hint** — the importer's guess during triage (`likely-idled`,
 `likely-played`, `likely-never-played`, `likely-not-a-game`). Hints suggest;

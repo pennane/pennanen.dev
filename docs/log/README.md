@@ -12,7 +12,7 @@ partly public at `/log`. Words: [GLOSSARY](./GLOSSARY.md). Decisions: [adr/](./a
 3. **Admin** — `/admin` PWA: triage (with bulk actions) first, then the
    add-anything search box with one-tap enjoyment, then entry editing.
 4. **Public** — `/log`, `/log/game`, `/log/game/<slug>`.
-5. **Rankings** — hand-picked ordered lists, `/log/ranking/<slug>` ([ADR 8](./adr/0008-rankings.md)).
+5. **Ranks** — enjoyment divisions and a strict order per kind ([ADR 12](./adr/0012-divisions-and-ranks.md)).
 6. **Rating** — public by default, triage then rate ([ADR 9](./adr/0009-public-by-default.md)); what shows and how is set in admin ([ADR 11](./adr/0011-presentation-settings.md)).
 
 ## Later
