@@ -43,14 +43,16 @@ const TRIAGE_TAGS = [
 ] as const
 
 const BULK_FOR_HINT: Partial<Record<Hint, { label: string; change: EntryChange }>> = {
-  'likely-idled': { label: 'never-played + idled', change: { status: NEVER_PLAYED, addTags: [IDLED] } },
+  'likely-idled': {
+    label: 'never-played + idled',
+    change: { status: NEVER_PLAYED, addTags: [IDLED] }
+  },
   'likely-never-played': { label: NEVER_PLAYED, change: { status: NEVER_PLAYED } },
   'likely-not-a-game': { label: 'dismissed', change: { status: 'dismissed' } }
 }
 
 const matches = (filter: Filter) => (card: GameCard) =>
-  filter === 'everything' ||
-  (filter === 'no-hint' ? card.hint === undefined : card.hint === filter)
+  filter === 'everything' || (filter === 'no-hint' ? card.hint === undefined : card.hint === filter)
 
 export const Triage = ({
   kind,
@@ -314,9 +316,7 @@ export const Triage = ({
             <Compare {...comparing} />
           ) : (
             <div className={styles.choices}>
-              <p className={styles.prompt}>
-                {step.status} — which tier?
-              </p>
+              <p className={styles.prompt}>{step.status} — which tier?</p>
               {presets.map((preset, i) => (
                 <button
                   key={preset.name}

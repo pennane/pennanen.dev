@@ -56,8 +56,7 @@ export const logAdmin = {
     call<Record<string, string>>('/admin/settings/tag-titles', send('PUT', titles)),
   items: (filter: Record<string, string>) =>
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
-  entries: (kind: string) =>
-    call<ListedEntry[]>(`/admin/entries?${new URLSearchParams({ kind })}`),
+  entries: (kind: string) => call<ListedEntry[]>(`/admin/entries?${new URLSearchParams({ kind })}`),
   place: (itemId: number, division: string, index: number) =>
     call<void>(`/admin/items/${itemId}/place`, send('PUT', { division, index })),
   createItem: (kind: string, title: string) =>
@@ -82,6 +81,5 @@ export const logAdmin = {
   changeEntries: (itemIds: number[], change: EntryChange) =>
     call<void>('/admin/entries/change', send('POST', { itemIds, change })),
   steamSync: () => call<SteamSyncReport>('/admin/sync/steam'),
-  startSteamSync: () =>
-    call<SteamSyncReport>('/admin/sync/steam', { method: 'POST' })
+  startSteamSync: () => call<SteamSyncReport>('/admin/sync/steam', { method: 'POST' })
 }

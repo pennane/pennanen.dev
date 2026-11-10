@@ -22,26 +22,17 @@ const toBase64Url = (bytes: ArrayBuffer) =>
     .replace(/=+$/, '')
 
 const fromBase64Url = (text: string) =>
-  Uint8Array.from(atob(text.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
-    c.charCodeAt(0)
-  )
+  Uint8Array.from(atob(text.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
 
 const payloadFor = (expiresAt: number) => encoder.encode(`admin:${expiresAt}`)
 
 export const createSession = async (now = Date.now()) => {
   const expiresAt = now + SESSION_DAYS * 24 * 60 * 60 * 1000
-  const signature = await crypto.subtle.sign(
-    'HMAC',
-    await signingKey(),
-    payloadFor(expiresAt)
-  )
+  const signature = await crypto.subtle.sign('HMAC', await signingKey(), payloadFor(expiresAt))
   return { value: `${expiresAt}.${toBase64Url(signature)}`, expiresAt }
 }
 
-export const isValidSession = async (
-  value: string | undefined,
-  now = Date.now()
-) => {
+export const isValidSession = async (value: string | undefined, now = Date.now()) => {
   const [expiresAtText, signature] = value?.split('.') ?? []
   const expiresAt = Number(expiresAtText)
   if (!signature || !Number.isFinite(expiresAt) || expiresAt < now) {

@@ -15,10 +15,7 @@ const isAdminPassword = (attempt: string) => {
   return timingSafeEqual(digest(attempt), digest(password))
 }
 
-export async function logIn(
-  _previous: LoginState,
-  form: FormData
-): Promise<LoginState> {
+export async function logIn(_previous: LoginState, form: FormData): Promise<LoginState> {
   if (!isAdminPassword(String(form.get('password') ?? ''))) {
     return { error: 'Nope.' }
   }

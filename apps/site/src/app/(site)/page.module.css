@@ -39,11 +39,7 @@
   margin-inline-end: 0.75lh;
   margin-block: 0;
   mix-blend-mode: luminosity;
-  border: 6px ridge
-    light-dark(
-      var(--foreground-secondary-dark),
-      var(--foreground-secondary-light)
-    );
+  border: 6px ridge light-dark(var(--foreground-secondary-dark), var(--foreground-secondary-light));
 }
 
 @media (max-width: 340px) {

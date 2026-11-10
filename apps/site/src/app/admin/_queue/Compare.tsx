@@ -62,9 +62,7 @@ export const Compare = (comparing: Comparing) => {
   const left = questionsLeft(comparing.search)
   return (
     <div className={styles.choices}>
-      <p className={styles.prompt}>
-        {comparing.divisionName}: better or worse than
-      </p>
+      <p className={styles.prompt}>{comparing.divisionName}: better or worse than</p>
       <div className={styles.rival}>
         {rival.cover && <Image src={rival.cover} alt="" width={92} height={43} unoptimized />}
         <span>{rival.title}</span>

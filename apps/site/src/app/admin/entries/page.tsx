@@ -22,19 +22,13 @@ const entryId = (value: string | undefined) => {
   return value && Number.isInteger(id) ? id : undefined
 }
 
-export default async function EntriesPage({
-  searchParams
-}: {
-  searchParams: SearchParams
-}) {
+export default async function EntriesPage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdmin()
   const params = await searchParams
   const kinds = await logAdmin.kinds()
   const kindName = single(params.kind) ?? DEFAULT_KIND
   const kind = kinds.find((k) => k.name === kindName) ?? kinds[0]
-  const entries = (await logAdmin.entries(kind.name)).sort((a, b) =>
-    a.title.localeCompare(b.title)
-  )
+  const entries = (await logAdmin.entries(kind.name)).sort((a, b) => a.title.localeCompare(b.title))
   const visibility = single(params.visibility)
 
   return (

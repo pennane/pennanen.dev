@@ -14,8 +14,6 @@ export const viewport: Viewport = {
   viewportFit: 'cover'
 }
 
-export default function AdminLayout({
-  children
-}: Readonly<{ children: React.ReactNode }>) {
+export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <div className={styles.shell}>{children}</div>
 }

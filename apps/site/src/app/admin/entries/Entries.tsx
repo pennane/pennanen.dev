@@ -139,7 +139,9 @@ export const Entries = ({
 
   const tags = useMemo(() => {
     const counted = tagsByUse(entries.filter((e) => matches(e, { ...filter, tag: undefined }, '')))
-    return !filter.tag || counted.some(([tag]) => tag === filter.tag) ? counted : [...counted, [filter.tag, 0] as [string, number]]
+    return !filter.tag || counted.some(([tag]) => tag === filter.tag)
+      ? counted
+      : [...counted, [filter.tag, 0] as [string, number]]
   }, [entries, filter])
   const shown = useMemo(
     () => entries.filter((e) => matches(e, filter, query.trim().toLowerCase())),
@@ -162,85 +164,92 @@ export const Entries = ({
   return (
     <div className={styles.workspace} data-panel={panel.state}>
       <div className={styles.listSide}>
-      <header className={styles.header}>
-        <h1>
-          entries <span className={styles.count}>{shown.length}</span>
-        </h1>
-        <Link href="/admin/triage" className={styles.quiet}>
-          triage
-        </Link>
-        <input
-          className={styles.search}
-          type="search"
-          value={query}
-          placeholder="find"
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      </header>
-      <Choices
-        chosen={filter.status}
-        anyLabel="any status"
-        options={statuses.map((s) => ({ value: s, label: statusLabel(s) }))}
-        onChoose={(status) => choose({ status })}
-      />
-      <Choices
-        chosen={filter.visibility}
-        anyLabel="anyone"
-        options={VISIBILITIES.map((v) => ({ value: v, label: VISIBILITY_LABELS[v] }))}
-        onChoose={(visibility) => choose({ visibility })}
-      />
-      {tags.length > 0 && (
+        <header className={styles.header}>
+          <h1>
+            entries <span className={styles.count}>{shown.length}</span>
+          </h1>
+          <Link href="/admin/triage" className={styles.quiet}>
+            triage
+          </Link>
+          <input
+            className={styles.search}
+            type="search"
+            value={query}
+            placeholder="find"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </header>
         <Choices
-          chosen={filter.tag}
-          anyLabel="any tag"
-          options={tags.map(([tag, uses]) => ({ value: tag, label: `${tagLabel(tag)} ${uses}` }))}
-          onChoose={(tag) => choose({ tag })}
+          chosen={filter.status}
+          anyLabel="any status"
+          options={statuses.map((s) => ({ value: s, label: statusLabel(s) }))}
+          onChoose={(status) => choose({ status })}
         />
-      )}
-      {shown.length === 0 ? (
-        <p className={styles.empty}>No entries match.</p>
-      ) : (
-        <ul className={styles.list}>
-          {shown.map((entry) => (
-            <li
-              key={entry.id}
-              className={styles.row}
-              aria-current={openIdOf(panel) === String(entry.id) ? 'true' : undefined}
-            >
-              <div className={styles.thumb}>
-                {entry.cover && (
-                  <Image alt="" src={entry.cover} width={92} height={43} unoptimized loading="lazy" />
-                )}
-              </div>
-              <div className={styles.rowBody}>
-                <Link
-                  href={`/admin/entries/${entry.id}`}
-                  className={styles.title}
-                  onClick={(event) => {
-                    if (!isPlainClick(event)) return
-                    event.preventDefault()
-                    showPanel({ state: 'loading', id: entry.id })
-                  }}
-                >
-                  {entry.title}
-                </Link>
-                <span className={styles.meta}>
-                  {statusLabel(entry.status)}
-                  {entry.scores[PRESTIGE] !== undefined &&
-                    ` · ${divisionName(findAxis(kind.axes, PRESTIGE), entry.scores[PRESTIGE])}`}
-                  {entry.rank !== undefined && ` #${entry.rank}`}
-                  {entry.tags.length > 0 && ` · ${entry.tags.map(tagLabel).join(', ')}`}
-                </span>
-              </div>
-              <VisibilitySwitch
-                visibility={entry.visibility}
-                presence={presenceOf(entry, statusesShown)}
-                onChange={(visibility) => changeVisibility(entry, visibility)}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+        <Choices
+          chosen={filter.visibility}
+          anyLabel="anyone"
+          options={VISIBILITIES.map((v) => ({ value: v, label: VISIBILITY_LABELS[v] }))}
+          onChoose={(visibility) => choose({ visibility })}
+        />
+        {tags.length > 0 && (
+          <Choices
+            chosen={filter.tag}
+            anyLabel="any tag"
+            options={tags.map(([tag, uses]) => ({ value: tag, label: `${tagLabel(tag)} ${uses}` }))}
+            onChoose={(tag) => choose({ tag })}
+          />
+        )}
+        {shown.length === 0 ? (
+          <p className={styles.empty}>No entries match.</p>
+        ) : (
+          <ul className={styles.list}>
+            {shown.map((entry) => (
+              <li
+                key={entry.id}
+                className={styles.row}
+                aria-current={openIdOf(panel) === String(entry.id) ? 'true' : undefined}
+              >
+                <div className={styles.thumb}>
+                  {entry.cover && (
+                    <Image
+                      alt=""
+                      src={entry.cover}
+                      width={92}
+                      height={43}
+                      unoptimized
+                      loading="lazy"
+                    />
+                  )}
+                </div>
+                <div className={styles.rowBody}>
+                  <Link
+                    href={`/admin/entries/${entry.id}`}
+                    className={styles.title}
+                    onClick={(event) => {
+                      if (!isPlainClick(event)) return
+                      event.preventDefault()
+                      showPanel({ state: 'loading', id: entry.id })
+                    }}
+                  >
+                    {entry.title}
+                  </Link>
+                  <span className={styles.meta}>
+                    {statusLabel(entry.status)}
+                    {entry.scores[PRESTIGE] !== undefined &&
+                      ` · ${divisionName(findAxis(kind.axes, PRESTIGE), entry.scores[PRESTIGE])}`}
+                    {entry.rank !== undefined && ` #${entry.rank}`}
+                    {entry.tags.length > 0 && ` · ${entry.tags.map(tagLabel).join(', ')}`}
+                  </span>
+                </div>
+                <VisibilitySwitch
+                  visibility={entry.visibility}
+                  presence={presenceOf(entry, statusesShown)}
+                  onChange={(visibility) => changeVisibility(entry, visibility)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       <aside className={styles.panel}>
         {panel.state === 'loading' && <p className={styles.empty}>Opening…</p>}

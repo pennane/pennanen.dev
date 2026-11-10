@@ -3,6 +3,7 @@
 **Status:** accepted · 2026-11-10
 
 ## Context
+
 Entries started `private` and needed a separate publish step. Private entries
 are rare, so the step only got in the way: ap rated games and none showed up.
 Making everything public is not enough either, since a Steam library holds
@@ -12,6 +13,7 @@ hundreds of games ap never played.
 ap also played it.
 
 ## Decision
+
 - New entries are `public`. `private` is a rare per-entry opt-out. Every
   existing entry became public.
 - Each kind lists the statuses it shows publicly. For `game`: `maybe-played`,
@@ -26,6 +28,7 @@ ap also played it.
   no score. There is no publish step; triage then rate.
 
 ## Consequences
+
 - The schema default for `entry.visibility` stays `private`; the store sets
   `public` explicitly, because SQLite cannot change a column default without
   rebuilding the table and its foreign keys.

@@ -3,12 +3,7 @@ import { A } from '../../../components/A'
 import { Gap, Stack } from '../../../components/Stack'
 import { WrapInBox } from '../../../components/WrapInBox'
 import { logPublic } from '../../../lib/log/public-api'
-import {
-  byRank,
-  kindPlural,
-  PUBLIC_KINDS,
-  toListed
-} from '../../../lib/log/present'
+import { byRank, kindPlural, PUBLIC_KINDS, toListed } from '../../../lib/log/present'
 import { ItemList } from './components/ItemRow'
 import styles from './components/log.module.css'
 

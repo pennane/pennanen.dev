@@ -3,11 +3,7 @@
 import clsx from 'clsx'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import {
-  statusLabel,
-  tagLabel,
-  type ListedItem
-} from '../../../../lib/log/present'
+import { statusLabel, tagLabel, type ListedItem } from '../../../../lib/log/present'
 import { ItemList } from '../components/ItemRow'
 import { useTagTitle } from '../components/PresentationContext'
 import styles from './kind.module.css'
@@ -48,16 +44,11 @@ const ChoiceRow = ({
                 href={href}
                 replace
                 scroll={false}
-                className={clsx(
-                  styles.choice,
-                  href === currentHref && styles.chosen
-                )}
+                className={clsx(styles.choice, href === currentHref && styles.chosen)}
                 aria-current={href === currentHref ? 'true' : undefined}
               >
                 {label}
-                {count !== undefined && (
-                  <span className={styles.count}>{count}</span>
-                )}
+                {count !== undefined && <span className={styles.count}>{count}</span>}
               </Link>
             </li>
           )
@@ -70,18 +61,17 @@ const ChoiceRow = ({
 const MIN_TO_BE_WORTH_FILTERING = 2
 
 const keepChosen = (counts: { value: string; count: number }[], chosen: string | undefined) =>
-  !chosen || counts.some((c) => c.value === chosen) ? counts : [...counts, { value: chosen, count: 0 }]
+  !chosen || counts.some((c) => c.value === chosen)
+    ? counts
+    : [...counts, { value: chosen, count: 0 }]
 
-export const KindBrowser = ({
-  items,
-  path
-}: {
-  items: ListedItem[]
-  path: string
-}) => {
+export const KindBrowser = ({ items, path }: { items: ListedItem[]; path: string }) => {
   const view = parseView(useSearchParams())
   const titleOf = useTagTitle()
-  const statuses = keepChosen(statusesIn(applyView(items, { ...view, status: undefined })), view.status)
+  const statuses = keepChosen(
+    statusesIn(applyView(items, { ...view, status: undefined })),
+    view.status
+  )
   const tags = keepChosen(tagsIn(applyView(items, { ...view, tag: undefined })), view.tag)
   const shown = applyView(items, view)
 

@@ -14,9 +14,7 @@ import styles from './page.module.css'
 
 type Params = { params: Promise<{ project: string }> }
 
-export async function generateMetadata({
-  params
-}: Params): Promise<Metadata | undefined> {
+export async function generateMetadata({ params }: Params): Promise<Metadata | undefined> {
   const project = await getProjectById((await params).project)
 
   if (!project) {
@@ -73,12 +71,8 @@ export default async function Page({ params }: Params) {
             {(project.date || project.links.live || project.links.source) && (
               <MetaLine>
                 {project.date && <time>{formatDate(project.date)}</time>}
-                {project.links.live && (
-                  <MetaLink href={project.links.live} icon={Globe} />
-                )}
-                {project.links.source && (
-                  <MetaLink href={project.links.source} icon={Code} />
-                )}
+                {project.links.live && <MetaLink href={project.links.live} icon={Globe} />}
+                {project.links.source && <MetaLink href={project.links.source} icon={Code} />}
               </MetaLine>
             )}
           </Stack>

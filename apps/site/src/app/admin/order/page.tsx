@@ -17,7 +17,10 @@ export default async function OrderPage({ searchParams }: { searchParams: Search
   await requireAdmin()
   const requested = (await searchParams).kind
   const kinds = (await logAdmin.kinds()).filter((k) => k.rankedAxis)
-  const kind = kinds.find((k) => k.name === requested) ?? kinds.find((k) => k.name === DEFAULT_KIND) ?? kinds[0]
+  const kind =
+    kinds.find((k) => k.name === requested) ??
+    kinds.find((k) => k.name === DEFAULT_KIND) ??
+    kinds[0]
   const entries = await logAdmin.entries(kind.name)
   const axis = kind.rankedAxis
   const sections = toSections(findAxis(kind.axes, axis)?.divisions ?? [], entries, axis)

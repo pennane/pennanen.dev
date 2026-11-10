@@ -9,8 +9,7 @@ export type PublicKind = keyof typeof KIND_PLURALS
 
 export const PUBLIC_KINDS = Object.keys(KIND_PLURALS) as PublicKind[]
 
-export const isPublicKind = (kind: string): kind is PublicKind =>
-  Object.hasOwn(KIND_PLURALS, kind)
+export const isPublicKind = (kind: string): kind is PublicKind => Object.hasOwn(KIND_PLURALS, kind)
 
 export const kindPlural = (kind: PublicKind) => KIND_PLURALS[kind]
 
@@ -28,9 +27,7 @@ export const numberField = (fields: Fields, name: string) => {
 
 export const listField = (fields: Fields, name: string) => {
   const value = fields[name]
-  return Array.isArray(value)
-    ? value.filter((v): v is string => typeof v === 'string')
-    : []
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
 }
 
 const FIELDS_WITH_A_PLACE = new Set([
@@ -62,14 +59,12 @@ export const freeFormFields = (fields: Fields) =>
         : []
     )
 
-export const titleOf = (item: PublicItem) =>
-  textField(item.fields, 'title') ?? item.slug
+export const titleOf = (item: PublicItem) => textField(item.fields, 'title') ?? item.slug
 
 export const pictureOf = (item: PublicItem) =>
   textField(item.fields, 'cover') ?? textField(item.fields, 'image')
 
-export const itemPath = (item: { kind: string; slug: string }) =>
-  `/log/${item.kind}/${item.slug}`
+export const itemPath = (item: { kind: string; slug: string }) => `/log/${item.kind}/${item.slug}`
 
 export const statusLabel = (status: string) => status.replaceAll('-', ' ')
 
@@ -81,14 +76,11 @@ export const tagIsWithin = (tag: string, parent: string) =>
   tag === parent || tag.startsWith(parent + TAG_SEPARATOR)
 
 export const tagWithAncestors = (tag: string) =>
-  tag
-    .split(TAG_SEPARATOR)
-    .map((_, i, parts) => parts.slice(0, i + 1).join(TAG_SEPARATOR))
+  tag.split(TAG_SEPARATOR).map((_, i, parts) => parts.slice(0, i + 1).join(TAG_SEPARATOR))
 
 const FAVORITE_TAG = 'favorite'
 
-export const isFavorite = (tags: string[]) =>
-  tags.some((tag) => tagIsWithin(tag, FAVORITE_TAG))
+export const isFavorite = (tags: string[]) => tags.some((tag) => tagIsWithin(tag, FAVORITE_TAG))
 
 export const PRESTIGE = 'prestige'
 
@@ -175,8 +167,7 @@ export const toListed = (item: PublicItem): ListedItem => ({
   lastPlayed: textField(item.fields, 'last_played')
 })
 
-export const byTitle = (a: ListedItem, b: ListedItem) =>
-  a.title.localeCompare(b.title)
+export const byTitle = (a: ListedItem, b: ListedItem) => a.title.localeCompare(b.title)
 
 const NEVER_PLAYED = ''
 
@@ -185,8 +176,7 @@ export const byLastPlayed = (a: ListedItem, b: ListedItem) =>
 
 const placeOf = (item: ListedItem) => item.rank?.place ?? Number.MAX_SAFE_INTEGER
 
-export const byRank = (a: ListedItem, b: ListedItem) =>
-  placeOf(a) - placeOf(b) || byTitle(a, b)
+export const byRank = (a: ListedItem, b: ListedItem) => placeOf(a) - placeOf(b) || byTitle(a, b)
 
 export type Presence = 'shown' | 'hidden'
 

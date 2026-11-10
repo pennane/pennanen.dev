@@ -5,6 +5,7 @@ the score words and score display of [ADR 11](./0011-presentation-settings.md) Â
 axis names and default divisions superseded by [ADR 13](./0013-axes-as-data.md)
 
 ## Context
+
 Scores were numbers from 0 to 100. Triage could only give four of them
 (92, 80, 60, 35), so 200 rated games sat in four ties and in an order ap
 disagreed with. Moving one meant guessing a number. ap thinks in "above or
@@ -12,12 +13,13 @@ below this one", finds 0â€“100 too fine, yet wants a clear best-to-worst order
 of games. Quality is an annotation; enjoyment is what orders things.
 
 ## Decision
+
 - An axis is an ordered list of named **divisions** (`loved` > `liked` >
   `fine` > `meh` > `disliked`), set in admin per axis, as many as it needs.
   A score is the division an entry sits in. No numbers are stored.
 - Enjoyment also has a **rank**: a strict order of a kind's entries across
   its divisions. No ties. Other axes have divisions only.
-- Rating picks a division, then asks *better or worse than X?* to find the
+- Rating picks a division, then asks _better or worse than X?_ to find the
   rank, and can stop early. An entry given a division without a rank joins
   the bottom of it, in an order the kind chooses (playtime for games).
 - Public pages show the division, never a rank number. Lists order by rank
@@ -33,6 +35,7 @@ of games. Quality is an annotation; enjoyment is what orders things.
   numbers stay in `number_score_archive` until nothing needs them.
 
 ## Consequences
+
 - Reordering is a drag or a comparison, never a typed number.
 - Adding an entry shifts the ranks below it; the division stays.
 - A rank is a position inside its division; a move renumbers that division,

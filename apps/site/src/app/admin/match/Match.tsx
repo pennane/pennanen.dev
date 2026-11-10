@@ -52,13 +52,17 @@ export const Match = ({ cards, report }: { cards: GameCard[]; report?: IGDBMatch
                   <IGDBSearch
                     initialQuery={card.title}
                     onPick={(result) =>
-                      settle(card, `${card.title} → ${result.name}`, () => matchIGDB(card.id, result.igdbId))
+                      settle(card, `${card.title} → ${result.name}`, () =>
+                        matchIGDB(card.id, result.igdbId)
+                      )
                     }
                   />
                   <button
                     type="button"
                     className={styles.quiet}
-                    onClick={() => settle(card, `${card.title} → no match`, () => matchIGDBNone(card.id))}
+                    onClick={() =>
+                      settle(card, `${card.title} → no match`, () => matchIGDBNone(card.id))
+                    }
                   >
                     igdb doesn’t have it: no match
                   </button>

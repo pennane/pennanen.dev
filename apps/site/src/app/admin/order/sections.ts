@@ -4,7 +4,11 @@ export type Section = { division: Division; ids: number[] }
 
 export type Spot = { division: string; index: number }
 
-export const toSections = (divisions: Division[], entries: ListedEntry[], axis: string): Section[] => {
+export const toSections = (
+  divisions: Division[],
+  entries: ListedEntry[],
+  axis: string
+): Section[] => {
   const ranked = entries
     .filter((e) => e.rank !== undefined && e.scores[axis] !== undefined)
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
@@ -43,7 +47,11 @@ export const oneStep = (sections: Section[], from: Spot, direction: 1 | -1): Spo
   return { division: neighbour.division.key, index: direction === 1 ? 0 : neighbour.ids.length }
 }
 
-export const acrossLine = (sections: Section[], from: Spot, direction: 1 | -1): Spot | undefined => {
+export const acrossLine = (
+  sections: Section[],
+  from: Spot,
+  direction: 1 | -1
+): Spot | undefined => {
   const neighbour = sections[sectionIndex(sections, from.division) + direction]
   if (!neighbour) return undefined
   return { division: neighbour.division.key, index: direction === 1 ? 0 : neighbour.ids.length }
@@ -59,5 +67,8 @@ export const spotBefore = (sections: Section[], id: number, target: number): Spo
   if (id === target) return spotOf(sections, id)
   const section = sections.find((s) => s.ids.includes(target))
   if (!section) return undefined
-  return { division: section.division.key, index: section.ids.filter((x) => x !== id).indexOf(target) }
+  return {
+    division: section.division.key,
+    index: section.ids.filter((x) => x !== id).indexOf(target)
+  }
 }

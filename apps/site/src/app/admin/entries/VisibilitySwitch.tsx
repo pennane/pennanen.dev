@@ -60,11 +60,7 @@ export const VisibilitySwitch = ({
         {visibility === 'auto' ? `auto · ${presence}` : VISIBILITY_LABELS[visibility]}
       </button>
       {save.state === 'failed' && (
-        <button
-          type="button"
-          className={styles.retry}
-          onClick={() => choose(save.wanted)}
-        >
+        <button type="button" className={styles.retry} onClick={() => choose(save.wanted)}>
           not saved, retry
         </button>
       )}

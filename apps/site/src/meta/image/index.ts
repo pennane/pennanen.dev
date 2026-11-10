@@ -1,10 +1,4 @@
-import {
-  CanvasRenderingContext2D,
-  createCanvas,
-  Image,
-  loadImage,
-  registerFont
-} from 'canvas'
+import { CanvasRenderingContext2D, createCanvas, Image, loadImage, registerFont } from 'canvas'
 import fs from 'fs'
 import path from 'path'
 import { Post } from '../../app/(site)/entries/lib'
@@ -104,11 +98,7 @@ const drawLines = (
   context.textAlign = 'left'
   context.textBaseline = 'middle'
   lines.forEach((line, i) => {
-    context.fillText(
-      line,
-      PADDING,
-      top + i * style.lineHeight + style.lineHeight / 2
-    )
+    context.fillText(line, PADDING, top + i * style.lineHeight + style.lineHeight / 2)
   })
 }
 
@@ -124,11 +114,7 @@ async function renderCard({ title, description, footer, image }: Card) {
   context.font = BRAND.font
   context.fillStyle = BRAND.color
   context.textBaseline = 'middle'
-  context.fillText(
-    'pennanen.dev',
-    PADDING + LOGO_SIZE + 12,
-    PADDING + LOGO_SIZE / 2
-  )
+  context.fillText('pennanen.dev', PADDING + LOGO_SIZE + 12, PADDING + LOGO_SIZE / 2)
 
   const footerTop = HEIGHT - PADDING - FOOTER.lineHeight
   if (footer) drawLines(context, [footer], FOOTER, footerTop)
@@ -139,17 +125,10 @@ async function renderCard({ title, description, footer, image }: Card) {
   const gap = descriptionBlock.height ? TITLE_GAP : 0
   const areaTop = PADDING + LOGO_SIZE
   const areaHeight = footerTop - areaTop
-  const top =
-    areaTop +
-    (areaHeight - titleBlock.height - gap - descriptionBlock.height) / 2
+  const top = areaTop + (areaHeight - titleBlock.height - gap - descriptionBlock.height) / 2
 
   drawLines(context, titleBlock.lines, TITLE, top)
-  drawLines(
-    context,
-    descriptionBlock.lines,
-    DESCRIPTION,
-    top + titleBlock.height + gap
-  )
+  drawLines(context, descriptionBlock.lines, DESCRIPTION, top + titleBlock.height + gap)
 
   return canvas.toBuffer('image/jpeg', { quality: 0.9 })
 }

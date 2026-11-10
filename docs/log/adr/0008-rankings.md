@@ -3,10 +3,12 @@
 **Status:** superseded by [ADR 12](./0012-divisions-and-ranks.md) · 2026-11-10
 
 ## Context
+
 Scores answer "how good was it". ap also wants to say "these, in this order":
 tier lists or a plain best-to-worst list, mostly to single out games.
 
 ## Decision
+
 - A ranking holds placements ap picked by hand. Filters in the admin help find
   candidates but are not saved; nothing joins a ranking on its own.
 - A ranking's layout is `numbered` (one order) or `tiered` (named tiers in
@@ -20,6 +22,7 @@ tier lists or a plain best-to-worst list, mostly to single out games.
   never collides with `/log/<kind>/<slug>`.
 
 ## Consequences
+
 - Placing a private entry in a ranking publishes its title and cover. That is
   the point of placing it.
 - Deleting an item removes its placements.

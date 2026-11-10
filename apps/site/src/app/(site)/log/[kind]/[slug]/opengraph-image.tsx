@@ -1,12 +1,7 @@
 import { readFile } from 'fs/promises'
 import { ImageResponse } from 'next/og'
 import path from 'path'
-import {
-  isPublicKind,
-  pictureOf,
-  shownScores,
-  titleOf
-} from '../../../../../lib/log/present'
+import { isPublicKind, pictureOf, shownScores, titleOf } from '../../../../../lib/log/present'
 import { logPublic } from '../../../../../lib/log/public-api'
 
 export const size = { width: 1200, height: 630 }
@@ -18,8 +13,7 @@ const PADDING = 48
 const LOGO_SIZE = 32
 const PUBLIC_DIR = path.join(process.cwd(), 'public')
 
-const publicFile = (...parts: string[]) =>
-  readFile(path.join(PUBLIC_DIR, ...parts))
+const publicFile = (...parts: string[]) => readFile(path.join(PUBLIC_DIR, ...parts))
 
 const font = (file: string) => publicFile('fonts', file)
 
@@ -52,57 +46,55 @@ export default async function OpenGraphImage({
     : ''
 
   return new ImageResponse(
-    (
-      <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative' }}>
-        <img
-          alt=""
-          src={(item && pictureOf(item)) ?? fallbackBackground}
-          width={size.width}
-          height={size.height}
-          style={{ position: 'absolute', inset: 0, objectFit: 'cover' }}
-        />
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            width: PANEL_WIDTH,
-            height: '100%',
-            padding: PADDING,
-            background: 'rgba(0, 0, 0, 0.86)',
-            fontFamily: 'Inter'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img alt="" src={logo} width={LOGO_SIZE} height={LOGO_SIZE} />
-            <span style={{ fontSize: 24, fontWeight: 500, color: 'rgba(255, 255, 255, 0.8)' }}>
-              pennanen.dev
-            </span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <span
-              style={{
-                fontSize: 60,
-                fontWeight: 700,
-                lineHeight: 1.07,
-                color: '#4980ff',
-                lineClamp: 3
-              }}
-            >
-              {title}
-            </span>
-            {blurb && (
-              <span style={{ fontSize: 28, lineHeight: 1.36, color: '#9fbcff', lineClamp: 5 }}>
-                {blurb}
-              </span>
-            )}
-          </div>
-          <span style={{ fontSize: 24, fontWeight: 500, color: 'rgba(255, 255, 255, 0.9)' }}>
-            {footer}
+    <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative' }}>
+      <img
+        alt=""
+        src={(item && pictureOf(item)) ?? fallbackBackground}
+        width={size.width}
+        height={size.height}
+        style={{ position: 'absolute', inset: 0, objectFit: 'cover' }}
+      />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          width: PANEL_WIDTH,
+          height: '100%',
+          padding: PADDING,
+          background: 'rgba(0, 0, 0, 0.86)',
+          fontFamily: 'Inter'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img alt="" src={logo} width={LOGO_SIZE} height={LOGO_SIZE} />
+          <span style={{ fontSize: 24, fontWeight: 500, color: 'rgba(255, 255, 255, 0.8)' }}>
+            pennanen.dev
           </span>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <span
+            style={{
+              fontSize: 60,
+              fontWeight: 700,
+              lineHeight: 1.07,
+              color: '#4980ff',
+              lineClamp: 3
+            }}
+          >
+            {title}
+          </span>
+          {blurb && (
+            <span style={{ fontSize: 28, lineHeight: 1.36, color: '#9fbcff', lineClamp: 5 }}>
+              {blurb}
+            </span>
+          )}
+        </div>
+        <span style={{ fontSize: 24, fontWeight: 500, color: 'rgba(255, 255, 255, 0.9)' }}>
+          {footer}
+        </span>
       </div>
-    ),
+    </div>,
     {
       ...size,
       fonts: [

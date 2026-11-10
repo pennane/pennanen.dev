@@ -55,7 +55,15 @@ const SaveButton = ({ save, onSave }: { save: Save; onSave: () => void }) => (
   </div>
 )
 
-const Section = ({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) => (
+const Section = ({
+  label,
+  hint,
+  children
+}: {
+  label: string
+  hint?: string
+  children: React.ReactNode
+}) => (
   <section className={editor.section}>
     <h3 className={editor.label}>{label}</h3>
     {hint && <p className={styles.hint}>{hint}</p>}
@@ -78,7 +86,9 @@ export const AxesForm = ({ initial }: { initial: Axis[] }) => {
   return (
     <article className={styles.kind}>
       <h2 className={styles.kindName}>axes</h2>
-      <p className={styles.hint}>shared by every kind that uses them; {PRESTIGE} orders things and stays</p>
+      <p className={styles.hint}>
+        shared by every kind that uses them; {PRESTIGE} orders things and stays
+      </p>
       {axes.map((axis, index) => (
         <Section key={axis.key || `new-${index}`} label={axis.name || 'new axis'}>
           <div className={styles.row}>
@@ -88,27 +98,59 @@ export const AxesForm = ({ initial }: { initial: Axis[] }) => {
               placeholder="name"
               onChange={(event) => changeAxis(index, { name: event.target.value })}
             />
-            {axis.key !== UNSAVED_KEY && axis.key !== axis.name && <span className={styles.rowKey}>{axis.key}</span>}
-            <button type="button" className={editor.quiet} aria-label="move up" onClick={() => change(moved(axes, index, index - 1))}>
+            {axis.key !== UNSAVED_KEY && axis.key !== axis.name && (
+              <span className={styles.rowKey}>{axis.key}</span>
+            )}
+            <button
+              type="button"
+              className={editor.quiet}
+              aria-label="move up"
+              onClick={() => change(moved(axes, index, index - 1))}
+            >
               ↑
             </button>
-            <button type="button" className={editor.quiet} aria-label="move down" onClick={() => change(moved(axes, index, index + 1))}>
+            <button
+              type="button"
+              className={editor.quiet}
+              aria-label="move down"
+              onClick={() => change(moved(axes, index, index + 1))}
+            >
               ↓
             </button>
             {axis.key !== PRESTIGE && (
-              <button type="button" className={editor.quiet} onClick={() => change(axes.filter((_, i) => i !== index))}>
+              <button
+                type="button"
+                className={editor.quiet}
+                onClick={() => change(axes.filter((_, i) => i !== index))}
+              >
                 remove
               </button>
             )}
           </div>
-          <p className={styles.hint}>{axis.key === PRESTIGE ? 'divisions, best first; entries rank inside each' : 'divisions, best first'}</p>
-          <DivisionList divisions={axis.divisions} onChange={(divisions) => changeAxis(index, { divisions })} />
+          <p className={styles.hint}>
+            {axis.key === PRESTIGE
+              ? 'divisions, best first; entries rank inside each'
+              : 'divisions, best first'}
+          </p>
+          <DivisionList
+            divisions={axis.divisions}
+            onChange={(divisions) => changeAxis(index, { divisions })}
+          />
         </Section>
       ))}
       <button
         type="button"
         className={editor.quiet}
-        onClick={() => change([...axes, { key: UNSAVED_KEY, name: '', divisions: TIERS.map((name) => ({ key: UNSAVED_KEY, name })) }])}
+        onClick={() =>
+          change([
+            ...axes,
+            {
+              key: UNSAVED_KEY,
+              name: '',
+              divisions: TIERS.map((name) => ({ key: UNSAVED_KEY, name }))
+            }
+          ])
+        }
       >
         add an axis
       </button>
@@ -160,7 +202,10 @@ export const KindSettingsForm = ({
     <article className={styles.kind}>
       <h2 className={styles.kindName}>{kind}</h2>
 
-      <Section label="shown on public pages" hint="entries set to auto show when their status is picked here">
+      <Section
+        label="shown on public pages"
+        hint="entries set to auto show when their status is picked here"
+      >
         <div className={editor.chips}>
           {statuses.map((status) => (
             <button
@@ -180,14 +225,28 @@ export const KindSettingsForm = ({
         {settings.axes.map((key, index) => (
           <div key={key} className={styles.row}>
             <span className={styles.input}>{nameOf(key)}</span>
-            <button type="button" className={editor.quiet} aria-label="move up" onClick={() => change({ axes: moved(settings.axes, index, index - 1) })}>
+            <button
+              type="button"
+              className={editor.quiet}
+              aria-label="move up"
+              onClick={() => change({ axes: moved(settings.axes, index, index - 1) })}
+            >
               ↑
             </button>
-            <button type="button" className={editor.quiet} aria-label="move down" onClick={() => change({ axes: moved(settings.axes, index, index + 1) })}>
+            <button
+              type="button"
+              className={editor.quiet}
+              aria-label="move down"
+              onClick={() => change({ axes: moved(settings.axes, index, index + 1) })}
+            >
               ↓
             </button>
             {key !== rankedAxis && (
-              <button type="button" className={editor.quiet} onClick={() => change({ axes: settings.axes.filter((a) => a !== key) })}>
+              <button
+                type="button"
+                className={editor.quiet}
+                onClick={() => change({ axes: settings.axes.filter((a) => a !== key) })}
+              >
                 remove
               </button>
             )}
@@ -233,26 +292,52 @@ const DivisionList = ({
             placeholder="name"
             onChange={(event) => rename(index, event.target.value)}
           />
-          {d.key !== UNSAVED_KEY && d.key !== d.name && <span className={styles.rowKey}>{d.key}</span>}
-          <button type="button" className={editor.quiet} aria-label="move up" onClick={() => onChange(moved(divisions, index, index - 1))}>
+          {d.key !== UNSAVED_KEY && d.key !== d.name && (
+            <span className={styles.rowKey}>{d.key}</span>
+          )}
+          <button
+            type="button"
+            className={editor.quiet}
+            aria-label="move up"
+            onClick={() => onChange(moved(divisions, index, index - 1))}
+          >
             ↑
           </button>
-          <button type="button" className={editor.quiet} aria-label="move down" onClick={() => onChange(moved(divisions, index, index + 1))}>
+          <button
+            type="button"
+            className={editor.quiet}
+            aria-label="move down"
+            onClick={() => onChange(moved(divisions, index, index + 1))}
+          >
             ↓
           </button>
-          <button type="button" className={editor.quiet} onClick={() => onChange(divisions.filter((_, i) => i !== index))}>
+          <button
+            type="button"
+            className={editor.quiet}
+            onClick={() => onChange(divisions.filter((_, i) => i !== index))}
+          >
             remove
           </button>
         </div>
       ))}
-      <button type="button" className={editor.quiet} onClick={() => onChange([...divisions, { key: UNSAVED_KEY, name: '' }])}>
+      <button
+        type="button"
+        className={editor.quiet}
+        onClick={() => onChange([...divisions, { key: UNSAVED_KEY, name: '' }])}
+      >
         add a division
       </button>
     </>
   )
 }
 
-export const TagTitlesForm = ({ tags, initial }: { tags: string[]; initial: Record<string, string> }) => {
+export const TagTitlesForm = ({
+  tags,
+  initial
+}: {
+  tags: string[]
+  initial: Record<string, string>
+}) => {
   const [titles, setTitles] = useState(initial)
   const { save, changed, run } = useSave(saveTagTitles)
 

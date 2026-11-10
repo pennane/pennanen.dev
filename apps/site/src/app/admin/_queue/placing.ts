@@ -65,5 +65,8 @@ export const withPlaced = (ranked: Ranked, rival: Rival, placement: Placement): 
 
 export const withoutRival = (ranked: Ranked, id: number): Ranked =>
   Object.fromEntries(
-    Object.entries(ranked).map(([division, rivals]) => [division, rivals.filter((r) => r.id !== id)])
+    Object.entries(ranked).map(([division, rivals]) => [
+      division,
+      rivals.filter((r) => r.id !== id)
+    ])
   )

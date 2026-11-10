@@ -68,7 +68,6 @@ export function wait() {
 
 ### worker threads inline example
 
-
 ✅ does not block event loop
 
 ```ts
@@ -82,9 +81,7 @@ export let wait = null
 
 if (isMainThread) {
   wait = function () {
-    return new Promise((resolve) =>
-      new Worker(__filename).on('message', resolve)
-    )
+    return new Promise((resolve) => new Worker(__filename).on('message', resolve))
   }
 } else {
   let start = Date.now()

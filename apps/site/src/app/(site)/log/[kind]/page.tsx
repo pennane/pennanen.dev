@@ -4,12 +4,7 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { Gap, Stack } from '../../../../components/Stack'
 import { logPublic } from '../../../../lib/log/public-api'
-import {
-  isPublicKind,
-  kindPlural,
-  PUBLIC_KINDS,
-  toListed
-} from '../../../../lib/log/present'
+import { isPublicKind, kindPlural, PUBLIC_KINDS, toListed } from '../../../../lib/log/present'
 import { ItemList } from '../components/ItemRow'
 import logStyles from '../components/log.module.css'
 import { KindBrowser } from './KindBrowser'
@@ -23,11 +18,7 @@ export function generateStaticParams() {
   return PUBLIC_KINDS.map((kind) => ({ kind }))
 }
 
-export async function generateMetadata({
-  params
-}: {
-  params: Params
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { kind } = await params
   if (!isPublicKind(kind)) return {}
   return {
@@ -39,10 +30,7 @@ export async function generateMetadata({
 export default async function KindPage({ params }: { params: Params }) {
   const { kind } = await params
   if (!isPublicKind(kind)) notFound()
-  const [listed, { untriaged }] = await Promise.all([
-    logPublic.items(kind),
-    logPublic.kind(kind)
-  ])
+  const [listed, { untriaged }] = await Promise.all([logPublic.items(kind), logPublic.kind(kind)])
   const items = listed.map(toListed)
   const path = `/log/${kind}`
 

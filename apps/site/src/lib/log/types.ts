@@ -1,10 +1,6 @@
 import type { TimeSpent } from './present'
 
-export type Hint =
-  | 'likely-idled'
-  | 'likely-played'
-  | 'likely-never-played'
-  | 'likely-not-a-game'
+export type Hint = 'likely-idled' | 'likely-played' | 'likely-never-played' | 'likely-not-a-game'
 
 export type Visibility = 'auto' | 'public' | 'private'
 

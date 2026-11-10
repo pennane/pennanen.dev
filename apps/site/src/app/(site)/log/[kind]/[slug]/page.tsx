@@ -20,11 +20,7 @@ import {
   titleOf,
   toListed
 } from '../../../../../lib/log/present'
-import {
-  logPublic,
-  type PublicItem,
-  type PublicMoment
-} from '../../../../../lib/log/public-api'
+import { logPublic, type PublicItem, type PublicMoment } from '../../../../../lib/log/public-api'
 import { baseUrl } from '../../../../sitemap'
 import { ScoreParts } from '../../components/Scores'
 import { Tags } from '../../components/Tags'
@@ -39,23 +35,14 @@ const findItem = async (params: Params) => {
   return logPublic.item(kind, slug)
 }
 
-export async function generateStaticParams({
-  params
-}: {
-  params: { kind: string }
-}) {
+export async function generateStaticParams({ params }: { params: { kind: string } }) {
   const items = await logPublic.items(params.kind)
   return items.map(({ slug }) => ({ slug }))
 }
 
-const summaryOf = (item: PublicItem) =>
-  item.blurb || undefined
+const summaryOf = (item: PublicItem) => item.blurb || undefined
 
-export async function generateMetadata({
-  params
-}: {
-  params: Params
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const item = await findItem(params)
   if (!item) return {}
   const title = titleOf(item)

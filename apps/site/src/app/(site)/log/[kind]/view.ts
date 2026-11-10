@@ -31,8 +31,7 @@ export const DEFAULT_VIEW: View = {
 
 type ReadableParams = { get: (name: string) => string | null }
 
-const isSort = (text: string | null): text is Sort =>
-  SORTS.some((sort) => sort === text)
+const isSort = (text: string | null): text is Sort => SORTS.some((sort) => sort === text)
 
 export const parseView = (params: ReadableParams): View => {
   const sort = params.get('sort')
@@ -65,20 +64,14 @@ const hasTagWithin = (parent: string | undefined) => (item: ListedItem) =>
   !parent || item.tags.some((tag) => tagIsWithin(tag, parent))
 
 export const applyView = (items: ListedItem[], view: View) =>
-  items
-    .filter(hasStatus(view.status))
-    .filter(hasTagWithin(view.tag))
-    .sort(COMPARATORS[view.sort])
+  items.filter(hasStatus(view.status)).filter(hasTagWithin(view.tag)).sort(COMPARATORS[view.sort])
 
 const countBy = (values: string[]) =>
   [...Map.groupBy(values, (value) => value)]
     .map(([value, all]) => ({ value, count: all.length }))
     .sort((a, b) => a.value.localeCompare(b.value))
 
-export const statusesIn = (items: ListedItem[]) =>
-  countBy(items.map((item) => item.status))
+export const statusesIn = (items: ListedItem[]) => countBy(items.map((item) => item.status))
 
 export const tagsIn = (items: ListedItem[]) =>
-  countBy(
-    items.flatMap((item) => [...new Set(item.tags.flatMap(tagWithAncestors))])
-  )
+  countBy(items.flatMap((item) => [...new Set(item.tags.flatMap(tagWithAncestors))]))

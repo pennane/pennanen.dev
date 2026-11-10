@@ -35,16 +35,8 @@ const nextConfig: NextConfig = {
 
 const withMDX = createMDX({
   options: {
-    rehypePlugins: [
-      rehypeHighlight,
-      rehypeSlug,
-      [rehypeAutolinkHeadings, { behavior: 'append' }]
-    ],
-    remarkPlugins: [
-      remarkFrontmatter,
-      [remarkMdxFrontmatter, { name: 'matter' }],
-      remarkMdxImages
-    ]
+    rehypePlugins: [rehypeHighlight, rehypeSlug, [rehypeAutolinkHeadings, { behavior: 'append' }]],
+    remarkPlugins: [remarkFrontmatter, [remarkMdxFrontmatter, { name: 'matter' }], remarkMdxImages]
   }
 })
 

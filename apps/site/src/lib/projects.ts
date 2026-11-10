@@ -69,14 +69,10 @@ const readFrontmatter = (id: string) => {
 const resolveImage = async (id: string, file: string) => {
   const isPublic = file.startsWith('/')
   const name = file.replace(/^\.\//, '')
-  const filePath = isPublic
-    ? path.join(PUBLIC_PATH, file)
-    : path.join(PROJECTS_PATH, id, name)
+  const filePath = isPublic ? path.join(PUBLIC_PATH, file) : path.join(PROJECTS_PATH, id, name)
 
   if (!fs.existsSync(filePath)) {
-    throw new Error(
-      `Missing image "${file}" in ${path.join(PROJECTS_PATH, id, 'index.mdx')}`
-    )
+    throw new Error(`Missing image "${file}" in ${path.join(PROJECTS_PATH, id, 'index.mdx')}`)
   }
 
   const src: ImageSource = isPublic
@@ -111,10 +107,7 @@ const fetchFavicon = async (id: string, pageUrl: string) => {
 
     fs.mkdirSync(FAVICON_PATH, { recursive: true })
     const fileName = `${id}.${extension}`
-    fs.writeFileSync(
-      path.join(FAVICON_PATH, fileName),
-      Buffer.from(await icon.arrayBuffer())
-    )
+    fs.writeFileSync(path.join(FAVICON_PATH, fileName), Buffer.from(await icon.arrayBuffer()))
     return `/meta/icons/${fileName}`
   } catch {
     return undefined

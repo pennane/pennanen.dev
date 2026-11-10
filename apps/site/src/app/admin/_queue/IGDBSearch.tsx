@@ -85,7 +85,9 @@ export const IGDBSearch = ({
               </button>
             </li>
           ))}
-          {search.results.length === 0 && <li className={styles.quiet}>igdb has nothing for that</li>}
+          {search.results.length === 0 && (
+            <li className={styles.quiet}>igdb has nothing for that</li>
+          )}
           {nothingFits && <li>{nothingFits(search.query)}</li>}
         </ul>
       )}

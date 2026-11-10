@@ -13,10 +13,7 @@ export const ThemeToggle = () => {
   useEffect(() => {
     setMounted(true)
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-      .matches
-      ? 'dark'
-      : 'light'
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
     const initialTheme = savedTheme || systemTheme
 
     setTheme(initialTheme)
@@ -32,10 +29,7 @@ export const ThemeToggle = () => {
 
   if (!mounted) {
     return (
-      <button
-        className={`${styles.toggle} ${styles.notMounted}`}
-        aria-label="Toggle theme"
-      >
+      <button className={`${styles.toggle} ${styles.notMounted}`} aria-label="Toggle theme">
         <Sun height={ICON_SIZE} />
       </button>
     )
@@ -49,11 +43,7 @@ export const ThemeToggle = () => {
       title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
     >
       <div className={styles.iconContainer}>
-        {theme === 'light' ? (
-          <Sun height={ICON_SIZE} />
-        ) : (
-          <Moon height={ICON_SIZE} />
-        )}
+        {theme === 'light' ? <Sun height={ICON_SIZE} /> : <Moon height={ICON_SIZE} />}
       </div>
     </button>
   )

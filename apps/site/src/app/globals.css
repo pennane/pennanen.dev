@@ -21,15 +21,8 @@
     var(--foreground-secondary-dark)
   );
   --accent: light-dark(var(--accent-light), var(--accent-dark));
-  --accent-2: light-dark(
-    var(--accent-light-secondary),
-    var(--accent-dark-secondary)
-  );
-  --heading-gradient: linear-gradient(
-    to right,
-    var(--foreground),
-    var(--foreground-secondary)
-  );
+  --accent-2: light-dark(var(--accent-light-secondary), var(--accent-dark-secondary));
+  --heading-gradient: linear-gradient(to right, var(--foreground), var(--foreground-secondary));
   --gradient: linear-gradient(to right, var(--accent), var(--accent-2));
   --link-color: var(--accent);
   --line-color: light-dark(var(--line-color-light), var(--line-color-dark));
@@ -50,8 +43,18 @@ html {
 
 body {
   color: var(--foreground);
-  font-family: apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  font-family:
+    apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    Fira Sans,
+    Droid Sans,
+    Helvetica Neue,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.025rem;
@@ -157,7 +160,7 @@ article {
 }
 
 article > header {
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
 }
 
 article h1 {
@@ -171,7 +174,8 @@ article h1 {
 
 code.hljs {
   border-radius: 0.2rem;
-  box-shadow: inset 0 4px 6px -1px hsl(var(--hue) 91.67% 9.41% / 20%),
+  box-shadow:
+    inset 0 4px 6px -1px hsl(var(--hue) 91.67% 9.41% / 20%),
     0 2px 4px -2px hsl(var(--hue) 91.67% 9.41% / 10%);
   font-size: 0.8125rem;
 }

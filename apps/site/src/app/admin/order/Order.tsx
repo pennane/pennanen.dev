@@ -27,7 +27,13 @@ const UP = -1
 
 const rowId = (id: number) => `order-${id}`
 
-export const Order = ({ sections: initial, entries }: { sections: Section[]; entries: ListedEntry[] }) => {
+export const Order = ({
+  sections: initial,
+  entries
+}: {
+  sections: Section[]
+  entries: ListedEntry[]
+}) => {
   const [sections, setSections] = useState(initial)
   const [picked, setPicked] = useState<Picked>(NONE)
   const [dragged, setDragged] = useState<number>()
@@ -70,7 +76,8 @@ export const Order = ({ sections: initial, entries }: { sections: Section[]; ent
 
   const pickedId = picked.state === 'picked' ? picked.id : undefined
   useEffect(() => {
-    if (pickedId !== undefined) document.getElementById(rowId(pickedId))?.scrollIntoView({ block: 'nearest' })
+    if (pickedId !== undefined)
+      document.getElementById(rowId(pickedId))?.scrollIntoView({ block: 'nearest' })
   }, [pickedId, sections])
 
   const dropOn = (to: Spot | undefined) => {
@@ -81,8 +88,9 @@ export const Order = ({ sections: initial, entries }: { sections: Section[]; ent
   return (
     <div className={styles.order}>
       <p className={styles.hint}>
-        drag, or pick one and use <kbd>j</kbd>/<kbd>k</kbd> to move a place, <kbd>J</kbd>/<kbd>K</kbd> to cross a
-        division · <kbd>↑</kbd>/<kbd>↓</kbd> pick · <SaveStatus state={saves.state} />
+        drag, or pick one and use <kbd>j</kbd>/<kbd>k</kbd> to move a place, <kbd>J</kbd>/
+        <kbd>K</kbd> to cross a division · <kbd>↑</kbd>/<kbd>↓</kbd> pick ·{' '}
+        <SaveStatus state={saves.state} />
       </p>
       {sections.map((section) => (
         <section key={section.division.key} className={styles.section}>
@@ -112,7 +120,16 @@ export const Order = ({ sections: initial, entries }: { sections: Section[]; ent
                 >
                   <span className={styles.rank}>{ranks.get(id)}</span>
                   <span className={styles.thumb}>
-                    {entry?.cover && <Image alt="" src={entry.cover} width={64} height={30} unoptimized loading="lazy" />}
+                    {entry?.cover && (
+                      <Image
+                        alt=""
+                        src={entry.cover}
+                        width={64}
+                        height={30}
+                        unoptimized
+                        loading="lazy"
+                      />
+                    )}
                   </span>
                   <span className={styles.title}>{entry?.title ?? id}</span>
                   <span className={styles.status}>{entry && statusLabel(entry.status)}</span>

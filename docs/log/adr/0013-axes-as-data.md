@@ -5,12 +5,14 @@
 [ADR 12](./0012-divisions-and-ranks.md) · amends [ADR 5](./0005-kinds-defined-in-code.md)
 
 ## Context
+
 Axes were words in each kind's Go definition. Adding one meant a deploy, and
 games and things each carried their own labels and divisions for what is the
 same axis. ap thinks of the ordering axis as prestige, not enjoyment, and of
 divisions as tiers.
 
 ## Decision
+
 - An **axis** is its own record: a key set once at creation, a name ap can
   change, an order, and its divisions. Kinds use axes; admin picks which and
   in what order. The first axis a kind uses leads on list rows.
@@ -30,6 +32,7 @@ divisions as tiers.
   as its own decision.
 
 ## Consequences
+
 - A new axis is an admin action, no deploy.
 - Renaming an axis or a division changes only what pages say; keys stay.
 - Giving a kind its own variant of an axis means making a second axis.

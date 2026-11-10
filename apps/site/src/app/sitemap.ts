@@ -22,9 +22,7 @@ export default async function sitemap() {
     lastModified: formatDateForSitemap(project.date)
   }))
 
-  const logItems = (
-    await Promise.all(PUBLIC_KINDS.map((kind) => logPublic.items(kind)))
-  )
+  const logItems = (await Promise.all(PUBLIC_KINDS.map((kind) => logPublic.items(kind))))
     .flat()
     .map((item) => ({
       url: `${baseUrl}${itemPath(item)}`,
@@ -33,13 +31,7 @@ export default async function sitemap() {
 
   const logRoutes = ['/log', ...PUBLIC_KINDS.map((kind) => `/log/${kind}`)]
 
-  const routes = [
-    '',
-    '/uncurated',
-    '/entries',
-    '/projects',
-    ...logRoutes
-  ].map((route) => ({
+  const routes = ['', '/uncurated', '/entries', '/projects', ...logRoutes].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: formatDateForSitemap(new Date())
   }))

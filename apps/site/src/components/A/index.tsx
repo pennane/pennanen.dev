@@ -12,10 +12,7 @@ export const A: FC<
   }>
 > = ({ children, className, ...rest }) => {
   return (
-    <Link
-      className={[className, styles.link].filter(Boolean).join(' ')}
-      {...rest}
-    >
+    <Link className={[className, styles.link].filter(Boolean).join(' ')} {...rest}>
       {children}
     </Link>
   )

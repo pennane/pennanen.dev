@@ -17,8 +17,7 @@ const _firaCode = Fira_Code({
 
 export const metadata: Metadata = {
   title: 'Arttu Pennanen',
-  description:
-    'Digital playground pennanen.dev - sharing some of personal projects and writings.'
+  description: 'Digital playground pennanen.dev - sharing some of personal projects and writings.'
 }
 
 export default function RootLayout({
@@ -49,9 +48,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

@@ -3,15 +3,11 @@ import { WrapInBox } from '../WrapInBox'
 import { formatDate } from '../../app/(site)/lib'
 import { ReactNode } from 'react'
 
-const groupEntries = <T,>(
-  items: T[],
-  getDate: (x: T) => Parameters<typeof formatDate>[0]
-) =>
+const groupEntries = <T,>(items: T[], getDate: (x: T) => Parameters<typeof formatDate>[0]) =>
   Object.entries(
     Object.groupBy(
       items,
-      (item) =>
-        formatDate(getDate(item))?.split(' ').at(-1) || 'Undated (2015-2018)'
+      (item) => formatDate(getDate(item))?.split(' ').at(-1) || 'Undated (2015-2018)'
     )
   ).sort((a, b) => Number(b[0]) - Number(a[0]))
 

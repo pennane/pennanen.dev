@@ -14,20 +14,9 @@ export enum Gap {
 
 type StackProps = {
   horizontal?: boolean
-  alignItems?:
-    | 'flex-start'
-    | 'center'
-    | 'flex-end'
-    | 'stretch'
-    | 'baseline'
-    | 'normal'
+  alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline' | 'normal'
   justifyContent?:
-    | 'flex-start'
-    | 'center'
-    | 'flex-end'
-    | 'space-between'
-    | 'space-around'
-    | 'space-evenly'
+    'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly'
   wrap?: boolean | 'wrap' | 'wrap-reverse'
   reverse?: boolean
   gap?: Gap | string | { row: Gap | string; column: Gap | string }

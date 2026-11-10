@@ -1,11 +1,7 @@
 import { cloneElement, isValidElement, ReactElement } from 'react'
 import styles from './wrap-in-box.module.css'
 
-export const WrapInBox = ({
-  children
-}: {
-  children: ReactElement | ReactElement[]
-}) => {
+export const WrapInBox = ({ children }: { children: ReactElement | ReactElement[] }) => {
   if (!children) return null
 
   if (Array.isArray(children)) {
@@ -14,9 +10,7 @@ export const WrapInBox = ({
         {children.map((child) =>
           isValidElement(child)
             ? cloneElement(child as ReactElement<any>, {
-                className: `${styles.box} ${
-                  (child as ReactElement<any>).props.className || ''
-                }`
+                className: `${styles.box} ${(child as ReactElement<any>).props.className || ''}`
               })
             : child
         )}
@@ -26,9 +20,7 @@ export const WrapInBox = ({
 
   if (isValidElement(children)) {
     return cloneElement(children as ReactElement<any>, {
-      className: `${styles.box} ${
-        (children as ReactElement<any>).props.className || ''
-      }`
+      className: `${styles.box} ${(children as ReactElement<any>).props.className || ''}`
     })
   }
 

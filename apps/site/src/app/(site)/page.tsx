@@ -10,10 +10,7 @@ import { getBlogPosts } from './entries/lib'
 import styles from './page.module.css'
 
 export default async function Page() {
-  const jsonLd = generateHomepageJsonLd(
-    await getFeaturedProjects(),
-    getBlogPosts()
-  )
+  const jsonLd = generateHomepageJsonLd(await getFeaturedProjects(), getBlogPosts())
 
   return (
     <Stack className={styles.page} gap={Gap.large}>
@@ -32,8 +29,7 @@ export default async function Page() {
           />
 
           <p>
-            Writing code that cannot break. Currently building large-scale
-            integrated systems at{' '}
+            Writing code that cannot break. Currently building large-scale integrated systems at{' '}
             <A href="https://hoxhunt.com/" rel="noreferrer" target="_blank">
               Hoxhunt
             </A>
@@ -45,19 +41,14 @@ export default async function Page() {
               Aalto University
             </A>
             . B.Eng. in Information Technology from{' '}
-            <A
-              href="https://www.metropolia.fi/en"
-              rel="noreferrer"
-              target="_blank"
-            >
+            <A href="https://www.metropolia.fi/en" rel="noreferrer" target="_blank">
               Metropolia
             </A>
             .
           </p>
           <p>
-            I focus on building reliable systems that delight users &
-            developers&mdash;in a functionally pure way on special days, and
-            pragmatically on most others.
+            I focus on building reliable systems that delight users & developers&mdash;in a
+            functionally pure way on special days, and pragmatically on most others.
           </p>
         </div>
       </Stack>

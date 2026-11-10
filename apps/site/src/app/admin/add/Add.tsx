@@ -151,7 +151,10 @@ export const Add = ({ kind, ranked: initialRanked }: { kind: Kind; ranked: Ranke
                 {preset.name}
               </button>
             ))}
-            <button className={styles.quiet} onClick={() => save(step.itemId, step.title, step.status)}>
+            <button
+              className={styles.quiet}
+              onClick={() => save(step.itemId, step.title, step.status)}
+            >
               no score
             </button>
           </div>

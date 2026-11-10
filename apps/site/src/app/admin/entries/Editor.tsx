@@ -132,7 +132,9 @@ export const Editor = ({
           initial={entry.scores[axis.key]}
           rank={axis.key === kind.rankedAxis ? entry.rank : undefined}
           onSave={(division) =>
-            save(`${axis.name} → ${division ?? 'none'}`, { scores: { [axis.key]: division ?? null } })
+            save(`${axis.name} → ${division ?? 'none'}`, {
+              scores: { [axis.key]: division ?? null }
+            })
           }
         />
       ))}
@@ -178,7 +180,9 @@ export const Editor = ({
         <Moments
           moments={moments}
           onAdd={(moment) =>
-            saves.enqueue(`moment ${moment.at}`, async () => setMoments(await addMoment(itemId, moment)))
+            saves.enqueue(`moment ${moment.at}`, async () =>
+              setMoments(await addMoment(itemId, moment))
+            )
           }
           onDelete={(id) => {
             setMoments((m) => m.filter((x) => x.id !== id))
@@ -370,7 +374,12 @@ const Moments = ({
         </div>
       ))}
       <div className={styles.newMoment}>
-        <input type="date" className={styles.date} value={at} onChange={(e) => setAt(e.target.value)} />
+        <input
+          type="date"
+          className={styles.date}
+          value={at}
+          onChange={(e) => setAt(e.target.value)}
+        />
         <textarea
           className={styles.text}
           rows={2}

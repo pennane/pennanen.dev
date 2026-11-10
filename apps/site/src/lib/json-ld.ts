@@ -66,11 +66,7 @@ const createBlogPosting = (post: Post): BlogPosting => ({
   isPartOf: createIsPartOf()
 })
 
-const createWebPage = (
-  url: string,
-  title: string,
-  description?: string
-): WebPage => ({
+const createWebPage = (url: string, title: string, description?: string): WebPage => ({
   '@type': 'WebPage',
   '@id': url,
   name: title,
@@ -81,23 +77,19 @@ const createWebPage = (
 })
 
 const selectProjectSchema = (project: Project) =>
-  project.links.source
-    ? createSoftwareSourceCode(project)
-    : createCreativeWork(project)
+  project.links.source ? createSoftwareSourceCode(project) : createCreativeWork(project)
 
-const projectToJsonLd = (
-  project: Project
-): WithContext<SoftwareSourceCode | CreativeWork> =>
+const projectToJsonLd = (project: Project): WithContext<SoftwareSourceCode | CreativeWork> =>
   ({
     '@context': 'https://schema.org',
     ...selectProjectSchema(project)
-  } as WithContext<SoftwareSourceCode | CreativeWork>)
+  }) as WithContext<SoftwareSourceCode | CreativeWork>
 
 const postToJsonLd = (post: Post): WithContext<BlogPosting> =>
   ({
     '@context': 'https://schema.org',
     ...createBlogPosting(post)
-  } as WithContext<BlogPosting>)
+  }) as WithContext<BlogPosting>
 
 const buildGraphItems = (projects: Project[], posts: Post[]) => [
   ...projects.map(selectProjectSchema),
@@ -118,10 +110,7 @@ const createGraph = (
   ]
 })
 
-const createHomepageGraph = (
-  featuredProjects: Project[],
-  featuredPosts: Post[]
-): Graph =>
+const createHomepageGraph = (featuredProjects: Project[], featuredPosts: Post[]): Graph =>
   createGraph(
     baseUrl,
     'Arttu Pennanen - Software Engineer',
@@ -131,25 +120,13 @@ const createHomepageGraph = (
   )
 
 const createProjectsListingGraph = (projects: Project[]): Graph =>
-  createGraph(
-    `${baseUrl}/projects`,
-    'Software Projects',
-    undefined,
-    projects,
-    []
-  )
+  createGraph(`${baseUrl}/projects`, 'Software Projects', undefined, projects, [])
 
 const createEntriesListingGraph = (posts: Post[]): Graph =>
   createGraph(`${baseUrl}/entries`, 'Entries', undefined, [], posts)
 
 const createUncuratedProjectsGraph = (projects: Project[]): Graph =>
-  createGraph(
-    `${baseUrl}/uncurated`,
-    'Uncurated Projects',
-    undefined,
-    projects,
-    []
-  )
+  createGraph(`${baseUrl}/uncurated`, 'Uncurated Projects', undefined, projects, [])
 
 export const generateProjectJsonLd = projectToJsonLd
 export const generatePostJsonLd = postToJsonLd

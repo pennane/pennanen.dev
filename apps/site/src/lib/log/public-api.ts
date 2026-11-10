@@ -69,7 +69,9 @@ const failure = (response: Response) =>
 const divisionSchema = z.object({ key: z.string(), name: z.string() })
 
 const presentationSchema = z.object({
-  axes: z.array(z.object({ key: z.string(), name: z.string(), divisions: z.array(divisionSchema) })),
+  axes: z.array(
+    z.object({ key: z.string(), name: z.string(), divisions: z.array(divisionSchema) })
+  ),
   kinds: z.record(
     z.object({
       statusesShown: z.array(z.string()),
@@ -91,9 +93,7 @@ export const logPublic = {
     return publicKindSchema.parse(await response.json())
   },
   items: async (kind: string) => {
-    const response = await fetchPublic(
-      `/public/items?${new URLSearchParams({ kind })}`
-    )
+    const response = await fetchPublic(`/public/items?${new URLSearchParams({ kind })}`)
     if (!response.ok) throw failure(response)
     return z.array(publicItemSchema).parse(await response.json())
   },

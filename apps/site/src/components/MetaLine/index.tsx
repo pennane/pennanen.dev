@@ -23,13 +23,7 @@ const linkText = (href: string) => {
   return host === 'github.com' ? pathname.slice(1) : host + pathname
 }
 
-export const MetaLink = ({
-  href,
-  icon: Icon
-}: {
-  href: string
-  icon: LucideIcon
-}) => {
+export const MetaLink = ({ href, icon: Icon }: { href: string; icon: LucideIcon }) => {
   const external = href.includes('://')
   return (
     <span className={styles.item}>
@@ -37,12 +31,7 @@ export const MetaLink = ({
       <A href={href} {...(external && { rel: 'noreferrer', target: '_blank' })}>
         {linkText(href)}
         {external && (
-          <ArrowUpRight
-            className={styles.arrow}
-            size={12}
-            strokeWidth={2.5}
-            aria-hidden
-          />
+          <ArrowUpRight className={styles.arrow} size={12} strokeWidth={2.5} aria-hidden />
         )}
       </A>
     </span>

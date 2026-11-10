@@ -25,17 +25,8 @@ const Navbar = () => {
         <Stack horizontal alignItems="flex-start" gap={Gap.large}>
           <NavItem>
             <Link href="/" style={{ marginLeft: '-.125rem' }}>
-              <Stack
-                horizontal
-                alignItems="flex-start"
-                className={styles.logoStack}
-              >
-                <Image
-                  alt=""
-                  src={'/icons/favicon-96.png'}
-                  height={ICON_SIZE}
-                  width={ICON_SIZE}
-                />
+              <Stack horizontal alignItems="flex-start" className={styles.logoStack}>
+                <Image alt="" src={'/icons/favicon-96.png'} height={ICON_SIZE} width={ICON_SIZE} />
                 <span>pennanen.dev</span>
               </Stack>
             </Link>

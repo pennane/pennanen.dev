@@ -13,8 +13,8 @@ A kind decides the item's fields, its statuses, and which source gives it
 an identity. Kinds are defined in code; which axes a kind uses is set in admin. `thing` is the catch-all
 kind: free-form fields, nothing checked, so an odd item never blocks you.
 
-**Relation** — a named link between two items. *Margaux 2015 is a
-`vintage-of` Château Margaux, which is `part-of` Margaux.* Follow the links
+**Relation** — a named link between two items. _Margaux 2015 is a
+`vintage-of` Château Margaux, which is `part-of` Margaux._ Follow the links
 and the bottle is in Margaux.
 
 ## Takes
@@ -62,7 +62,7 @@ against wine. Public pages never show the number; they order by it.
 
 **Tag** — a free-form label ap puts on an entry: `favorite`, `comfort`,
 `formative`. Nest with a slash for precision: `favorite/all-time`. Tags are
-ap's, so they live on entries; what an item *is* (`co-op`, `jam-game`) is a
+ap's, so they live on entries; what an item _is_ (`co-op`, `jam-game`) is a
 claim, not a tag. `another-shot` marks something ap wants to try again,
 whatever its status. `idled` marks a game ap ran for trading cards, whether or
 not ap also played it. A tag's **title** is what public pages show for it;
@@ -74,7 +74,7 @@ playtime stays private, and public pages show only this, when ap says it.
 
 **Blurb** — public text, written for others, shown on the item's page.
 
-**Moment** — a dated note on an entry: *replayed 2024, still great*. May
+**Moment** — a dated note on an entry: _replayed 2024, still great_. May
 point at other items.
 
 ## Sources
@@ -86,7 +86,7 @@ Never edited; a re-sync replaces only that source's claim.
 
 **Verdict** — the claim that wins for a field. Sources are ranked per field;
 the highest-ranked one with a value wins. ap's own override ranks first,
-always. *Steam claims 412h, IGDB claims nothing, so the verdict is 412h.*
+always. _Steam claims 412h, IGDB claims nothing, so the verdict is 412h._
 
 **Identity** — the external ID that says two claims are about the same item.
 For games, the IGDB ID. Optional: an item with no identity is just ap's.
@@ -106,7 +106,7 @@ has nothing.
 screen where imports get sorted into played, never played, and so on.
 
 **Rating** — giving a shown entry its scores, one card at a time, after triage:
-pick a division, then answer *better or worse than X?* until it has a rank.
+pick a division, then answer _better or worse than X?_ until it has a rank.
 
 **Hint** — the importer's guess during triage (`likely-idled`,
 `likely-played`, `likely-never-played`, `likely-not-a-game`). Hints suggest;

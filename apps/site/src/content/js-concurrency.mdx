@@ -24,10 +24,7 @@ This can be very well implemented, though. Consider:
 ```ts
 async function* racePromises<T>(promises: Promise<T>[]) {
   const pool = new Map(
-    promises.map((promise, i) => [
-      i,
-      promise.then((value) => [i, value] as const)
-    ])
+    promises.map((promise, i) => [i, promise.then((value) => [i, value] as const)])
   )
 
   while (pool.size) {
@@ -73,8 +70,7 @@ const asSettled = <T>(promise: Promise<T>) =>
       reason
     }))
 
-const racePromisesSettled = <T>(promises: Promise<T>[]) =>
-  racePromises(promises.map(asSettled))
+const racePromisesSettled = <T>(promises: Promise<T>[]) => racePromises(promises.map(asSettled))
 ```
 
 Proper functional ergonomics with proper speed!

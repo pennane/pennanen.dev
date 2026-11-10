@@ -2,13 +2,7 @@ import Image, { StaticImageData } from 'next/image'
 import { isUnoptimizable } from '../../lib/images'
 import styles from './media.module.css'
 
-export const MdxImage = ({
-  src,
-  alt
-}: {
-  src?: StaticImageData | string
-  alt?: string
-}) => {
+export const MdxImage = ({ src, alt }: { src?: StaticImageData | string; alt?: string }) => {
   if (!src) return null
   if (typeof src !== 'string') {
     return <Image className={styles.media} src={src} alt={alt ?? ''} />
