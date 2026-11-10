@@ -1,9 +1,8 @@
 import Link from 'next/link'
 import { requireAdmin } from '../../../lib/admin/require-admin'
 import { logAdmin } from '../../../lib/log/admin-api'
-import { HEADLINE_AXIS, textField } from '../../../lib/log/present'
-import type { ItemView, Visibility } from '../../../lib/log/types'
-import { Entries, type ListedEntry } from './Entries'
+import type { Visibility } from '../../../lib/log/types'
+import { Entries } from './Entries'
 import styles from './entries.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -18,24 +17,10 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>
 const single = (value: string | string[] | undefined) =>
   typeof value === 'string' ? value : undefined
 
-const toListedEntries = (items: ItemView[]): ListedEntry[] =>
-  items
-    .flatMap(({ id, slug, verdicts, entry }) =>
-      entry && entry.status !== NOT_YET_TRIAGED && entry.status !== NEVER_PUBLIC
-        ? [
-            {
-              id,
-              title: textField(verdicts.values, 'title') ?? slug,
-              cover: textField(verdicts.values, 'cover'),
-              status: entry.status,
-              headlineScore: entry.scores[HEADLINE_AXIS],
-              visibility: entry.visibility,
-              tags: entry.tags
-            }
-          ]
-        : []
-    )
-    .sort((a, b) => a.title.localeCompare(b.title))
+const entryId = (value: string | undefined) => {
+  const id = Number(value)
+  return value && Number.isInteger(id) ? id : undefined
+}
 
 export default async function EntriesPage({
   searchParams
@@ -47,7 +32,9 @@ export default async function EntriesPage({
   const kinds = await logAdmin.kinds()
   const kindName = single(params.kind) ?? DEFAULT_KIND
   const kind = kinds.find((k) => k.name === kindName) ?? kinds[0]
-  const entries = toListedEntries(await logAdmin.items({ kind: kind.name }))
+  const entries = (await logAdmin.entries(kind.name)).sort((a, b) =>
+    a.title.localeCompare(b.title)
+  )
   const visibility = single(params.visibility)
 
   return (
@@ -67,13 +54,14 @@ export default async function EntriesPage({
       <Entries
         key={kind.name}
         entries={entries}
+        kind={kind}
         statuses={kind.statuses.filter((s) => s !== NOT_YET_TRIAGED && s !== NEVER_PUBLIC)}
-        statusesShown={kind.statusesShown}
         initial={{
           status: single(params.status),
           visibility: VISIBILITIES.find((v) => v === visibility),
           tag: single(params.tag)
         }}
+        initiallyOpen={entryId(single(params.open))}
       />
     </div>
   )

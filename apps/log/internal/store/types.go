@@ -62,7 +62,6 @@ type Item struct {
 type Entry struct {
 	Status     string         `json:"status"`
 	Visibility Visibility     `json:"visibility"`
-	Notes      string         `json:"notes"`
 	Blurb      string         `json:"blurb"`
 	TimeSpent  TimeSpent      `json:"timeSpent,omitempty"`
 	Scores     map[string]int `json:"scores"`
@@ -99,7 +98,6 @@ type ItemView struct {
 type EntryChange struct {
 	Status     *string         `json:"status"`
 	Visibility *Visibility     `json:"visibility"`
-	Notes      *string         `json:"notes"`
 	Blurb      *string         `json:"blurb"`
 	TimeSpent  *TimeSpent      `json:"timeSpent"`
 	Scores     map[string]*int `json:"scores"`

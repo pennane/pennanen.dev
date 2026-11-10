@@ -2,11 +2,27 @@
 
 import { requireAdmin } from '../../lib/admin/require-admin'
 import { logAdmin } from '../../lib/log/admin-api'
+import { textField } from '../../lib/log/present'
 import type { EntryChange, KindSettings, NewMoment } from '../../lib/log/types'
+import type { EntrySubject } from './entries/Editor'
 
 export async function changeEntry(itemId: number, change: EntryChange) {
   await requireAdmin()
   await logAdmin.changeEntry(itemId, change)
+}
+
+export async function openEntry(itemId: number): Promise<EntrySubject> {
+  await requireAdmin()
+  const item = await logAdmin.item(itemId)
+  if (!item.entry) throw new Error(`item ${itemId} has no entry`)
+  return {
+    itemId: item.id,
+    title: textField(item.verdicts.values, 'title') ?? item.slug,
+    cover: textField(item.verdicts.values, 'cover') ?? textField(item.verdicts.values, 'image'),
+    publicPath: `/log/${item.kind}/${item.slug}`,
+    entry: item.entry,
+    moments: item.moments ?? []
+  }
 }
 
 export async function changeEntries(itemIds: number[], change: EntryChange) {

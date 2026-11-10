@@ -94,12 +94,11 @@ func changeEntry(ctx context.Context, tx *sql.Tx, itemID int64, change EntryChan
 		UPDATE entry SET
 			status = coalesce(?, status),
 			visibility = coalesce(?, visibility),
-			notes = coalesce(?, notes),
 			blurb = coalesce(?, blurb),
 			time_spent = CASE WHEN ? IS NULL THEN time_spent ELSE nullif(?, '') END,
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 		WHERE item_id = ?`,
-		change.Status, change.Visibility, change.Notes, change.Blurb, change.TimeSpent, change.TimeSpent, itemID); err != nil {
+		change.Status, change.Visibility, change.Blurb, change.TimeSpent, change.TimeSpent, itemID); err != nil {
 		return err
 	}
 	for axis, value := range change.Scores {

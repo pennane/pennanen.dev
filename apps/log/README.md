@@ -37,6 +37,7 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `GET /admin/settings` | per-kind settings and tag titles |
 | `PUT /admin/settings/kinds/{kind}` | shown statuses, axis labels, score display and words |
 | `PUT /admin/settings/tag-titles` | `{tag: title}` |
+| `GET /admin/entries?kind=` | triaged, undismissed entries with only what the admin list shows |
 | `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=&needs=score` | items with verdicts and entries; `needs=score` lists played entries with no score, `needs=match` (with `kind`) unmatched ones |
 | `POST /admin/items` | `{kind, title, fields}` |
 | `GET /admin/items/{id}` | item with claims, moments, relations |

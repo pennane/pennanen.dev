@@ -5,6 +5,7 @@ import type {
   IGDBResult,
   ItemDetail,
   ItemView,
+  ListedEntry,
   Kind,
   KindSettings,
   NewMoment,
@@ -53,6 +54,8 @@ export const logAdmin = {
     call<Record<string, string>>('/admin/settings/tag-titles', send('PUT', titles)),
   items: (filter: Record<string, string>) =>
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
+  entries: (kind: string) =>
+    call<ListedEntry[]>(`/admin/entries?${new URLSearchParams({ kind })}`),
   createItem: (kind: string, title: string) =>
     call<ItemView>('/admin/items', send('POST', { kind, title })),
   searchIGDB: (query: string) =>

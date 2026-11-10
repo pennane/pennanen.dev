@@ -2,28 +2,28 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
+  HEADLINE_AXIS,
   presenceOf,
   statusLabel,
   tagIsWithin,
   tagLabel,
   tagWithAncestors
 } from '../../../lib/log/present'
-import type { Visibility } from '../../../lib/log/types'
-import { changeEntry } from '../actions'
+import type { EntryChange, Kind, ListedEntry, Visibility } from '../../../lib/log/types'
+import { changeEntry, openEntry } from '../actions'
+import { Editor, type EntrySubject } from './Editor'
 import styles from './entries.module.css'
 import { VISIBILITY_LABELS, VisibilitySwitch } from './VisibilitySwitch'
 
-export type ListedEntry = {
-  id: number
-  title: string
-  cover: string | undefined
-  status: string
-  headlineScore: number | undefined
-  visibility: Visibility
-  tags: string[]
-}
+type Panel =
+  | { state: 'closed' }
+  | { state: 'loading'; id: number }
+  | { state: 'open'; id: number; subject: EntrySubject }
+  | { state: 'failed'; id: number }
+
+const CLOSED: Panel = { state: 'closed' }
 
 type Filter = {
   status: string | undefined
@@ -48,9 +48,34 @@ const tagsByUse = (entries: ListedEntry[]) => {
   return [...uses].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
 }
 
-const syncUrl = (filter: Filter) => {
+const openIdOf = (panel: Panel) => (panel.state === 'closed' ? undefined : String(panel.id))
+
+const withScores = (scores: Record<string, number>, changed: Record<string, number | null>) => {
+  const next = { ...scores }
+  for (const [axis, value] of Object.entries(changed)) {
+    if (value === null) delete next[axis]
+    else next[axis] = value
+  }
+  return next
+}
+
+const applyChange = (entry: ListedEntry, change: EntryChange): ListedEntry => ({
+  ...entry,
+  status: change.status ?? entry.status,
+  visibility: change.visibility ?? entry.visibility,
+  scores: change.scores ? withScores(entry.scores, change.scores) : entry.scores,
+  tags: [
+    ...entry.tags.filter((t) => !change.removeTags?.includes(t)),
+    ...(change.addTags ?? []).filter((t) => !entry.tags.includes(t))
+  ]
+})
+
+const isPlainClick = (event: React.MouseEvent) =>
+  event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
+
+const syncUrl = (params: Record<string, string | undefined>) => {
   const url = new URL(window.location.href)
-  for (const [name, value] of Object.entries(filter)) {
+  for (const [name, value] of Object.entries(params)) {
     if (value) url.searchParams.set(name, value)
     else url.searchParams.delete(name)
   }
@@ -59,24 +84,53 @@ const syncUrl = (filter: Filter) => {
 
 export const Entries = ({
   entries: initialEntries,
+  kind,
   statuses,
-  statusesShown,
-  initial
+  initial,
+  initiallyOpen
 }: {
   entries: ListedEntry[]
+  kind: Kind
   statuses: string[]
-  statusesShown: string[]
   initial: Filter
+  initiallyOpen: number | undefined
 }) => {
   const [entries, setEntries] = useState(initialEntries)
   const [filter, setFilter] = useState(initial)
   const [query, setQuery] = useState('')
+  const [panel, setPanel] = useState<Panel>(
+    initiallyOpen === undefined ? CLOSED : { state: 'loading', id: initiallyOpen }
+  )
+  const statusesShown = kind.statusesShown
 
   const choose = (change: Partial<Filter>) => {
     const next = { ...filter, ...change }
     setFilter(next)
-    syncUrl(next)
+    syncUrl({ ...next, open: openIdOf(panel) })
   }
+
+  const showPanel = (next: Panel) => {
+    setPanel(next)
+    syncUrl({ ...filter, open: openIdOf(next) })
+  }
+
+  const loadingId = panel.state === 'loading' ? panel.id : undefined
+  useEffect(() => {
+    if (loadingId === undefined) return
+    let current = true
+    openEntry(loadingId).then(
+      (subject) => current && setPanel({ state: 'open', id: loadingId, subject }),
+      () => current && setPanel({ state: 'failed', id: loadingId })
+    )
+    return () => {
+      current = false
+    }
+  }, [loadingId])
+
+  const allTags = useMemo(() => tagsByUse(entries).map(([tag]) => tag), [entries])
+
+  const patchEntry = (id: number, change: EntryChange) =>
+    setEntries((all) => all.map((e) => (e.id === id ? applyChange(e, change) : e)))
 
   const tags = useMemo(() => {
     const counted = tagsByUse(entries.filter((e) => matches(e, { ...filter, tag: undefined }, '')))
@@ -101,7 +155,8 @@ export const Entries = ({
   }
 
   return (
-    <>
+    <div className={styles.workspace} data-panel={panel.state}>
+      <div className={styles.listSide}>
       <header className={styles.header}>
         <h1>
           entries <span className={styles.count}>{shown.length}</span>
@@ -142,19 +197,31 @@ export const Entries = ({
       ) : (
         <ul className={styles.list}>
           {shown.map((entry) => (
-            <li key={entry.id} className={styles.row}>
+            <li
+              key={entry.id}
+              className={styles.row}
+              aria-current={openIdOf(panel) === String(entry.id) ? 'true' : undefined}
+            >
               <div className={styles.thumb}>
                 {entry.cover && (
                   <Image alt="" src={entry.cover} width={92} height={43} unoptimized loading="lazy" />
                 )}
               </div>
               <div className={styles.rowBody}>
-                <Link href={`/admin/entries/${entry.id}`} className={styles.title}>
+                <Link
+                  href={`/admin/entries/${entry.id}`}
+                  className={styles.title}
+                  onClick={(event) => {
+                    if (!isPlainClick(event)) return
+                    event.preventDefault()
+                    showPanel({ state: 'loading', id: entry.id })
+                  }}
+                >
                   {entry.title}
                 </Link>
                 <span className={styles.meta}>
                   {statusLabel(entry.status)}
-                  {entry.headlineScore !== undefined && ` · ${entry.headlineScore}`}
+                  {entry.scores[HEADLINE_AXIS] !== undefined && ` · ${entry.scores[HEADLINE_AXIS]}`}
                   {entry.tags.length > 0 && ` · ${entry.tags.map(tagLabel).join(', ')}`}
                 </span>
               </div>
@@ -167,7 +234,29 @@ export const Entries = ({
           ))}
         </ul>
       )}
-    </>
+      </div>
+      <aside className={styles.panel}>
+        {panel.state === 'loading' && <p className={styles.empty}>Opening…</p>}
+        {panel.state === 'failed' && (
+          <p className={styles.empty}>
+            Could not open this entry.{' '}
+            <button type="button" className={styles.quiet} onClick={() => showPanel(CLOSED)}>
+              close
+            </button>
+          </p>
+        )}
+        {panel.state === 'open' && (
+          <Editor
+            key={panel.id}
+            subject={panel.subject}
+            kind={kind}
+            knownTags={allTags}
+            onClose={() => showPanel(CLOSED)}
+            onChange={(change) => patchEntry(panel.id, change)}
+          />
+        )}
+      </aside>
+    </div>
   )
 }
 

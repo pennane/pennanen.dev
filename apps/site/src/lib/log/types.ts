@@ -35,12 +35,21 @@ export type Kind = {
 export type Entry = {
   status: string
   visibility: Visibility
-  notes: string
   blurb: string
   timeSpent?: TimeSpent
   scores: Record<string, number>
   tags: string[]
   updatedAt: string
+}
+
+export type ListedEntry = {
+  id: number
+  title: string
+  cover?: string
+  status: string
+  visibility: Visibility
+  scores: Record<string, number>
+  tags: string[]
 }
 
 export type ItemView = {
@@ -74,7 +83,6 @@ export type NewMoment = {
 export type EntryChange = {
   status?: string
   visibility?: Visibility
-  notes?: string
   blurb?: string
   timeSpent?: TimeSpent | ''
   scores?: Record<string, number | null>

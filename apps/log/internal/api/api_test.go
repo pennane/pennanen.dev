@@ -72,7 +72,7 @@ func TestPublicShowsOnlyWhatIsPublic(t *testing.T) {
 	}
 
 	call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token,
-		`{"status":"finished","visibility":"public","notes":"cried","blurb":"go play it","scores":{"enjoyment":98},"addTags":["favorite/all-time"]}`)
+		`{"status":"finished","visibility":"public","blurb":"go play it","scores":{"enjoyment":98},"addTags":["favorite/all-time"]}`)
 	call(t, srv, "POST", "/admin/items/"+id+"/moments", token, `{"at":"2024-01-02","note":"public moment"}`)
 	call(t, srv, "POST", "/admin/items/"+id+"/moments", token, `{"at":"2024-01-03","note":"private moment","visibility":"private"}`)
 
@@ -80,7 +80,7 @@ func TestPublicShowsOnlyWhatIsPublic(t *testing.T) {
 	if status != http.StatusOK {
 		t.Fatalf("public: %d %s", status, body)
 	}
-	for _, leaked := range []string{"cried", "private moment", "claims", "notes"} {
+	for _, leaked := range []string{"private moment", "claims"} {
 		if strings.Contains(body, leaked) {
 			t.Errorf("public item leaks %q: %s", leaked, body)
 		}
@@ -132,7 +132,7 @@ func createGame(t *testing.T, srv *httptest.Server, title, entry string) string 
 func TestRankings(t *testing.T) {
 	srv := newServer(t)
 	hades := createGame(t, srv, "Hades", `{"status":"finished","visibility":"public"}`)
-	wilds := createGame(t, srv, "Outer Wilds", `{"status":"finished","visibility":"private","notes":"secret notes"}`)
+	wilds := createGame(t, srv, "Outer Wilds", `{"status":"finished","visibility":"private","blurb":"secret blurb"}`)
 	wallpaper := createGame(t, srv, "Wallpaper Engine", `{"status":"dismissed"}`)
 
 	status, body := call(t, srv, "POST", "/admin/rankings", token, `{"name":"Games I want to single out"}`)
@@ -195,8 +195,8 @@ func TestRankings(t *testing.T) {
 	if top[1].Page == nil || top[1].Page.Slug != "hades" {
 		t.Errorf("public entry not linked: %s", body)
 	}
-	if strings.Contains(body, "secret notes") {
-		t.Errorf("ranking leaks notes: %s", body)
+	if strings.Contains(body, "secret blurb") {
+		t.Errorf("ranking leaks a private blurb: %s", body)
 	}
 
 	numbered := `{"layout":"numbered","placements":[{"itemId":` + hades + `},{"itemId":` + wilds + `}]}`
@@ -303,5 +303,31 @@ func TestSettingsDecideWhatShows(t *testing.T) {
 	call(t, srv, "PUT", "/admin/settings/tag-titles", token, `{"Another Shot":"worth another shot"}`)
 	if _, body := call(t, srv, "GET", "/public/presentation", "", ""); !strings.Contains(body, `"tagTitles":{"another-shot":"worth another shot"}`) || !strings.Contains(body, `"axisLabels":{"enjoyment":"liked","quality":"quality"}`) {
 		t.Errorf("presentation: %s", body)
+	}
+}
+
+func TestEntriesListOnlyTriagedAndKeepsItSmall(t *testing.T) {
+	srv := newServer(t)
+	createGame(t, srv, "Hades", `{"status":"finished","blurb":"long public text","scores":{"enjoyment":92},"addTags":["comfort"]}`)
+	createGame(t, srv, "Wallpaper Engine", `{"status":"dismissed"}`)
+	call(t, srv, "POST", "/admin/items", token, `{"kind":"game","title":"Untouched"}`)
+
+	status, body := call(t, srv, "GET", "/admin/entries?kind=game", token, "")
+	if status != http.StatusOK {
+		t.Fatalf("entries: %d %s", status, body)
+	}
+	var entries []struct {
+		Title  string
+		Scores map[string]int
+		Tags   []string
+	}
+	if err := json.Unmarshal([]byte(body), &entries); err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Title != "Hades" || entries[0].Scores["enjoyment"] != 92 || entries[0].Tags[0] != "comfort" {
+		t.Errorf("entries: %s", body)
+	}
+	if strings.Contains(body, "long public text") || strings.Contains(body, "verdicts") {
+		t.Errorf("entries carry more than the list shows: %s", body)
 	}
 }

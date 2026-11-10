@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { scoreWordFor, statusLabel } from '../../../lib/log/present'
 import type { KindSettings, ScoreDisplay, ScoreWord } from '../../../lib/log/types'
 import { saveKindSettings, saveTagTitles } from '../actions'
-import editor from '../entries/[id]/editor.module.css'
+import editor from '../entries/editor.module.css'
 import styles from './settings.module.css'
 
 const SCORE_DISPLAYS: { value: ScoreDisplay; label: string }[] = [

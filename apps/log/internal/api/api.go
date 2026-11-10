@@ -50,6 +50,7 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("DELETE /admin/items/{id}", s.deleteItem)
 	admin.HandleFunc("PATCH /admin/items/{id}/fields", s.changeFields)
 	admin.HandleFunc("PATCH /admin/items/{id}/entry", s.changeEntry)
+	admin.HandleFunc("GET /admin/entries", s.listEntries)
 	admin.HandleFunc("POST /admin/entries/change", s.changeEntries)
 	admin.HandleFunc("POST /admin/items/{id}/moments", s.addMoment)
 	admin.HandleFunc("DELETE /admin/moments/{id}", s.deleteMoment)

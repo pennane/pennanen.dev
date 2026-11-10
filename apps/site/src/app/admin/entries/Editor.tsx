@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
 import { useState } from 'react'
 import {
   presenceOf,
@@ -10,7 +9,7 @@ import {
   TIME_SPENT_CHOICES,
   TIME_SPENT_LABELS,
   type TimeSpent
-} from '../../../../lib/log/present'
+} from '../../../lib/log/present'
 import type {
   Entry,
   EntryChange,
@@ -18,10 +17,10 @@ import type {
   Moment,
   MomentVisibility,
   Visibility
-} from '../../../../lib/log/types'
-import { SaveStatus } from '../../_queue/card'
-import { useSaveQueue } from '../../_queue/useSaveQueue'
-import { addMoment, changeEntry, deleteMoment } from '../../actions'
+} from '../../../lib/log/types'
+import { SaveStatus } from '../_queue/card'
+import { useSaveQueue } from '../_queue/useSaveQueue'
+import { addMoment, changeEntry, deleteMoment } from '../actions'
 import styles from './editor.module.css'
 
 const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
@@ -39,22 +38,27 @@ const NO_SCORE = '–'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-export const Editor = ({
-  itemId,
-  title,
-  cover,
-  publicPath,
-  kind,
-  entry,
-  moments: initialMoments
-}: {
+export type EntrySubject = {
   itemId: number
   title: string
   cover: string | undefined
   publicPath: string
-  kind: Kind
   entry: Entry
   moments: Moment[]
+}
+
+export const Editor = ({
+  subject: { itemId, title, cover, publicPath, entry, moments: initialMoments },
+  kind,
+  knownTags,
+  onClose,
+  onChange
+}: {
+  subject: EntrySubject
+  kind: Kind
+  knownTags: string[]
+  onClose: () => void
+  onChange: (change: EntryChange) => void
 }) => {
   const [status, setStatus] = useState(entry.status)
   const [visibility, setVisibility] = useState(entry.visibility)
@@ -63,17 +67,19 @@ export const Editor = ({
   const [moments, setMoments] = useState(initialMoments)
   const saves = useSaveQueue()
 
-  const save = (label: string, change: EntryChange) =>
+  const save = (label: string, change: EntryChange) => {
+    onChange(change)
     saves.enqueue(label, () => changeEntry(itemId, change))
+  }
 
   const presence = presenceOf({ status, visibility }, kind.statusesShown)
 
   return (
     <div className={styles.editor}>
       <header className={styles.header}>
-        <Link href="/admin/entries" className={styles.quiet}>
+        <button type="button" className={styles.quiet} onClick={onClose}>
           ← entries
-        </Link>
+        </button>
         <SaveStatus state={saves.state} />
       </header>
 
@@ -150,17 +156,10 @@ export const Editor = ({
         onSave={(blurb) => save('blurb', { blurb })}
       />
 
-      <TextField
-        label="notes"
-        hint="private, only you see these"
-        initial={entry.notes}
-        rows={6}
-        onSave={(notes) => save('notes', { notes })}
-      />
-
       <Section label="tags">
         <Tags
           tags={tags}
+          suggestions={knownTags.filter((t) => !tags.includes(t))}
           onAdd={(tag) => {
             setTags((t) => (t.includes(tag) ? t : [...t, tag]))
             save(`tag ${tag}`, { addTags: [tag] })
@@ -302,12 +301,16 @@ const TextField = ({
   )
 }
 
+const TAG_SUGGESTIONS = 'tag-suggestions'
+
 const Tags = ({
   tags,
+  suggestions,
   onAdd,
   onRemove
 }: {
   tags: string[]
+  suggestions: string[]
   onAdd: (tag: string) => void
   onRemove: (tag: string) => void
 }) => {
@@ -335,6 +338,7 @@ const Tags = ({
         className={styles.tagInput}
         value={draft}
         placeholder="add tag"
+        list={TAG_SUGGESTIONS}
         enterKeyHint="done"
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => {
@@ -342,6 +346,11 @@ const Tags = ({
         }}
         onBlur={add}
       />
+      <datalist id={TAG_SUGGESTIONS}>
+        {suggestions.map((tag) => (
+          <option key={tag} value={tag} label={tagLabel(tag)} />
+        ))}
+      </datalist>
     </div>
   )
 }
