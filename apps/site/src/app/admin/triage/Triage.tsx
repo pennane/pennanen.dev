@@ -8,6 +8,7 @@ import {
   ANOTHER_SHOT,
   CardFace,
   prestigeDivisions,
+  prestigeName,
   formatPlaytime,
   HINT_LABELS,
   IDLED,
@@ -18,12 +19,17 @@ import {
   type GameCard
 } from '../_queue/card'
 import styles from '../_queue/queue.module.css'
-import { changeEntries, changeEntry, startSteamSync, steamSyncStatus } from '../actions'
+import { changeEntries, changeEntry, placeEntry, startSteamSync, steamSyncStatus } from '../actions'
+import { Compare, compareKeys, useRanked, type Comparing } from '../_queue/Compare'
+import type { Placement, Ranked, Search } from '../_queue/placing'
 import { useSaveQueue } from '../_queue/useSaveQueue'
 
 type Filter = 'everything' | Hint | 'no-hint'
 
-type Step = { phase: 'status' } | { phase: 'score'; status: string }
+type Step =
+  | { phase: 'status' }
+  | { phase: 'score'; status: string }
+  | { phase: 'compare'; status: string; search: Search }
 
 type Triaged = { cards: GameCard[] }
 
@@ -49,13 +55,16 @@ const matches = (filter: Filter) => (card: GameCard) =>
 export const Triage = ({
   kind,
   cards,
+  ranked: initialRanked,
   steamSync
 }: {
   kind: Kind
   cards: GameCard[]
+  ranked: Ranked
   steamSync?: SteamSyncReport
 }) => {
   const presets = useMemo(() => prestigeDivisions(kind), [kind])
+  const { ranked, place, unplace, searchFrom } = useRanked(initialRanked)
   const [queue, setQueue] = useState(cards)
   const [history, setHistory] = useState<Triaged[]>([])
   const [filter, setFilter] = useState<Filter>('everything')
@@ -105,17 +114,45 @@ export const Triage = ({
   )
 
   const commit = useCallback(
-    (status: string, prestige?: string) => {
+    (status: string, placement?: Placement) => {
       if (!current) return
-      settle([current], `${current.title} → ${status}`, () =>
-        changeEntry(current.id, {
+      if (placement) place(current, placement)
+      settle([current], `${current.title} → ${status}`, async () => {
+        await changeEntry(current.id, {
           status,
-          ...(prestige === undefined ? {} : { scores: { [PRESTIGE]: prestige } }),
+          ...(placement ? { scores: { [PRESTIGE]: placement.division } } : {}),
           ...(tagsToAdd.length > 0 ? { addTags: tagsToAdd } : {})
         })
-      )
+        if (placement) await placeEntry(current.id, placement.division, placement.index)
+      })
     },
-    [current, settle, tagsToAdd]
+    [current, settle, tagsToAdd, place]
+  )
+
+  const score = useCallback(
+    (status: string, division: string) => {
+      if (!current) return
+      const search = searchFrom(division, current.id)
+      if (search.high === 0) commit(status, { division, index: 0 })
+      else setStep({ phase: 'compare', status, search })
+    },
+    [current, searchFrom, commit]
+  )
+
+  const comparing = useMemo<Comparing | undefined>(
+    () =>
+      current && step.phase === 'compare'
+        ? {
+            ranked,
+            search: step.search,
+            id: current.id,
+            divisionName: prestigeName(kind, step.search.division),
+            onSearch: (search) => setStep({ phase: 'compare', status: step.status, search }),
+            onPlace: (placement) => commit(step.status, placement),
+            onBack: () => setStep({ phase: 'score', status: step.status })
+          }
+        : undefined,
+    [current, step, ranked, kind, commit]
   )
 
   const choose = useCallback(
@@ -141,6 +178,7 @@ export const Triage = ({
     setStep({ phase: 'status' })
     const ids = last.cards.map((c) => c.id)
     ids.forEach((id) => settledIds.current.delete(id))
+    ids.forEach(unplace)
     saves.enqueue(`undo ${last.cards.length}`, () =>
       changeEntries(ids, {
         status: UNTRIAGED,
@@ -148,7 +186,7 @@ export const Triage = ({
         removeTags: TRIAGE_TAGS.map((t) => t.tag)
       })
     )
-  }, [history, saves])
+  }, [history, saves, unplace])
 
   const bulk = useCallback(
     (hint: Hint) => {
@@ -181,17 +219,19 @@ export const Triage = ({
       z: undo
     }
     TRIAGE_TAGS.forEach((t) => (handlers[t.shortcut] = () => toggleTag(t.tag)))
-    if (step.phase === 'status') {
+    if (comparing) {
+      Object.assign(handlers, compareKeys(comparing))
+    } else if (step.phase === 'status') {
       statuses.forEach((status, i) => (handlers[String(i + 1)] = () => choose(status)))
     } else {
       presets.forEach(
-        (preset, i) => (handlers[String(i + 1)] = () => commit(step.status, preset.key))
+        (preset, i) => (handlers[String(i + 1)] = () => score(step.status, preset.key))
       )
       handlers['0'] = () => commit(step.status)
       handlers.Escape = () => setStep({ phase: 'status' })
     }
     return handlers
-  }, [presets, step, statuses, choose, commit, skip, undo, toggleTag])
+  }, [presets, step, statuses, choose, commit, score, skip, undo, toggleTag, comparing])
   useKeys(keys)
 
   const bulkAction = filter !== 'everything' && filter !== 'no-hint' && BULK_FOR_HINT[filter]
@@ -270,17 +310,19 @@ export const Triage = ({
                 </button>
               ))}
             </div>
+          ) : comparing ? (
+            <Compare {...comparing} />
           ) : (
             <div className={styles.choices}>
               <p className={styles.prompt}>
-                {step.status} — how much did you enjoy it?
+                {step.status} — which tier?
               </p>
               {presets.map((preset, i) => (
                 <button
                   key={preset.name}
                   className={styles.choice}
                   data-preset={preset.name}
-                  onClick={() => commit(step.status, preset.key)}
+                  onClick={() => score(step.status, preset.key)}
                 >
                   <kbd>{i + 1}</kbd> {preset.name}
                 </button>

@@ -3,11 +3,14 @@
 import { useCallback, useMemo, useState } from 'react'
 import { PRESTIGE } from '../../../lib/log/present'
 import type { Kind } from '../../../lib/log/types'
-import { changeEntry } from '../actions'
+import { changeEntry, placeEntry } from '../actions'
+import { Compare, compareKeys, useRanked, type Comparing } from '../_queue/Compare'
+import type { Placement, Ranked, Search } from '../_queue/placing'
 import {
   ANOTHER_SHOT,
   CardFace,
   prestigeDivisions,
+  prestigeName,
   QueueHeader,
   SaveStatus,
   TagToggle,
@@ -19,10 +22,24 @@ import { useSaveQueue } from '../_queue/useSaveQueue'
 
 type Rated = { card: GameCard; blurb: string; addedTags: string[] }
 
+type Step = { phase: 'division' } | { phase: 'compare'; search: Search }
+
+const CHOOSING: Step = { phase: 'division' }
+
 const RATE_TAGS = [{ tag: ANOTHER_SHOT, shortcut: 'a', label: 'worth another shot' }] as const
 
-export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
+export const Rate = ({
+  kind,
+  cards,
+  ranked: initialRanked
+}: {
+  kind: Kind
+  cards: GameCard[]
+  ranked: Ranked
+}) => {
   const presets = useMemo(() => prestigeDivisions(kind), [kind])
+  const { ranked, place, unplace, searchFrom } = useRanked(initialRanked)
+  const [step, setStep] = useState<Step>(CHOOSING)
   const [queue, setQueue] = useState(cards)
   const [history, setHistory] = useState<Rated[]>([])
   const [blurb, setBlurb] = useState('')
@@ -33,25 +50,55 @@ export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
   const reset = () => {
     setBlurb('')
     setTagsToAdd([])
+    setStep(CHOOSING)
   }
 
-  const rate = useCallback(
-    (prestige: string) => {
+  const commit = useCallback(
+    (placement: Placement) => {
       if (!current) return
       const written = blurb.trim()
       const addedTags = tagsToAdd.filter((t) => !current.tags.includes(t))
       setQueue((q) => q.slice(1))
       setHistory((h) => [...h, { card: current, blurb: written, addedTags }])
+      place(current, placement)
       reset()
-      saves.enqueue(`${current.title} → ${prestige}`, () =>
-        changeEntry(current.id, {
-          scores: { [PRESTIGE]: prestige },
+      const label = `${current.title} → ${prestigeName(kind, placement.division)} #${placement.index + 1}`
+      saves.enqueue(label, async () => {
+        await changeEntry(current.id, {
+          scores: { [PRESTIGE]: placement.division },
           ...(written ? { blurb: written } : {}),
           ...(addedTags.length > 0 ? { addTags: addedTags } : {})
         })
-      )
+        await placeEntry(current.id, placement.division, placement.index)
+      })
     },
-    [current, blurb, tagsToAdd, saves]
+    [current, blurb, tagsToAdd, saves, place, kind]
+  )
+
+  const rate = useCallback(
+    (division: string) => {
+      if (!current) return
+      const search = searchFrom(division, current.id)
+      if (search.high === 0) commit({ division, index: 0 })
+      else setStep({ phase: 'compare', search })
+    },
+    [current, searchFrom, commit]
+  )
+
+  const comparing = useMemo<Comparing | undefined>(
+    () =>
+      current && step.phase === 'compare'
+        ? {
+            ranked,
+            search: step.search,
+            id: current.id,
+            divisionName: prestigeName(kind, step.search.division),
+            onSearch: (search) => setStep({ phase: 'compare', search }),
+            onPlace: commit,
+            onBack: () => setStep(CHOOSING)
+          }
+        : undefined,
+    [current, step, ranked, kind, commit]
   )
 
   const skip = useCallback(() => {
@@ -65,6 +112,7 @@ export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
     if (!last) return
     setHistory((h) => h.slice(0, -1))
     setQueue((q) => [last.card, ...q])
+    unplace(last.card.id)
     reset()
     saves.enqueue(`undo ${last.card.title}`, () =>
       changeEntry(last.card.id, {
@@ -73,7 +121,7 @@ export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
         ...(last.addedTags.length > 0 ? { removeTags: last.addedTags } : {})
       })
     )
-  }, [history, saves])
+  }, [history, saves, unplace])
 
   const toggleTag = useCallback(
     (tag: string) =>
@@ -83,10 +131,11 @@ export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
 
   const keys = useMemo(() => {
     const handlers: Record<string, () => void> = { s: skip, z: undo }
-    presets.forEach((preset, i) => (handlers[String(i + 1)] = () => rate(preset.key)))
+    if (comparing) Object.assign(handlers, compareKeys(comparing))
+    else presets.forEach((preset, i) => (handlers[String(i + 1)] = () => rate(preset.key)))
     RATE_TAGS.forEach((t) => (handlers[t.shortcut] = () => toggleTag(t.tag)))
     return handlers
-  }, [presets, skip, undo, rate, toggleTag])
+  }, [presets, skip, undo, rate, toggleTag, comparing])
   useKeys(keys)
 
   return (
@@ -103,19 +152,23 @@ export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
             placeholder="one line for the public page (optional)"
             enterKeyHint="done"
           />
-          <div className={styles.choices}>
-            <p className={styles.prompt}>how much did you enjoy it?</p>
-            {presets.map((preset, i) => (
-              <button
-                key={preset.name}
-                className={styles.choice}
-                data-preset={preset.name}
-                onClick={() => rate(preset.key)}
-              >
-                <kbd>{i + 1}</kbd> {preset.name}
-              </button>
-            ))}
-          </div>
+          {comparing ? (
+            <Compare {...comparing} />
+          ) : (
+            <div className={styles.choices}>
+              <p className={styles.prompt}>which tier?</p>
+              {presets.map((preset, i) => (
+                <button
+                  key={preset.name}
+                  className={styles.choice}
+                  data-preset={preset.name}
+                  onClick={() => rate(preset.key)}
+                >
+                  <kbd>{i + 1}</kbd> {preset.name}
+                </button>
+              ))}
+            </div>
+          )}
           <div className={styles.toggles}>
             {RATE_TAGS.map((t) => (
               <TagToggle

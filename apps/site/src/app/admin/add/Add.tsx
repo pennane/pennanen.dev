@@ -5,23 +5,28 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { PRESTIGE, statusLabel } from '../../../lib/log/present'
 import type { IGDBResult, Kind } from '../../../lib/log/types'
-import { prestigeDivisions, QueueHeader } from '../_queue/card'
+import { prestigeDivisions, prestigeName, QueueHeader, useKeys } from '../_queue/card'
 import { IGDBSearch } from '../_queue/IGDBSearch'
 import styles from '../_queue/queue.module.css'
-import { addByTitle, addFromIGDB, changeEntry } from '../actions'
+import { addByTitle, addFromIGDB, changeEntry, placeEntry } from '../actions'
+import { Compare, compareKeys, useRanked, type Comparing } from '../_queue/Compare'
+import type { Placement, Ranked, Search } from '../_queue/placing'
 
 const UNTRIAGED = 'untriaged'
+const NO_KEYS = {}
 
 type Step =
   | { phase: 'search' }
   | { phase: 'adding'; title: string }
   | { phase: 'status'; itemId: number; title: string }
   | { phase: 'score'; itemId: number; title: string; status: string }
+  | { phase: 'compare'; itemId: number; title: string; status: string; search: Search }
   | { phase: 'saved'; itemId: number; title: string; outcome: string }
   | { phase: 'failed'; title: string; error: string }
 
-export const Add = ({ kind }: { kind: Kind }) => {
+export const Add = ({ kind, ranked: initialRanked }: { kind: Kind; ranked: Ranked }) => {
   const presets = prestigeDivisions(kind)
+  const { ranked, place, searchFrom } = useRanked(initialRanked)
   const [step, setStep] = useState<Step>({ phase: 'search' })
   const router = useRouter()
 
@@ -42,18 +47,46 @@ export const Add = ({ kind }: { kind: Kind }) => {
     add(result.name, () => addFromIGDB(result.igdbId))
   }
 
-  const save = async (itemId: number, title: string, status: string, prestige?: string) => {
-    const outcome = prestige === undefined ? statusLabel(status) : `${statusLabel(status)}, ${prestige}`
+  const save = async (itemId: number, title: string, status: string, placement?: Placement) => {
+    const outcome = placement
+      ? `${statusLabel(status)}, ${prestigeName(kind, placement.division)} #${placement.index + 1}`
+      : statusLabel(status)
     try {
       await changeEntry(itemId, {
         status,
-        ...(prestige === undefined ? {} : { scores: { [PRESTIGE]: prestige } })
+        ...(placement ? { scores: { [PRESTIGE]: placement.division } } : {})
       })
+      if (placement) {
+        await placeEntry(itemId, placement.division, placement.index)
+        place({ id: itemId, title }, placement)
+      }
       setStep({ phase: 'saved', itemId, title, outcome })
     } catch (error) {
       setStep({ phase: 'failed', title, error: String(error) })
     }
   }
+
+  const score = (itemId: number, title: string, status: string, division: string) => {
+    const search = searchFrom(division, itemId)
+    if (search.high === 0) save(itemId, title, status, { division, index: 0 })
+    else setStep({ phase: 'compare', itemId, title, status, search })
+  }
+
+  const comparing: Comparing | undefined =
+    step.phase === 'compare'
+      ? {
+          ranked,
+          search: step.search,
+          id: step.itemId,
+          divisionName: prestigeName(kind, step.search.division),
+          onSearch: (search) => setStep({ ...step, search }),
+          onPlace: (placement) => save(step.itemId, step.title, step.status, placement),
+          onBack: () =>
+            setStep({ phase: 'score', itemId: step.itemId, title: step.title, status: step.status })
+        }
+      : undefined
+
+  useKeys(comparing ? compareKeys(comparing) : NO_KEYS)
 
   return (
     <div className={styles.queue}>
@@ -107,13 +140,13 @@ export const Add = ({ kind }: { kind: Kind }) => {
         <article className={styles.card}>
           <h2 className={styles.title}>{step.title}</h2>
           <div className={styles.choices}>
-            <p className={styles.prompt}>{statusLabel(step.status)} — how much did you enjoy it?</p>
+            <p className={styles.prompt}>{statusLabel(step.status)} — which tier?</p>
             {presets.map((preset) => (
               <button
                 key={preset.name}
                 className={styles.choice}
                 data-preset={preset.name}
-                onClick={() => save(step.itemId, step.title, step.status, preset.key)}
+                onClick={() => score(step.itemId, step.title, step.status, preset.key)}
               >
                 {preset.name}
               </button>
@@ -122,6 +155,13 @@ export const Add = ({ kind }: { kind: Kind }) => {
               no score
             </button>
           </div>
+        </article>
+      )}
+
+      {comparing && step.phase === 'compare' && (
+        <article className={styles.card}>
+          <h2 className={styles.title}>{step.title}</h2>
+          <Compare {...comparing} />
         </article>
       )}
 

@@ -284,3 +284,17 @@
   gap: 0.5rem;
   padding: 0.5rem 0 1rem;
 }
+
+.rival {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.rival img {
+  border-radius: 0.25rem;
+  object-fit: cover;
+}
