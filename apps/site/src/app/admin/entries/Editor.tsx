@@ -126,13 +126,13 @@ export const Editor = ({
 
       {kind.axes.map((axis) => (
         <DivisionPicker
-          key={axis}
-          label={kind.axisLabels[axis] ?? axis}
-          divisions={kind.divisions[axis] ?? []}
-          initial={entry.scores[axis]}
-          rank={axis === kind.rankedAxis ? entry.rank : undefined}
+          key={axis.key}
+          label={axis.name}
+          divisions={axis.divisions}
+          initial={entry.scores[axis.key]}
+          rank={axis.key === kind.rankedAxis ? entry.rank : undefined}
           onSave={(division) =>
-            save(`${axis} → ${division ?? 'none'}`, { scores: { [axis]: division ?? null } })
+            save(`${axis.name} → ${division ?? 'none'}`, { scores: { [axis.key]: division ?? null } })
           }
         />
       ))}

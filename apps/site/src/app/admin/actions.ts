@@ -3,7 +3,7 @@
 import { requireAdmin } from '../../lib/admin/require-admin'
 import { logAdmin } from '../../lib/log/admin-api'
 import { textField } from '../../lib/log/present'
-import type { EntryChange, KindSettings, NewMoment } from '../../lib/log/types'
+import type { Axis, EntryChange, KindSettings, NewMoment } from '../../lib/log/types'
 import type { EntrySubject } from './entries/Editor'
 
 export async function changeEntry(itemId: number, change: EntryChange) {
@@ -91,6 +91,11 @@ export async function startSteamSync() {
 export async function steamSyncStatus() {
   await requireAdmin()
   return logAdmin.steamSync()
+}
+
+export async function saveAxes(axes: Axis[]) {
+  await requireAdmin()
+  return logAdmin.putAxes(axes)
 }
 
 export async function saveKindSettings(kind: string, settings: KindSettings) {

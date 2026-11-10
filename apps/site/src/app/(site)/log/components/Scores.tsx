@@ -1,27 +1,26 @@
 'use client'
 
-import { divisionName, orderedScores } from '../../../../lib/log/present'
+import { shownScores } from '../../../../lib/log/present'
 import styles from './log.module.css'
 import { usePresentation } from './PresentationContext'
 
-export const Score = ({ kind, axis, division }: { kind: string; axis: string; division: string }) => {
-  const settings = usePresentation().kinds[kind]
+export const ScoreParts = ({ kind, scores }: { kind: string; scores: Record<string, string> }) => {
+  const shown = shownScores(usePresentation(), kind, scores)
   return (
-    <span className={styles.score}>
-      <span className={styles.axis}>{settings?.axisLabels[axis] ?? axis}</span>
-      <span className={styles.word}>{divisionName(settings?.divisions, axis, division)}</span>
-    </span>
+    <>
+      {shown.map(({ axis, axisName, division }) => (
+        <span key={axis} className={styles.score}>
+          <span className={styles.axis}>{axisName}</span>
+          <span className={styles.word}>{division}</span>
+        </span>
+      ))}
+    </>
   )
 }
 
-export const Scores = ({ kind, scores }: { kind: string; scores: Record<string, string> }) => {
-  const ordered = orderedScores(scores)
-  if (ordered.length === 0) return null
-  return (
+export const Scores = ({ kind, scores }: { kind: string; scores: Record<string, string> }) =>
+  Object.keys(scores).length === 0 ? null : (
     <span className={styles.scores}>
-      {ordered.map(({ axis, division }) => (
-        <Score key={axis} kind={kind} axis={axis} division={division} />
-      ))}
+      <ScoreParts kind={kind} scores={scores} />
     </span>
   )
-}

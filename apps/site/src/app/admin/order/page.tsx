@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { requireAdmin } from '../../../lib/admin/require-admin'
 import { logAdmin } from '../../../lib/log/admin-api'
+import { findAxis } from '../../../lib/log/present'
 import { QueueHeader } from '../_queue/card'
 import { Order } from './Order'
 import { toSections } from './sections'
@@ -19,7 +20,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Search
   const kind = kinds.find((k) => k.name === requested) ?? kinds.find((k) => k.name === DEFAULT_KIND) ?? kinds[0]
   const entries = await logAdmin.entries(kind.name)
   const axis = kind.rankedAxis
-  const sections = toSections(kind.divisions[axis] ?? [], entries, axis)
+  const sections = toSections(findAxis(kind.axes, axis)?.divisions ?? [], entries, axis)
   const unrated = entries.filter((e) => e.scores[axis] === undefined).length
 
   return (

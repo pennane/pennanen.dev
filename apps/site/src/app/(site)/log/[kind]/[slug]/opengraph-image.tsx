@@ -2,10 +2,9 @@ import { readFile } from 'fs/promises'
 import { ImageResponse } from 'next/og'
 import path from 'path'
 import {
-  divisionName,
   isPublicKind,
-  orderedScores,
   pictureOf,
+  shownScores,
   titleOf
 } from '../../../../../lib/log/present'
 import { logPublic } from '../../../../../lib/log/public-api'
@@ -37,7 +36,6 @@ export default async function OpenGraphImage({
     isPublicKind(kind) ? logPublic.item(kind, slug) : undefined,
     logPublic.presentation()
   ])
-  const settings = presentation.kinds[kind]
   const [regular, medium, bold, logo, fallbackBackground] = await Promise.all([
     font('Inter-Regular.ttf'),
     font('Inter-Medium.ttf'),
@@ -48,10 +46,8 @@ export default async function OpenGraphImage({
   const title = item ? titleOf(item) : 'things as ap saw them'
   const blurb = item?.blurb
   const footer = item
-    ? orderedScores(item.scores)
-        .map(({ axis, division }) =>
-          `${settings?.axisLabels[axis] ?? axis} ${divisionName(settings?.divisions, axis, division)}`
-        )
+    ? shownScores(presentation, kind, item.scores)
+        .map(({ axisName, division }) => `${axisName} ${division}`)
         .join(' · ')
     : ''
 

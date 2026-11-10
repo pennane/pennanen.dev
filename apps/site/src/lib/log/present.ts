@@ -1,5 +1,5 @@
 import type { PublicItem } from './public-api'
-import type { Divisions } from './types'
+import type { Axis, Presentation } from './types'
 
 export type Rank = { place: number; of: number }
 
@@ -90,22 +90,29 @@ const FAVORITE_TAG = 'favorite'
 export const isFavorite = (tags: string[]) =>
   tags.some((tag) => tagIsWithin(tag, FAVORITE_TAG))
 
-const AXES_IN_ORDER = ['enjoyment', 'quality']
+export const PRESTIGE = 'prestige'
 
-const axisRank = (axis: string) => {
-  const rank = AXES_IN_ORDER.indexOf(axis)
-  return rank === -1 ? AXES_IN_ORDER.length : rank
+export type ShownScore = { axis: string; axisName: string; division: string }
+
+export const findAxis = (axes: Axis[], key: string) => axes.find((axis) => axis.key === key)
+
+export const divisionName = (axis: Axis | undefined, key: string) =>
+  axis?.divisions.find((d) => d.key === key)?.name ?? key
+
+export const shownScores = (
+  presentation: Presentation,
+  kind: string,
+  scores: Record<string, string>
+): ShownScore[] => {
+  const order = presentation.kinds[kind]?.axes ?? []
+  const place = (axis: string) => (order.includes(axis) ? order.indexOf(axis) : order.length)
+  return Object.entries(scores)
+    .sort(([a], [b]) => place(a) - place(b) || a.localeCompare(b))
+    .map(([key, division]) => {
+      const axis = findAxis(presentation.axes, key)
+      return { axis: key, axisName: axis?.name ?? key, division: divisionName(axis, division) }
+    })
 }
-
-export const orderedScores = (scores: Record<string, string>) =>
-  Object.entries(scores)
-    .map(([axis, division]) => ({ axis, division }))
-    .sort((a, b) => axisRank(a.axis) - axisRank(b.axis) || a.axis.localeCompare(b.axis))
-
-export const HEADLINE_AXIS = 'enjoyment'
-
-export const divisionName = (divisions: Divisions | undefined, axis: string, key: string) =>
-  divisions?.[axis]?.find((d) => d.key === key)?.name ?? key
 
 const monthYear = new Intl.DateTimeFormat('en-GB', {
   year: 'numeric',

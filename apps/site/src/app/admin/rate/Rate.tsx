@@ -1,13 +1,13 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import { PRESTIGE } from '../../../lib/log/present'
 import type { Kind } from '../../../lib/log/types'
 import { changeEntry } from '../actions'
 import {
   ANOTHER_SHOT,
   CardFace,
-  ENJOYMENT,
-  enjoymentDivisions,
+  prestigeDivisions,
   QueueHeader,
   SaveStatus,
   TagToggle,
@@ -22,7 +22,7 @@ type Rated = { card: GameCard; blurb: string; addedTags: string[] }
 const RATE_TAGS = [{ tag: ANOTHER_SHOT, shortcut: 'a', label: 'worth another shot' }] as const
 
 export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
-  const presets = useMemo(() => enjoymentDivisions(kind), [kind])
+  const presets = useMemo(() => prestigeDivisions(kind), [kind])
   const [queue, setQueue] = useState(cards)
   const [history, setHistory] = useState<Rated[]>([])
   const [blurb, setBlurb] = useState('')
@@ -36,16 +36,16 @@ export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
   }
 
   const rate = useCallback(
-    (enjoyment: string) => {
+    (prestige: string) => {
       if (!current) return
       const written = blurb.trim()
       const addedTags = tagsToAdd.filter((t) => !current.tags.includes(t))
       setQueue((q) => q.slice(1))
       setHistory((h) => [...h, { card: current, blurb: written, addedTags }])
       reset()
-      saves.enqueue(`${current.title} → ${enjoyment}`, () =>
+      saves.enqueue(`${current.title} → ${prestige}`, () =>
         changeEntry(current.id, {
-          scores: { [ENJOYMENT]: enjoyment },
+          scores: { [PRESTIGE]: prestige },
           ...(written ? { blurb: written } : {}),
           ...(addedTags.length > 0 ? { addTags: addedTags } : {})
         })
@@ -68,7 +68,7 @@ export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
     reset()
     saves.enqueue(`undo ${last.card.title}`, () =>
       changeEntry(last.card.id, {
-        scores: { [ENJOYMENT]: null },
+        scores: { [PRESTIGE]: null },
         ...(last.blurb ? { blurb: '' } : {}),
         ...(last.addedTags.length > 0 ? { removeTags: last.addedTags } : {})
       })

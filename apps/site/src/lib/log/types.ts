@@ -10,15 +10,15 @@ export type Visibility = 'auto' | 'public' | 'private'
 
 export type Division = { key: string; name: string }
 
-export type Divisions = Record<string, Division[]>
+export type Axis = { key: string; name: string; divisions: Division[] }
 
 export type KindSettings = {
   statusesShown: string[]
-  axisLabels: Record<string, string>
-  divisions: Divisions
+  axes: string[]
 }
 
 export type Presentation = {
+  axes: Axis[]
   kinds: Record<string, KindSettings>
   tagTitles: Record<string, string>
 }
@@ -28,10 +28,8 @@ export type Kind = {
   statuses: string[]
   statusesToScore: string[]
   statusesShown: string[]
-  axes: string[]
   rankedAxis: string
-  axisLabels: Record<string, string>
-  divisions: Divisions
+  axes: Axis[]
 }
 
 export type Entry = {

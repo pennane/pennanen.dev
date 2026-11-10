@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect } from 'react'
+import { findAxis, PRESTIGE } from '../../../lib/log/present'
 import type { Hint, Kind } from '../../../lib/log/types'
 import styles from './queue.module.css'
 import type { SaveQueueState } from './useSaveQueue'
@@ -20,12 +21,11 @@ export type GameCard = {
   hint?: Hint
 }
 
-export const ENJOYMENT = 'enjoyment'
 export const ANOTHER_SHOT = 'another-shot'
 export const IDLED = 'idled'
 const STEAM_TRADING_CARDS = 'Steam Trading Cards'
 
-export const enjoymentDivisions = (kind: Kind) => kind.divisions[ENJOYMENT] ?? []
+export const prestigeDivisions = (kind: Kind) => findAxis(kind.axes, PRESTIGE)?.divisions ?? []
 
 export const HINT_LABELS: Record<Hint, string> = {
   'likely-played': 'looks played',

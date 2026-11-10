@@ -11,7 +11,6 @@ import {
   formatPartialDate,
   freeFormFields,
   isPublicKind,
-  orderedScores,
   itemPath,
   kindPlural,
   pictureOf,
@@ -27,7 +26,7 @@ import {
   type PublicMoment
 } from '../../../../../lib/log/public-api'
 import { baseUrl } from '../../../../sitemap'
-import { Score } from '../../components/Scores'
+import { ScoreParts } from '../../components/Scores'
 import { Tags } from '../../components/Tags'
 import logStyles from '../../components/log.module.css'
 import styles from './item.module.css'
@@ -85,14 +84,7 @@ const Facts = ({ item }: { item: PublicItem }) => {
   return (
     <MetaLine>
       <span>{statusLabel(item.status)}</span>
-      {orderedScores(item.scores).map(({ axis, division }) => (
-        <Score
-          key={axis}
-          kind={item.kind}
-          axis={axis}
-          division={division}
-        />
-      ))}
+      <ScoreParts kind={item.kind} scores={item.scores} />
       {released && <span>{formatPartialDate(released)}</span>}
       {item.timeSpent && <span>{TIME_SPENT_LABELS[item.timeSpent]}</span>}
       {lastPlayed && <span>last played {formatPartialDate(lastPlayed)}</span>}

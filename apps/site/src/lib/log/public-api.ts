@@ -66,12 +66,14 @@ const fetchPublic = (path: string) =>
 const failure = (response: Response) =>
   new Error(`log api ${response.url} answered ${response.status}`)
 
+const divisionSchema = z.object({ key: z.string(), name: z.string() })
+
 const presentationSchema = z.object({
+  axes: z.array(z.object({ key: z.string(), name: z.string(), divisions: z.array(divisionSchema) })),
   kinds: z.record(
     z.object({
       statusesShown: z.array(z.string()),
-      axisLabels: z.record(z.string()),
-      divisions: z.record(z.array(z.object({ key: z.string(), name: z.string() })))
+      axes: z.array(z.string())
     })
   ),
   tagTitles: z.record(z.string())

@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import {
   divisionName,
-  HEADLINE_AXIS,
+  findAxis,
+  PRESTIGE,
   presenceOf,
   statusLabel,
   tagIsWithin,
@@ -225,8 +226,8 @@ export const Entries = ({
                 </Link>
                 <span className={styles.meta}>
                   {statusLabel(entry.status)}
-                  {entry.scores[HEADLINE_AXIS] !== undefined &&
-                    ` · ${divisionName(kind.divisions, HEADLINE_AXIS, entry.scores[HEADLINE_AXIS])}`}
+                  {entry.scores[PRESTIGE] !== undefined &&
+                    ` · ${divisionName(findAxis(kind.axes, PRESTIGE), entry.scores[PRESTIGE])}`}
                   {entry.rank !== undefined && ` #${entry.rank}`}
                   {entry.tags.length > 0 && ` · ${entry.tags.map(tagLabel).join(', ')}`}
                 </span>

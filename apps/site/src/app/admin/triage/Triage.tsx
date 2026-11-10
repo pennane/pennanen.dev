@@ -2,12 +2,12 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { PRESTIGE } from '../../../lib/log/present'
 import type { EntryChange, Hint, Kind, SteamSyncReport } from '../../../lib/log/types'
 import {
   ANOTHER_SHOT,
   CardFace,
-  ENJOYMENT,
-  enjoymentDivisions,
+  prestigeDivisions,
   formatPlaytime,
   HINT_LABELS,
   IDLED,
@@ -55,7 +55,7 @@ export const Triage = ({
   cards: GameCard[]
   steamSync?: SteamSyncReport
 }) => {
-  const presets = useMemo(() => enjoymentDivisions(kind), [kind])
+  const presets = useMemo(() => prestigeDivisions(kind), [kind])
   const [queue, setQueue] = useState(cards)
   const [history, setHistory] = useState<Triaged[]>([])
   const [filter, setFilter] = useState<Filter>('everything')
@@ -105,12 +105,12 @@ export const Triage = ({
   )
 
   const commit = useCallback(
-    (status: string, enjoyment?: string) => {
+    (status: string, prestige?: string) => {
       if (!current) return
       settle([current], `${current.title} → ${status}`, () =>
         changeEntry(current.id, {
           status,
-          ...(enjoyment === undefined ? {} : { scores: { [ENJOYMENT]: enjoyment } }),
+          ...(prestige === undefined ? {} : { scores: { [PRESTIGE]: prestige } }),
           ...(tagsToAdd.length > 0 ? { addTags: tagsToAdd } : {})
         })
       )
@@ -144,7 +144,7 @@ export const Triage = ({
     saves.enqueue(`undo ${last.cards.length}`, () =>
       changeEntries(ids, {
         status: UNTRIAGED,
-        scores: { [ENJOYMENT]: null },
+        scores: { [PRESTIGE]: null },
         removeTags: TRIAGE_TAGS.map((t) => t.tag)
       })
     )

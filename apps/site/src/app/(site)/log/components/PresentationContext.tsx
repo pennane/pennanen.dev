@@ -3,7 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import type { Presentation } from '../../../../lib/log/types'
 
-const PresentationContext = createContext<Presentation>({ kinds: {}, tagTitles: {} })
+const PresentationContext = createContext<Presentation>({ axes: [], kinds: {}, tagTitles: {} })
 
 export const PresentationProvider = ({
   presentation,

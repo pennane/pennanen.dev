@@ -1,13 +1,16 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { statusLabel } from '../../../lib/log/present'
-import type { Division, KindSettings } from '../../../lib/log/types'
-import { saveKindSettings, saveTagTitles } from '../actions'
+import { PRESTIGE, statusLabel } from '../../../lib/log/present'
+import type { Axis, Division, KindSettings } from '../../../lib/log/types'
+import { saveAxes, saveKindSettings, saveTagTitles } from '../actions'
 import editor from '../entries/editor.module.css'
 import styles from './settings.module.css'
 
 const UNSAVED_KEY = ''
+
+const TIERS = ['S', 'A', 'B', 'C', 'D', 'F']
 
 const moved = <T,>(list: T[], from: number, to: number) => {
   if (to < 0 || to >= list.length) return list
@@ -60,6 +63,68 @@ const Section = ({ label, hint, children }: { label: string; hint?: string; chil
   </section>
 )
 
+export const AxesForm = ({ initial }: { initial: Axis[] }) => {
+  const router = useRouter()
+  const [axes, setAxes] = useState(initial)
+  const { save, changed, run } = useSave(saveAxes)
+
+  const change = (next: Axis[]) => {
+    setAxes(next)
+    changed()
+  }
+  const changeAxis = (index: number, next: Partial<Axis>) =>
+    change(axes.map((axis, i) => (i === index ? { ...axis, ...next } : axis)))
+
+  return (
+    <article className={styles.kind}>
+      <h2 className={styles.kindName}>axes</h2>
+      <p className={styles.hint}>shared by every kind that uses them; {PRESTIGE} orders things and stays</p>
+      {axes.map((axis, index) => (
+        <Section key={axis.key || `new-${index}`} label={axis.name || 'new axis'}>
+          <div className={styles.row}>
+            <input
+              className={styles.input}
+              value={axis.name}
+              placeholder="name"
+              onChange={(event) => changeAxis(index, { name: event.target.value })}
+            />
+            {axis.key !== UNSAVED_KEY && axis.key !== axis.name && <span className={styles.rowKey}>{axis.key}</span>}
+            <button type="button" className={editor.quiet} aria-label="move up" onClick={() => change(moved(axes, index, index - 1))}>
+              ↑
+            </button>
+            <button type="button" className={editor.quiet} aria-label="move down" onClick={() => change(moved(axes, index, index + 1))}>
+              ↓
+            </button>
+            {axis.key !== PRESTIGE && (
+              <button type="button" className={editor.quiet} onClick={() => change(axes.filter((_, i) => i !== index))}>
+                remove
+              </button>
+            )}
+          </div>
+          <p className={styles.hint}>{axis.key === PRESTIGE ? 'divisions, best first; entries rank inside each' : 'divisions, best first'}</p>
+          <DivisionList divisions={axis.divisions} onChange={(divisions) => changeAxis(index, { divisions })} />
+        </Section>
+      ))}
+      <button
+        type="button"
+        className={editor.quiet}
+        onClick={() => change([...axes, { key: UNSAVED_KEY, name: '', divisions: TIERS.map((name) => ({ key: UNSAVED_KEY, name })) }])}
+      >
+        add an axis
+      </button>
+      <SaveButton
+        save={save}
+        onSave={() =>
+          run(axes, (saved) => {
+            setAxes(saved)
+            router.refresh()
+          })
+        }
+      />
+    </article>
+  )
+}
+
 export const KindSettingsForm = ({
   kind,
   statuses,
@@ -69,7 +134,7 @@ export const KindSettingsForm = ({
 }: {
   kind: string
   statuses: string[]
-  axes: string[]
+  axes: Axis[]
   rankedAxis: string
   initial: KindSettings
 }) => {
@@ -88,8 +153,8 @@ export const KindSettingsForm = ({
         : [...settings.statusesShown, status]
     })
 
-  const changeDivisions = (axis: string, divisions: Division[]) =>
-    change({ divisions: { ...settings.divisions, [axis]: divisions } })
+  const nameOf = (key: string) => axes.find((axis) => axis.key === key)?.name ?? key
+  const unused = axes.filter((axis) => !settings.axes.includes(axis.key))
 
   return (
     <article className={styles.kind}>
@@ -111,32 +176,38 @@ export const KindSettingsForm = ({
         </div>
       </Section>
 
-      <Section label="score names" hint="what each score is called on public pages">
-        {axes.map((axis) => (
-          <label key={axis} className={styles.row}>
-            <span className={styles.rowKey}>{axis}</span>
-            <input
-              className={styles.input}
-              value={settings.axisLabels[axis] ?? ''}
-              placeholder={axis}
-              onChange={(event) => change({ axisLabels: { ...settings.axisLabels, [axis]: event.target.value } })}
-            />
-          </label>
+      <Section label="axes" hint="the first one leads on list rows">
+        {settings.axes.map((key, index) => (
+          <div key={key} className={styles.row}>
+            <span className={styles.input}>{nameOf(key)}</span>
+            <button type="button" className={editor.quiet} aria-label="move up" onClick={() => change({ axes: moved(settings.axes, index, index - 1) })}>
+              ↑
+            </button>
+            <button type="button" className={editor.quiet} aria-label="move down" onClick={() => change({ axes: moved(settings.axes, index, index + 1) })}>
+              ↓
+            </button>
+            {key !== rankedAxis && (
+              <button type="button" className={editor.quiet} onClick={() => change({ axes: settings.axes.filter((a) => a !== key) })}>
+                remove
+              </button>
+            )}
+          </div>
         ))}
+        {unused.length > 0 && (
+          <div className={editor.chips}>
+            {unused.map((axis) => (
+              <button
+                key={axis.key}
+                type="button"
+                className={editor.chip}
+                onClick={() => change({ axes: [...settings.axes, axis.key] })}
+              >
+                + {axis.name}
+              </button>
+            ))}
+          </div>
+        )}
       </Section>
-
-      {axes.map((axis) => (
-        <Section
-          key={axis}
-          label={`${settings.axisLabels[axis] || axis} divisions`}
-          hint={axis === rankedAxis ? 'best first; entries rank inside each' : 'best first'}
-        >
-          <DivisionList
-            divisions={settings.divisions[axis] ?? []}
-            onChange={(divisions) => changeDivisions(axis, divisions)}
-          />
-        </Section>
-      ))}
 
       <SaveButton save={save} onSave={() => run(settings, setSettings)} />
     </article>

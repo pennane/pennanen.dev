@@ -3,9 +3,9 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { statusLabel } from '../../../lib/log/present'
+import { PRESTIGE, statusLabel } from '../../../lib/log/present'
 import type { IGDBResult, Kind } from '../../../lib/log/types'
-import { ENJOYMENT, enjoymentDivisions, QueueHeader } from '../_queue/card'
+import { prestigeDivisions, QueueHeader } from '../_queue/card'
 import { IGDBSearch } from '../_queue/IGDBSearch'
 import styles from '../_queue/queue.module.css'
 import { addByTitle, addFromIGDB, changeEntry } from '../actions'
@@ -21,7 +21,7 @@ type Step =
   | { phase: 'failed'; title: string; error: string }
 
 export const Add = ({ kind }: { kind: Kind }) => {
-  const presets = enjoymentDivisions(kind)
+  const presets = prestigeDivisions(kind)
   const [step, setStep] = useState<Step>({ phase: 'search' })
   const router = useRouter()
 
@@ -42,12 +42,12 @@ export const Add = ({ kind }: { kind: Kind }) => {
     add(result.name, () => addFromIGDB(result.igdbId))
   }
 
-  const save = async (itemId: number, title: string, status: string, enjoyment?: string) => {
-    const outcome = enjoyment === undefined ? statusLabel(status) : `${statusLabel(status)}, ${enjoyment}`
+  const save = async (itemId: number, title: string, status: string, prestige?: string) => {
+    const outcome = prestige === undefined ? statusLabel(status) : `${statusLabel(status)}, ${prestige}`
     try {
       await changeEntry(itemId, {
         status,
-        ...(enjoyment === undefined ? {} : { scores: { [ENJOYMENT]: enjoyment } })
+        ...(prestige === undefined ? {} : { scores: { [PRESTIGE]: prestige } })
       })
       setStep({ phase: 'saved', itemId, title, outcome })
     } catch (error) {

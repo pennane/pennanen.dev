@@ -7,6 +7,7 @@ import type {
   ItemView,
   ListedEntry,
   Kind,
+  Axis,
   KindSettings,
   NewMoment,
   Presentation,
@@ -48,6 +49,7 @@ const send = (method: string, body: unknown): RequestInit => ({
 export const logAdmin = {
   kinds: () => call<Kind[]>('/admin/kinds'),
   settings: () => call<Presentation>('/admin/settings'),
+  putAxes: (axes: Axis[]) => call<Axis[]>('/admin/settings/axes', send('PUT', axes)),
   putKindSettings: (kind: string, settings: KindSettings) =>
     call<KindSettings>(`/admin/settings/kinds/${encodeURIComponent(kind)}`, send('PUT', settings)),
   putTagTitles: (titles: Record<string, string>) =>
