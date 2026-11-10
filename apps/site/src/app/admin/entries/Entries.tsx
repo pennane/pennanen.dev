@@ -78,7 +78,10 @@ export const Entries = ({
     syncUrl(next)
   }
 
-  const tags = useMemo(() => tagsByUse(initialEntries), [initialEntries])
+  const tags = useMemo(() => {
+    const counted = tagsByUse(entries.filter((e) => matches(e, { ...filter, tag: undefined }, '')))
+    return !filter.tag || counted.some(([tag]) => tag === filter.tag) ? counted : [...counted, [filter.tag, 0] as [string, number]]
+  }, [entries, filter])
   const shown = useMemo(
     () => entries.filter((e) => matches(e, filter, query.trim().toLowerCase())),
     [entries, filter, query]

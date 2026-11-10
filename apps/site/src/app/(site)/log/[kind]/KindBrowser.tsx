@@ -69,6 +69,9 @@ const ChoiceRow = ({
 
 const MIN_TO_BE_WORTH_FILTERING = 2
 
+const keepChosen = (counts: { value: string; count: number }[], chosen: string | undefined) =>
+  !chosen || counts.some((c) => c.value === chosen) ? counts : [...counts, { value: chosen, count: 0 }]
+
 export const KindBrowser = ({
   items,
   path
@@ -78,8 +81,8 @@ export const KindBrowser = ({
 }) => {
   const view = parseView(useSearchParams())
   const titleOf = useTagTitle()
-  const statuses = statusesIn(items)
-  const tags = tagsIn(items)
+  const statuses = keepChosen(statusesIn(applyView(items, { ...view, status: undefined })), view.status)
+  const tags = keepChosen(tagsIn(applyView(items, { ...view, tag: undefined })), view.tag)
   const shown = applyView(items, view)
 
   return (
@@ -94,7 +97,7 @@ export const KindBrowser = ({
             view: { ...view, sort }
           }))}
         />
-        {statuses.length >= MIN_TO_BE_WORTH_FILTERING && (
+        {statusesIn(items).length >= MIN_TO_BE_WORTH_FILTERING && (
           <ChoiceRow
             name="status"
             path={path}
@@ -109,7 +112,7 @@ export const KindBrowser = ({
             ]}
           />
         )}
-        {tags.length > 0 && (
+        {(tags.length > 0 || view.tag) && (
           <ChoiceRow
             name="tag"
             path={path}
