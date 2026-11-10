@@ -51,10 +51,11 @@ export type PublicMoment = z.infer<typeof momentSchema>
 
 const NOT_FOUND = 404
 
+const STALE_AFTER_SECONDS = 300
+
 const fetchPublic = (path: string) =>
   fetch(requiredEnv('LOG_API_URL') + path, {
-    cache: 'force-cache',
-    next: { tags: [LOG_CACHE_TAG] }
+    next: { tags: [LOG_CACHE_TAG], revalidate: STALE_AFTER_SECONDS }
   })
 
 const failure = (response: Response) =>
