@@ -1,4 +1,5 @@
 import {
+  byLastPlayed,
   byScore,
   byTitle,
   tagIsWithin,
@@ -6,9 +7,15 @@ import {
   type ListedItem
 } from '../../../../lib/log/present'
 
-export const SORTS = ['score', 'title'] as const
+export const SORTS = ['score', 'last-played', 'title'] as const
 
 export type Sort = (typeof SORTS)[number]
+
+export const SORT_LABELS: Record<Sort, string> = {
+  score: 'score',
+  'last-played': 'last played',
+  title: 'title'
+}
 
 export type View = {
   sort: Sort
@@ -47,6 +54,7 @@ export const hrefFor = (path: string, view: View) => {
 
 const COMPARATORS: Record<Sort, (a: ListedItem, b: ListedItem) => number> = {
   score: byScore,
+  'last-played': byLastPlayed,
   title: byTitle
 }
 

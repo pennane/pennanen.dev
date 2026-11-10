@@ -15,6 +15,7 @@ import {
   applyView,
   hrefFor,
   parseView,
+  SORT_LABELS,
   SORTS,
   statusesIn,
   tagsIn,
@@ -89,7 +90,7 @@ export const KindBrowser = ({
           path={path}
           current={view}
           choices={SORTS.map((sort) => ({
-            label: sort,
+            label: SORT_LABELS[sort],
             view: { ...view, sort }
           }))}
         />
