@@ -136,7 +136,6 @@ export type ListedItem = {
   status: string
   scores: Record<string, number>
   tags: string[]
-  updatedAt: string
 }
 
 export const toListed = (item: PublicItem): ListedItem => ({
@@ -146,9 +145,16 @@ export const toListed = (item: PublicItem): ListedItem => ({
   picture: pictureOf(item),
   status: item.status,
   scores: item.scores,
-  tags: item.tags,
-  updatedAt: item.updatedAt
+  tags: item.tags
 })
 
-export const byMostRecent = (a: ListedItem, b: ListedItem) =>
-  b.updatedAt.localeCompare(a.updatedAt)
+const UNSCORED = -1
+
+const headlineScore = (item: ListedItem) =>
+  item.scores[HEADLINE_AXIS] ?? UNSCORED
+
+export const byTitle = (a: ListedItem, b: ListedItem) =>
+  a.title.localeCompare(b.title)
+
+export const byScore = (a: ListedItem, b: ListedItem) =>
+  headlineScore(b) - headlineScore(a) || byTitle(a, b)

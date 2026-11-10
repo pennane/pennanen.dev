@@ -1,12 +1,12 @@
 import {
-  byMostRecent,
-  HEADLINE_AXIS,
+  byScore,
+  byTitle,
   tagIsWithin,
   tagWithAncestors,
   type ListedItem
 } from '../../../../lib/log/present'
 
-export const SORTS = ['score', 'recent', 'title'] as const
+export const SORTS = ['score', 'title'] as const
 
 export type Sort = (typeof SORTS)[number]
 
@@ -45,15 +45,9 @@ export const hrefFor = (path: string, view: View) => {
   return search ? `${path}?${search}` : path
 }
 
-const UNSCORED = -1
-
-const headlineScore = (item: ListedItem) =>
-  item.scores[HEADLINE_AXIS] ?? UNSCORED
-
 const COMPARATORS: Record<Sort, (a: ListedItem, b: ListedItem) => number> = {
-  score: (a, b) => headlineScore(b) - headlineScore(a) || byMostRecent(a, b),
-  recent: byMostRecent,
-  title: (a, b) => a.title.localeCompare(b.title)
+  score: byScore,
+  title: byTitle
 }
 
 const hasStatus = (status: string | undefined) => (item: ListedItem) =>

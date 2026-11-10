@@ -1,11 +1,19 @@
 'use client'
 
+import { Eye, EyeOff } from 'lucide-react'
 import { useOptimistic, useState, useTransition } from 'react'
 import type { Visibility } from '../../../lib/log/types'
 import { setVisibility } from './actions'
 import styles from './entries.module.css'
 
-const VISIBILITIES: Visibility[] = ['private', 'public']
+const OTHER: Record<Visibility, Visibility> = {
+  private: 'public',
+  public: 'private'
+}
+
+const ICONS = { private: EyeOff, public: Eye }
+
+const ICON_SIZE = 14
 
 type Save = { state: 'idle' } | { state: 'failed'; wanted: Visibility }
 
@@ -31,23 +39,26 @@ export const VisibilitySwitch = ({
       }
     })
 
+  const Icon = ICONS[shown]
+
   return (
     <div className={styles.switchArea}>
-      <div className={styles.switch} role="group" aria-label="visibility">
-        {VISIBILITIES.map((option) => (
-          <button
-            key={option}
-            type="button"
-            className={styles.option}
-            aria-pressed={option === shown}
-            onClick={() => option !== shown && choose(option)}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
+      <button
+        type="button"
+        className={styles.visibility}
+        data-visibility={shown}
+        aria-label={`${shown}, make ${OTHER[shown]}`}
+        onClick={() => choose(OTHER[shown])}
+      >
+        <Icon size={ICON_SIZE} aria-hidden />
+        {shown}
+      </button>
       {save.state === 'failed' && (
-        <button type="button" className={styles.retry} onClick={() => choose(save.wanted)}>
+        <button
+          type="button"
+          className={styles.retry}
+          onClick={() => choose(save.wanted)}
+        >
           not saved, retry
         </button>
       )}

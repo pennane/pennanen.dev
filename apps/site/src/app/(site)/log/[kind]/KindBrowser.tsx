@@ -20,7 +20,7 @@ import {
   type View
 } from './view'
 
-type Choice = { label: string; view: View }
+type Choice = { label: string; count?: number; view: View }
 
 const ChoiceRow = ({
   name,
@@ -38,7 +38,7 @@ const ChoiceRow = ({
     <div className={styles.choiceRow}>
       <span className={styles.choiceName}>{name}</span>
       <ul className={styles.choices}>
-        {choices.map(({ label, view }) => {
+        {choices.map(({ label, count, view }) => {
           const href = hrefFor(path, view)
           return (
             <li key={label}>
@@ -53,6 +53,9 @@ const ChoiceRow = ({
                 aria-current={href === currentHref ? 'true' : undefined}
               >
                 {label}
+                {count !== undefined && (
+                  <span className={styles.count}>{count}</span>
+                )}
               </Link>
             </li>
           )
@@ -96,7 +99,8 @@ export const KindBrowser = ({
             choices={[
               { label: 'any', view: { ...view, status: undefined } },
               ...statuses.map(({ value, count }) => ({
-                label: `${statusLabel(value)} ${count}`,
+                label: statusLabel(value),
+                count,
                 view: { ...view, status: value }
               }))
             ]}
@@ -110,7 +114,8 @@ export const KindBrowser = ({
             choices={[
               { label: 'any', view: { ...view, tag: undefined } },
               ...tags.map(({ value, count }) => ({
-                label: `${tagLabel(value)} ${count}`,
+                label: tagLabel(value),
+                count,
                 view: { ...view, tag: value }
               }))
             ]}
