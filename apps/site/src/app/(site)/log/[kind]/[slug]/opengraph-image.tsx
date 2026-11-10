@@ -2,6 +2,8 @@ import { readFile } from 'fs/promises'
 import { ImageResponse } from 'next/og'
 import path from 'path'
 import {
+  divisionName,
+  HEADLINE_AXIS,
   isPublicKind,
   orderedScores,
   pictureOf,
@@ -32,7 +34,11 @@ export default async function OpenGraphImage({
   params: Promise<{ kind: string; slug: string }>
 }) {
   const { kind, slug } = await params
-  const item = isPublicKind(kind) ? await logPublic.item(kind, slug) : undefined
+  const [item, presentation] = await Promise.all([
+    isPublicKind(kind) ? logPublic.item(kind, slug) : undefined,
+    logPublic.presentation()
+  ])
+  const settings = presentation.kinds[kind]
   const [regular, medium, bold, logo, fallbackBackground] = await Promise.all([
     font('Inter-Regular.ttf'),
     font('Inter-Medium.ttf'),
@@ -44,7 +50,15 @@ export default async function OpenGraphImage({
   const blurb = item?.blurb
   const footer = item
     ? orderedScores(item.scores)
-        .map(({ axis, score }) => `${axis} ${score}`)
+        .map(({ axis, division }) =>
+          [
+            settings?.axisLabels[axis] ?? axis,
+            divisionName(settings?.divisions, axis, division),
+            axis === HEADLINE_AXIS && item.rank ? `#${item.rank.place}` : ''
+          ]
+            .filter(Boolean)
+            .join(' ')
+        )
         .join(' · ')
     : ''
 

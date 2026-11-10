@@ -1,18 +1,18 @@
 import {
   byLastPlayed,
-  byScore,
+  byRank,
   byTitle,
   tagIsWithin,
   tagWithAncestors,
   type ListedItem
 } from '../../../../lib/log/present'
 
-export const SORTS = ['score', 'last-played', 'title'] as const
+export const SORTS = ['rank', 'last-played', 'title'] as const
 
 export type Sort = (typeof SORTS)[number]
 
 export const SORT_LABELS: Record<Sort, string> = {
-  score: 'score',
+  rank: 'rank',
   'last-played': 'last played',
   title: 'title'
 }
@@ -24,7 +24,7 @@ export type View = {
 }
 
 export const DEFAULT_VIEW: View = {
-  sort: 'score',
+  sort: 'rank',
   status: undefined,
   tag: undefined
 }
@@ -53,7 +53,7 @@ export const hrefFor = (path: string, view: View) => {
 }
 
 const COMPARATORS: Record<Sort, (a: ListedItem, b: ListedItem) => number> = {
-  score: byScore,
+  rank: byRank,
   'last-played': byLastPlayed,
   title: byTitle
 }

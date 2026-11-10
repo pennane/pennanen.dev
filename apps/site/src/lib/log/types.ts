@@ -8,15 +8,14 @@ export type Hint =
 
 export type Visibility = 'auto' | 'public' | 'private'
 
-export type ScoreDisplay = 'number' | 'word' | 'both'
+export type Division = { key: string; name: string }
 
-export type ScoreWord = { from: number; word: string }
+export type Divisions = Record<string, Division[]>
 
 export type KindSettings = {
   statusesShown: string[]
   axisLabels: Record<string, string>
-  scoreDisplay: ScoreDisplay
-  scoreWords: ScoreWord[]
+  divisions: Divisions
 }
 
 export type Presentation = {
@@ -30,6 +29,9 @@ export type Kind = {
   statusesToScore: string[]
   statusesShown: string[]
   axes: string[]
+  rankedAxis: string
+  axisLabels: Record<string, string>
+  divisions: Divisions
 }
 
 export type Entry = {
@@ -37,7 +39,8 @@ export type Entry = {
   visibility: Visibility
   blurb: string
   timeSpent?: TimeSpent
-  scores: Record<string, number>
+  scores: Record<string, string>
+  rank?: number
   tags: string[]
   updatedAt: string
 }
@@ -48,7 +51,8 @@ export type ListedEntry = {
   cover?: string
   status: string
   visibility: Visibility
-  scores: Record<string, number>
+  scores: Record<string, string>
+  rank?: number
   tags: string[]
 }
 
@@ -69,7 +73,6 @@ export type Moment = {
   at: string
   note: string
   visibility: MomentVisibility
-  scores: Record<string, number> | null
 }
 
 export type ItemDetail = ItemView & { moments?: Moment[] }
@@ -85,7 +88,7 @@ export type EntryChange = {
   visibility?: Visibility
   blurb?: string
   timeSpent?: TimeSpent | ''
-  scores?: Record<string, number | null>
+  scores?: Record<string, string | null>
   addTags?: string[]
   removeTags?: string[]
 }

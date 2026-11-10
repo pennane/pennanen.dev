@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { statusLabel } from '../../../lib/log/present'
 import type { IGDBResult, Kind } from '../../../lib/log/types'
-import { ENJOYMENT, ENJOYMENT_PRESETS, QueueHeader } from '../_queue/card'
+import { ENJOYMENT, enjoymentDivisions, QueueHeader } from '../_queue/card'
 import { IGDBSearch } from '../_queue/IGDBSearch'
 import styles from '../_queue/queue.module.css'
 import { addByTitle, addFromIGDB, changeEntry } from '../actions'
@@ -21,6 +21,7 @@ type Step =
   | { phase: 'failed'; title: string; error: string }
 
 export const Add = ({ kind }: { kind: Kind }) => {
+  const presets = enjoymentDivisions(kind)
   const [step, setStep] = useState<Step>({ phase: 'search' })
   const router = useRouter()
 
@@ -41,7 +42,7 @@ export const Add = ({ kind }: { kind: Kind }) => {
     add(result.name, () => addFromIGDB(result.igdbId))
   }
 
-  const save = async (itemId: number, title: string, status: string, enjoyment?: number) => {
+  const save = async (itemId: number, title: string, status: string, enjoyment?: string) => {
     const outcome = enjoyment === undefined ? statusLabel(status) : `${statusLabel(status)}, ${enjoyment}`
     try {
       await changeEntry(itemId, {
@@ -107,14 +108,14 @@ export const Add = ({ kind }: { kind: Kind }) => {
           <h2 className={styles.title}>{step.title}</h2>
           <div className={styles.choices}>
             <p className={styles.prompt}>{statusLabel(step.status)} — how much did you enjoy it?</p>
-            {ENJOYMENT_PRESETS.map((preset) => (
+            {presets.map((preset) => (
               <button
-                key={preset.label}
+                key={preset.name}
                 className={styles.choice}
-                data-preset={preset.label}
-                onClick={() => save(step.itemId, step.title, step.status, preset.value)}
+                data-preset={preset.name}
+                onClick={() => save(step.itemId, step.title, step.status, preset.key)}
               >
-                {preset.label}
+                {preset.name}
               </button>
             ))}
             <button className={styles.quiet} onClick={() => save(step.itemId, step.title, step.status)}>

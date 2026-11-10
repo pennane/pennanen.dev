@@ -1,38 +1,78 @@
 'use client'
 
-import { orderedScores, scoreWordFor } from '../../../../lib/log/present'
+import {
+  divisionName,
+  HEADLINE_AXIS,
+  isPublicKind,
+  kindPlural,
+  orderedScores,
+  type Rank
+} from '../../../../lib/log/present'
 import styles from './log.module.css'
 import { usePresentation } from './PresentationContext'
 
-const SCORE_SCALE = 100
+export type RankShown = 'place' | 'place-of-all'
 
-export const Score = ({ kind, axis, score }: { kind: string; axis: string; score: number }) => {
+const RankLabel = ({ kind, rank, shown }: { kind: string; rank: Rank; shown: RankShown }) => (
+  <span>
+    <span className={styles.number}>#{rank.place}</span>
+    {shown === 'place-of-all' && (
+      <span className={styles.scale}>
+        {' '}
+        of {rank.of}
+        {isPublicKind(kind) && ` ${kindPlural(kind)}`}
+      </span>
+    )}
+  </span>
+)
+
+export const Score = ({
+  kind,
+  axis,
+  division,
+  rank,
+  rankShown
+}: {
+  kind: string
+  axis: string
+  division: string
+  rank: Rank | undefined
+  rankShown: RankShown
+}) => {
   const settings = usePresentation().kinds[kind]
-  const label = settings?.axisLabels[axis] ?? axis
-  const display = settings?.scoreDisplay ?? 'number'
-  const word = settings && scoreWordFor(score, settings.scoreWords)
-  const number = (
-    <span>
-      <span className={styles.number}>{score}</span>
-      <span className={styles.scale}> / {SCORE_SCALE}</span>
-    </span>
-  )
   return (
     <span className={styles.score}>
-      <span className={styles.axis}>{label}</span>
-      {display !== 'number' && word && <span className={styles.word}>{word}</span>}
-      {(display !== 'word' || !word) && number}
+      <span className={styles.axis}>{settings?.axisLabels[axis] ?? axis}</span>
+      <span className={styles.word}>{divisionName(settings?.divisions, axis, division)}</span>
+      {axis === HEADLINE_AXIS && rank && <RankLabel kind={kind} rank={rank} shown={rankShown} />}
     </span>
   )
 }
 
-export const Scores = ({ kind, scores }: { kind: string; scores: Record<string, number> }) => {
+export const Scores = ({
+  kind,
+  scores,
+  rank,
+  rankShown
+}: {
+  kind: string
+  scores: Record<string, string>
+  rank: Rank | undefined
+  rankShown: RankShown
+}) => {
   const ordered = orderedScores(scores)
   if (ordered.length === 0) return null
   return (
     <span className={styles.scores}>
-      {ordered.map(({ axis, score }) => (
-        <Score key={axis} kind={kind} axis={axis} score={score} />
+      {ordered.map(({ axis, division }) => (
+        <Score
+          key={axis}
+          kind={kind}
+          axis={axis}
+          division={division}
+          rank={rank}
+          rankShown={rankShown}
+        />
       ))}
     </span>
   )

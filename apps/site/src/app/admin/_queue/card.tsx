@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect } from 'react'
-import type { Hint } from '../../../lib/log/types'
+import type { Hint, Kind } from '../../../lib/log/types'
 import styles from './queue.module.css'
 import type { SaveQueueState } from './useSaveQueue'
 
@@ -25,12 +25,7 @@ export const ANOTHER_SHOT = 'another-shot'
 export const IDLED = 'idled'
 const STEAM_TRADING_CARDS = 'Steam Trading Cards'
 
-export const ENJOYMENT_PRESETS = [
-  { label: 'loved', value: 92 },
-  { label: 'liked', value: 80 },
-  { label: 'meh', value: 60 },
-  { label: 'disliked', value: 35 }
-] as const
+export const enjoymentDivisions = (kind: Kind) => kind.divisions[ENJOYMENT] ?? []
 
 export const HINT_LABELS: Record<Hint, string> = {
   'likely-played': 'looks played',
@@ -66,6 +61,7 @@ const QUEUES = [
   { href: '/admin/add', label: 'add' },
   { href: '/admin/match', label: 'match' },
   { href: '/admin/entries', label: 'entries' },
+  { href: '/admin/order', label: 'order' },
   { href: '/admin/settings', label: 'settings' }
 ] as const
 

@@ -1,19 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { scoreWordFor, statusLabel } from '../../../lib/log/present'
-import type { KindSettings, ScoreDisplay, ScoreWord } from '../../../lib/log/types'
+import { statusLabel } from '../../../lib/log/present'
+import type { Division, KindSettings } from '../../../lib/log/types'
 import { saveKindSettings, saveTagTitles } from '../actions'
 import editor from '../entries/editor.module.css'
 import styles from './settings.module.css'
 
-const SCORE_DISPLAYS: { value: ScoreDisplay; label: string }[] = [
-  { value: 'number', label: 'number' },
-  { value: 'word', label: 'word' },
-  { value: 'both', label: 'both' }
-]
+const UNSAVED_KEY = ''
 
-const SAMPLE_SCORES = [20, 55, 75, 92]
+const moved = <T,>(list: T[], from: number, to: number) => {
+  if (to < 0 || to >= list.length) return list
+  const next = [...list]
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
+  return next
+}
 
 type Save =
   | { state: 'unchanged' }
@@ -62,11 +64,13 @@ export const KindSettingsForm = ({
   kind,
   statuses,
   axes,
+  rankedAxis,
   initial
 }: {
   kind: string
   statuses: string[]
   axes: string[]
+  rankedAxis: string
   initial: KindSettings
 }) => {
   const [settings, setSettings] = useState(initial)
@@ -84,8 +88,8 @@ export const KindSettingsForm = ({
         : [...settings.statusesShown, status]
     })
 
-  const changeWord = (index: number, word: Partial<ScoreWord>) =>
-    change({ scoreWords: settings.scoreWords.map((w, i) => (i === index ? { ...w, ...word } : w)) })
+  const changeDivisions = (axis: string, divisions: Division[]) =>
+    change({ divisions: { ...settings.divisions, [axis]: divisions } })
 
   return (
     <article className={styles.kind}>
@@ -121,67 +125,61 @@ export const KindSettingsForm = ({
         ))}
       </Section>
 
-      <Section label="scores show as">
-        <div className={editor.chips}>
-          {SCORE_DISPLAYS.map((d) => (
-            <button
-              key={d.value}
-              type="button"
-              className={editor.chip}
-              aria-pressed={settings.scoreDisplay === d.value}
-              onClick={() => change({ scoreDisplay: d.value })}
-            >
-              {d.label}
-            </button>
-          ))}
-        </div>
-      </Section>
-
-      <Section label="score words" hint="a score gets the word of the highest start at or below it">
-        {settings.scoreWords.map((w, index) => (
-          <div key={index} className={styles.row}>
-            <input
-              className={styles.from}
-              type="number"
-              min={0}
-              max={100}
-              value={w.from}
-              aria-label="from"
-              onChange={(event) => changeWord(index, { from: Number(event.target.value) })}
-            />
-            <input
-              className={styles.input}
-              value={w.word}
-              placeholder="word"
-              onChange={(event) => changeWord(index, { word: event.target.value })}
-            />
-            <button
-              type="button"
-              className={editor.quiet}
-              onClick={() => change({ scoreWords: settings.scoreWords.filter((_, i) => i !== index) })}
-            >
-              remove
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          className={editor.quiet}
-          onClick={() => change({ scoreWords: [...settings.scoreWords, { from: 0, word: '' }] })}
+      {axes.map((axis) => (
+        <Section
+          key={axis}
+          label={`${settings.axisLabels[axis] || axis} divisions`}
+          hint={axis === rankedAxis ? 'best first; entries rank inside each' : 'best first'}
         >
-          add a word
-        </button>
-        <p className={styles.hint}>
-          {SAMPLE_SCORES.map((score) => `${score} → ${scoreWordFor(score, sortedWords(settings.scoreWords)) ?? '–'}`).join(' · ')}
-        </p>
-      </Section>
+          <DivisionList
+            divisions={settings.divisions[axis] ?? []}
+            onChange={(divisions) => changeDivisions(axis, divisions)}
+          />
+        </Section>
+      ))}
 
       <SaveButton save={save} onSave={() => run(settings, setSettings)} />
     </article>
   )
 }
 
-const sortedWords = (words: ScoreWord[]) => words.toSorted((a, b) => a.from - b.from)
+const DivisionList = ({
+  divisions,
+  onChange
+}: {
+  divisions: Division[]
+  onChange: (divisions: Division[]) => void
+}) => {
+  const rename = (index: number, name: string) =>
+    onChange(divisions.map((d, i) => (i === index ? { ...d, name } : d)))
+  return (
+    <>
+      {divisions.map((d, index) => (
+        <div key={d.key || `new-${index}`} className={styles.row}>
+          <input
+            className={styles.input}
+            value={d.name}
+            placeholder="name"
+            onChange={(event) => rename(index, event.target.value)}
+          />
+          {d.key !== UNSAVED_KEY && d.key !== d.name && <span className={styles.rowKey}>{d.key}</span>}
+          <button type="button" className={editor.quiet} aria-label="move up" onClick={() => onChange(moved(divisions, index, index - 1))}>
+            ↑
+          </button>
+          <button type="button" className={editor.quiet} aria-label="move down" onClick={() => onChange(moved(divisions, index, index + 1))}>
+            ↓
+          </button>
+          <button type="button" className={editor.quiet} onClick={() => onChange(divisions.filter((_, i) => i !== index))}>
+            remove
+          </button>
+        </div>
+      ))}
+      <button type="button" className={editor.quiet} onClick={() => onChange([...divisions, { key: UNSAVED_KEY, name: '' }])}>
+        add a division
+      </button>
+    </>
+  )
+}
 
 export const TagTitlesForm = ({ tags, initial }: { tags: string[]; initial: Record<string, string> }) => {
   const [titles, setTitles] = useState(initial)

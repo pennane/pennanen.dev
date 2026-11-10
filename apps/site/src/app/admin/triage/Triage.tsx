@@ -7,7 +7,7 @@ import {
   ANOTHER_SHOT,
   CardFace,
   ENJOYMENT,
-  ENJOYMENT_PRESETS,
+  enjoymentDivisions,
   formatPlaytime,
   HINT_LABELS,
   IDLED,
@@ -55,6 +55,7 @@ export const Triage = ({
   cards: GameCard[]
   steamSync?: SteamSyncReport
 }) => {
+  const presets = useMemo(() => enjoymentDivisions(kind), [kind])
   const [queue, setQueue] = useState(cards)
   const [history, setHistory] = useState<Triaged[]>([])
   const [filter, setFilter] = useState<Filter>('everything')
@@ -104,7 +105,7 @@ export const Triage = ({
   )
 
   const commit = useCallback(
-    (status: string, enjoyment?: number) => {
+    (status: string, enjoyment?: string) => {
       if (!current) return
       settle([current], `${current.title} → ${status}`, () =>
         changeEntry(current.id, {
@@ -183,14 +184,14 @@ export const Triage = ({
     if (step.phase === 'status') {
       statuses.forEach((status, i) => (handlers[String(i + 1)] = () => choose(status)))
     } else {
-      ENJOYMENT_PRESETS.forEach(
-        (preset, i) => (handlers[String(i + 1)] = () => commit(step.status, preset.value))
+      presets.forEach(
+        (preset, i) => (handlers[String(i + 1)] = () => commit(step.status, preset.key))
       )
       handlers['0'] = () => commit(step.status)
       handlers.Escape = () => setStep({ phase: 'status' })
     }
     return handlers
-  }, [step, statuses, choose, commit, skip, undo, toggleTag])
+  }, [presets, step, statuses, choose, commit, skip, undo, toggleTag])
   useKeys(keys)
 
   const bulkAction = filter !== 'everything' && filter !== 'no-hint' && BULK_FOR_HINT[filter]
@@ -274,14 +275,14 @@ export const Triage = ({
               <p className={styles.prompt}>
                 {step.status} — how much did you enjoy it?
               </p>
-              {ENJOYMENT_PRESETS.map((preset, i) => (
+              {presets.map((preset, i) => (
                 <button
-                  key={preset.label}
+                  key={preset.name}
                   className={styles.choice}
-                  data-preset={preset.label}
-                  onClick={() => commit(step.status, preset.value)}
+                  data-preset={preset.name}
+                  onClick={() => commit(step.status, preset.key)}
                 >
-                  <kbd>{i + 1}</kbd> {preset.label}
+                  <kbd>{i + 1}</kbd> {preset.name}
                 </button>
               ))}
               <button className={styles.quiet} onClick={() => commit(step.status)}>

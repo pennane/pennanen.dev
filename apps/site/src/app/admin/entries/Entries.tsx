@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import {
+  divisionName,
   HEADLINE_AXIS,
   presenceOf,
   statusLabel,
@@ -24,6 +25,8 @@ type Panel =
   | { state: 'failed'; id: number }
 
 const CLOSED: Panel = { state: 'closed' }
+
+const DISMISSED = 'dismissed'
 
 type Filter = {
   status: string | undefined
@@ -50,7 +53,7 @@ const tagsByUse = (entries: ListedEntry[]) => {
 
 const openIdOf = (panel: Panel) => (panel.state === 'closed' ? undefined : String(panel.id))
 
-const withScores = (scores: Record<string, number>, changed: Record<string, number | null>) => {
+const withScores = (scores: Record<string, string>, changed: Record<string, string | null>) => {
   const next = { ...scores }
   for (const [axis, value] of Object.entries(changed)) {
     if (value === null) delete next[axis]
@@ -64,6 +67,7 @@ const applyChange = (entry: ListedEntry, change: EntryChange): ListedEntry => ({
   status: change.status ?? entry.status,
   visibility: change.visibility ?? entry.visibility,
   scores: change.scores ? withScores(entry.scores, change.scores) : entry.scores,
+  rank: change.scores || change.status === DISMISSED ? undefined : entry.rank,
   tags: [
     ...entry.tags.filter((t) => !change.removeTags?.includes(t)),
     ...(change.addTags ?? []).filter((t) => !entry.tags.includes(t))
@@ -221,7 +225,9 @@ export const Entries = ({
                 </Link>
                 <span className={styles.meta}>
                   {statusLabel(entry.status)}
-                  {entry.scores[HEADLINE_AXIS] !== undefined && ` · ${entry.scores[HEADLINE_AXIS]}`}
+                  {entry.scores[HEADLINE_AXIS] !== undefined &&
+                    ` · ${divisionName(kind.divisions, HEADLINE_AXIS, entry.scores[HEADLINE_AXIS])}`}
+                  {entry.rank !== undefined && ` #${entry.rank}`}
                   {entry.tags.length > 0 && ` · ${entry.tags.map(tagLabel).join(', ')}`}
                 </span>
               </div>

@@ -4,7 +4,7 @@ import { Gap, Stack } from '../../../components/Stack'
 import { WrapInBox } from '../../../components/WrapInBox'
 import { logPublic } from '../../../lib/log/public-api'
 import {
-  byScore,
+  byRank,
   kindPlural,
   PUBLIC_KINDS,
   toListed
@@ -23,7 +23,7 @@ export default async function LogPage() {
   const sections = await Promise.all(
     PUBLIC_KINDS.map(async (kind) => ({
       kind,
-      items: (await logPublic.items(kind)).map(toListed).sort(byScore)
+      items: (await logPublic.items(kind)).map(toListed).sort(byRank)
     }))
   )
   const filled = sections.filter((section) => section.items.length > 0)

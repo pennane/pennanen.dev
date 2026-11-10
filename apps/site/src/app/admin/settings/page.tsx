@@ -11,10 +11,10 @@ const NEVER_SHOWABLE = ['untriaged', 'dismissed']
 export default async function SettingsPage() {
   await requireAdmin()
   const [kinds, presentation] = await Promise.all([logAdmin.kinds(), logAdmin.settings()])
-  const itemsByKind = await Promise.all(kinds.map((k) => logAdmin.items({ kind: k.name })))
+  const entriesByKind = await Promise.all(kinds.map((k) => logAdmin.entries(k.name)))
   const tagsInUse = [
     ...new Set([
-      ...itemsByKind.flat().flatMap((item) => item.entry?.tags ?? []),
+      ...entriesByKind.flat().flatMap((entry) => entry.tags),
       ...Object.keys(presentation.tagTitles)
     ])
   ].sort()
@@ -28,6 +28,7 @@ export default async function SettingsPage() {
           kind={kind.name}
           statuses={kind.statuses.filter((s) => !NEVER_SHOWABLE.includes(s))}
           axes={kind.axes}
+          rankedAxis={kind.rankedAxis}
           initial={presentation.kinds[kind.name]}
         />
       ))}

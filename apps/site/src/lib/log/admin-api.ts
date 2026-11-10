@@ -56,6 +56,8 @@ export const logAdmin = {
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
   entries: (kind: string) =>
     call<ListedEntry[]>(`/admin/entries?${new URLSearchParams({ kind })}`),
+  place: (itemId: number, division: string, index: number) =>
+    call<void>(`/admin/items/${itemId}/place`, send('PUT', { division, index })),
   createItem: (kind: string, title: string) =>
     call<ItemView>('/admin/items', send('POST', { kind, title })),
   searchIGDB: (query: string) =>

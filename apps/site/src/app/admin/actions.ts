@@ -25,6 +25,11 @@ export async function openEntry(itemId: number): Promise<EntrySubject> {
   }
 }
 
+export async function placeEntry(itemId: number, division: string, index: number) {
+  await requireAdmin()
+  await logAdmin.place(itemId, division, index)
+}
+
 export async function changeEntries(itemIds: number[], change: EntryChange) {
   await requireAdmin()
   await logAdmin.changeEntries(itemIds, change)

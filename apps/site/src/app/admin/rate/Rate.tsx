@@ -1,12 +1,13 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import type { Kind } from '../../../lib/log/types'
 import { changeEntry } from '../actions'
 import {
   ANOTHER_SHOT,
   CardFace,
   ENJOYMENT,
-  ENJOYMENT_PRESETS,
+  enjoymentDivisions,
   QueueHeader,
   SaveStatus,
   TagToggle,
@@ -20,7 +21,8 @@ type Rated = { card: GameCard; blurb: string; addedTags: string[] }
 
 const RATE_TAGS = [{ tag: ANOTHER_SHOT, shortcut: 'a', label: 'worth another shot' }] as const
 
-export const Rate = ({ cards }: { cards: GameCard[] }) => {
+export const Rate = ({ kind, cards }: { kind: Kind; cards: GameCard[] }) => {
+  const presets = useMemo(() => enjoymentDivisions(kind), [kind])
   const [queue, setQueue] = useState(cards)
   const [history, setHistory] = useState<Rated[]>([])
   const [blurb, setBlurb] = useState('')
@@ -34,7 +36,7 @@ export const Rate = ({ cards }: { cards: GameCard[] }) => {
   }
 
   const rate = useCallback(
-    (enjoyment: number) => {
+    (enjoyment: string) => {
       if (!current) return
       const written = blurb.trim()
       const addedTags = tagsToAdd.filter((t) => !current.tags.includes(t))
@@ -81,10 +83,10 @@ export const Rate = ({ cards }: { cards: GameCard[] }) => {
 
   const keys = useMemo(() => {
     const handlers: Record<string, () => void> = { s: skip, z: undo }
-    ENJOYMENT_PRESETS.forEach((preset, i) => (handlers[String(i + 1)] = () => rate(preset.value)))
+    presets.forEach((preset, i) => (handlers[String(i + 1)] = () => rate(preset.key)))
     RATE_TAGS.forEach((t) => (handlers[t.shortcut] = () => toggleTag(t.tag)))
     return handlers
-  }, [skip, undo, rate, toggleTag])
+  }, [presets, skip, undo, rate, toggleTag])
   useKeys(keys)
 
   return (
@@ -103,14 +105,14 @@ export const Rate = ({ cards }: { cards: GameCard[] }) => {
           />
           <div className={styles.choices}>
             <p className={styles.prompt}>how much did you enjoy it?</p>
-            {ENJOYMENT_PRESETS.map((preset, i) => (
+            {presets.map((preset, i) => (
               <button
-                key={preset.label}
+                key={preset.name}
                 className={styles.choice}
-                data-preset={preset.label}
-                onClick={() => rate(preset.value)}
+                data-preset={preset.name}
+                onClick={() => rate(preset.key)}
               >
-                <kbd>{i + 1}</kbd> {preset.label}
+                <kbd>{i + 1}</kbd> {preset.name}
               </button>
             ))}
           </div>

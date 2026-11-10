@@ -93,29 +93,6 @@
   color: var(--background);
 }
 
-.score {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.score input {
-  flex: 1;
-  accent-color: var(--accent);
-  height: 2rem;
-}
-
-.score input[data-empty='true'] {
-  opacity: 0.35;
-}
-
-.scoreValue {
-  min-width: 2.5ch;
-  text-align: right;
-  font-size: 1.25rem;
-  font-variant-numeric: tabular-nums;
-}
-
 .text,
 .tagInput,
 .date {

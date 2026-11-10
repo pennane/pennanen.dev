@@ -1,4 +1,7 @@
 import type { PublicItem } from './public-api'
+import type { Divisions } from './types'
+
+export type Rank = { place: number; of: number }
 
 const KIND_PLURALS = { game: 'games', thing: 'things' } as const
 
@@ -94,12 +97,15 @@ const axisRank = (axis: string) => {
   return rank === -1 ? AXES_IN_ORDER.length : rank
 }
 
-export const orderedScores = (scores: Record<string, number>) =>
+export const orderedScores = (scores: Record<string, string>) =>
   Object.entries(scores)
-    .map(([axis, score]) => ({ axis, score }))
+    .map(([axis, division]) => ({ axis, division }))
     .sort((a, b) => axisRank(a.axis) - axisRank(b.axis) || a.axis.localeCompare(b.axis))
 
 export const HEADLINE_AXIS = 'enjoyment'
+
+export const divisionName = (divisions: Divisions | undefined, axis: string, key: string) =>
+  divisions?.[axis]?.find((d) => d.key === key)?.name ?? key
 
 const monthYear = new Intl.DateTimeFormat('en-GB', {
   year: 'numeric',
@@ -144,7 +150,8 @@ export type ListedItem = {
   title: string
   picture: string | undefined
   status: string
-  scores: Record<string, number>
+  scores: Record<string, string>
+  rank: Rank | undefined
   tags: string[]
   lastPlayed: string | undefined
 }
@@ -156,14 +163,10 @@ export const toListed = (item: PublicItem): ListedItem => ({
   picture: pictureOf(item),
   status: item.status,
   scores: item.scores,
+  rank: item.rank,
   tags: item.tags,
   lastPlayed: textField(item.fields, 'last_played')
 })
-
-const UNSCORED = -1
-
-const headlineScore = (item: ListedItem) =>
-  item.scores[HEADLINE_AXIS] ?? UNSCORED
 
 export const byTitle = (a: ListedItem, b: ListedItem) =>
   a.title.localeCompare(b.title)
@@ -173,11 +176,10 @@ const NEVER_PLAYED = ''
 export const byLastPlayed = (a: ListedItem, b: ListedItem) =>
   (b.lastPlayed ?? NEVER_PLAYED).localeCompare(a.lastPlayed ?? NEVER_PLAYED) || byTitle(a, b)
 
-export const byScore = (a: ListedItem, b: ListedItem) =>
-  headlineScore(b) - headlineScore(a) || byTitle(a, b)
+const placeOf = (item: ListedItem) => item.rank?.place ?? Number.MAX_SAFE_INTEGER
 
-export const scoreWordFor = (score: number, words: { from: number; word: string }[]) =>
-  words.findLast((w) => w.from <= score)?.word
+export const byRank = (a: ListedItem, b: ListedItem) =>
+  placeOf(a) - placeOf(b) || byTitle(a, b)
 
 export type Presence = 'shown' | 'hidden'
 

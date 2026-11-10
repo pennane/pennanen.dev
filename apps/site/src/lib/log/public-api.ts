@@ -5,14 +5,18 @@ import { isTimeSpent } from './present'
 export const LOG_CACHE_TAG = 'log'
 
 const scoresSchema = z
-  .record(z.number())
+  .record(z.string())
   .nullish()
   .transform((scores) => scores ?? {})
+
+const rankSchema = z
+  .object({ place: z.number(), of: z.number() })
+  .nullish()
+  .transform((rank) => rank ?? undefined)
 
 const momentSchema = z.object({
   at: z.string(),
   note: z.string(),
-  scores: scoresSchema,
   refs: z
     .array(z.object({ kind: z.string(), slug: z.string(), title: z.string() }))
     .nullish()
@@ -28,6 +32,7 @@ const publicItemSchema = z.object({
     .transform((fields) => fields ?? {}),
   status: z.string(),
   scores: scoresSchema,
+  rank: rankSchema,
   tags: z
     .array(z.string())
     .nullish()
@@ -61,15 +66,12 @@ const fetchPublic = (path: string) =>
 const failure = (response: Response) =>
   new Error(`log api ${response.url} answered ${response.status}`)
 
-const scoreWordSchema = z.object({ from: z.number(), word: z.string() })
-
 const presentationSchema = z.object({
   kinds: z.record(
     z.object({
       statusesShown: z.array(z.string()),
       axisLabels: z.record(z.string()),
-      scoreDisplay: z.enum(['number', 'word', 'both']),
-      scoreWords: z.array(scoreWordSchema)
+      divisions: z.record(z.array(z.object({ key: z.string(), name: z.string() })))
     })
   ),
   tagTitles: z.record(z.string())

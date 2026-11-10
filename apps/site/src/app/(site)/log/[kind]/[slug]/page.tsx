@@ -25,7 +25,7 @@ import {
   type PublicMoment
 } from '../../../../../lib/log/public-api'
 import { baseUrl } from '../../../../sitemap'
-import { Score, Scores } from '../../components/Scores'
+import { Score } from '../../components/Scores'
 import { Tags } from '../../components/Tags'
 import logStyles from '../../components/log.module.css'
 import styles from './item.module.css'
@@ -83,8 +83,15 @@ const Facts = ({ item }: { item: PublicItem }) => {
   return (
     <MetaLine>
       <span>{statusLabel(item.status)}</span>
-      {orderedScores(item.scores).map(({ axis, score }) => (
-        <Score key={axis} kind={item.kind} axis={axis} score={score} />
+      {orderedScores(item.scores).map(({ axis, division }) => (
+        <Score
+          key={axis}
+          kind={item.kind}
+          axis={axis}
+          division={division}
+          rank={item.rank}
+          rankShown="place-of-all"
+        />
       ))}
       {released && <span>{formatPartialDate(released)}</span>}
       {item.timeSpent && <span>{TIME_SPENT_LABELS[item.timeSpent]}</span>}
@@ -96,7 +103,7 @@ const Facts = ({ item }: { item: PublicItem }) => {
 
 const byNewest = (a: PublicMoment, b: PublicMoment) => b.at.localeCompare(a.at)
 
-const Moments = ({ kind, moments }: { kind: string; moments: PublicMoment[] }) => (
+const Moments = ({ moments }: { moments: PublicMoment[] }) => (
   <section>
     <Stack gap={Gap.large} alignItems="stretch">
       <header>
@@ -110,7 +117,6 @@ const Moments = ({ kind, moments }: { kind: string; moments: PublicMoment[] }) =
             <time dateTime={moment.at}>{formatPartialDate(moment.at)}</time>
             <div className={styles.momentBody}>
               {moment.note && <p>{moment.note}</p>}
-              <Scores kind={kind} scores={moment.scores} />
               {moment.refs.length > 0 && (
                 <p className={styles.refs}>
                   {moment.refs.map((ref) => (
@@ -173,7 +179,7 @@ export default async function ItemPage({ params }: { params: Params }) {
           ))}
         </dl>
       )}
-      {item.moments.length > 0 && <Moments kind={item.kind} moments={item.moments} />}
+      {item.moments.length > 0 && <Moments moments={item.moments} />}
     </article>
   )
 }

@@ -9,6 +9,11 @@ const RATED_KIND = 'game'
 
 export default async function RatePage() {
   await requireAdmin()
-  const items = await logAdmin.items({ kind: RATED_KIND, needs: 'score' })
-  return <Rate cards={items.map(toGameCard).sort(byPlaytime)} />
+  const [kinds, items] = await Promise.all([
+    logAdmin.kinds(),
+    logAdmin.items({ kind: RATED_KIND, needs: 'score' })
+  ])
+  const kind = kinds.find((k) => k.name === RATED_KIND)
+  if (!kind) throw new Error(`kind ${RATED_KIND} is missing from the log`)
+  return <Rate kind={kind} cards={items.map(toGameCard).sort(byPlaytime)} />
 }

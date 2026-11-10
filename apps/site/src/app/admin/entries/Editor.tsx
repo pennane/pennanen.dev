@@ -11,6 +11,7 @@ import {
   type TimeSpent
 } from '../../../lib/log/present'
 import type {
+  Division,
   Entry,
   EntryChange,
   Kind,
@@ -124,12 +125,14 @@ export const Editor = ({
       </Section>
 
       {kind.axes.map((axis) => (
-        <ScoreSlider
+        <DivisionPicker
           key={axis}
-          axis={axis}
+          label={kind.axisLabels[axis] ?? axis}
+          divisions={kind.divisions[axis] ?? []}
           initial={entry.scores[axis]}
-          onSave={(value) =>
-            save(`${axis} → ${value ?? 'none'}`, { scores: { [axis]: value ?? null } })
+          rank={axis === kind.rankedAxis ? entry.rank : undefined}
+          onSave={(division) =>
+            save(`${axis} → ${division ?? 'none'}`, { scores: { [axis]: division ?? null } })
           }
         />
       ))}
@@ -218,52 +221,37 @@ const Chips = <T extends string>({
   </div>
 )
 
-const ScoreSlider = ({
-  axis,
+const NO_DIVISION = ''
+
+const DivisionPicker = ({
+  label,
+  divisions,
   initial,
+  rank,
   onSave
 }: {
-  axis: string
-  initial: number | undefined
-  onSave: (value: number | undefined) => void
+  label: string
+  divisions: Division[]
+  initial: string | undefined
+  rank: number | undefined
+  onSave: (division: string | undefined) => void
 }) => {
-  const [value, setValue] = useState(initial)
-  const [saved, setSaved] = useState(initial)
-
-  const commit = (next: number | undefined) => {
-    if (next === saved) return
-    setSaved(next)
-    onSave(next)
-  }
-
+  const [chosen, setChosen] = useState(initial ?? NO_DIVISION)
+  const [shownRank, setShownRank] = useState(rank)
   return (
-    <Section label={axis}>
-      <div className={styles.score}>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={value ?? 50}
-          data-empty={value === undefined}
-          aria-label={axis}
-          onChange={(event) => setValue(Number(event.target.value))}
-          onPointerUp={() => commit(value)}
-          onKeyUp={() => commit(value)}
-          onBlur={() => commit(value)}
-        />
-        <span className={styles.scoreValue}>{value ?? NO_SCORE}</span>
-        <button
-          type="button"
-          className={styles.quiet}
-          disabled={value === undefined}
-          onClick={() => {
-            setValue(undefined)
-            commit(undefined)
-          }}
-        >
-          clear
-        </button>
-      </div>
+    <Section label={shownRank === undefined ? label : `${label} · #${shownRank}`}>
+      <Chips
+        options={[
+          ...divisions.map((d) => ({ value: d.key, label: d.name })),
+          { value: NO_DIVISION, label: NO_SCORE }
+        ]}
+        chosen={chosen}
+        onChoose={(next) => {
+          setChosen(next)
+          setShownRank(undefined)
+          onSave(next === NO_DIVISION ? undefined : next)
+        }}
+      />
     </Section>
   )
 }
