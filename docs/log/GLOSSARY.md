@@ -48,10 +48,9 @@ nothing is owed.
 many as it needs, set in admin. There is no number behind a division.
 
 **Rank** — an entry's place in its kind's enjoyment order, counted from the
-top across all divisions: *loved · #14 of 214 games*. Strict: no two entries
-share a rank. Only enjoyment has ranks; other axes have divisions alone. Games
-rank against games, never against wine. Public pages count only entries that
-show publicly.
+top across all divisions. Strict: no two entries share a rank. Only enjoyment
+has ranks; other axes have divisions alone. Games rank against games, never
+against wine. Public pages never show the number; they order by it.
 
 **Tag** — a free-form label ap puts on an entry: `favorite`, `comfort`,
 `formative`. Nest with a slash for precision: `favorite/all-time`. Tags are

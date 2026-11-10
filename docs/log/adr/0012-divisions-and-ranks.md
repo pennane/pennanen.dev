@@ -19,8 +19,9 @@ of games. Quality is an annotation; enjoyment is what orders things.
 - Rating picks a division, then asks *better or worse than X?* to find the
   rank, and can stop early. An entry given a division without a rank joins
   the bottom of it, in an order the kind chooses (playtime for games).
-- Public pages show the division and, for enjoyment, the rank among public
-  entries: *loved · #14 of 214 games*.
+- Public pages show the division, never a rank number. Lists order by rank
+  ("most prestige first"), and an item links to the public entries just
+  above and below it.
 - Score words and the number/word/both display setting are gone; divisions
   replace them.
 - Rankings (ADR 8) are removed, unbuilt in admin and on public pages.
