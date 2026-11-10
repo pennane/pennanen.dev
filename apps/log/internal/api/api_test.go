@@ -263,3 +263,22 @@ func TestNeedsScoreListsPlayedGamesWithoutScores(t *testing.T) {
 		t.Errorf("needs score: %s", body)
 	}
 }
+
+func TestTimeSpentIsApsWord(t *testing.T) {
+	srv := newServer(t)
+	id := createGame(t, srv, "Hades", `{"status":"finished","timeSpent":"too-much"}`)
+	if _, body := call(t, srv, "GET", "/public/items/game/hades", "", ""); !strings.Contains(body, `"timeSpent":"too-much"`) {
+		t.Errorf("public: %s", body)
+	}
+	if status, _ := call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token, `{"timeSpent":"forever"}`); status != http.StatusUnprocessableEntity {
+		t.Errorf("unknown choice: %d", status)
+	}
+	call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token, `{"blurb":"x"}`)
+	if _, body := call(t, srv, "GET", "/public/items/game/hades", "", ""); !strings.Contains(body, `"timeSpent":"too-much"`) {
+		t.Errorf("kept when not mentioned: %s", body)
+	}
+	call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token, `{"timeSpent":""}`)
+	if _, body := call(t, srv, "GET", "/public/items/game/hades", "", ""); strings.Contains(body, "timeSpent") {
+		t.Errorf("unsaid: %s", body)
+	}
+}

@@ -3,7 +3,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
-import { statusLabel, tagLabel } from '../../../../lib/log/present'
+import {
+  statusLabel,
+  tagLabel,
+  TIME_SPENT_CHOICES,
+  TIME_SPENT_LABELS,
+  type TimeSpent
+} from '../../../../lib/log/present'
 import type {
   Entry,
   EntryChange,
@@ -23,6 +29,7 @@ const MOMENT_VISIBILITIES: { value: MomentVisibility; label: string }[] = [
   { value: 'private', label: 'private' }
 ]
 const UNTRIAGED = 'untriaged'
+const UNSAID = ''
 const NO_SCORE = '–'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -47,6 +54,7 @@ export const Editor = ({
   const [status, setStatus] = useState(entry.status)
   const [visibility, setVisibility] = useState(entry.visibility)
   const [tags, setTags] = useState(entry.tags)
+  const [timeSpent, setTimeSpent] = useState<TimeSpent | typeof UNSAID>(entry.timeSpent ?? UNSAID)
   const [moments, setMoments] = useState(initialMoments)
   const saves = useSaveQueue()
 
@@ -114,6 +122,20 @@ export const Editor = ({
           }
         />
       ))}
+
+      <Section label="time spent">
+        <Chips
+          options={[
+            ...TIME_SPENT_CHOICES.map((t) => ({ value: t, label: TIME_SPENT_LABELS[t] })),
+            { value: UNSAID, label: 'not saying' }
+          ]}
+          chosen={timeSpent}
+          onChoose={(next) => {
+            setTimeSpent(next)
+            save(`time → ${next || 'unsaid'}`, { timeSpent: next })
+          }}
+        />
+      </Section>
 
       <TextField
         label="blurb"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
@@ -31,6 +32,9 @@ func (s *Store) ChangeEntries(ctx context.Context, itemIDs []int64, change Entry
 func normalizedChange(change EntryChange) (EntryChange, error) {
 	if change.Visibility != nil && *change.Visibility != Private && *change.Visibility != Public {
 		return change, fmt.Errorf("%w: visibility must be private or public", ErrInvalid)
+	}
+	if change.TimeSpent != nil && *change.TimeSpent != TimeSpentUnsaid && !slices.Contains(TimeSpentChoices, *change.TimeSpent) {
+		return change, fmt.Errorf("%w: time spent must be one of %v, or empty to unsay it", ErrInvalid, TimeSpentChoices)
 	}
 	for axis, value := range change.Scores {
 		if value != nil && (*value < 0 || *value > 100) {
@@ -92,9 +96,10 @@ func changeEntry(ctx context.Context, tx *sql.Tx, itemID int64, change EntryChan
 			visibility = coalesce(?, visibility),
 			notes = coalesce(?, notes),
 			blurb = coalesce(?, blurb),
+			time_spent = CASE WHEN ? IS NULL THEN time_spent ELSE nullif(?, '') END,
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 		WHERE item_id = ?`,
-		change.Status, change.Visibility, change.Notes, change.Blurb, itemID); err != nil {
+		change.Status, change.Visibility, change.Notes, change.Blurb, change.TimeSpent, change.TimeSpent, itemID); err != nil {
 		return err
 	}
 	for axis, value := range change.Scores {

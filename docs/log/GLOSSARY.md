@@ -58,6 +58,10 @@ its own order).
 **Placement** — one item's spot in a ranking, with an optional one-line note
 about why it sits there.
 
+**Time spent** — ap's word on how long it took: `not-enough`, `a-bit`,
+`just-right`, `a-lot`, `too-much`. A judgment, not a measurement: Steam's
+playtime stays private, and public pages show only this, when ap says it.
+
 **Notes** — private markdown. Only ap sees it.
 
 **Blurb** — public text, written for others, shown on the item's page.

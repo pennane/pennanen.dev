@@ -22,6 +22,19 @@ const (
 
 const NewEntryVisibility = Public
 
+type TimeSpent string
+
+const (
+	TimeSpentUnsaid TimeSpent = ""
+	NotEnough       TimeSpent = "not-enough"
+	ABit            TimeSpent = "a-bit"
+	JustRight       TimeSpent = "just-right"
+	ALot            TimeSpent = "a-lot"
+	TooMuch         TimeSpent = "too-much"
+)
+
+var TimeSpentChoices = []TimeSpent{NotEnough, ABit, JustRight, ALot, TooMuch}
+
 type MomentVisibility string
 
 const (
@@ -48,6 +61,7 @@ type Entry struct {
 	Visibility Visibility     `json:"visibility"`
 	Notes      string         `json:"notes"`
 	Blurb      string         `json:"blurb"`
+	TimeSpent  TimeSpent      `json:"timeSpent,omitempty"`
 	Scores     map[string]int `json:"scores"`
 	Tags       []string       `json:"tags"`
 	UpdatedAt  string         `json:"updatedAt"`
@@ -84,6 +98,7 @@ type EntryChange struct {
 	Visibility *Visibility     `json:"visibility"`
 	Notes      *string         `json:"notes"`
 	Blurb      *string         `json:"blurb"`
+	TimeSpent  *TimeSpent      `json:"timeSpent"`
 	Scores     map[string]*int `json:"scores"`
 	AddTags    []string        `json:"addTags"`
 	RemoveTags []string        `json:"removeTags"`

@@ -15,6 +15,7 @@ import {
   pictureOf,
   statusLabel,
   textField,
+  TIME_SPENT_LABELS,
   titleOf
 } from '../../../../../lib/log/present'
 import {
@@ -81,6 +82,7 @@ const Facts = ({ item }: { item: PublicItem }) => {
     <MetaLine>
       <span>{statusLabel(item.status)}</span>
       {released && <span>{formatPartialDate(released)}</span>}
+      {item.timeSpent && <span>{TIME_SPENT_LABELS[item.timeSpent]}</span>}
       {link && <MetaLink href={link} icon={Link2} />}
     </MetaLine>
   )

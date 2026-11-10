@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { requiredEnv } from './env'
+import { isTimeSpent } from './present'
 
 export const LOG_CACHE_TAG = 'log'
 
@@ -32,6 +33,10 @@ const publicItemSchema = z.object({
     .nullish()
     .transform((tags) => tags ?? []),
   blurb: z.string(),
+  timeSpent: z
+    .string()
+    .nullish()
+    .transform((value) => (isTimeSpent(value) ? value : undefined)),
   updatedAt: z.string(),
   moments: z
     .array(momentSchema)

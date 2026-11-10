@@ -1,3 +1,5 @@
+import type { TimeSpent } from './present'
+
 export type Hint =
   | 'likely-idled'
   | 'likely-played'
@@ -19,6 +21,7 @@ export type Entry = {
   visibility: Visibility
   notes: string
   blurb: string
+  timeSpent?: TimeSpent
   scores: Record<string, number>
   tags: string[]
   updatedAt: string
@@ -57,6 +60,7 @@ export type EntryChange = {
   visibility?: Visibility
   notes?: string
   blurb?: string
+  timeSpent?: TimeSpent | ''
   scores?: Record<string, number | null>
   addTags?: string[]
   removeTags?: string[]

@@ -9,15 +9,16 @@ import (
 )
 
 type PublicItem struct {
-	Kind      string         `json:"kind"`
-	Slug      string         `json:"slug"`
-	Fields    map[string]any `json:"fields"`
-	Status    string         `json:"status"`
-	Scores    map[string]int `json:"scores"`
-	Tags      []string       `json:"tags"`
-	Blurb     string         `json:"blurb"`
-	UpdatedAt string         `json:"updatedAt"`
-	Moments   []PublicMoment `json:"moments,omitempty"`
+	Kind      string          `json:"kind"`
+	Slug      string          `json:"slug"`
+	Fields    map[string]any  `json:"fields"`
+	Status    string          `json:"status"`
+	Scores    map[string]int  `json:"scores"`
+	Tags      []string        `json:"tags"`
+	Blurb     string          `json:"blurb"`
+	TimeSpent store.TimeSpent `json:"timeSpent,omitempty"`
+	UpdatedAt string          `json:"updatedAt"`
+	Moments   []PublicMoment  `json:"moments,omitempty"`
 }
 
 type PublicMoment struct {
@@ -128,6 +129,7 @@ func publicItem(v store.ItemView) PublicItem {
 		Scores:    v.Entry.Scores,
 		Tags:      v.Entry.Tags,
 		Blurb:     v.Entry.Blurb,
+		TimeSpent: v.Entry.TimeSpent,
 		UpdatedAt: v.Entry.UpdatedAt,
 	}
 }

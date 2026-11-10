@@ -123,12 +123,20 @@ export const formatPartialDate = (text: string) => {
   return dayMonthYear.format(Date.UTC(year, month - 1, day))
 }
 
-const MINUTES_IN_HOUR = 60
+export const TIME_SPENT_LABELS = {
+  'not-enough': 'not enough time',
+  'a-bit': 'a bit of time',
+  'just-right': 'just the right amount of time',
+  'a-lot': 'a lot of time',
+  'too-much': 'too much time'
+} as const
 
-export const formatPlaytime = (minutes: number) =>
-  minutes < MINUTES_IN_HOUR
-    ? `${minutes} min`
-    : `${Math.round(minutes / MINUTES_IN_HOUR)} h`
+export type TimeSpent = keyof typeof TIME_SPENT_LABELS
+
+export const TIME_SPENT_CHOICES = Object.keys(TIME_SPENT_LABELS) as TimeSpent[]
+
+export const isTimeSpent = (value: unknown): value is TimeSpent =>
+  typeof value === 'string' && Object.hasOwn(TIME_SPENT_LABELS, value)
 
 export type ListedItem = {
   kind: string
