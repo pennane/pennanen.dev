@@ -15,6 +15,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/api"
 	"github.com/pennane/pennanen.dev/apps/log/internal/backup"
 	"github.com/pennane/pennanen.dev/apps/log/internal/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/jobs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/revalidate"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
@@ -63,6 +64,19 @@ func run() error {
 		}})
 	} else {
 		slog.Warn("STEAM_API_KEY or STEAM_ID missing; steam sync disabled")
+	}
+
+	if id, secret := os.Getenv("IGDB_CLIENT_ID"), os.Getenv("IGDB_CLIENT_SECRET"); id != "" && secret != "" {
+		server.IGDB = igdb.NewClient(id, secret)
+		server.IGDBMatch = igdb.NewMatcher(st, server.IGDB, notifier.Changed)
+		daily = append(daily, jobs.Job{Name: "igdb-match", Run: func(ctx context.Context) error {
+			if report := server.IGDBMatch.Run(ctx); report.State == igdb.MatchFailed {
+				return errors.New(report.Problems[len(report.Problems)-1])
+			}
+			return nil
+		}})
+	} else {
+		slog.Warn("IGDB_CLIENT_ID or IGDB_CLIENT_SECRET missing; igdb disabled")
 	}
 
 	if target, configured := r2FromEnv(); configured {

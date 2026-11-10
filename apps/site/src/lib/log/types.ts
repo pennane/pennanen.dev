@@ -62,6 +62,24 @@ export type EntryChange = {
   removeTags?: string[]
 }
 
+export type IGDBResult = {
+  igdbId: number
+  name: string
+  year?: string
+  platforms: string[]
+  poster?: string
+  itemId?: number
+}
+
+export type IGDBMatchReport = {
+  state: 'never-matched' | 'matching' | 'matched' | 'failed'
+  startedAt?: string
+  finishedAt?: string
+  checked: number
+  matched: number
+  problems: string[]
+}
+
 export type SteamSyncReport = {
   state: 'never-synced' | 'syncing' | 'synced' | 'failed'
   startedAt?: string

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
@@ -19,6 +20,8 @@ type Server struct {
 	Store      *store.Store
 	AdminToken string
 	Steam      *steam.Syncer
+	IGDB       *igdb.Client
+	IGDBMatch  *igdb.Matcher
 	Backup     func(ctx context.Context) (string, error)
 	Changed    func()
 }
@@ -54,6 +57,12 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("PATCH /admin/rankings/{id}", s.changeRanking)
 	admin.HandleFunc("PUT /admin/rankings/{id}/order", s.putRankingOrder)
 	admin.HandleFunc("DELETE /admin/rankings/{id}", s.deleteRanking)
+	admin.HandleFunc("GET /admin/igdb/search", s.searchIGDB)
+	admin.HandleFunc("POST /admin/items/from-igdb", s.addFromIGDB)
+	admin.HandleFunc("PUT /admin/items/{id}/igdb", s.matchIGDB)
+	admin.HandleFunc("PUT /admin/items/{id}/igdb/none", s.matchIGDBNone)
+	admin.HandleFunc("GET /admin/sync/igdb", s.igdbMatchStatus)
+	admin.HandleFunc("POST /admin/sync/igdb", s.startIGDBMatch)
 	admin.HandleFunc("GET /admin/sync/steam", s.steamSyncStatus)
 	admin.HandleFunc("POST /admin/sync/steam", s.startSteamSync)
 	admin.HandleFunc("POST /admin/backup", s.backupNow)
@@ -269,6 +278,8 @@ func respond(w http.ResponseWriter, status int, body any, err error) {
 		writeError(w, http.StatusNotFound, err.Error())
 	case errors.Is(err, store.ErrInvalid):
 		writeError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, store.ErrConflict):
+		writeError(w, http.StatusConflict, err.Error())
 	case err != nil:
 		slog.Error("request failed", "err", err)
 		writeError(w, http.StatusInternalServerError, "internal error")

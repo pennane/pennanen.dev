@@ -34,7 +34,7 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | | |
 |---|---|
 | `GET /admin/kinds` | kind definitions |
-| `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=&needs=score` | items with verdicts and entries; `needs=score` lists played entries with no score |
+| `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=&needs=score` | items with verdicts and entries; `needs=score` lists played entries with no score, `needs=match` (with `kind`) unmatched ones |
 | `POST /admin/items` | `{kind, title, fields}` |
 | `GET /admin/items/{id}` | item with claims, moments, relations |
 | `DELETE /admin/items/{id}` | |
@@ -47,6 +47,11 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `GET`/`POST /admin/rankings` | list / create `{name, description}` |
 | `GET`/`PATCH`/`DELETE /admin/rankings/{id}` | ranking with its items / `{name, description}` / remove |
 | `PUT /admin/rankings/{id}/order` | `{layout: "numbered", placements}` or `{layout: "tiered", tiers: [{name, placements}]}`; placement is `{itemId, note}` |
+| `GET /admin/igdb/search?q=` | IGDB games, each with `itemId` when already in the log |
+| `POST /admin/items/from-igdb` | `{igdbId}`; 201 new, 200 when already in the log |
+| `PUT /admin/items/{id}/igdb` | `{igdbId}`; 409 when another item has that game |
+| `PUT /admin/items/{id}/igdb/none` | IGDB has no match; never asked again |
+| `GET`/`POST /admin/sync/igdb` | match Steam games by app id: status / start |
 | `GET`/`POST /admin/sync/steam` | sync status / start |
 | `POST /admin/backup` | back up now |
 | `GET /public/items?kind=` | public entries |

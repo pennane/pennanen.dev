@@ -36,6 +36,8 @@ const FIELDS_WITH_A_PLACE = new Set([
   'link',
   'image',
   'cover',
+  'poster',
+  'platforms',
   'released',
   'developers',
   'genres',

@@ -39,6 +39,7 @@ type Kind struct {
 	Axes             []string                           `json:"axes"`
 	Fields           []Field                            `json:"fields"`
 	UndeclaredFields UndeclaredFields                   `json:"undeclaredFields"`
+	IdentitySource   string                             `json:"identitySource,omitempty"`
 	GuessStatus      func(verdicts map[string]any) Hint `json:"-"`
 }
 

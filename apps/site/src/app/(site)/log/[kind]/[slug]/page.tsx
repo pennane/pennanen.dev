@@ -8,13 +8,10 @@ import { Gap, Stack } from '../../../../../components/Stack'
 import { WrapInBox } from '../../../../../components/WrapInBox'
 import {
   formatPartialDate,
-  formatPlaytime,
   freeFormFields,
   isPublicKind,
   itemPath,
   kindPlural,
-  listField,
-  numberField,
   pictureOf,
   statusLabel,
   textField,
@@ -79,17 +76,11 @@ const PICTURE_HEIGHT = 215
 
 const Facts = ({ item }: { item: PublicItem }) => {
   const released = textField(item.fields, 'released')
-  const developers = listField(item.fields, 'developers')
-  const playtime = numberField(item.fields, 'playtime_minutes')
   const link = textField(item.fields, 'link')
   return (
     <MetaLine>
       <span>{statusLabel(item.status)}</span>
       {released && <span>{formatPartialDate(released)}</span>}
-      {developers.length > 0 && <span>{developers.join(', ')}</span>}
-      {playtime !== undefined && playtime > 0 && (
-        <span>{formatPlaytime(playtime)} played</span>
-      )}
       {link && <MetaLink href={link} icon={Link2} />}
     </MetaLine>
   )
@@ -134,7 +125,6 @@ export default async function ItemPage({ params }: { params: Params }) {
   if (!item || !isPublicKind(item.kind)) notFound()
   const picture = pictureOf(item)
   const description = textField(item.fields, 'description')
-  const genres = listField(item.fields, 'genres')
   const extras = freeFormFields(item.fields)
 
   return (
@@ -172,14 +162,8 @@ export default async function ItemPage({ params }: { params: Params }) {
       )}
       <Tags tags={item.tags} />
       {description && <p className={styles.description}>{description}</p>}
-      {(genres.length > 0 || extras.length > 0) && (
+      {extras.length > 0 && (
         <dl className={styles.fields}>
-          {genres.length > 0 && (
-            <div>
-              <dt>genres</dt>
-              <dd>{genres.join(', ')}</dd>
-            </div>
-          )}
           {extras.map(({ name, value }) => (
             <div key={name}>
               <dt>{name}</dt>

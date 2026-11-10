@@ -10,6 +10,7 @@ import (
 var (
 	ErrNotFound = errors.New("not found")
 	ErrInvalid  = errors.New("invalid")
+	ErrConflict = errors.New("conflict")
 )
 
 type Visibility string
@@ -112,4 +113,5 @@ type Need string
 const (
 	NeedsNothing Need = ""
 	NeedsScore   Need = "score"
+	NeedsMatch   Need = "match"
 )

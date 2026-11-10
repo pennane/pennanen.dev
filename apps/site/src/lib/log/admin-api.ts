@@ -1,6 +1,8 @@
 import { requiredEnv } from './env'
 import type {
   EntryChange,
+  IGDBMatchReport,
+  IGDBResult,
   ItemDetail,
   ItemView,
   Kind,
@@ -44,6 +46,18 @@ export const logAdmin = {
   kinds: () => call<Kind[]>('/admin/kinds'),
   items: (filter: Record<string, string>) =>
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
+  createItem: (kind: string, title: string) =>
+    call<ItemView>('/admin/items', send('POST', { kind, title })),
+  searchIGDB: (query: string) =>
+    call<IGDBResult[]>(`/admin/igdb/search?${new URLSearchParams({ q: query })}`),
+  addFromIGDB: (igdbId: number) =>
+    call<ItemView>('/admin/items/from-igdb', send('POST', { igdbId })),
+  matchIGDB: (itemId: number, igdbId: number) =>
+    call<ItemView>(`/admin/items/${itemId}/igdb`, send('PUT', { igdbId })),
+  matchIGDBNone: (itemId: number) =>
+    call<ItemView>(`/admin/items/${itemId}/igdb/none`, { method: 'PUT' }),
+  igdbMatch: () => call<IGDBMatchReport>('/admin/sync/igdb'),
+  startIGDBMatch: () => call<IGDBMatchReport>('/admin/sync/igdb', { method: 'POST' }),
   item: (itemId: number) => call<ItemDetail>(`/admin/items/${itemId}`),
   addMoment: (itemId: number, moment: NewMoment) =>
     call<ItemDetail>(`/admin/items/${itemId}/moments`, send('POST', moment)),

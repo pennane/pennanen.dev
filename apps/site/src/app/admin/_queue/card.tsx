@@ -63,6 +63,8 @@ export const useKeys = (handlers: Record<string, () => void>) => {
 const QUEUES = [
   { href: '/admin/triage', label: 'triage' },
   { href: '/admin/rate', label: 'rate' },
+  { href: '/admin/add', label: 'add' },
+  { href: '/admin/match', label: 'match' },
   { href: '/admin/entries', label: 'entries' }
 ] as const
 
@@ -72,12 +74,12 @@ export const QueueHeader = ({
   children
 }: {
   current: (typeof QUEUES)[number]['label']
-  count: number
+  count?: number
   children?: React.ReactNode
 }) => (
   <header className={styles.header}>
     <h1>
-      {current} <span className={styles.count}>{count}</span>
+      {current} {count !== undefined && <span className={styles.count}>{count}</span>}
     </h1>
     <nav className={styles.queues}>
       {QUEUES.filter((q) => q.label !== current).map((q) => (

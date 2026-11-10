@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -26,6 +27,14 @@ func (s *Store) ListItems(ctx context.Context, filter ItemFilter) ([]ItemView, e
 	if filter.Tag != "" {
 		where = append(where, "EXISTS (SELECT 1 FROM tag t WHERE t.item_id = i.id AND (t.tag = ? OR t.tag LIKE ? ESCAPE '\\'))")
 		args = append(args, filter.Tag, escapeLike(filter.Tag)+"/%")
+	}
+	if filter.Needs == NeedsMatch {
+		k, known := kind.Get(filter.Kind)
+		if !known || k.IdentitySource == "" {
+			return nil, fmt.Errorf("%w: needs=match takes a kind that has an identity source", ErrInvalid)
+		}
+		where = append(where, "e.status <> ? AND NOT EXISTS (SELECT 1 FROM claim m WHERE m.item_id = i.id AND m.source = ?)")
+		args = append(args, kind.Dismissed, k.IdentitySource)
 	}
 	views, err := s.queryViews(ctx, strings.Join(where, " AND "), args...)
 	if err != nil {

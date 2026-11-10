@@ -166,7 +166,37 @@ func putClaim(ctx context.Context, q queryer, itemID int64, source, externalID s
 			data = excluded.data,
 			fetched_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')`,
 		itemID, source, externalID, string(raw))
+	if isIdentityTaken(err) {
+		return fmt.Errorf("%w: another item already has %s %s", ErrConflict, source, externalID)
+	}
 	return err
+}
+
+func isIdentityTaken(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed: claim.source, claim.external_id")
+}
+
+func (s *Store) IdentitiesLackingSource(ctx context.Context, have, lacking string) (map[string]int64, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT c.external_id, c.item_id FROM claim c
+		JOIN entry e ON e.item_id = c.item_id
+		WHERE c.source = ? AND c.external_id IS NOT NULL AND e.status <> ?
+		  AND NOT EXISTS (SELECT 1 FROM claim l WHERE l.item_id = c.item_id AND l.source = ?)`,
+		have, kind.Dismissed, lacking)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	itemOf := map[string]int64{}
+	for rows.Next() {
+		var externalID string
+		var itemID int64
+		if err := rows.Scan(&externalID, &itemID); err != nil {
+			return nil, err
+		}
+		itemOf[externalID] = itemID
+	}
+	return itemOf, rows.Err()
 }
 
 func asJSON(data any) ([]byte, error) {

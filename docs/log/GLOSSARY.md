@@ -80,6 +80,15 @@ always. *Steam claims 412h, IGDB claims nothing, so the verdict is 412h.*
 **Identity** — the external ID that says two claims are about the same item.
 For games, the IGDB ID. Optional: an item with no identity is just ap's.
 
+**Match** — giving an item its identity. Steam games match by app id on their
+own; the rest wait in the match queue until ap picks a game or answers
+**no match**, which IGDB's claim then records so nobody asks again.
+
+**Quick-add** — adding an item by searching IGDB, or by title alone when IGDB
+has nothing.
+
+**Cover / poster** — an item's wide picture and its tall box art.
+
 ## Doing
 
 **Triage** — moving an entry out of `untriaged`. The fast, one-at-a-time

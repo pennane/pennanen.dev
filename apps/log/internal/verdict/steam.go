@@ -16,7 +16,6 @@ type SteamOwnedGame struct {
 type SteamStoreDetails struct {
 	Name             string   `json:"name"`
 	HeaderImage      string   `json:"header_image"`
-	ShortDescription string   `json:"short_description"`
 	Developers       []string `json:"developers"`
 	Genres           []struct {
 		Description string `json:"description"`
@@ -59,7 +58,6 @@ func readSteamStoreDetails(raw json.RawMessage) (map[string]any, error) {
 	values := map[string]any{
 		"title":            d.Name,
 		"cover":            d.HeaderImage,
-		"description":      d.ShortDescription,
 		"developers":       d.Developers,
 		"genres":           descriptions(d.Genres),
 		"steam_categories": descriptions(d.Categories),
