@@ -10,6 +10,7 @@ import {
   formatPartialDate,
   freeFormFields,
   isPublicKind,
+  orderedScores,
   itemPath,
   kindPlural,
   pictureOf,
@@ -24,7 +25,7 @@ import {
   type PublicMoment
 } from '../../../../../lib/log/public-api'
 import { baseUrl } from '../../../../sitemap'
-import { Scores } from '../../components/Scores'
+import { Score, Scores } from '../../components/Scores'
 import { Tags } from '../../components/Tags'
 import logStyles from '../../components/log.module.css'
 import styles from './item.module.css'
@@ -47,7 +48,7 @@ export async function generateStaticParams({
 }
 
 const summaryOf = (item: PublicItem) =>
-  item.blurb || textField(item.fields, 'description')
+  item.blurb || undefined
 
 export async function generateMetadata({
   params
@@ -81,6 +82,9 @@ const Facts = ({ item }: { item: PublicItem }) => {
   return (
     <MetaLine>
       <span>{statusLabel(item.status)}</span>
+      {orderedScores(item.scores).map(({ axis, score }) => (
+        <Score key={axis} axis={axis} score={score} />
+      ))}
       {released && <span>{formatPartialDate(released)}</span>}
       {item.timeSpent && <span>{TIME_SPENT_LABELS[item.timeSpent]}</span>}
       {link && <MetaLink href={link} icon={Link2} />}
@@ -126,7 +130,6 @@ export default async function ItemPage({ params }: { params: Params }) {
   const item = await findItem(params)
   if (!item || !isPublicKind(item.kind)) notFound()
   const picture = pictureOf(item)
-  const description = textField(item.fields, 'description')
   const extras = freeFormFields(item.fields)
 
   return (
@@ -157,13 +160,7 @@ export default async function ItemPage({ params }: { params: Params }) {
           </Stack>
         </Stack>
       </header>
-      {Object.keys(item.scores).length > 0 && (
-        <div className={styles.headlineScores}>
-          <Scores scores={item.scores} />
-        </div>
-      )}
       <Tags tags={item.tags} />
-      {description && <p className={styles.description}>{description}</p>}
       {extras.length > 0 && (
         <dl className={styles.fields}>
           {extras.map(({ name, value }) => (

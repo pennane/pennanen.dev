@@ -1,20 +1,10 @@
 .picture {
   width: 100%;
+  max-width: 20rem;
   height: auto;
   aspect-ratio: 460 / 215;
   object-fit: cover;
   border-radius: 0.25rem;
-}
-
-.headlineScores {
-  font-size: 1.125rem;
-  color: var(--foreground-secondary);
-}
-
-.description {
-  color: var(--foreground-secondary);
-  line-height: 1.4;
-  opacity: 0.85;
 }
 
 .fields {
