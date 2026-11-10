@@ -34,6 +34,24 @@ export type ItemView = {
   hint?: Hint
 }
 
+export type MomentVisibility = 'inherit' | 'private'
+
+export type Moment = {
+  id: number
+  at: string
+  note: string
+  visibility: MomentVisibility
+  scores: Record<string, number> | null
+}
+
+export type ItemDetail = ItemView & { moments?: Moment[] }
+
+export type NewMoment = {
+  at: string
+  note: string
+  visibility: MomentVisibility
+}
+
 export type EntryChange = {
   status?: string
   visibility?: Visibility

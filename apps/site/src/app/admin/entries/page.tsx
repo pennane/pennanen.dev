@@ -162,7 +162,9 @@ export default async function EntriesPage({
                 )}
               </div>
               <div className={styles.rowBody}>
-                <span className={styles.title}>{entry.title}</span>
+                <Link href={`/admin/entries/${entry.id}`} className={styles.title}>
+                  {entry.title}
+                </Link>
                 <span className={styles.meta}>
                   {statusLabel(entry.status)}
                   {entry.headlineScore !== undefined && ` · ${entry.headlineScore}`}

@@ -1,5 +1,12 @@
 import { requiredEnv } from './env'
-import type { EntryChange, ItemView, Kind, SteamSyncReport } from './types'
+import type {
+  EntryChange,
+  ItemDetail,
+  ItemView,
+  Kind,
+  NewMoment,
+  SteamSyncReport
+} from './types'
 
 class LogApiError extends Error {
   constructor(
@@ -37,6 +44,11 @@ export const logAdmin = {
   kinds: () => call<Kind[]>('/admin/kinds'),
   items: (filter: Record<string, string>) =>
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
+  item: (itemId: number) => call<ItemDetail>(`/admin/items/${itemId}`),
+  addMoment: (itemId: number, moment: NewMoment) =>
+    call<ItemDetail>(`/admin/items/${itemId}/moments`, send('POST', moment)),
+  deleteMoment: (momentId: number) =>
+    call<void>(`/admin/moments/${momentId}`, { method: 'DELETE' }),
   changeEntry: (itemId: number, change: EntryChange) =>
     call<ItemView>(`/admin/items/${itemId}/entry`, send('PATCH', change)),
   changeEntries: (itemIds: number[], change: EntryChange) =>

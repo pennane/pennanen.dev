@@ -1,0 +1,190 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 36rem;
+  margin: 0 auto;
+  padding-bottom: 4rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.875rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--background);
+  padding: 0.5rem 0;
+}
+
+.quiet {
+  color: var(--foreground-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.quiet:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.cover {
+  aspect-ratio: 460 / 215;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.title {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.where {
+  margin: -0.75rem 0 0;
+  font-size: 0.875rem;
+  color: var(--foreground-secondary);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--foreground-secondary);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+.chip {
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  touch-action: manipulation;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--background);
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.score input {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 2rem;
+}
+
+.score input[data-empty='true'] {
+  opacity: 0.35;
+}
+
+.scoreValue {
+  min-width: 2.5ch;
+  text-align: right;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.text,
+.tagInput,
+.date {
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+.text {
+  resize: vertical;
+}
+
+.tagInput {
+  flex: 1;
+  min-width: 8rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+}
+
+.moments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.moment {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line-color);
+}
+
+.momentDate {
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground-secondary);
+  font-size: 0.875rem;
+}
+
+.momentNote {
+  white-space: pre-wrap;
+}
+
+.newMoment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.date {
+  align-self: flex-start;
+}
+
+.add {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: var(--accent);
+  color: var(--background);
+  cursor: pointer;
+}
+
+.add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
