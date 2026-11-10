@@ -12,7 +12,7 @@ export const SORTS = ['rank', 'last-played', 'title'] as const
 export type Sort = (typeof SORTS)[number]
 
 export const SORT_LABELS: Record<Sort, string> = {
-  rank: 'rank',
+  rank: 'most prestige first',
   'last-played': 'last played',
   title: 'title'
 }

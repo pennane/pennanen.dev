@@ -31,7 +31,7 @@ export const ItemRow = ({ item }: { item: ListedItem }) => (
       </Link>
       <p className={styles.rowMeta}>
         <span className={styles.status}>{statusLabel(item.status)}</span>
-        <Scores kind={item.kind} scores={item.scores} rank={item.rank} rankShown="place" />
+        <Scores kind={item.kind} scores={item.scores} />
       </p>
       <Tags tags={item.tags} />
     </div>

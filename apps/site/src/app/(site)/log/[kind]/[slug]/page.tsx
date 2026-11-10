@@ -7,6 +7,7 @@ import { Lede, MetaLine, MetaLink } from '../../../../../components/MetaLine'
 import { Gap, Stack } from '../../../../../components/Stack'
 import { WrapInBox } from '../../../../../components/WrapInBox'
 import {
+  byRank,
   formatPartialDate,
   freeFormFields,
   isPublicKind,
@@ -17,7 +18,8 @@ import {
   statusLabel,
   textField,
   TIME_SPENT_LABELS,
-  titleOf
+  titleOf,
+  toListed
 } from '../../../../../lib/log/present'
 import {
   logPublic,
@@ -89,8 +91,6 @@ const Facts = ({ item }: { item: PublicItem }) => {
           kind={item.kind}
           axis={axis}
           division={division}
-          rank={item.rank}
-          rankShown="place-of-all"
         />
       ))}
       {released && <span>{formatPartialDate(released)}</span>}
@@ -134,11 +134,39 @@ const Moments = ({ moments }: { moments: PublicMoment[] }) => (
   </section>
 )
 
+type Neighbour = { title: string; href: string }
+
+const neighboursOf = async (item: PublicItem) => {
+  const ordered = (await logPublic.items(item.kind)).map(toListed).toSorted(byRank)
+  const at = ordered.findIndex((listed) => listed.slug === item.slug)
+  const linkTo = (index: number): Neighbour | undefined => {
+    const listed = at >= 0 ? ordered[index] : undefined
+    return listed && { title: listed.title, href: itemPath(listed) }
+  }
+  return { previous: linkTo(at - 1), next: linkTo(at + 1) }
+}
+
+const Neighbours = ({ previous, next }: { previous?: Neighbour; next?: Neighbour }) => (
+  <nav className={styles.neighbours}>
+    {previous && (
+      <Link href={previous.href} rel="prev" className={styles.previous}>
+        ← {previous.title}
+      </Link>
+    )}
+    {next && (
+      <Link href={next.href} rel="next" className={styles.next}>
+        {next.title} →
+      </Link>
+    )}
+  </nav>
+)
+
 export default async function ItemPage({ params }: { params: Params }) {
   const item = await findItem(params)
   if (!item || !isPublicKind(item.kind)) notFound()
   const picture = pictureOf(item)
   const extras = freeFormFields(item.fields)
+  const neighbours = await neighboursOf(item)
 
   return (
     <article>
@@ -180,6 +208,7 @@ export default async function ItemPage({ params }: { params: Params }) {
         </dl>
       )}
       {item.moments.length > 0 && <Moments moments={item.moments} />}
+      <Neighbours {...neighbours} />
     </article>
   )
 }

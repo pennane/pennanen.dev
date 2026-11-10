@@ -3,7 +3,6 @@ import { ImageResponse } from 'next/og'
 import path from 'path'
 import {
   divisionName,
-  HEADLINE_AXIS,
   isPublicKind,
   orderedScores,
   pictureOf,
@@ -51,13 +50,7 @@ export default async function OpenGraphImage({
   const footer = item
     ? orderedScores(item.scores)
         .map(({ axis, division }) =>
-          [
-            settings?.axisLabels[axis] ?? axis,
-            divisionName(settings?.divisions, axis, division),
-            axis === HEADLINE_AXIS && item.rank ? `#${item.rank.place}` : ''
-          ]
-            .filter(Boolean)
-            .join(' ')
+          `${settings?.axisLabels[axis] ?? axis} ${divisionName(settings?.divisions, axis, division)}`
         )
         .join(' · ')
     : ''
