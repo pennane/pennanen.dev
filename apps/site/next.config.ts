@@ -9,6 +9,7 @@ import remarkMdxImages from 'remark-mdx-images'
 
 const nextConfig: NextConfig = {
   pageExtensions: ['md', 'mdx', 'ts', 'tsx'],
+  eslint: { ignoreDuringBuilds: true },
   outputFileTracingIncludes: {
     '/log/[kind]/[slug]/*': [
       './public/fonts/Inter-{Regular,Medium,Bold}.ttf',

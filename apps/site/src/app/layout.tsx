@@ -1,17 +1,16 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import 'highlight.js/styles/github-dark.css'
 import type { Metadata } from 'next'
 import { Fira_Code, Inter } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 
-const inter = Inter({
+const _inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap'
 })
 
-const firaCode = Fira_Code({
+const _firaCode = Fira_Code({
   subsets: ['latin'],
   display: 'block'
 })

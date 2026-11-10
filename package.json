@@ -5,7 +5,12 @@
     "dev": "pnpm --filter site dev",
     "build": "pnpm --filter site build",
     "start": "pnpm --filter site start",
-    "lint": "pnpm --filter site lint"
+    "lint": "pnpm --filter site lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
-  "packageManager": "pnpm@10.28.2"
+  "packageManager": "pnpm@10.28.2",
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
 }

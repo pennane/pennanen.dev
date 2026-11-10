@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { cloneElement, isValidElement, ReactElement } from 'react'
 import styles from './wrap-in-box.module.css'
 
