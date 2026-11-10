@@ -2,3 +2,4 @@ pnpm-lock.yaml
 apps/log
 .next
 apps/site/public
+*.mdx
