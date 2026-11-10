@@ -31,6 +31,7 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("GET /public/items", s.publicItems)
 	mux.HandleFunc("GET /public/items/{kind}/{slug}", s.publicItem)
+	mux.HandleFunc("GET /public/kinds/{kind}", s.publicKind)
 	mux.HandleFunc("GET /public/rankings", s.publicRankings)
 	mux.HandleFunc("GET /public/rankings/{slug}", s.publicRanking)
 
@@ -85,6 +86,7 @@ func (s *Server) listItems(w http.ResponseWriter, r *http.Request) {
 		Hint:       kind.Hint(q.Get("hint")),
 		Tag:        store.NormalizeTag(q.Get("tag")),
 		Query:      q.Get("q"),
+		Needs:      store.Need(q.Get("needs")),
 	})
 	respond(w, http.StatusOK, orEmpty(views), err)
 }

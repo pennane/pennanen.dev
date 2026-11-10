@@ -122,3 +122,9 @@
   color: var(--foreground-secondary);
   opacity: 0.8;
 }
+
+.unsorted {
+  color: var(--foreground-secondary);
+  opacity: 0.8;
+  font-size: 0.875rem;
+}

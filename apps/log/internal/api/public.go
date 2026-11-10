@@ -33,6 +33,21 @@ type PublicRef struct {
 	Title string `json:"title"`
 }
 
+type PublicKind struct {
+	Name      string `json:"name"`
+	Untriaged int    `json:"untriaged"`
+}
+
+func (s *Server) publicKind(w http.ResponseWriter, r *http.Request) {
+	k, known := kind.Get(r.PathValue("kind"))
+	if !known {
+		respond(w, 0, nil, store.ErrNotFound)
+		return
+	}
+	untriaged, err := s.Store.CountUntriaged(r.Context(), k.Name)
+	respond(w, http.StatusOK, PublicKind{Name: k.Name, Untriaged: untriaged}, err)
+}
+
 func (s *Server) publicItems(w http.ResponseWriter, r *http.Request) {
 	views, err := s.Store.ListItems(r.Context(), store.ItemFilter{Kind: r.URL.Query().Get("kind"), Visibility: store.Public})
 	if err != nil {
@@ -97,7 +112,11 @@ func (s *Server) publicRefs(r *http.Request, moments []store.Moment) (map[int64]
 }
 
 func isPublic(v store.ItemView) bool {
-	return v.Entry != nil && v.Entry.Visibility == store.Public && v.Entry.Status != kind.Dismissed
+	if v.Entry == nil || v.Entry.Visibility != store.Public {
+		return false
+	}
+	k, known := kind.Get(v.Kind)
+	return known && k.Shows(v.Entry.Status)
 }
 
 func publicItem(v store.ItemView) PublicItem {

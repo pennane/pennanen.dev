@@ -34,7 +34,7 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | | |
 |---|---|
 | `GET /admin/kinds` | kind definitions |
-| `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=` | items with verdicts and entries |
+| `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=&needs=score` | items with verdicts and entries; `needs=score` lists played entries with no score |
 | `POST /admin/items` | `{kind, title, fields}` |
 | `GET /admin/items/{id}` | item with claims, moments, relations |
 | `DELETE /admin/items/{id}` | |
@@ -51,5 +51,6 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `POST /admin/backup` | back up now |
 | `GET /public/items?kind=` | public entries |
 | `GET /public/items/{kind}/{slug}` | one public entry with its visible moments |
+| `GET /public/kinds/{kind}` | `{name, untriaged}` |
 | `GET /public/rankings` | all rankings |
 | `GET /public/rankings/{slug}` | one ranking; each placement has `kind, title, cover, note`, and `page` when the entry is public |

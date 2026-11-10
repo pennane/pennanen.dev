@@ -132,7 +132,7 @@ func createGame(t *testing.T, srv *httptest.Server, title, entry string) string 
 func TestRankings(t *testing.T) {
 	srv := newServer(t)
 	hades := createGame(t, srv, "Hades", `{"status":"finished","visibility":"public"}`)
-	wilds := createGame(t, srv, "Outer Wilds", `{"status":"finished","notes":"secret notes"}`)
+	wilds := createGame(t, srv, "Outer Wilds", `{"status":"finished","visibility":"private","notes":"secret notes"}`)
 	wallpaper := createGame(t, srv, "Wallpaper Engine", `{"status":"dismissed"}`)
 
 	status, body := call(t, srv, "POST", "/admin/rankings", token, `{"name":"Games I want to single out"}`)
@@ -218,5 +218,48 @@ func TestRankings(t *testing.T) {
 	}
 	if status, _ := call(t, srv, "GET", "/public/rankings/games-i-want-to-single-out", "", ""); status != http.StatusNotFound {
 		t.Errorf("deleted ranking still public: %d", status)
+	}
+}
+
+func TestPlayedGamesArePublicByDefault(t *testing.T) {
+	srv := newServer(t)
+	createGame(t, srv, "Hades", `{"status":"finished"}`)
+	createGame(t, srv, "Forgotten", `{"status":"maybe-played"}`)
+	createGame(t, srv, "Backlog", `{"status":"never-played"}`)
+	createGame(t, srv, "Hidden", `{"status":"played","visibility":"private"}`)
+	call(t, srv, "POST", "/admin/items", token, `{"kind":"game","title":"Unsorted"}`)
+
+	_, body := call(t, srv, "GET", "/public/items?kind=game", "", "")
+	for _, slug := range []string{"hades", "forgotten"} {
+		if !strings.Contains(body, `"slug":"`+slug+`"`) {
+			t.Errorf("%s not listed: %s", slug, body)
+		}
+	}
+	for _, slug := range []string{"backlog", "hidden", "unsorted"} {
+		if strings.Contains(body, `"slug":"`+slug+`"`) {
+			t.Errorf("%s listed: %s", slug, body)
+		}
+	}
+	if status, _ := call(t, srv, "GET", "/public/items/game/backlog", "", ""); status != http.StatusNotFound {
+		t.Errorf("never-played page: %d", status)
+	}
+	if status, body := call(t, srv, "GET", "/public/kinds/game", "", ""); status != http.StatusOK || body != `{"name":"game","untriaged":1}`+"\n" {
+		t.Errorf("kind: %d %q", status, body)
+	}
+	if status, _ := call(t, srv, "GET", "/public/kinds/nope", "", ""); status != http.StatusNotFound {
+		t.Errorf("unknown kind: %d", status)
+	}
+}
+
+func TestNeedsScoreListsPlayedGamesWithoutScores(t *testing.T) {
+	srv := newServer(t)
+	createGame(t, srv, "Rated", `{"status":"finished","scores":{"enjoyment":80}}`)
+	createGame(t, srv, "Unrated", `{"status":"played"}`)
+	createGame(t, srv, "Forgotten", `{"status":"maybe-played"}`)
+	_, body := call(t, srv, "GET", "/admin/items?needs=score", token, "")
+	var views []struct{ Slug string }
+	json.Unmarshal([]byte(body), &views)
+	if len(views) != 1 || views[0].Slug != "unrated" {
+		t.Errorf("needs score: %s", body)
 	}
 }

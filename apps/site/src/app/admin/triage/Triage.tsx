@@ -1,80 +1,50 @@
 'use client'
 
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Hint, Kind, SteamSyncReport } from '../../../lib/log/types'
+import type { EntryChange, Hint, Kind, SteamSyncReport } from '../../../lib/log/types'
+import {
+  ANOTHER_SHOT,
+  CardFace,
+  ENJOYMENT,
+  ENJOYMENT_PRESETS,
+  formatPlaytime,
+  HINT_LABELS,
+  IDLED,
+  QueueHeader,
+  SaveStatus,
+  TagToggle,
+  useKeys,
+  type GameCard
+} from '../_queue/card'
+import styles from '../_queue/queue.module.css'
 import { changeEntries, changeEntry, startSteamSync, steamSyncStatus } from '../actions'
-import styles from './triage.module.css'
-import { useSaveQueue, type SaveQueueState } from './useSaveQueue'
-
-export type TriageCard = {
-  id: number
-  title: string
-  cover?: string
-  playtimeMinutes?: number
-  lastPlayed?: string
-  achievements?: { unlocked: number; total: number }
-  steamCategories: string[]
-  hint?: Hint
-}
+import { useSaveQueue } from '../_queue/useSaveQueue'
 
 type Filter = 'everything' | Hint | 'no-hint'
 
 type Step = { phase: 'status' } | { phase: 'score'; status: string }
 
-type Triaged = { cards: TriageCard[] }
+type Triaged = { cards: GameCard[] }
 
 const UNTRIAGED = 'untriaged'
-const ENJOYMENT = 'enjoyment'
-const ANOTHER_SHOT = 'another-shot'
-const STEAM_TRADING_CARDS = 'Steam Trading Cards'
+const NEVER_PLAYED = 'never-played'
 const SYNC_POLL_MS = 3000
 
-const ENJOYMENT_PRESETS = [
-  { label: 'loved', value: 92 },
-  { label: 'liked', value: 80 },
-  { label: 'meh', value: 60 },
-  { label: 'disliked', value: 35 }
+const TRIAGE_TAGS = [
+  { tag: ANOTHER_SHOT, shortcut: 'a', label: 'worth another shot' },
+  { tag: IDLED, shortcut: 'i', label: 'idled for cards' }
 ] as const
 
-const HINT_LABELS: Record<Hint, string> = {
-  'likely-played': 'looks played',
-  'likely-idled': 'looks idled',
-  'likely-never-played': 'never launched',
-  'likely-not-a-game': 'not a game'
+const BULK_FOR_HINT: Partial<Record<Hint, { label: string; change: EntryChange }>> = {
+  'likely-idled': { label: 'never-played + idled', change: { status: NEVER_PLAYED, addTags: [IDLED] } },
+  'likely-never-played': { label: NEVER_PLAYED, change: { status: NEVER_PLAYED } },
+  'likely-not-a-game': { label: 'dismissed', change: { status: 'dismissed' } }
 }
 
-const BULK_STATUS_FOR_HINT: Partial<Record<Hint, string>> = {
-  'likely-idled': 'idled',
-  'likely-never-played': 'never-played',
-  'likely-not-a-game': 'dismissed'
-}
-
-const matches = (filter: Filter) => (card: TriageCard) =>
+const matches = (filter: Filter) => (card: GameCard) =>
   filter === 'everything' ||
   (filter === 'no-hint' ? card.hint === undefined : card.hint === filter)
-
-const formatPlaytime = (minutes: number) => {
-  if (minutes < 60) return `${minutes} min`
-  const hours = Math.floor(minutes / 60)
-  return minutes % 60 === 0 ? `${hours} h` : `${hours} h ${minutes % 60} min`
-}
-
-const useKeys = (handlers: Record<string, () => void>) => {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return
-      if (event.target instanceof HTMLInputElement) return
-      const handler = handlers[event.key]
-      if (!handler) return
-      event.preventDefault()
-      handler()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [handlers])
-}
 
 export const Triage = ({
   kind,
@@ -82,7 +52,7 @@ export const Triage = ({
   steamSync
 }: {
   kind: Kind
-  cards: TriageCard[]
+  cards: GameCard[]
   steamSync?: SteamSyncReport
 }) => {
   const [queue, setQueue] = useState(cards)
@@ -90,7 +60,7 @@ export const Triage = ({
   const [filter, setFilter] = useState<Filter>('everything')
   const [step, setStep] = useState<Step>({ phase: 'status' })
   const [bulkArmed, setBulkArmed] = useState<Hint>()
-  const [tagToAdd, setTagToAdd] = useState<typeof ANOTHER_SHOT>()
+  const [tagsToAdd, setTagsToAdd] = useState<string[]>([])
   const saves = useSaveQueue()
   const settledIds = useRef(new Set<number>())
 
@@ -120,14 +90,14 @@ export const Triage = ({
   }, [queue])
 
   const settle = useCallback(
-    (triaged: TriageCard[], label: string, save: () => Promise<unknown>) => {
+    (triaged: GameCard[], label: string, save: () => Promise<unknown>) => {
       const ids = new Set(triaged.map((c) => c.id))
       ids.forEach((id) => settledIds.current.add(id))
       setQueue((q) => q.filter((c) => !ids.has(c.id)))
       setHistory((h) => [...h, { cards: triaged }])
       setStep({ phase: 'status' })
       setBulkArmed(undefined)
-      setTagToAdd(undefined)
+      setTagsToAdd([])
       saves.enqueue(label, save)
     },
     [saves]
@@ -140,11 +110,11 @@ export const Triage = ({
         changeEntry(current.id, {
           status,
           ...(enjoyment === undefined ? {} : { scores: { [ENJOYMENT]: enjoyment } }),
-          ...(tagToAdd ? { addTags: [tagToAdd] } : {})
+          ...(tagsToAdd.length > 0 ? { addTags: tagsToAdd } : {})
         })
       )
     },
-    [current, settle, tagToAdd]
+    [current, settle, tagsToAdd]
   )
 
   const choose = useCallback(
@@ -159,7 +129,7 @@ export const Triage = ({
     if (!current) return
     setQueue((q) => [...q.filter((c) => c.id !== current.id), current])
     setStep({ phase: 'status' })
-    setTagToAdd(undefined)
+    setTagsToAdd([])
   }, [current])
 
   const undo = useCallback(() => {
@@ -174,41 +144,42 @@ export const Triage = ({
       changeEntries(ids, {
         status: UNTRIAGED,
         scores: { [ENJOYMENT]: null },
-        removeTags: [ANOTHER_SHOT]
+        removeTags: TRIAGE_TAGS.map((t) => t.tag)
       })
     )
   }, [history, saves])
 
   const bulk = useCallback(
     (hint: Hint) => {
-      const status = BULK_STATUS_FOR_HINT[hint]
-      if (!status) return
+      const action = BULK_FOR_HINT[hint]
+      if (!action) return
       if (bulkArmed !== hint) {
         setBulkArmed(hint)
         return
       }
       const triaged = queue.filter((c) => c.hint === hint)
-      settle(triaged, `${triaged.length} → ${status}`, () =>
+      settle(triaged, `${triaged.length} → ${action.label}`, () =>
         changeEntries(
           triaged.map((c) => c.id),
-          { status }
+          action.change
         )
       )
     },
     [bulkArmed, queue, settle]
   )
 
-  const toggleAnotherShot = useCallback(
-    () => setTagToAdd((tag) => (tag ? undefined : ANOTHER_SHOT)),
+  const toggleTag = useCallback(
+    (tag: string) =>
+      setTagsToAdd((tags) => (tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag])),
     []
   )
 
   const keys = useMemo(() => {
     const handlers: Record<string, () => void> = {
       s: skip,
-      z: undo,
-      a: toggleAnotherShot
+      z: undo
     }
+    TRIAGE_TAGS.forEach((t) => (handlers[t.shortcut] = () => toggleTag(t.tag)))
     if (step.phase === 'status') {
       statuses.forEach((status, i) => (handlers[String(i + 1)] = () => choose(status)))
     } else {
@@ -219,19 +190,16 @@ export const Triage = ({
       handlers.Escape = () => setStep({ phase: 'status' })
     }
     return handlers
-  }, [step, statuses, choose, commit, skip, undo, toggleAnotherShot])
+  }, [step, statuses, choose, commit, skip, undo, toggleTag])
   useKeys(keys)
 
-  const bulkStatus = filter !== 'everything' && filter !== 'no-hint' && BULK_STATUS_FOR_HINT[filter]
+  const bulkAction = filter !== 'everything' && filter !== 'no-hint' && BULK_FOR_HINT[filter]
 
   return (
-    <div className={styles.triage}>
-      <header className={styles.header}>
-        <h1>
-          triage <span className={styles.count}>{queue.length}</span>
-        </h1>
+    <div className={styles.queue}>
+      <QueueHeader current="triage" count={queue.length}>
         <SteamSyncButton initial={steamSync} />
-      </header>
+      </QueueHeader>
 
       <nav className={styles.filters}>
         {(
@@ -259,7 +227,7 @@ export const Triage = ({
         ))}
       </nav>
 
-      {bulkStatus && countByFilter[filter] > 0 && (
+      {bulkAction && countByFilter[filter] > 0 && (
         <section className={styles.bulkPanel}>
           <button
             className={styles.bulk}
@@ -267,8 +235,8 @@ export const Triage = ({
             onClick={() => bulk(filter as Hint)}
           >
             {bulkArmed === filter
-              ? `Tap again: mark these ${countByFilter[filter]} as ${bulkStatus}`
-              : `Mark all ${countByFilter[filter]} as ${bulkStatus}…`}
+              ? `Tap again: mark these ${countByFilter[filter]} as ${bulkAction.label}`
+              : `Mark all ${countByFilter[filter]} as ${bulkAction.label}…`}
           </button>
           {bulkArmed === filter && (
             <>
@@ -292,7 +260,7 @@ export const Triage = ({
 
       {bulkArmed ? null : current ? (
         <article className={styles.card} key={current.id}>
-          <CardFace card={current} />
+          <CardFace card={current} badge={current.hint && HINT_LABELS[current.hint]} />
           {step.phase === 'status' ? (
             <div className={styles.choices}>
               {statuses.map((status, i) => (
@@ -324,13 +292,16 @@ export const Triage = ({
               </button>
             </div>
           )}
-          <button
-            className={styles.filter}
-            aria-pressed={tagToAdd === ANOTHER_SHOT}
-            onClick={toggleAnotherShot}
-          >
-            <kbd>a</kbd> worth another shot
-          </button>
+          <div className={styles.toggles}>
+            {TRIAGE_TAGS.map((t) => (
+              <TagToggle
+                key={t.tag}
+                {...t}
+                pressed={tagsToAdd.includes(t.tag)}
+                onToggle={toggleTag}
+              />
+            ))}
+          </div>
         </article>
       ) : (
         <p className={styles.empty}>
@@ -348,41 +319,6 @@ export const Triage = ({
         <SaveStatus state={saves.state} />
       </footer>
     </div>
-  )
-}
-
-const CardFace = ({ card }: { card: TriageCard }) => {
-  const facts = [
-    card.playtimeMinutes !== undefined && formatPlaytime(card.playtimeMinutes),
-    card.achievements && `${card.achievements.unlocked}/${card.achievements.total} achievements`,
-    card.lastPlayed && `last played ${card.lastPlayed}`,
-    card.steamCategories.includes(STEAM_TRADING_CARDS) && 'drops cards'
-  ].filter(Boolean)
-  return (
-    <>
-      <div className={styles.cover}>
-        {card.cover ? (
-          <Image src={card.cover} alt="" width={460} height={215} unoptimized priority />
-        ) : (
-          <span className={styles.noCover}>{card.title}</span>
-        )}
-      </div>
-      <h2 className={styles.title}>{card.title}</h2>
-      <p className={styles.facts}>
-        {card.hint && <span className={styles.hint}>{HINT_LABELS[card.hint]}</span>}
-        {facts.join(' · ')}
-      </p>
-    </>
-  )
-}
-
-const SaveStatus = ({ state }: { state: SaveQueueState }) => {
-  if (state.kind === 'saved') return <span className={styles.saved}>saved</span>
-  if (state.kind === 'saving') return <span className={styles.saving}>saving {state.unsaved}…</span>
-  return (
-    <span className={styles.retrying} title={state.error}>
-      {state.unsaved} unsaved, retrying ({state.label})
-    </span>
   )
 }
 

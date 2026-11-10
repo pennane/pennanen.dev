@@ -39,7 +39,11 @@ export async function generateMetadata({
 export default async function KindPage({ params }: { params: Params }) {
   const { kind } = await params
   if (!isPublicKind(kind)) notFound()
-  const items = (await logPublic.items(kind)).map(toListed)
+  const [listed, { untriaged }] = await Promise.all([
+    logPublic.items(kind),
+    logPublic.kind(kind)
+  ])
+  const items = listed.map(toListed)
   const path = `/log/${kind}`
 
   return (
@@ -55,6 +59,11 @@ export default async function KindPage({ params }: { params: Params }) {
         <Suspense fallback={<ItemList items={applyView(items, DEFAULT_VIEW)} />}>
           <KindBrowser items={items} path={path} />
         </Suspense>
+      )}
+      {untriaged > 0 && (
+        <p className={logStyles.unsorted}>
+          and {untriaged} {kindPlural(kind)} still unsorted
+        </p>
       )}
     </Stack>
   )

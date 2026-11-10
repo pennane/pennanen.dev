@@ -64,7 +64,7 @@ func TestIdleHintFromCardsAndNoAchievements(t *testing.T) {
 	if err != nil || len(idled) != 1 {
 		t.Fatalf("idled = %d, %v", len(idled), err)
 	}
-	if err := s.ChangeEntries(ctx, []int64{id}, store.EntryChange{Status: ptr("idled")}); err != nil {
+	if err := s.ChangeEntries(ctx, []int64{id}, store.EntryChange{Status: ptr("never-played")}); err != nil {
 		t.Fatal(err)
 	}
 	v, _ := s.GetItem(ctx, id)

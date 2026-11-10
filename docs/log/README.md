@@ -13,6 +13,7 @@ partly public at `/log`. Words: [GLOSSARY](./GLOSSARY.md). Decisions: [adr/](./a
    add-anything search box with one-tap enjoyment, then entry editing.
 4. **Public** — `/log`, `/log/game`, `/log/game/<slug>`.
 5. **Rankings** — hand-picked ordered lists, `/log/ranking/<slug>` ([ADR 8](./adr/0008-rankings.md)).
+6. **Rating** — public by default, triage then rate ([ADR 9](./adr/0009-public-by-default.md)).
 
 ## Later
 

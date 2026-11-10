@@ -39,8 +39,9 @@ const (
 func init() {
 	register(Kind{
 		Name:             "game",
-		Statuses:         []string{Untriaged, "never-played", "idled", "maybe-played", "playing", "played", "finished", "dropped"},
+		Statuses:         []string{Untriaged, "never-played", "maybe-played", "playing", "played", "finished", "dropped"},
 		StatusesToScore:  []string{"playing", "played", "finished", "dropped"},
+		StatusesShown:    []string{"maybe-played", "playing", "played", "finished", "dropped"},
 		Axes:             []string{Enjoyment, Quality},
 		UndeclaredFields: RejectUndeclaredFields,
 		Fields: []Field{
@@ -66,6 +67,7 @@ func init() {
 		Name:             "thing",
 		Statuses:         []string{Untriaged, "seen"},
 		StatusesToScore:  []string{"seen"},
+		StatusesShown:    []string{"seen"},
 		Axes:             []string{Enjoyment, Quality},
 		UndeclaredFields: AcceptUndeclaredFields,
 		Fields: []Field{

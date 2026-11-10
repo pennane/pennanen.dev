@@ -10,6 +10,7 @@ export type Kind = {
   name: string
   statuses: string[]
   statusesToScore: string[]
+  statusesShown: string[]
   axes: string[]
 }
 

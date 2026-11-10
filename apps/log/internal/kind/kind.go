@@ -35,6 +35,7 @@ type Kind struct {
 	Name             string                             `json:"name"`
 	Statuses         []string                           `json:"statuses"`
 	StatusesToScore  []string                           `json:"statusesToScore"`
+	StatusesShown    []string                           `json:"statusesShown"`
 	Axes             []string                           `json:"axes"`
 	Fields           []Field                            `json:"fields"`
 	UndeclaredFields UndeclaredFields                   `json:"undeclaredFields"`
@@ -64,6 +65,8 @@ func (k Kind) Field(name string) (Field, bool) {
 
 func (k Kind) HasStatus(status string) bool { return slices.Contains(k.Statuses, status) }
 func (k Kind) HasAxis(axis string) bool     { return slices.Contains(k.Axes, axis) }
+func (k Kind) Shows(status string) bool     { return slices.Contains(k.StatusesShown, status) }
+func (k Kind) Scores(status string) bool    { return slices.Contains(k.StatusesToScore, status) }
 
 func (k Kind) Hint(verdicts map[string]any) Hint {
 	if k.GuessStatus == nil {

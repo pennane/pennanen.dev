@@ -110,7 +110,7 @@ func insertItem(ctx context.Context, q queryer, kindName, title string) (int64, 
 }
 
 func ensureEntry(ctx context.Context, q queryer, itemID int64) error {
-	_, err := q.ExecContext(ctx, `INSERT INTO entry (item_id) VALUES (?) ON CONFLICT DO NOTHING`, itemID)
+	_, err := q.ExecContext(ctx, `INSERT INTO entry (item_id, visibility) VALUES (?, ?) ON CONFLICT DO NOTHING`, itemID, NewEntryVisibility)
 	return err
 }
 

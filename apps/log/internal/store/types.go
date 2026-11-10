@@ -19,6 +19,8 @@ const (
 	Public  Visibility = "public"
 )
 
+const NewEntryVisibility = Public
+
 type MomentVisibility string
 
 const (
@@ -102,4 +104,12 @@ type ItemFilter struct {
 	Hint       kind.Hint
 	Tag        string
 	Query      string
+	Needs      Need
 }
+
+type Need string
+
+const (
+	NeedsNothing Need = ""
+	NeedsScore   Need = "score"
+)

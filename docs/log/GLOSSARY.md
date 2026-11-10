@@ -24,9 +24,10 @@ scores, tags, notes, a blurb, and a visibility.
 
 **Status** — where ap is with the item, regardless of what ap thought of it.
 Each kind has its own set. Every kind starts at `untriaged` and can end at
-`dismissed`. For `game`: `untriaged`, `never-played`, `idled`, `maybe-played`,
+`dismissed`. For `game`: `untriaged`, `never-played`, `maybe-played`,
 `playing`, `played`, `finished`, `dropped`, `dismissed`. `maybe-played` is the
-honest answer when ap can't remember.
+honest answer when ap can't remember. Each kind also lists the statuses it
+**shows** publicly; for `game` those are the ones where ap played it.
 
 **Dismissed** — the status for something that doesn't belong in the log at all,
 like Wallpaper Engine in a Steam library. The item is kept so sync won't bring
@@ -43,7 +44,8 @@ be scored.
 `formative`. Nest with a slash for precision: `favorite/all-time`. Tags are
 ap's, so they live on entries; what an item *is* (`co-op`, `jam-game`) is a
 claim, not a tag. `another-shot` marks something ap wants to try again,
-whatever its status.
+whatever its status. `idled` marks a game ap ran for trading cards, whether or
+not ap also played it.
 
 **Ranking** — ap's hand-picked, ordered list of items: "games I want to single
 out". Any kinds may mix. Always public, at `/log/ranking/<slug>`. Separate from
@@ -81,7 +83,9 @@ For games, the IGDB ID. Optional: an item with no identity is just ap's.
 ## Doing
 
 **Triage** — moving an entry out of `untriaged`. The fast, one-at-a-time
-screen where imports get sorted into played, idled, never played.
+screen where imports get sorted into played, never played, and so on.
+
+**Rating** — giving a shown entry its scores, one card at a time, after triage.
 
 **Hint** — the importer's guess during triage (`likely-idled`,
 `likely-played`, `likely-never-played`, `likely-not-a-game`). Hints suggest;
@@ -89,7 +93,7 @@ they never set a status.
 
 **Sync** — pulling fresh claims from a source. Steam syncs nightly and on demand.
 
-**Visibility** — who can see an entry: `private` (default) or `public`;
+**Visibility** — who can see an entry: `public` (default) or `private`;
 later maybe `unlisted` (reachable by link, not listed). A moment is `inherit`
 (default, same as its entry) or `private`, so it can never be more visible
 than its entry.

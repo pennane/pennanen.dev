@@ -39,6 +39,8 @@ const publicItemSchema = z.object({
     .transform((moments) => moments ?? [])
 })
 
+const publicKindSchema = z.object({ name: z.string(), untriaged: z.number() })
+
 export type PublicItem = z.infer<typeof publicItemSchema>
 export type PublicMoment = z.infer<typeof momentSchema>
 
@@ -54,6 +56,11 @@ const failure = (response: Response) =>
   new Error(`log api ${response.url} answered ${response.status}`)
 
 export const logPublic = {
+  kind: async (kind: string) => {
+    const response = await fetchPublic(`/public/kinds/${encodeURIComponent(kind)}`)
+    if (!response.ok) throw failure(response)
+    return publicKindSchema.parse(await response.json())
+  },
   items: async (kind: string) => {
     const response = await fetchPublic(
       `/public/items?${new URLSearchParams({ kind })}`

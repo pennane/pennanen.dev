@@ -41,7 +41,23 @@ func matchesDerived(v ItemView, filter ItemFilter) bool {
 	if filter.Query != "" && !strings.Contains(strings.ToLower(verdict.Title(v.Verdicts)), strings.ToLower(filter.Query)) {
 		return false
 	}
+	if filter.Needs == NeedsScore && !needsScore(v) {
+		return false
+	}
 	return true
+}
+
+func needsScore(v ItemView) bool {
+	k, known := kind.Get(v.Kind)
+	return known && v.Entry != nil && k.Scores(v.Entry.Status) && len(v.Entry.Scores) == 0
+}
+
+func (s *Store) CountUntriaged(ctx context.Context, kindName string) (int, error) {
+	var count int
+	err := s.db.QueryRowContext(ctx,
+		`SELECT count(*) FROM entry e JOIN item i ON i.id = e.item_id WHERE i.kind = ? AND e.status = ?`,
+		kindName, kind.Untriaged).Scan(&count)
+	return count, err
 }
 
 func escapeLike(s string) string {
