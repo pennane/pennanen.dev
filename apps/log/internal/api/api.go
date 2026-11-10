@@ -36,8 +36,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /public/items/{kind}/{slug}", s.publicItem)
 	mux.HandleFunc("GET /public/kinds/{kind}", s.publicKind)
 	mux.HandleFunc("GET /public/presentation", s.publicPresentation)
-	mux.HandleFunc("GET /public/rankings", s.publicRankings)
-	mux.HandleFunc("GET /public/rankings/{slug}", s.publicRanking)
 
 	admin := http.NewServeMux()
 	admin.HandleFunc("GET /admin/kinds", s.kinds)
@@ -50,18 +48,13 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("DELETE /admin/items/{id}", s.deleteItem)
 	admin.HandleFunc("PATCH /admin/items/{id}/fields", s.changeFields)
 	admin.HandleFunc("PATCH /admin/items/{id}/entry", s.changeEntry)
+	admin.HandleFunc("PUT /admin/items/{id}/place", s.placeEntry)
 	admin.HandleFunc("GET /admin/entries", s.listEntries)
 	admin.HandleFunc("POST /admin/entries/change", s.changeEntries)
 	admin.HandleFunc("POST /admin/items/{id}/moments", s.addMoment)
 	admin.HandleFunc("DELETE /admin/moments/{id}", s.deleteMoment)
 	admin.HandleFunc("POST /admin/relations", s.addRelation)
 	admin.HandleFunc("DELETE /admin/relations", s.removeRelation)
-	admin.HandleFunc("GET /admin/rankings", s.listRankings)
-	admin.HandleFunc("POST /admin/rankings", s.createRanking)
-	admin.HandleFunc("GET /admin/rankings/{id}", s.getRanking)
-	admin.HandleFunc("PATCH /admin/rankings/{id}", s.changeRanking)
-	admin.HandleFunc("PUT /admin/rankings/{id}/order", s.putRankingOrder)
-	admin.HandleFunc("DELETE /admin/rankings/{id}", s.deleteRanking)
 	admin.HandleFunc("GET /admin/igdb/search", s.searchIGDB)
 	admin.HandleFunc("POST /admin/items/from-igdb", s.addFromIGDB)
 	admin.HandleFunc("PUT /admin/items/{id}/igdb", s.matchIGDB)
@@ -87,15 +80,22 @@ func (s *Server) requireAdmin(next http.Handler) http.Handler {
 	})
 }
 
+type adminKind struct {
+	kind.Kind
+	AxisLabels map[string]string           `json:"axisLabels"`
+	Divisions  map[string][]store.Division `json:"divisions"`
+}
+
 func (s *Server) kinds(w http.ResponseWriter, r *http.Request) {
 	settings, err := s.Store.AllKindSettings(r.Context())
 	if err != nil {
 		respond(w, 0, nil, err)
 		return
 	}
-	kinds := kind.All()
-	for i, k := range kinds {
-		kinds[i].StatusesShown = settings[k.Name].StatusesShown
+	kinds := []adminKind{}
+	for _, k := range kind.All() {
+		k.StatusesShown = settings[k.Name].StatusesShown
+		kinds = append(kinds, adminKind{Kind: k, AxisLabels: settings[k.Name].AxisLabels, Divisions: settings[k.Name].Divisions})
 	}
 	writeJSON(w, http.StatusOK, kinds)
 }

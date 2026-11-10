@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -32,7 +33,13 @@ func Open(ctx context.Context, path string) (*sql.DB, error) {
 	return d, nil
 }
 
+const everyMigration = math.MaxInt
+
 func migrate(ctx context.Context, d *sql.DB) error {
+	return migrateUpTo(ctx, d, everyMigration)
+}
+
+func migrateUpTo(ctx context.Context, d *sql.DB, lastVersion int) error {
 	var appliedVersion int
 	if err := d.QueryRowContext(ctx, "PRAGMA user_version").Scan(&appliedVersion); err != nil {
 		return err
@@ -47,7 +54,7 @@ func migrate(ctx context.Context, d *sql.DB) error {
 		if err != nil {
 			return err
 		}
-		if version <= appliedVersion {
+		if version <= appliedVersion || version > lastVersion {
 			continue
 		}
 		if err := applyMigration(ctx, d, name, version); err != nil {

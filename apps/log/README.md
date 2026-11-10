@@ -35,22 +35,20 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 |---|---|
 | `GET /admin/kinds` | kind definitions, shown statuses from settings |
 | `GET /admin/settings` | per-kind settings and tag titles |
-| `PUT /admin/settings/kinds/{kind}` | shown statuses, axis labels, score display and words |
+| `PUT /admin/settings/kinds/{kind}` | shown statuses, axis labels, divisions per axis `{axis: [{key, name}]}` best first; a division in use cannot be removed |
 | `PUT /admin/settings/tag-titles` | `{tag: title}` |
-| `GET /admin/entries?kind=` | triaged, undismissed entries with only what the admin list shows |
+| `GET /admin/entries?kind=` | triaged, undismissed entries with only what the admin list shows, `rank` on ranked ones |
 | `GET /admin/items?kind=&status=&visibility=&hint=&tag=&q=&needs=score` | items with verdicts and entries; `needs=score` lists played entries with no score, `needs=match` (with `kind`) unmatched ones |
 | `POST /admin/items` | `{kind, title, fields}` |
 | `GET /admin/items/{id}` | item with claims, moments, relations |
 | `DELETE /admin/items/{id}` | |
 | `PATCH /admin/items/{id}/fields` | override fields; `null` removes |
-| `PATCH /admin/items/{id}/entry` | `{status, visibility, notes, blurb, scores, addTags, removeTags}` |
+| `PATCH /admin/items/{id}/entry` | `{status, visibility, blurb, scores: {axis: division}, addTags, removeTags}`; a new division joins the bottom of it, `dismissed` clears scores |
+| `PUT /admin/items/{id}/place` | `{division, index}` on the ranked axis; index 0 is the top of the division |
 | `POST /admin/entries/change` | `{itemIds, change}` for bulk triage |
-| `POST /admin/items/{id}/moments` | `{at, note, visibility, scores, refs, scoresEffect}` |
+| `POST /admin/items/{id}/moments` | `{at, note, visibility, refs}` |
 | `DELETE /admin/moments/{id}` | |
 | `POST`/`DELETE /admin/relations` | `{fromId, type, toId}` |
-| `GET`/`POST /admin/rankings` | list / create `{name, description}` |
-| `GET`/`PATCH`/`DELETE /admin/rankings/{id}` | ranking with its items / `{name, description}` / remove |
-| `PUT /admin/rankings/{id}/order` | `{layout: "numbered", placements}` or `{layout: "tiered", tiers: [{name, placements}]}`; placement is `{itemId, note}` |
 | `GET /admin/igdb/search?q=` | IGDB games, each with `itemId` when already in the log |
 | `POST /admin/items/from-igdb` | `{igdbId}`; 201 new, 200 when already in the log |
 | `PUT /admin/items/{id}/igdb` | `{igdbId}`; 409 when another item has that game |
@@ -58,9 +56,7 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `GET`/`POST /admin/sync/igdb` | match Steam games by app id: status / start |
 | `GET`/`POST /admin/sync/steam` | sync status / start |
 | `POST /admin/backup` | back up now |
-| `GET /public/items?kind=` | public entries |
+| `GET /public/items?kind=` | public entries; ranked ones carry `rank: {place, of}` counted among public entries |
 | `GET /public/items/{kind}/{slug}` | one public entry with its visible moments |
 | `GET /public/kinds/{kind}` | `{name, untriaged}` |
 | `GET /public/presentation` | per-kind settings and tag titles |
-| `GET /public/rankings` | all rankings |
-| `GET /public/rankings/{slug}` | one ranking; each placement has `kind, title, cover, note`, and `page` when the entry is public |

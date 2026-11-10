@@ -68,7 +68,6 @@ playtime stays private, and public pages show only this, when ap says it.
 **Blurb** — public text, written for others, shown on the item's page.
 
 **Moment** — a dated note on an entry: *replayed 2024, still great*. May
-carry a score (which becomes the entry's score unless overridden) and may
 point at other items.
 
 ## Sources

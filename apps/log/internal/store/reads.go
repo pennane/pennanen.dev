@@ -136,7 +136,7 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 			v.Entry = &Entry{
 				Status: status.String, Visibility: Visibility(visibility.String),
 				Blurb: blurb.String, TimeSpent: TimeSpent(timeSpent.String), UpdatedAt: updatedAt.String,
-				Scores: map[string]int{}, Tags: []string{},
+				Scores: map[string]string{}, Tags: []string{},
 			}
 		}
 		views = append(views, v)
@@ -154,6 +154,9 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 		return nil, err
 	}
 	if err := s.attachScoresAndTags(ctx, ids, byID); err != nil {
+		return nil, err
+	}
+	if err := s.attachRanks(ctx, views); err != nil {
 		return nil, err
 	}
 	return views, nil
@@ -213,20 +216,19 @@ func (s *Store) claimsOf(ctx context.Context, ids []int64) ([]itemClaim, error) 
 func (s *Store) attachScoresAndTags(ctx context.Context, ids []int64, byID map[int64]*ItemView) error {
 	return forChunks(ids, func(chunk []int64) error {
 		in, args := placeholders(len(chunk)), int64sAsArgs(chunk)
-		rows, err := s.db.QueryContext(ctx, `SELECT item_id, axis, value FROM score WHERE item_id IN (`+in+`)`, args...)
+		rows, err := s.db.QueryContext(ctx, `SELECT item_id, axis, division FROM score WHERE item_id IN (`+in+`)`, args...)
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
 			var id int64
-			var axis string
-			var value int
-			if err := rows.Scan(&id, &axis, &value); err != nil {
+			var axis, division string
+			if err := rows.Scan(&id, &axis, &division); err != nil {
 				rows.Close()
 				return err
 			}
 			if v := byID[id]; v.Entry != nil {
-				v.Entry.Scores[axis] = value
+				v.Entry.Scores[axis] = division
 			}
 		}
 		rows.Close()

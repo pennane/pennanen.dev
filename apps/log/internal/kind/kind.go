@@ -37,6 +37,7 @@ type Kind struct {
 	StatusesToScore  []string                           `json:"statusesToScore"`
 	StatusesShown    []string                           `json:"statusesShown"`
 	Axes             []string                           `json:"axes"`
+	RankedAxis       string                             `json:"rankedAxis"`
 	Fields           []Field                            `json:"fields"`
 	UndeclaredFields UndeclaredFields                   `json:"undeclaredFields"`
 	IdentitySource   string                             `json:"identitySource,omitempty"`
@@ -125,12 +126,7 @@ func isWebURL(s string) bool {
 
 var registry = map[string]Kind{}
 
-const ReservedForRankings = "ranking"
-
 func register(k Kind) {
-	if k.Name == ReservedForRankings {
-		panic(fmt.Sprintf("kind name %q is reserved for rankings", k.Name))
-	}
 	k.Statuses = append(k.Statuses, Dismissed)
 	registry[k.Name] = k
 }

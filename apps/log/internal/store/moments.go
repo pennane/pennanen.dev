@@ -13,22 +13,13 @@ func (s *Store) AddMoment(ctx context.Context, itemID int64, m NewMoment) (int64
 	if m.Visibility == "" {
 		m.Visibility = InheritFromEntry
 	}
-	if m.ScoresEffect == "" {
-		m.ScoresEffect = MomentScoresUpdateEntry
-	}
 	if err := validateMoment(m); err != nil {
 		return 0, err
 	}
 	var momentID int64
 	err := s.inTx(ctx, func(tx *sql.Tx) error {
-		k, err := lookupKind(ctx, tx, itemID)
-		if err != nil {
+		if _, err := lookupKind(ctx, tx, itemID); err != nil {
 			return err
-		}
-		for axis := range m.Scores {
-			if !k.HasAxis(axis) {
-				return fmt.Errorf("%w: %s has no axis %q", ErrInvalid, k.Name, axis)
-			}
 		}
 		if err := ensureEntry(ctx, tx, itemID); err != nil {
 			return err
@@ -40,16 +31,6 @@ func (s *Store) AddMoment(ctx context.Context, itemID int64, m NewMoment) (int64
 		}
 		if momentID, err = result.LastInsertId(); err != nil {
 			return err
-		}
-		for axis, value := range m.Scores {
-			if _, err := tx.ExecContext(ctx, `INSERT INTO moment_score (moment_id, axis, value) VALUES (?, ?, ?)`, momentID, axis, value); err != nil {
-				return err
-			}
-			if m.ScoresEffect == MomentScoresUpdateEntry {
-				if err := setScore(ctx, tx, itemID, axis, &value); err != nil {
-					return err
-				}
-			}
 		}
 		for _, ref := range m.Refs {
 			if _, err := tx.ExecContext(ctx, `INSERT INTO moment_ref (moment_id, item_id) VALUES (?, ?) ON CONFLICT DO NOTHING`, momentID, ref); err != nil {
@@ -67,14 +48,6 @@ func validateMoment(m NewMoment) error {
 	}
 	if m.Visibility != InheritFromEntry && m.Visibility != MomentPrivate {
 		return fmt.Errorf("%w: moment visibility must be inherit or private", ErrInvalid)
-	}
-	if m.ScoresEffect != MomentScoresUpdateEntry && m.ScoresEffect != MomentScoresStayOnMoment {
-		return fmt.Errorf("%w: scoresEffect must be update-entry or stay-on-moment", ErrInvalid)
-	}
-	for axis, value := range m.Scores {
-		if value < 0 || value > 100 {
-			return fmt.Errorf("%w: score %q must be within 0–100", ErrInvalid, axis)
-		}
 	}
 	return nil
 }
@@ -94,7 +67,7 @@ func (s *Store) momentsOf(ctx context.Context, itemID int64) ([]Moment, error) {
 	}
 	var moments []Moment
 	for rows.Next() {
-		m := Moment{Scores: map[string]int{}, Refs: []int64{}}
+		m := Moment{Refs: []int64{}}
 		if err := rows.Scan(&m.ID, &m.ItemID, &m.At, &m.Note, &m.Visibility); err != nil {
 			rows.Close()
 			return nil, err
@@ -114,21 +87,7 @@ func (s *Store) momentsOf(ctx context.Context, itemID int64) ([]Moment, error) {
 }
 
 func (s *Store) attachMomentDetails(ctx context.Context, m *Moment) error {
-	rows, err := s.db.QueryContext(ctx, `SELECT axis, value FROM moment_score WHERE moment_id = ?`, m.ID)
-	if err != nil {
-		return err
-	}
-	for rows.Next() {
-		var axis string
-		var value int
-		if err := rows.Scan(&axis, &value); err != nil {
-			rows.Close()
-			return err
-		}
-		m.Scores[axis] = value
-	}
-	rows.Close()
-	rows, err = s.db.QueryContext(ctx, `SELECT item_id FROM moment_ref WHERE moment_id = ? ORDER BY item_id`, m.ID)
+	rows, err := s.db.QueryContext(ctx, `SELECT item_id FROM moment_ref WHERE moment_id = ? ORDER BY item_id`, m.ID)
 	if err != nil {
 		return err
 	}

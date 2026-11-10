@@ -1,7 +1,9 @@
 package api
 
 import (
+	"cmp"
 	"net/http"
+	"slices"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
@@ -9,23 +11,50 @@ import (
 )
 
 type PublicItem struct {
-	Kind      string          `json:"kind"`
-	Slug      string          `json:"slug"`
-	Fields    map[string]any  `json:"fields"`
-	Status    string          `json:"status"`
-	Scores    map[string]int  `json:"scores"`
-	Tags      []string        `json:"tags"`
-	Blurb     string          `json:"blurb"`
-	TimeSpent store.TimeSpent `json:"timeSpent,omitempty"`
-	UpdatedAt string          `json:"updatedAt"`
-	Moments   []PublicMoment  `json:"moments,omitempty"`
+	Kind      string            `json:"kind"`
+	Slug      string            `json:"slug"`
+	Fields    map[string]any    `json:"fields"`
+	Status    string            `json:"status"`
+	Scores    map[string]string `json:"scores"`
+	Rank      *PublicRank       `json:"rank,omitempty"`
+	Tags      []string          `json:"tags"`
+	Blurb     string            `json:"blurb"`
+	TimeSpent store.TimeSpent   `json:"timeSpent,omitempty"`
+	UpdatedAt string            `json:"updatedAt"`
+	Moments   []PublicMoment    `json:"moments,omitempty"`
 }
 
 type PublicMoment struct {
-	At     string         `json:"at"`
-	Note   string         `json:"note"`
-	Scores map[string]int `json:"scores"`
-	Refs   []PublicRef    `json:"refs"`
+	At   string      `json:"at"`
+	Note string      `json:"note"`
+	Refs []PublicRef `json:"refs"`
+}
+
+type PublicRank struct {
+	Place int `json:"place"`
+	Of    int `json:"of"`
+}
+
+func publicRanks(views []store.ItemView, isPublic publicRule) map[int64]PublicRank {
+	var ranked []store.ItemView
+	for _, v := range views {
+		if isPublic(v) && v.Entry.Rank > 0 {
+			ranked = append(ranked, v)
+		}
+	}
+	slices.SortFunc(ranked, func(a, b store.ItemView) int { return cmp.Compare(a.Entry.Rank, b.Entry.Rank) })
+	ranks := map[int64]PublicRank{}
+	for i, v := range ranked {
+		ranks[v.ID] = PublicRank{Place: i + 1, Of: len(ranked)}
+	}
+	return ranks
+}
+
+func withRank(item PublicItem, rank PublicRank, ranked bool) PublicItem {
+	if ranked {
+		item.Rank = &rank
+	}
+	return item
 }
 
 type PublicRef struct {
@@ -102,10 +131,12 @@ func (s *Server) publicItems(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
+	ranks := publicRanks(views, isPublic)
 	items := make([]PublicItem, 0, len(views))
 	for _, v := range views {
 		if isPublic(v) {
-			items = append(items, publicItem(v))
+			rank, ranked := ranks[v.ID]
+			items = append(items, withRank(publicItem(v), rank, ranked))
 		}
 	}
 	writeJSON(w, http.StatusOK, items)
@@ -125,7 +156,13 @@ func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
-	item := publicItem(view)
+	kindViews, err := s.Store.ListItems(r.Context(), store.ItemFilter{Kind: view.Kind})
+	if err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
+	rank, ranked := publicRanks(kindViews, isPublic)[view.ID]
+	item := withRank(publicItem(view), rank, ranked)
 	refs, err := s.publicRefs(r, view.Moments, isPublic)
 	if err != nil {
 		respond(w, 0, nil, err)
@@ -135,7 +172,7 @@ func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
 		if m.Visibility == store.MomentPrivate {
 			continue
 		}
-		pm := PublicMoment{At: m.At, Note: m.Note, Scores: m.Scores, Refs: []PublicRef{}}
+		pm := PublicMoment{At: m.At, Note: m.Note, Refs: []PublicRef{}}
 		for _, id := range m.Refs {
 			if ref, shown := refs[id]; shown {
 				pm.Refs = append(pm.Refs, ref)

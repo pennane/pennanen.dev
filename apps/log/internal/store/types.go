@@ -45,13 +45,6 @@ const (
 	MomentPrivate    MomentVisibility = "private"
 )
 
-type MomentScoresEffect string
-
-const (
-	MomentScoresUpdateEntry  MomentScoresEffect = "update-entry"
-	MomentScoresStayOnMoment MomentScoresEffect = "stay-on-moment"
-)
-
 type Item struct {
 	ID        int64  `json:"id"`
 	Kind      string `json:"kind"`
@@ -60,13 +53,14 @@ type Item struct {
 }
 
 type Entry struct {
-	Status     string         `json:"status"`
-	Visibility Visibility     `json:"visibility"`
-	Blurb      string         `json:"blurb"`
-	TimeSpent  TimeSpent      `json:"timeSpent,omitempty"`
-	Scores     map[string]int `json:"scores"`
-	Tags       []string       `json:"tags"`
-	UpdatedAt  string         `json:"updatedAt"`
+	Status     string            `json:"status"`
+	Visibility Visibility        `json:"visibility"`
+	Blurb      string            `json:"blurb"`
+	TimeSpent  TimeSpent         `json:"timeSpent,omitempty"`
+	Scores     map[string]string `json:"scores"`
+	Rank       int               `json:"rank,omitempty"`
+	Tags       []string          `json:"tags"`
+	UpdatedAt  string            `json:"updatedAt"`
 }
 
 type Moment struct {
@@ -75,7 +69,6 @@ type Moment struct {
 	At         string           `json:"at"`
 	Note       string           `json:"note"`
 	Visibility MomentVisibility `json:"visibility"`
-	Scores     map[string]int   `json:"scores"`
 	Refs       []int64          `json:"refs"`
 }
 
@@ -96,22 +89,20 @@ type ItemView struct {
 }
 
 type EntryChange struct {
-	Status     *string         `json:"status"`
-	Visibility *Visibility     `json:"visibility"`
-	Blurb      *string         `json:"blurb"`
-	TimeSpent  *TimeSpent      `json:"timeSpent"`
-	Scores     map[string]*int `json:"scores"`
-	AddTags    []string        `json:"addTags"`
-	RemoveTags []string        `json:"removeTags"`
+	Status     *string            `json:"status"`
+	Visibility *Visibility        `json:"visibility"`
+	Blurb      *string            `json:"blurb"`
+	TimeSpent  *TimeSpent         `json:"timeSpent"`
+	Scores     map[string]*string `json:"scores"`
+	AddTags    []string           `json:"addTags"`
+	RemoveTags []string           `json:"removeTags"`
 }
 
 type NewMoment struct {
-	At           string             `json:"at"`
-	Note         string             `json:"note"`
-	Visibility   MomentVisibility   `json:"visibility"`
-	Scores       map[string]int     `json:"scores"`
-	Refs         []int64            `json:"refs"`
-	ScoresEffect MomentScoresEffect `json:"scoresEffect"`
+	At         string           `json:"at"`
+	Note       string           `json:"note"`
+	Visibility MomentVisibility `json:"visibility"`
+	Refs       []int64          `json:"refs"`
 }
 
 type ItemFilter struct {

@@ -83,11 +83,11 @@ func TestEntryRulesFollowKind(t *testing.T) {
 	if err := s.ChangeEntry(ctx, id, store.EntryChange{Status: ptr("finished")}); err == nil {
 		t.Error("thing accepted a game status")
 	}
-	if err := s.ChangeEntry(ctx, id, store.EntryChange{Scores: map[string]*int{"vibes": ptr(50)}}); err == nil {
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{Scores: map[string]*string{"vibes": ptr("good")}}); err == nil {
 		t.Error("accepted an undeclared axis")
 	}
 	if err := s.ChangeEntry(ctx, id, store.EntryChange{
-		Scores:  map[string]*int{kind.Enjoyment: ptr(92)},
+		Scores:  map[string]*string{kind.Enjoyment: ptr("loved")},
 		AddTags: []string{" Favorite / All Time "},
 	}); err != nil {
 		t.Fatal(err)
@@ -96,7 +96,7 @@ func TestEntryRulesFollowKind(t *testing.T) {
 		t.Error("game accepted an undeclared field")
 	}
 	favorites, _ := s.ListItems(ctx, store.ItemFilter{Tag: "favorite"})
-	if len(favorites) != 1 || favorites[0].Entry.Tags[0] != "favorite/all-time" || favorites[0].Entry.Scores[kind.Enjoyment] != 92 {
+	if len(favorites) != 1 || favorites[0].Entry.Tags[0] != "favorite/all-time" || favorites[0].Entry.Scores[kind.Enjoyment] != "loved" {
 		t.Errorf("favorites = %+v", favorites)
 	}
 	if favorites[0].Verdicts.Values["mood"] != "foggy" {
@@ -104,19 +104,19 @@ func TestEntryRulesFollowKind(t *testing.T) {
 	}
 }
 
-func TestMomentScoreUpdatesEntryByDefault(t *testing.T) {
+func TestMomentsKeepTheirRefs(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
 	id, _ := s.CreateItem(ctx, "game", "Outer Wilds", nil)
 	other, _ := s.CreateItem(ctx, "thing", "Rainy weekend", nil)
-	if _, err := s.AddMoment(ctx, id, store.NewMoment{At: "2024-03-01", Note: "replayed", Scores: map[string]int{kind.Enjoyment: 97}, Refs: []int64{other}}); err != nil {
+	if _, err := s.AddMoment(ctx, id, store.NewMoment{At: "2024-03-01", Note: "replayed", Refs: []int64{other}}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.AddMoment(ctx, id, store.NewMoment{At: "2025-01-01", Scores: map[string]int{kind.Enjoyment: 10}, ScoresEffect: store.MomentScoresStayOnMoment}); err != nil {
+	if _, err := s.AddMoment(ctx, id, store.NewMoment{At: "2025-01-01", Note: "again"}); err != nil {
 		t.Fatal(err)
 	}
 	v, _ := s.GetItem(ctx, id)
-	if v.Entry.Scores[kind.Enjoyment] != 97 || len(v.Moments) != 2 || v.Moments[1].Refs[0] != other {
+	if len(v.Moments) != 2 || v.Moments[1].Refs[0] != other {
 		t.Errorf("entry %+v moments %+v", v.Entry, v.Moments)
 	}
 }

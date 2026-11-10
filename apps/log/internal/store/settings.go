@@ -13,35 +13,39 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 )
 
-type ScoreDisplay string
-
-const (
-	ShowNumber ScoreDisplay = "number"
-	ShowWord   ScoreDisplay = "word"
-	ShowBoth   ScoreDisplay = "both"
-)
-
-var ScoreDisplays = []ScoreDisplay{ShowNumber, ShowWord, ShowBoth}
-
-type ScoreWord struct {
-	From int    `json:"from"`
-	Word string `json:"word"`
+type Division struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
 }
 
 type KindSettings struct {
-	StatusesShown []string          `json:"statusesShown"`
-	AxisLabels    map[string]string `json:"axisLabels"`
-	ScoreDisplay  ScoreDisplay      `json:"scoreDisplay"`
-	ScoreWords    []ScoreWord       `json:"scoreWords"`
+	StatusesShown []string              `json:"statusesShown"`
+	AxisLabels    map[string]string     `json:"axisLabels"`
+	Divisions     map[string][]Division `json:"divisions"`
 }
 
 type TagTitles map[string]string
 
-var defaultScoreWords = []ScoreWord{
-	{From: 0, Word: "disliked"},
-	{From: 50, Word: "meh"},
-	{From: 70, Word: "liked"},
-	{From: 88, Word: "loved"},
+func divisionsNamed(names ...string) []Division {
+	divisions := make([]Division, len(names))
+	for i, name := range names {
+		divisions[i] = Division{Key: name, Name: name}
+	}
+	return divisions
+}
+
+var defaultDivisions = map[string][]Division{
+	kind.Enjoyment: divisionsNamed("loved", "liked", "fine", "meh", "disliked"),
+	kind.Quality:   divisionsNamed("masterpiece", "great", "solid", "rough", "broken"),
+}
+
+var fallbackDivisions = divisionsNamed("good", "fine", "bad")
+
+func defaultDivisionsOf(axis string) []Division {
+	if divisions, known := defaultDivisions[axis]; known {
+		return slices.Clone(divisions)
+	}
+	return slices.Clone(fallbackDivisions)
 }
 
 var defaultTagTitles = TagTitles{
@@ -55,18 +59,24 @@ func kindSettingsKey(k kind.Kind) string { return "kind:" + k.Name }
 
 func DefaultKindSettings(k kind.Kind) KindSettings {
 	labels := map[string]string{}
+	divisions := map[string][]Division{}
 	for _, axis := range k.Axes {
 		labels[axis] = axis
+		divisions[axis] = defaultDivisionsOf(axis)
 	}
 	return KindSettings{
 		StatusesShown: slices.Clone(k.StatusesShown),
 		AxisLabels:    labels,
-		ScoreDisplay:  ShowNumber,
-		ScoreWords:    slices.Clone(defaultScoreWords),
+		Divisions:     divisions,
 	}
 }
 
 func (ks KindSettings) Shows(status string) bool { return slices.Contains(ks.StatusesShown, status) }
+
+func (ks KindSettings) DivisionIndex(axis, key string) (int, bool) {
+	i := slices.IndexFunc(ks.Divisions[axis], func(d Division) bool { return d.Key == key })
+	return i, i >= 0
+}
 
 func (s *Store) KindSettings(ctx context.Context, k kind.Kind) (KindSettings, error) {
 	settings := DefaultKindSettings(k)
@@ -76,6 +86,9 @@ func (s *Store) KindSettings(ctx context.Context, k kind.Kind) (KindSettings, er
 	for _, axis := range k.Axes {
 		if settings.AxisLabels[axis] == "" {
 			settings.AxisLabels[axis] = axis
+		}
+		if len(settings.Divisions[axis]) == 0 {
+			settings.Divisions[axis] = defaultDivisionsOf(axis)
 		}
 	}
 	return settings, nil
@@ -98,6 +111,9 @@ func (s *Store) SetKindSettings(ctx context.Context, k kind.Kind, settings KindS
 	if err != nil {
 		return settings, err
 	}
+	if err := s.refuseDroppingUsedDivisions(ctx, k, settings); err != nil {
+		return settings, err
+	}
 	return settings, s.writeSetting(ctx, kindSettingsKey(k), settings)
 }
 
@@ -117,28 +133,68 @@ func validKindSettings(k kind.Kind, settings KindSettings) (KindSettings, error)
 		}
 	}
 	settings.AxisLabels = labels
-	if !slices.Contains(ScoreDisplays, settings.ScoreDisplay) {
-		return settings, fmt.Errorf("%w: score display must be one of %v", ErrInvalid, ScoreDisplays)
+	divisions := map[string][]Division{}
+	for _, axis := range k.Axes {
+		valid, err := validDivisions(axis, settings.Divisions[axis])
+		if err != nil {
+			return settings, err
+		}
+		divisions[axis] = valid
 	}
-	words, err := validScoreWords(settings.ScoreWords)
-	settings.ScoreWords = words
-	return settings, err
+	for axis := range settings.Divisions {
+		if !k.HasAxis(axis) {
+			return settings, fmt.Errorf("%w: %s has no axis %q", ErrInvalid, k.Name, axis)
+		}
+	}
+	settings.Divisions = divisions
+	return settings, nil
 }
 
-func validScoreWords(words []ScoreWord) ([]ScoreWord, error) {
-	out := make([]ScoreWord, 0, len(words))
-	for _, w := range words {
-		w.Word = strings.TrimSpace(w.Word)
-		if w.Word == "" || w.From < 0 || w.From > 100 {
-			return nil, fmt.Errorf("%w: each score word needs a word and a start within 0–100", ErrInvalid)
-		}
-		if slices.ContainsFunc(out, func(o ScoreWord) bool { return o.From == w.From }) {
-			return nil, fmt.Errorf("%w: two score words start at %d", ErrInvalid, w.From)
-		}
-		out = append(out, w)
+func validDivisions(axis string, divisions []Division) ([]Division, error) {
+	if len(divisions) == 0 {
+		return nil, fmt.Errorf("%w: %s needs at least one division", ErrInvalid, axis)
 	}
-	slices.SortFunc(out, func(a, b ScoreWord) int { return a.From - b.From })
+	out := make([]Division, 0, len(divisions))
+	for _, d := range divisions {
+		d.Name = strings.TrimSpace(d.Name)
+		d.Key = DivisionKey(d.Key)
+		if d.Key == "" {
+			d.Key = DivisionKey(d.Name)
+		}
+		if d.Name == "" || d.Key == "" {
+			return nil, fmt.Errorf("%w: each %s division needs a name", ErrInvalid, axis)
+		}
+		if slices.ContainsFunc(out, func(o Division) bool { return o.Key == d.Key }) {
+			return nil, fmt.Errorf("%w: two %s divisions share the key %q", ErrInvalid, axis, d.Key)
+		}
+		out = append(out, d)
+	}
 	return out, nil
+}
+
+func DivisionKey(text string) string {
+	return strings.Join(strings.Fields(strings.ToLower(strings.ReplaceAll(text, "/", " "))), "-")
+}
+
+func (s *Store) refuseDroppingUsedDivisions(ctx context.Context, k kind.Kind, settings KindSettings) error {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT s.axis, s.division, count(*) FROM score s JOIN item i ON i.id = s.item_id
+		WHERE i.kind = ? GROUP BY s.axis, s.division`, k.Name)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var axis, division string
+		var entries int
+		if err := rows.Scan(&axis, &division, &entries); err != nil {
+			return err
+		}
+		if _, kept := settings.DivisionIndex(axis, division); !kept {
+			return fmt.Errorf("%w: %d %s entries sit in %s %q; move them before removing it", ErrConflict, entries, k.Name, axis, division)
+		}
+	}
+	return rows.Err()
 }
 
 func (s *Store) TagTitles(ctx context.Context) (TagTitles, error) {

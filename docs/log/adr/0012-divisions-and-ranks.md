@@ -25,11 +25,14 @@ of games. Quality is an annotation; enjoyment is what orders things.
   replace them.
 - Rankings (ADR 8) are removed, unbuilt in admin and on public pages.
   Cross-kind or per-tag lists may come back later as their own decision.
+- Moments no longer carry scores.
 - Old scores migrate once: the nearest of 92/80/60/35 picks the division,
-  and within it the higher old number ranks first, then playtime.
+  and within it the higher old number ranks first, then playtime. The old
+  numbers stay in `number_score_archive` until nothing needs them.
 
 ## Consequences
 - Reordering is a drag or a comparison, never a typed number.
 - Adding an entry shifts the ranks below it; the division stays.
-- A rank needs a sortable position per entry so a move writes one row.
+- A rank is a position inside its division; a move renumbers that division,
+  which is a few hundred rows at most.
 - Ranks never span kinds.

@@ -19,9 +19,13 @@ func (s *Store) ChangeEntries(ctx context.Context, itemIDs []int64, change Entry
 	if err != nil {
 		return err
 	}
+	settings, err := s.AllKindSettings(ctx)
+	if err != nil {
+		return err
+	}
 	return s.inTx(ctx, func(tx *sql.Tx) error {
 		for _, id := range itemIDs {
-			if err := changeEntry(ctx, tx, id, change); err != nil {
+			if err := changeEntry(ctx, tx, settings, id, change); err != nil {
 				return fmt.Errorf("item %d: %w", id, err)
 			}
 		}
@@ -36,9 +40,10 @@ func normalizedChange(change EntryChange) (EntryChange, error) {
 	if change.TimeSpent != nil && *change.TimeSpent != TimeSpentUnsaid && !slices.Contains(TimeSpentChoices, *change.TimeSpent) {
 		return change, fmt.Errorf("%w: time spent must be one of %v, or empty to unsay it", ErrInvalid, TimeSpentChoices)
 	}
-	for axis, value := range change.Scores {
-		if value != nil && (*value < 0 || *value > 100) {
-			return change, fmt.Errorf("%w: score %q must be within 0–100", ErrInvalid, axis)
+	for axis, division := range change.Scores {
+		if division != nil {
+			key := DivisionKey(*division)
+			change.Scores[axis] = &key
 		}
 	}
 	var err error
@@ -74,7 +79,7 @@ func normalizedTags(tags []string) ([]string, error) {
 	return out, nil
 }
 
-func changeEntry(ctx context.Context, tx *sql.Tx, itemID int64, change EntryChange) error {
+func changeEntry(ctx context.Context, tx *sql.Tx, settings map[string]KindSettings, itemID int64, change EntryChange) error {
 	k, err := lookupKind(ctx, tx, itemID)
 	if err != nil {
 		return err
@@ -82,9 +87,12 @@ func changeEntry(ctx context.Context, tx *sql.Tx, itemID int64, change EntryChan
 	if change.Status != nil && !k.HasStatus(*change.Status) {
 		return fmt.Errorf("%w: %s has no status %q", ErrInvalid, k.Name, *change.Status)
 	}
-	for axis := range change.Scores {
+	for axis, division := range change.Scores {
 		if !k.HasAxis(axis) {
 			return fmt.Errorf("%w: %s has no axis %q", ErrInvalid, k.Name, axis)
+		}
+		if _, known := settings[k.Name].DivisionIndex(axis, deref(division)); division != nil && !known {
+			return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, axis, *division)
 		}
 	}
 	if err := ensureEntry(ctx, tx, itemID); err != nil {
@@ -101,8 +109,13 @@ func changeEntry(ctx context.Context, tx *sql.Tx, itemID int64, change EntryChan
 		change.Status, change.Visibility, change.Blurb, change.TimeSpent, change.TimeSpent, itemID); err != nil {
 		return err
 	}
-	for axis, value := range change.Scores {
-		if err := setScore(ctx, tx, itemID, axis, value); err != nil {
+	if change.Status != nil && *change.Status == kind.Dismissed {
+		if err := clearScores(ctx, tx, k, itemID); err != nil {
+			return err
+		}
+	}
+	for axis, division := range change.Scores {
+		if err := setScore(ctx, tx, k, itemID, axis, division); err != nil {
 			return err
 		}
 	}
@@ -119,15 +132,11 @@ func changeEntry(ctx context.Context, tx *sql.Tx, itemID int64, change EntryChan
 	return nil
 }
 
-func setScore(ctx context.Context, tx *sql.Tx, itemID int64, axis string, value *int) error {
-	if value == nil {
-		_, err := tx.ExecContext(ctx, `DELETE FROM score WHERE item_id = ? AND axis = ?`, itemID, axis)
-		return err
+func deref(text *string) string {
+	if text == nil {
+		return ""
 	}
-	_, err := tx.ExecContext(ctx, `
-		INSERT INTO score (item_id, axis, value) VALUES (?, ?, ?)
-		ON CONFLICT (item_id, axis) DO UPDATE SET value = excluded.value`, itemID, axis, *value)
-	return err
+	return *text
 }
 
 func lookupKind(ctx context.Context, q queryer, itemID int64) (kind.Kind, error) {

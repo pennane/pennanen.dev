@@ -9,13 +9,14 @@ import (
 )
 
 type listedEntry struct {
-	ID         int64            `json:"id"`
-	Title      string           `json:"title"`
-	Cover      string           `json:"cover,omitempty"`
-	Status     string           `json:"status"`
-	Visibility store.Visibility `json:"visibility"`
-	Scores     map[string]int   `json:"scores"`
-	Tags       []string         `json:"tags"`
+	ID         int64             `json:"id"`
+	Title      string            `json:"title"`
+	Cover      string            `json:"cover,omitempty"`
+	Status     string            `json:"status"`
+	Visibility store.Visibility  `json:"visibility"`
+	Scores     map[string]string `json:"scores"`
+	Rank       int               `json:"rank,omitempty"`
+	Tags       []string          `json:"tags"`
 }
 
 func (s *Server) listEntries(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +46,37 @@ func toListedEntry(v store.ItemView) listedEntry {
 		Status:     v.Entry.Status,
 		Visibility: v.Entry.Visibility,
 		Scores:     v.Entry.Scores,
+		Rank:       v.Entry.Rank,
 		Tags:       v.Entry.Tags,
 	}
+}
+
+var coverFields = []string{"cover", "image"}
+
+func coverOf(v store.ItemView) string {
+	for _, field := range coverFields {
+		if url, isString := v.Verdicts.Values[field].(string); isString && url != "" {
+			return url
+		}
+	}
+	return ""
+}
+
+func (s *Server) placeEntry(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Division string `json:"division"`
+		Index    int    `json:"index"`
+	}
+	if !readJSON(w, r, &body) {
+		return
+	}
+	err := s.Store.Place(r.Context(), id, body.Division, body.Index)
+	if err == nil {
+		s.changed()
+	}
+	respond(w, http.StatusNoContent, nil, err)
 }
