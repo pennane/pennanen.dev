@@ -9,7 +9,8 @@ import type {
   FieldValue,
   ItemLink,
   ItemView,
-  KindSettings
+  KindSettings,
+  TakeFieldVisibility
 } from '../../lib/log/types'
 import type { EntrySubject } from './entries/Editor'
 
@@ -30,8 +31,19 @@ export async function openEntry(itemId: number): Promise<EntrySubject> {
     cover: textField(item.verdicts.values, 'cover') ?? textField(item.verdicts.values, 'image'),
     publicPath: `/log/${item.kind}/${item.slug}`,
     entry: item.entry,
-    lastPlayed: lastPlayedOf(item)
+    lastPlayed: lastPlayedOf(item),
+    takes: item.takes
   }
+}
+
+export async function setTakeFieldVisibility(
+  itemId: number,
+  source: string,
+  field: string,
+  visibility: TakeFieldVisibility
+) {
+  await requireAdmin()
+  return (await logAdmin.setTakeFieldVisibility(itemId, source, field, visibility)).takes
 }
 
 const lastPlayedOf = (item: ItemView): FieldValue => ({

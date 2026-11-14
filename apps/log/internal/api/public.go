@@ -8,6 +8,7 @@ import (
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 type PublicItem struct {
@@ -23,6 +24,7 @@ type PublicItem struct {
 	UpdatedAt  string            `json:"updatedAt"`
 	Prose      string            `json:"prose,omitempty"`
 	ProseWords int               `json:"proseWords"`
+	Takes      []verdict.Take    `json:"takes"`
 }
 
 type PublicRank struct {
@@ -196,5 +198,14 @@ func publicItem(v store.ItemView) PublicItem {
 		TimeSpent:  v.Entry.TimeSpent,
 		UpdatedAt:  v.Entry.UpdatedAt,
 		ProseWords: len(strings.Fields(v.Entry.Prose)),
+		Takes:      publicTakes(v.Takes),
 	}
+}
+
+func publicTakes(takes []store.TakeView) []verdict.Take {
+	public := make([]verdict.Take, 0, len(takes))
+	for _, t := range takes {
+		public = append(public, t.Public())
+	}
+	return public
 }

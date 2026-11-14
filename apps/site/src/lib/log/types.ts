@@ -40,7 +40,14 @@ export type Kind = {
   rankedAxis: string
   axes: Axis[]
   fields: { name: string; type: string }[]
+  takes: { source: string; privateFields: string[] }[]
 }
+
+export type Take = { source: string; values: Record<string, unknown>; fetchedAt: string }
+
+export type TakeView = Take & { hidden: string[] }
+
+export type TakeFieldVisibility = 'shown' | 'hidden'
 
 export const SET_BY_AP = 'ap'
 
@@ -79,6 +86,7 @@ export type ItemView = {
   verdicts: { values: Record<string, unknown>; sourceOf: Record<string, string> }
   entry: Entry | null
   hint?: Hint
+  takes: TakeView[]
 }
 
 export type UploadTicket = { ticket: string; url: string }

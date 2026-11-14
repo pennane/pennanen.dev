@@ -9,6 +9,7 @@ import type {
   KindSettings,
   Presentation,
   SyncReport,
+  TakeFieldVisibility,
   UploadTicket
 } from './types'
 
@@ -76,6 +77,16 @@ export const logAdmin = {
   },
   changeEntry: (itemId: number, change: EntryChange) =>
     call<ItemView>(`/admin/items/${itemId}/entry`, send('PATCH', change)),
+  setTakeFieldVisibility: (
+    itemId: number,
+    source: string,
+    field: string,
+    visibility: TakeFieldVisibility
+  ) =>
+    call<ItemView>(
+      `/admin/items/${itemId}/takes/${encodeURIComponent(source)}/${encodeURIComponent(field)}`,
+      send('PUT', { visibility })
+    ),
   changeFields: (itemId: number, changes: Record<string, unknown>) =>
     call<ItemView>(`/admin/items/${itemId}/fields`, send('PATCH', changes)),
   changeEntries: (itemIds: number[], change: EntryChange) =>

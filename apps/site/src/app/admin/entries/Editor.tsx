@@ -21,6 +21,7 @@ import type {
   Visibility
 } from '../../../lib/log/types'
 import { SET_BY_AP, sortOf } from '../../../lib/log/types'
+import type { TakeFieldVisibility, TakeView } from '../../../lib/log/types'
 import { SaveStatus, useKeys } from '../_queue/card'
 import { Compare, compareKeys, type Comparing } from '../_queue/Compare'
 import {
@@ -41,7 +42,8 @@ import {
   changeLastPlayed,
   findItemLinks,
   imageUploadTicket,
-  placeEntry
+  placeEntry,
+  setTakeFieldVisibility
 } from '../actions'
 import styles from './editor.module.css'
 
@@ -81,10 +83,11 @@ export type EntrySubject = {
   publicPath: string
   entry: Entry
   lastPlayed: FieldValue
+  takes: TakeView[]
 }
 
 export const Editor = ({
-  subject: { itemId, title, cover, publicPath, entry, lastPlayed },
+  subject: { itemId, title, cover, publicPath, entry, lastPlayed, takes },
   kind,
   knownTags,
   ranked,
@@ -221,6 +224,8 @@ export const Editor = ({
           }}
         />
       </Section>
+
+      {takes.length > 0 && <Takes itemId={itemId} kind={kind} initial={takes} />}
 
       {outsideSays.length > 0 && <p className={styles.note}>{outsideSays.join(' · ')}</p>}
 
@@ -502,6 +507,51 @@ const RankedPicker = ({
         </>
       )}
     </Section>
+  )
+}
+
+const Takes = ({ itemId, kind, initial }: { itemId: number; kind: Kind; initial: TakeView[] }) => {
+  const [takes, setTakes] = useState(initial)
+  const [problem, setProblem] = useState<string>()
+  const toggle = async (source: string, field: string, visibility: TakeFieldVisibility) => {
+    try {
+      setTakes(await setTakeFieldVisibility(itemId, source, field, visibility))
+      setProblem(undefined)
+    } catch (error) {
+      setProblem(String(error))
+    }
+  }
+  return (
+    <>
+      {takes.map((take) => {
+        const privateFields = kind.takes.find((t) => t.source === take.source)?.privateFields ?? []
+        return (
+          <Section key={take.source} label={take.source}>
+            <dl className={styles.take}>
+              {Object.entries(take.values).map(([field, value]) => {
+                const hidden = take.hidden.includes(field)
+                return (
+                  <div key={field} className={styles.takeField}>
+                    <dt>{field}</dt>
+                    <dd>{String(value)}</dd>
+                    {privateFields.includes(field) && (
+                      <button
+                        type="button"
+                        className={styles.quiet}
+                        onClick={() => toggle(take.source, field, hidden ? 'shown' : 'hidden')}
+                      >
+                        {hidden ? 'private, show publicly' : 'public, hide again'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </dl>
+          </Section>
+        )
+      })}
+      {problem && <p className={styles.note}>{problem}</p>}
+    </>
   )
 }
 

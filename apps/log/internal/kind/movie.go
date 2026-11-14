@@ -1,0 +1,38 @@
+package kind
+
+const (
+	SourceTMDB           = "tmdb"
+	SourceLetterboxd     = "letterboxd"
+	SourceLetterboxdTake = "letterboxd-take"
+
+	Want    = "want"
+	Watched = "watched"
+)
+
+func init() {
+	register(Kind{
+		Name:             "movie",
+		DefaultTitle:     "movies",
+		Statuses:         []string{Untriaged, Want, Watched},
+		StatusesToScore:  []string{Watched},
+		StatusesShown:    []string{Watched},
+		DefaultAxes:      []string{Prestige, Quality},
+		RankedAxis:       Prestige,
+		UndeclaredFields: RejectUndeclaredFields,
+		IdentitySource:   SourceTMDB,
+		Fields: []Field{
+			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceTMDB, SourceLetterboxd}},
+			{Name: "original_title", Type: Text, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "released", Type: PartialDate, SourcesBestFirstAfterAP: []string{SourceTMDB, SourceLetterboxd}},
+			{Name: "poster", Type: URL, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "cover", Type: URL, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "directors", Type: StringList, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "countries", Type: StringList, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "runtime_minutes", Type: Int, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "tmdb_id", Type: Int, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "link", Type: URL, SourcesBestFirstAfterAP: []string{SourceLetterboxd}},
+		},
+		Takes: []Take{{Source: SourceLetterboxdTake, PrivateFields: []string{}}},
+	})
+}

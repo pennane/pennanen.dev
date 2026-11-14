@@ -41,7 +41,11 @@ const publicItemSchema = z.object({
   proseWords: z
     .number()
     .nullish()
-    .transform((words) => words ?? 0)
+    .transform((words) => words ?? 0),
+  takes: z
+    .array(z.object({ source: z.string(), values: z.record(z.unknown()), fetchedAt: z.string() }))
+    .nullish()
+    .transform((takes) => takes ?? [])
 })
 
 const publicKindSchema = z.object({ name: z.string(), untriaged: z.number() })

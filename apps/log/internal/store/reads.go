@@ -152,6 +152,9 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 		return nil, err
 	}
 	attachVerdicts(claimsByItem, byID)
+	if err := s.attachTakes(ctx, claimsByItem, byID); err != nil {
+		return nil, err
+	}
 	if err := s.attachScoresAndTags(ctx, ids, byID); err != nil {
 		return nil, err
 	}

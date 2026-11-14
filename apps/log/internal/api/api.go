@@ -57,6 +57,7 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("PUT /admin/items/{id}/place", s.placeEntry)
 	admin.HandleFunc("GET /admin/entries", s.listEntries)
 	admin.HandleFunc("POST /admin/entries/change", s.changeEntries)
+	admin.HandleFunc("PUT /admin/items/{id}/takes/{source}/{field}", s.setTakeFieldVisibility)
 	admin.HandleFunc("POST /admin/relations", s.addRelation)
 	admin.HandleFunc("DELETE /admin/relations", s.removeRelation)
 	admin.HandleFunc("GET /admin/igdb/search", s.searchIGDB)
@@ -252,6 +253,21 @@ func (s *Server) removeRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mutated(w, s.Store.RemoveRelation(r.Context(), rel))
+}
+
+func (s *Server) setTakeFieldVisibility(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Visibility store.TakeFieldVisibility `json:"visibility"`
+	}
+	if !readJSON(w, r, &body) {
+		return
+	}
+	err := s.Store.SetTakeFieldVisibility(r.Context(), id, r.PathValue("source"), r.PathValue("field"), body.Visibility)
+	s.mutatedItem(w, r, id, err)
 }
 
 func (s *Server) syncReports(w http.ResponseWriter, r *http.Request) {

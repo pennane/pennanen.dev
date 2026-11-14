@@ -25,6 +25,7 @@ var claimReaders = map[string]readClaim{
 	kind.SourceSteamStore:        readSteamStoreDetails,
 	kind.SourceSteamAchievements: readSteamAchievements,
 	kind.SourceIGDB:              readIGDBGame,
+	kind.SourceLetterboxdTake:    readLetterboxdTake,
 }
 
 func Decide(k kind.Kind, claims []Claim) Verdicts {
@@ -55,6 +56,27 @@ func Decide(k kind.Kind, claims []Claim) Verdicts {
 		}
 	}
 	return decided
+}
+
+type Take struct {
+	Source    string         `json:"source"`
+	Values    map[string]any `json:"values"`
+	FetchedAt string         `json:"fetchedAt"`
+}
+
+func Takes(k kind.Kind, claims []Claim) []Take {
+	takes := []Take{}
+	for _, c := range claims {
+		if _, isTake := k.Take(c.Source); !isTake {
+			continue
+		}
+		values, err := readValues(k, c)
+		if err != nil || values == nil {
+			continue
+		}
+		takes = append(takes, Take{Source: c.Source, Values: values, FetchedAt: c.FetchedAt})
+	}
+	return takes
 }
 
 func Number(k kind.Kind, claims []Claim, source, field string) (float64, bool) {

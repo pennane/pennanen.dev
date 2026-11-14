@@ -42,8 +42,24 @@ type Kind struct {
 	Fields           []Field                            `json:"fields"`
 	UndeclaredFields UndeclaredFields                   `json:"undeclaredFields"`
 	IdentitySource   string                             `json:"identitySource,omitempty"`
+	Takes            []Take                             `json:"takes"`
 	GuessStatus      func(verdicts map[string]any) Hint `json:"-"`
 }
+
+type Take struct {
+	Source        string   `json:"source"`
+	PrivateFields []string `json:"privateFields"`
+}
+
+func (k Kind) Take(source string) (Take, bool) {
+	i := slices.IndexFunc(k.Takes, func(t Take) bool { return t.Source == source })
+	if i < 0 {
+		return Take{}, false
+	}
+	return k.Takes[i], true
+}
+
+func (t Take) IsPrivate(field string) bool { return slices.Contains(t.PrivateFields, field) }
 
 type Hint string
 
@@ -128,6 +144,9 @@ var registry = map[string]Kind{}
 
 func register(k Kind) {
 	k.Statuses = append(k.Statuses, Dismissed)
+	if k.Takes == nil {
+		k.Takes = []Take{}
+	}
 	registry[k.Name] = k
 }
 

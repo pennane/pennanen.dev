@@ -77,6 +77,7 @@ type ItemView struct {
 	Verdicts  verdict.Verdicts `json:"verdicts"`
 	Entry     *Entry           `json:"entry"`
 	Hint      kind.Hint        `json:"hint,omitempty"`
+	Takes     []TakeView       `json:"takes"`
 	Claims    []verdict.Claim  `json:"claims,omitempty"`
 	Relations []Relation       `json:"relations,omitempty"`
 }
