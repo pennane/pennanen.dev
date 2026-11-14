@@ -48,7 +48,31 @@ func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film verdict.L
 			return 0, err
 		}
 	}
+	if shelf == WatchlistShelf {
+		watched, err := r.isWatched(ctx, itemID)
+		if err != nil || watched == AlreadyWatched {
+			return itemID, err
+		}
+	}
 	return itemID, r.follow(ctx, p, itemID, shelf)
+}
+
+type Watched int
+
+const (
+	NotWatchedYet Watched = iota
+	AlreadyWatched
+)
+
+func (r *Recorder) isWatched(ctx context.Context, itemID int64) (Watched, error) {
+	v, err := r.Store.GetItem(ctx, itemID)
+	if err != nil {
+		return NotWatchedYet, err
+	}
+	if v.Entry != nil && v.Entry.Status == kind.Watched {
+		return AlreadyWatched, nil
+	}
+	return NotWatchedYet, nil
 }
 
 func (r *Recorder) PutListTake(ctx context.Context, itemID int64, listed ListedFilm) error {

@@ -70,13 +70,14 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	}
 
 	searches := 0
+	watchlist := `<div class="poster-grid"><ul class="grid"></ul></div>`
 	fake := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.URL.Path == "/me/films/":
 			fmt.Fprint(w, gridItem("ddd4", "decent-film", "Decent Film (2024)", `<p class="poster-viewingdata"><span class="rating -micro rated-7">★★★½</span></p>`)+
 				gridItem("ccc3", "memento", "Memento (2000)", `<p class="poster-viewingdata"><span class="like liked-micro has-icon icon-liked"></span></p>`))
 		case r.URL.Path == "/me/watchlist/":
-			fmt.Fprint(w, `<div class="poster-grid"><ul class="grid"></ul></div>`)
+			fmt.Fprint(w, watchlist)
 		case r.URL.Path == "/me/rss/":
 			fmt.Fprint(w, rss)
 		case r.URL.Path == "/3/search/movie":
@@ -139,12 +140,16 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	watchlist = gridItem("aaa1", "stalker", "Stalker (1979)", "")
 	report = nightly.Run(ctx)
 	if report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 1 || len(report.Problems) != 0 {
 		t.Fatalf("nightly: %+v", report)
 	}
 	if memento := item(t, s, "ccc3"); memento.Entry.Status != kind.Watched || memento.Takes[0].Values["reaction"] != "liked" {
 		t.Errorf("watched off the watchlist: %+v %+v", memento.Entry, memento.Takes)
+	}
+	if stalker := item(t, s, "aaa1"); stalker.Entry.Status != kind.Watched {
+		t.Errorf("a watched film on the watchlist went back to %s", stalker.Entry.Status)
 	}
 	decent := item(t, s, "ddd4")
 	if decent.Takes[0].Values["rating"] != 3.5 || decent.Takes[0].Values["review"] != "Better than I & you thought\n\nsecond thought" {
