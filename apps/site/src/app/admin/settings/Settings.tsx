@@ -369,6 +369,24 @@ export const KindSettingsForm = ({
         </div>
       </Section>
 
+      <Section label="list columns" hint="axes with a column in the public list">
+        <div className={editor.chips}>
+          {settings.axes.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={editor.chip}
+              aria-pressed={!settings.axesWithoutColumns.includes(key)}
+              onClick={() =>
+                change({ axesWithoutColumns: toggledIn(settings.axesWithoutColumns, key) })
+              }
+            >
+              {nameOf(key)}
+            </button>
+          ))}
+        </div>
+      </Section>
+
       <Section label="overview" hint="which entries the log's front page shows, and how many">
         <div className={styles.row}>
           <select

@@ -22,7 +22,8 @@ in admin what each kind's pages offer.
   filter, sort and show as columns; lists filter and search; text searches;
   ids and links do nothing.
 - Per kind, admin overrides: each field's uses (filter, column, page) and
-  public name, which axes get a **tier list**, the **default view** (tiers,
+  public name, which axes get a **tier list** and which a list column, the
+  **default view** (tiers,
   list, or tiers once something is scored), and the **overview**: which
   sort picks the entries on the log's front page, and how many.
 - A field nobody has set keeps its type's defaults, so a new field appears

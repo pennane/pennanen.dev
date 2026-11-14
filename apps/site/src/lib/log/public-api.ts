@@ -97,6 +97,7 @@ const presentationSchema = z.object({
       axes: z.array(z.string()),
       defaultView: z.enum(DEFAULT_VIEWS).catch('auto'),
       axesWithoutTiers: z.array(z.string()).catch([]),
+      axesWithoutColumns: z.array(z.string()).catch([]),
       fieldUses: z.record(z.array(z.enum(FIELD_USES))).catch({}),
       fieldNames: z.record(z.string()).catch({}),
       overview: z

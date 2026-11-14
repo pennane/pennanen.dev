@@ -51,6 +51,9 @@ export const divisionIndex = (axis: Axis, item: ListedItem) => {
 export const tierAxes = (axes: Axis[], settings: KindSettings | undefined) =>
   axes.filter((axis) => !settings?.axesWithoutTiers.includes(axis.key))
 
+export const columnAxes = (axes: Axis[], settings: KindSettings | undefined) =>
+  axes.filter((axis) => !settings?.axesWithoutColumns.includes(axis.key))
+
 export const defaultModeFor = (
   items: ListedItem[],
   axes: Axis[],

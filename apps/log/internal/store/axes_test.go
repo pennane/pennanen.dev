@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
@@ -149,5 +150,21 @@ func TestAnOutsideAxisReadsApsRatingFromTheTake(t *testing.T) {
 	}
 	if v.Entry.ReadScores[stars.Key] != "a" {
 		t.Errorf("3.5 stars read as %v", v.Entry.ReadScores)
+	}
+}
+
+func TestAnAxisLeftOutOfTheListMustBeOneTheKindUses(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	movie, _ := kind.Get("movie")
+	settings, _ := s.KindSettings(ctx, movie)
+	settings.AxesWithoutColumns = []string{kind.Prestige}
+	saved, err := s.SetKindSettings(ctx, movie, settings)
+	if err != nil || !slices.Equal(saved.AxesWithoutColumns, []string{kind.Prestige}) {
+		t.Fatalf("prestige left out of the list: %+v %v", saved, err)
+	}
+	settings.AxesWithoutColumns = []string{"nothing-here"}
+	if _, err := s.SetKindSettings(ctx, movie, settings); !errors.Is(err, store.ErrInvalid) {
+		t.Errorf("an axis the kind doesn't use: %v", err)
 	}
 }

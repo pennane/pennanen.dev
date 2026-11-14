@@ -67,6 +67,7 @@ export type KindSettings = {
   axes: string[]
   defaultView: DefaultView
   axesWithoutTiers: string[]
+  axesWithoutColumns: string[]
   fieldUses: Record<string, FieldUse[]>
   fieldNames: Record<string, string>
   overview: Overview

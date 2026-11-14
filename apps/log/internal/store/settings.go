@@ -66,15 +66,16 @@ func (a Axis) DivisionReadAs(value float64) (string, bool) {
 type Axes []Axis
 
 type KindSettings struct {
-	Title            string                     `json:"title"`
-	Description      string                     `json:"description"`
-	StatusesShown    []string                   `json:"statusesShown"`
-	Axes             []string                   `json:"axes"`
-	DefaultView      View                       `json:"defaultView"`
-	AxesWithoutTiers []string                   `json:"axesWithoutTiers"`
-	FieldUses        map[string][]kind.FieldUse `json:"fieldUses"`
-	FieldNames       map[string]string          `json:"fieldNames"`
-	Overview         Overview                   `json:"overview"`
+	Title              string                     `json:"title"`
+	Description        string                     `json:"description"`
+	StatusesShown      []string                   `json:"statusesShown"`
+	Axes               []string                   `json:"axes"`
+	DefaultView        View                       `json:"defaultView"`
+	AxesWithoutTiers   []string                   `json:"axesWithoutTiers"`
+	AxesWithoutColumns []string                   `json:"axesWithoutColumns"`
+	FieldUses          map[string][]kind.FieldUse `json:"fieldUses"`
+	FieldNames         map[string]string          `json:"fieldNames"`
+	Overview           Overview                   `json:"overview"`
 }
 
 type View string
@@ -286,14 +287,15 @@ func DefaultKindSettings(k kind.Kind) KindSettings {
 		uses[f.Key] = f.DefaultUses
 	}
 	return KindSettings{
-		Title:            k.DefaultTitle,
-		StatusesShown:    slices.Clone(k.StatusesShown),
-		Axes:             slices.Clone(k.DefaultAxes),
-		DefaultView:      AutoView,
-		AxesWithoutTiers: []string{},
-		FieldUses:        uses,
-		FieldNames:       map[string]string{},
-		Overview:         Overview{Sort: AutoSort, Count: DefaultOverviewCount},
+		Title:              k.DefaultTitle,
+		StatusesShown:      slices.Clone(k.StatusesShown),
+		Axes:               slices.Clone(k.DefaultAxes),
+		DefaultView:        AutoView,
+		AxesWithoutTiers:   []string{},
+		AxesWithoutColumns: []string{},
+		FieldUses:          uses,
+		FieldNames:         map[string]string{},
+		Overview:           Overview{Sort: AutoSort, Count: DefaultOverviewCount},
 	}
 }
 
@@ -303,6 +305,9 @@ func (ks KindSettings) filledFrom(defaults KindSettings) KindSettings {
 	}
 	if ks.AxesWithoutTiers == nil {
 		ks.AxesWithoutTiers = defaults.AxesWithoutTiers
+	}
+	if ks.AxesWithoutColumns == nil {
+		ks.AxesWithoutColumns = defaults.AxesWithoutColumns
 	}
 	if ks.Overview.Count == 0 {
 		ks.Overview.Count = defaults.Overview.Count
@@ -323,6 +328,7 @@ func (ks KindSettings) filledFrom(defaults KindSettings) KindSettings {
 func (ks KindSettings) withoutStale(k kind.Kind, axes Axes) KindSettings {
 	ks.Axes = slices.DeleteFunc(ks.Axes, func(axis string) bool { return !axes.Has(axis) })
 	ks.AxesWithoutTiers = slices.DeleteFunc(ks.AxesWithoutTiers, func(axis string) bool { return !ks.Uses(axis) })
+	ks.AxesWithoutColumns = slices.DeleteFunc(ks.AxesWithoutColumns, func(axis string) bool { return !ks.Uses(axis) })
 	maps.DeleteFunc(ks.FieldUses, func(key string, _ []kind.FieldUse) bool { _, known := k.PublicField(key); return !known })
 	maps.DeleteFunc(ks.FieldNames, func(key string, _ string) bool { _, known := k.PublicField(key); return !known })
 	if validOverviewSort(k, ks, ks.Overview.Sort) != nil {
@@ -411,6 +417,11 @@ func validPublicSettings(k kind.Kind, settings KindSettings) error {
 	for _, axis := range settings.AxesWithoutTiers {
 		if !settings.Uses(axis) {
 			return fmt.Errorf("%w: %s has no axis %q to leave without tiers", ErrInvalid, k.Name, axis)
+		}
+	}
+	for _, axis := range settings.AxesWithoutColumns {
+		if !settings.Uses(axis) {
+			return fmt.Errorf("%w: %s has no axis %q to leave out of the list", ErrInvalid, k.Name, axis)
 		}
 	}
 	for key, uses := range settings.FieldUses {
