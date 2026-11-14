@@ -25,6 +25,8 @@ type Client struct {
 	lastPage      time.Time
 }
 
+const userAgent = "pennanen.dev log"
+
 const letterboxdRateLimitsBackToBackPages = 5 * time.Second
 
 func NewClient(username string) *Client {
@@ -74,6 +76,7 @@ func (c *Client) getURL(ctx context.Context, address string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("User-Agent", userAgent)
 	res, err := c.HTTP.Do(req)
 	if err != nil {
 		var urlErr *url.Error
