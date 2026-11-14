@@ -45,7 +45,7 @@ func toListedEntry(v store.ItemView) listedEntry {
 		Cover:      coverOf(v),
 		Status:     v.Entry.Status,
 		Visibility: v.Entry.Visibility,
-		Scores:     v.Entry.Scores,
+		Scores:     v.Entry.EveryScore(),
 		Rank:       v.Entry.Rank,
 		Tags:       v.Entry.Tags,
 	}

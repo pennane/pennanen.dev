@@ -133,7 +133,7 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 			v.Entry = &Entry{
 				Status: status.String, StatusSetBy: setBy.String, Visibility: Visibility(visibility.String),
 				Blurb: blurb.String, Prose: prose.String, TimeSpent: TimeSpent(timeSpent.String), UpdatedAt: updatedAt.String,
-				Scores: map[string]string{}, Tags: []string{},
+				Scores: map[string]string{}, ReadScores: map[string]string{}, Tags: []string{},
 			}
 		}
 		views = append(views, v)
@@ -147,10 +147,15 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 		ids[i] = views[i].ID
 		byID[views[i].ID] = &views[i]
 	}
-	if err := s.attachVerdicts(ctx, ids, byID); err != nil {
+	claimsByItem, err := s.claimsByItem(ctx, ids)
+	if err != nil {
 		return nil, err
 	}
+	attachVerdicts(claimsByItem, byID)
 	if err := s.attachScoresAndTags(ctx, ids, byID); err != nil {
+		return nil, err
+	}
+	if err := s.attachReadScores(ctx, claimsByItem, byID); err != nil {
 		return nil, err
 	}
 	if err := s.attachRanks(ctx, views); err != nil {
@@ -159,15 +164,19 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	return views, nil
 }
 
-func (s *Store) attachVerdicts(ctx context.Context, ids []int64, byID map[int64]*ItemView) error {
+func (s *Store) claimsByItem(ctx context.Context, ids []int64) (map[int64][]verdict.Claim, error) {
 	claims, err := s.claimsOf(ctx, ids)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	claimsByItem := map[int64][]verdict.Claim{}
+	byItem := map[int64][]verdict.Claim{}
 	for _, c := range claims {
-		claimsByItem[c.itemID] = append(claimsByItem[c.itemID], c.Claim)
+		byItem[c.itemID] = append(byItem[c.itemID], c.Claim)
 	}
+	return byItem, nil
+}
+
+func attachVerdicts(claimsByItem map[int64][]verdict.Claim, byID map[int64]*ItemView) {
 	for id, v := range byID {
 		k, known := kind.Get(v.Kind)
 		if !known {
@@ -176,6 +185,39 @@ func (s *Store) attachVerdicts(ctx context.Context, ids []int64, byID map[int64]
 		v.Verdicts = verdict.Decide(k, claimsByItem[id])
 		if v.Entry != nil && v.Entry.Status == kind.Untriaged {
 			v.Hint = k.Hint(v.Verdicts.Values)
+		}
+	}
+}
+
+func (s *Store) attachReadScores(ctx context.Context, claimsByItem map[int64][]verdict.Claim, byID map[int64]*ItemView) error {
+	axes, err := s.Axes(ctx)
+	if err != nil {
+		return err
+	}
+	read := slices.DeleteFunc(slices.Clone(axes), func(a Axis) bool { return a.Sort() == OwnAxis })
+	if len(read) == 0 {
+		return nil
+	}
+	settings, err := s.AllKindSettings(ctx)
+	if err != nil {
+		return err
+	}
+	for id, v := range byID {
+		k, known := kind.Get(v.Kind)
+		if !known || v.Entry == nil {
+			continue
+		}
+		for _, axis := range read {
+			if !settings[k.Name].Uses(axis.Key) {
+				continue
+			}
+			value, present := verdict.Number(k, claimsByItem[id], axis.Reading.Source, axis.Reading.Field)
+			if !present {
+				continue
+			}
+			if division, inRange := axis.DivisionReadAs(value); inRange {
+				v.Entry.ReadScores[axis.Key] = division
+			}
 		}
 	}
 	return nil

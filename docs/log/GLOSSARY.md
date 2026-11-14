@@ -55,7 +55,8 @@ change. Axes come in three sorts. **Own** axes are ap's, and only ap
 sets them. An **outside** axis is ap's rating on another site
 (`letterboxd`, `vivino`). A **crowd** axis is a site's public average.
 Outside and crowd axes are read from claims, never set by hand and never
-ranked. An outside axis suggests a division when ap rates on an own axis; a
+ranked. Each has a **reading**: the source and field it reads, and a
+**floor** per division, best first, the lowest value that lands there. An outside axis suggests a division when ap rates on an own axis; a
 crowd axis only shows.
 
 **Prestige** — the axis that orders things: how high something stands for

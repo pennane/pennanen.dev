@@ -57,6 +57,32 @@ func Decide(k kind.Kind, claims []Claim) Verdicts {
 	return decided
 }
 
+func Number(k kind.Kind, claims []Claim, source, field string) (float64, bool) {
+	for _, c := range claims {
+		if c.Source != source || source == kind.SourceAP {
+			continue
+		}
+		values, err := readValues(k, c)
+		if err != nil {
+			return 0, false
+		}
+		return asNumber(values[field])
+	}
+	return 0, false
+}
+
+func asNumber(value any) (float64, bool) {
+	switch n := value.(type) {
+	case float64:
+		return n, true
+	case int64:
+		return float64(n), true
+	case int:
+		return float64(n), true
+	}
+	return 0, false
+}
+
 func readValues(k kind.Kind, c Claim) (map[string]any, error) {
 	if c.Source == kind.SourceAP {
 		return readOverride(k, c.Data)

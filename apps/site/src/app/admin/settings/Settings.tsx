@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { PRESTIGE, statusLabel } from '../../../lib/log/present'
-import type { Axis, Division, KindSettings } from '../../../lib/log/types'
+import type { Axis, AxisSort, Division, KindSettings, Reading } from '../../../lib/log/types'
+import { sortOf } from '../../../lib/log/types'
 import { saveAxes, saveKindSettings, saveTagTitles } from '../actions'
 import editor from '../entries/editor.module.css'
 import styles from './settings.module.css'
@@ -136,6 +137,9 @@ export const AxesForm = ({ initial }: { initial: Axis[] }) => {
             divisions={axis.divisions}
             onChange={(divisions) => changeAxis(index, { divisions })}
           />
+          {axis.key !== PRESTIGE && (
+            <ReadingForm axis={axis} onChange={(reading) => changeAxis(index, { reading })} />
+          )}
         </Section>
       ))}
       <button
@@ -288,6 +292,88 @@ export const KindSettingsForm = ({
 
       <SaveButton save={save} onSave={() => run(settings, setSettings)} />
     </article>
+  )
+}
+
+const SORTS: { sort: AxisSort; label: string }[] = [
+  { sort: 'own', label: 'own, set by hand' },
+  { sort: 'outside', label: 'outside, my rating on a site' },
+  { sort: 'crowd', label: "crowd, a site's average" }
+]
+
+const ReadingForm = ({
+  axis,
+  onChange
+}: {
+  axis: Axis
+  onChange: (reading: Reading | undefined) => void
+}) => {
+  const reading = axis.reading
+  const choose = (sort: AxisSort) =>
+    onChange(
+      sort === 'own'
+        ? undefined
+        : {
+            sort,
+            source: reading?.source ?? '',
+            field: reading?.field ?? '',
+            floors: reading?.floors ?? []
+          }
+    )
+  const setFloor = (index: number, text: string) => {
+    if (!reading) return
+    const floors = axis.divisions.map((_, i) => reading.floors[i] ?? 0)
+    floors[index] = Number(text)
+    onChange({ ...reading, floors })
+  }
+  return (
+    <>
+      <p className={styles.hint}>sort</p>
+      <div className={styles.row}>
+        <select
+          className={styles.input}
+          value={sortOf(axis)}
+          onChange={(event) => choose(event.target.value as AxisSort)}
+        >
+          {SORTS.map(({ sort, label }) => (
+            <option key={sort} value={sort}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+      {reading && (
+        <>
+          <div className={styles.row}>
+            <input
+              className={styles.input}
+              value={reading.source}
+              placeholder="source, like letterboxd-take"
+              onChange={(event) => onChange({ ...reading, source: event.target.value })}
+            />
+            <input
+              className={styles.input}
+              value={reading.field}
+              placeholder="field, like rating"
+              onChange={(event) => onChange({ ...reading, field: event.target.value })}
+            />
+          </div>
+          <p className={styles.hint}>lowest value for each division, best first</p>
+          {axis.divisions.map((division, index) => (
+            <div key={division.key || `new-${index}`} className={styles.row}>
+              <span className={styles.rowKey}>{division.name || 'new division'}</span>
+              <input
+                className={styles.input}
+                type="number"
+                step="any"
+                value={reading.floors[index] ?? ''}
+                onChange={(event) => setFloor(index, event.target.value)}
+              />
+            </div>
+          ))}
+        </>
+      )}
+    </>
   )
 }
 

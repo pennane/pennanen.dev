@@ -20,7 +20,7 @@ import type {
   Kind,
   Visibility
 } from '../../../lib/log/types'
-import { SET_BY_AP } from '../../../lib/log/types'
+import { SET_BY_AP, sortOf } from '../../../lib/log/types'
 import { SaveStatus, useKeys } from '../_queue/card'
 import { Compare, compareKeys, type Comparing } from '../_queue/Compare'
 import {
@@ -165,6 +165,10 @@ export const Editor = ({
     )
   }
 
+  const outsideSays = kind.axes
+    .filter((axis) => sortOf(axis) === 'outside' && entry.readScores[axis.key])
+    .map((axis) => `${axis.name} says ${divisionName(axis, entry.readScores[axis.key])}`)
+
   return (
     <div className={styles.editor}>
       <header className={styles.header}>
@@ -218,8 +222,18 @@ export const Editor = ({
         />
       </Section>
 
+      {outsideSays.length > 0 && <p className={styles.note}>{outsideSays.join(' · ')}</p>}
+
       {kind.axes.map((axis) =>
-        axis.key === kind.rankedAxis ? (
+        axis.reading ? (
+          <Section key={axis.key} label={axis.name}>
+            <p className={styles.note}>
+              {entry.readScores[axis.key]
+                ? `${divisionName(axis, entry.readScores[axis.key])}, read from ${axis.reading.source}`
+                : `nothing from ${axis.reading.source}`}
+            </p>
+          </Section>
+        ) : axis.key === kind.rankedAxis ? (
           <RankedPicker
             key={axis.key}
             axis={axis}

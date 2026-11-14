@@ -95,6 +95,9 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 		if !settings[k.Name].Uses(axis) {
 			return fmt.Errorf("%w: %s has no axis %q", ErrInvalid, k.Name, axis)
 		}
+		if found, _ := axes.Find(axis); found.Sort() != OwnAxis {
+			return fmt.Errorf("%w: %s is read from %s, never set by hand", ErrInvalid, axis, found.Reading.Source)
+		}
 		if _, known := axes.DivisionIndex(axis, deref(division)); division != nil && !known {
 			return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, axis, *division)
 		}

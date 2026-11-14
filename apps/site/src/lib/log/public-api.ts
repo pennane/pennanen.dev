@@ -64,7 +64,19 @@ const divisionSchema = z.object({ key: z.string(), name: z.string() })
 
 const presentationSchema = z.object({
   axes: z.array(
-    z.object({ key: z.string(), name: z.string(), divisions: z.array(divisionSchema) })
+    z.object({
+      key: z.string(),
+      name: z.string(),
+      divisions: z.array(divisionSchema),
+      reading: z
+        .object({
+          sort: z.enum(['outside', 'crowd']),
+          source: z.string(),
+          field: z.string(),
+          floors: z.array(z.number())
+        })
+        .optional()
+    })
   ),
   kinds: z.record(
     z.object({

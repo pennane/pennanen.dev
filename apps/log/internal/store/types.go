@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"maps"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
@@ -53,9 +54,16 @@ type Entry struct {
 	Prose       string            `json:"prose"`
 	TimeSpent   TimeSpent         `json:"timeSpent,omitempty"`
 	Scores      map[string]string `json:"scores"`
+	ReadScores  map[string]string `json:"readScores"`
 	Rank        int               `json:"rank,omitempty"`
 	Tags        []string          `json:"tags"`
 	UpdatedAt   string            `json:"updatedAt"`
+}
+
+func (e Entry) EveryScore() map[string]string {
+	every := maps.Clone(e.ReadScores)
+	maps.Copy(every, e.Scores)
+	return every
 }
 
 type Relation struct {

@@ -6,7 +6,18 @@ export type Visibility = 'auto' | 'public' | 'private'
 
 export type Division = { key: string; name: string }
 
-export type Axis = { key: string; name: string; divisions: Division[] }
+export type AxisSort = 'own' | 'outside' | 'crowd'
+
+export type Reading = {
+  sort: Exclude<AxisSort, 'own'>
+  source: string
+  field: string
+  floors: number[]
+}
+
+export type Axis = { key: string; name: string; divisions: Division[]; reading?: Reading }
+
+export const sortOf = (axis: Axis): AxisSort => axis.reading?.sort ?? 'own'
 
 export type KindSettings = {
   title: string
@@ -41,6 +52,7 @@ export type Entry = {
   prose: string
   timeSpent?: TimeSpent
   scores: Record<string, string>
+  readScores: Record<string, string>
   rank?: number
   tags: string[]
   updatedAt: string

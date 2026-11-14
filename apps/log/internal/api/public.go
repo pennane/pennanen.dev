@@ -190,7 +190,7 @@ func publicItem(v store.ItemView) PublicItem {
 		Slug:       v.Slug,
 		Fields:     v.Verdicts.Values,
 		Status:     v.Entry.Status,
-		Scores:     v.Entry.Scores,
+		Scores:     v.Entry.EveryScore(),
 		Tags:       v.Entry.Tags,
 		Blurb:      v.Entry.Blurb,
 		TimeSpent:  v.Entry.TimeSpent,

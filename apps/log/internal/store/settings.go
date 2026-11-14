@@ -22,6 +22,40 @@ type Axis struct {
 	Key       string     `json:"key"`
 	Name      string     `json:"name"`
 	Divisions []Division `json:"divisions"`
+	Reading   *Reading   `json:"reading,omitempty"`
+}
+
+type AxisSort string
+
+const (
+	OwnAxis     AxisSort = "own"
+	OutsideAxis AxisSort = "outside"
+	CrowdAxis   AxisSort = "crowd"
+)
+
+type Reading struct {
+	Sort   AxisSort  `json:"sort"`
+	Source string    `json:"source"`
+	Field  string    `json:"field"`
+	Floors []float64 `json:"floors"`
+}
+
+func (a Axis) Sort() AxisSort {
+	if a.Reading == nil {
+		return OwnAxis
+	}
+	return a.Reading.Sort
+}
+
+func (a Axis) DivisionReadAs(value float64) (string, bool) {
+	if a.Reading == nil {
+		return "", false
+	}
+	i := slices.IndexFunc(a.Reading.Floors, func(floor float64) bool { return value >= floor })
+	if i < 0 || i >= len(a.Divisions) {
+		return "", false
+	}
+	return a.Divisions[i].Key, true
 }
 
 type Axes []Axis
@@ -118,12 +152,42 @@ func validAxes(axes Axes) (Axes, error) {
 			return nil, err
 		}
 		axis.Divisions = divisions
+		if axis.Reading != nil {
+			if err := validReading(axis); err != nil {
+				return nil, err
+			}
+		}
 		out = append(out, axis)
 	}
-	if !out.Has(kind.Prestige) {
+	prestige, found := out.Find(kind.Prestige)
+	if !found {
 		return nil, fmt.Errorf("%w: %s orders things and can't be removed", ErrInvalid, kind.Prestige)
 	}
+	if prestige.Sort() != OwnAxis {
+		return nil, fmt.Errorf("%w: %s is ap's own and can't be read from a source", ErrInvalid, kind.Prestige)
+	}
 	return out, nil
+}
+
+func validReading(axis Axis) error {
+	r := axis.Reading
+	r.Source = strings.TrimSpace(r.Source)
+	r.Field = strings.TrimSpace(r.Field)
+	if r.Sort != OutsideAxis && r.Sort != CrowdAxis {
+		return fmt.Errorf("%w: %s is read from a source, so it is %s or %s", ErrInvalid, axis.Key, OutsideAxis, CrowdAxis)
+	}
+	if r.Source == "" || r.Source == kind.SourceAP || r.Field == "" {
+		return fmt.Errorf("%w: %s needs a source other than ap and a field to read", ErrInvalid, axis.Key)
+	}
+	if len(r.Floors) != len(axis.Divisions) {
+		return fmt.Errorf("%w: %s needs a floor for each division", ErrInvalid, axis.Key)
+	}
+	for i := 1; i < len(r.Floors); i++ {
+		if r.Floors[i] >= r.Floors[i-1] {
+			return fmt.Errorf("%w: %s floors must fall from the best division down", ErrInvalid, axis.Key)
+		}
+	}
+	return nil
 }
 
 func validDivisions(axis string, divisions []Division) ([]Division, error) {
@@ -164,8 +228,12 @@ func (s *Store) refuseDroppingScored(ctx context.Context, axes Axes) error {
 		if err := rows.Scan(&axis, &division, &entries); err != nil {
 			return err
 		}
-		if !axes.Has(axis) {
+		found, kept := axes.Find(axis)
+		if !kept {
 			return fmt.Errorf("%w: %d entries are scored on %s; clear them before removing it", ErrConflict, entries, axis)
+		}
+		if found.Sort() != OwnAxis {
+			return fmt.Errorf("%w: %d entries are scored on %s by hand; clear them before reading it from a source", ErrConflict, entries, axis)
 		}
 		if _, kept := axes.DivisionIndex(axis, division); !kept {
 			return fmt.Errorf("%w: %d entries sit in %s %q; move them before removing it", ErrConflict, entries, axis, division)
