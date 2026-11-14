@@ -186,7 +186,10 @@ func putClaim(ctx context.Context, q queryer, itemID int64, source, externalID s
 	if isIdentityTaken(err) {
 		return fmt.Errorf("%w: another item already has %s %s", ErrConflict, source, externalID)
 	}
-	return err
+	if err != nil {
+		return err
+	}
+	return putReading(ctx, q, itemID, source, raw)
 }
 
 func isIdentityTaken(err error) bool {

@@ -54,7 +54,7 @@ func (s *Store) SetTakeFieldVisibility(ctx context.Context, itemID int64, source
 
 type shownField struct{ source, field string }
 
-func (s *Store) attachTakes(ctx context.Context, claimsByItem map[int64][]verdict.Claim, byID map[int64]*ItemView) error {
+func (s *Store) attachTakes(ctx context.Context, readings map[int64][]verdict.Reading, byID map[int64]*ItemView) error {
 	shown, err := s.shownTakeFields(ctx, byID)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (s *Store) attachTakes(ctx context.Context, claimsByItem map[int64][]verdic
 			continue
 		}
 		v.Takes = []TakeView{}
-		for _, take := range verdict.Takes(k, verdict.ReadAll(k, claimsByItem[id])) {
+		for _, take := range verdict.Takes(k, readings[id]) {
 			declared, _ := k.Take(take.Source)
 			hidden := []string{}
 			for field := range take.Values {

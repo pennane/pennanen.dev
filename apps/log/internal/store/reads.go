@@ -149,18 +149,18 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 		ids[i] = views[i].ID
 		byID[views[i].ID] = &views[i]
 	}
-	claimsByItem, err := s.claimsByItem(ctx, ids)
+	readings, err := s.readingsByItem(ctx, byID)
 	if err != nil {
 		return nil, err
 	}
-	attachVerdicts(claimsByItem, byID)
-	if err := s.attachTakes(ctx, claimsByItem, byID); err != nil {
+	attachVerdicts(readings, byID)
+	if err := s.attachTakes(ctx, readings, byID); err != nil {
 		return nil, err
 	}
 	if err := s.attachScoresAndTags(ctx, ids, byID); err != nil {
 		return nil, err
 	}
-	if err := s.attachReadScores(ctx, claimsByItem, byID); err != nil {
+	if err := s.attachReadScores(ctx, readings, byID); err != nil {
 		return nil, err
 	}
 	if err := s.attachRanks(ctx, views); err != nil {
@@ -169,32 +169,20 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	return views, nil
 }
 
-func (s *Store) claimsByItem(ctx context.Context, ids []int64) (map[int64][]verdict.Claim, error) {
-	claims, err := s.claimsOf(ctx, ids)
-	if err != nil {
-		return nil, err
-	}
-	byItem := map[int64][]verdict.Claim{}
-	for _, c := range claims {
-		byItem[c.itemID] = append(byItem[c.itemID], c.Claim)
-	}
-	return byItem, nil
-}
-
-func attachVerdicts(claimsByItem map[int64][]verdict.Claim, byID map[int64]*ItemView) {
+func attachVerdicts(readings map[int64][]verdict.Reading, byID map[int64]*ItemView) {
 	for id, v := range byID {
 		k, known := kind.Get(v.Kind)
 		if !known {
 			continue
 		}
-		v.Verdicts = verdict.Decide(k, verdict.ReadAll(k, claimsByItem[id]))
+		v.Verdicts = verdict.Decide(k, readings[id])
 		if v.Entry != nil && v.Entry.Status == kind.Untriaged {
 			v.Hint = k.Hint(v.Verdicts.Values)
 		}
 	}
 }
 
-func (s *Store) attachReadScores(ctx context.Context, claimsByItem map[int64][]verdict.Claim, byID map[int64]*ItemView) error {
+func (s *Store) attachReadScores(ctx context.Context, readings map[int64][]verdict.Reading, byID map[int64]*ItemView) error {
 	axes, err := s.Axes(ctx)
 	if err != nil {
 		return err
@@ -216,7 +204,7 @@ func (s *Store) attachReadScores(ctx context.Context, claimsByItem map[int64][]v
 			if !settings[k.Name].Uses(axis.Key) {
 				continue
 			}
-			value, present := verdict.Number(k, verdict.ReadAll(k, claimsByItem[id]), axis.Reading.Source, axis.Reading.Field)
+			value, present := verdict.Number(k, readings[id], axis.Reading.Source, axis.Reading.Field)
 			if !present {
 				continue
 			}

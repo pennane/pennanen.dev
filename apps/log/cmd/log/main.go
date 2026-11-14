@@ -45,6 +45,11 @@ func run() error {
 	}
 	defer database.Close()
 	st := store.New(database)
+	reread, err := st.RereadClaims(ctx)
+	if err != nil {
+		return fmt.Errorf("re-read claims: %w", err)
+	}
+	slog.Info("claims re-read at start", "count", reread)
 
 	notifier := &revalidate.Notifier{
 		URL:      os.Getenv("REVALIDATE_URL"),
