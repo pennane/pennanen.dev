@@ -8,13 +8,10 @@ import { Gap, Stack } from '../../../../../components/Stack'
 import { WrapInBox } from '../../../../../components/WrapInBox'
 import {
   byRank,
-  fieldName,
-  fieldsUsedAs,
-  fieldValueOf,
-  formatFieldValue,
   isPublicKind,
   itemPath,
   kindTitle,
+  pageFieldsOf,
   pictureOf,
   shownTake,
   statusLabel,
@@ -80,20 +77,6 @@ const Facts = ({ item }: { item: PublicItem }) => {
     </MetaLine>
   )
 }
-
-const pageFieldsOf = (item: PublicItem, presentation: Presentation) =>
-  fieldsUsedAs(presentation, item.kind, 'page').flatMap((field) => {
-    const value = fieldValueOf(item, field)
-    return value === undefined
-      ? []
-      : [
-          {
-            key: field.key,
-            name: fieldName(presentation.kinds[item.kind], field),
-            value: formatFieldValue(field, value)
-          }
-        ]
-  })
 
 const PARAGRAPH_BREAK = /\n\s*\n/
 

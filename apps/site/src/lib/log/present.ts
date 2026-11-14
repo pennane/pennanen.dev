@@ -253,3 +253,44 @@ export const shownTake = (take: PublicItem['takes'][number]): ShownTake => {
     text
   }
 }
+
+const COUNT_SUFFIX = '_unlocked'
+
+const TOTAL_SUFFIX = '_total'
+
+export type PageField = { key: string; name: string; value: string }
+
+export const pageFieldsOf = (item: PublicItem, presentation: Presentation): PageField[] => {
+  const settings = presentation.kinds[item.kind]
+  const shown = fieldsUsedAs(presentation, item.kind, 'page').flatMap((field) => {
+    const value = fieldValueOf(item, field)
+    return value === undefined ? [] : [{ field, value }]
+  })
+  const baseOfCount = (field: PublicField) =>
+    field.key.endsWith(COUNT_SUFFIX) ? field.key.slice(0, -COUNT_SUFFIX.length) : undefined
+  const totalOf = (field: PublicField) => {
+    const base = baseOfCount(field)
+    return base === undefined ? undefined : shown.find((s) => s.field.key === base + TOTAL_SUFFIX)
+  }
+  const totalsShownWithCounts = new Set(
+    shown.flatMap(({ field }) => totalOf(field)?.field.key ?? [])
+  )
+  return shown.flatMap(({ field, value }) => {
+    if (totalsShownWithCounts.has(field.key)) return []
+    const total = totalOf(field)
+    if (total === undefined) {
+      return [
+        { key: field.key, name: fieldName(settings, field), value: formatFieldValue(field, value) }
+      ]
+    }
+    if (total.value === 0) return []
+    const base = baseOfCount(field) ?? field.key
+    return [
+      {
+        key: field.key,
+        name: settings?.fieldNames[field.key] ?? base.replaceAll('_', ' '),
+        value: `${value} / ${total.value}`
+      }
+    ]
+  })
+}
