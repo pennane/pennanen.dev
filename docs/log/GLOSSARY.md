@@ -121,6 +121,10 @@ Together they make the graph of items.
 **Claim** — what one source says about an item, kept exactly as received.
 Never edited; a re-sync replaces only that source's claim.
 
+**Reading** — what a source's reader takes from one claim. Stored with the
+claim and recomputed when the readers change. Verdicts are decided from
+readings, not from claims.
+
 **Outside take** — ap's take recorded on another site: Letterboxd stars, a
 Goodreads shelf and review, a Vivino rating and tasting note. Kept as claims
 from its own source (`letterboxd-take`, `steam-take`, `vivino-take`), apart from what the
