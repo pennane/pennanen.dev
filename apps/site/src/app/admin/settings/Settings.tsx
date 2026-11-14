@@ -16,7 +16,7 @@ import type {
 } from '../../../lib/log/types'
 import { DEFAULT_VIEWS, FIELD_USES, READ_FROM_BY_SORT } from '../../../lib/log/types'
 import { sortOf } from '../../../lib/log/types'
-import { saveAxes, saveKindSettings, saveTagTitles } from '../actions'
+import { saveAxes, saveKindOrder, saveKindSettings, saveTagTitles } from '../actions'
 import editor from '../entries/editor.module.css'
 import styles from './settings.module.css'
 
@@ -641,6 +641,44 @@ export const TagTitlesForm = ({
         ))}
       </Section>
       <SaveButton save={save} onSave={() => run(titles, setTitles)} />
+    </article>
+  )
+}
+
+export const KindOrderForm = ({ initial }: { initial: string[] }) => {
+  const [order, setOrder] = useState(initial)
+  const { save, changed, run } = useSave(saveKindOrder)
+  const change = (next: string[]) => {
+    setOrder(next)
+    changed()
+  }
+  return (
+    <article className={styles.kind}>
+      <h2 className={styles.kindName}>kind order</h2>
+      <Section label="order" hint="the order kinds come in on the log page">
+        {order.map((kind, index) => (
+          <div key={kind} className={styles.row}>
+            <span className={styles.input}>{kind}</span>
+            <button
+              type="button"
+              className={editor.quiet}
+              aria-label="move up"
+              onClick={() => change(moved(order, index, index - 1))}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className={editor.quiet}
+              aria-label="move down"
+              onClick={() => change(moved(order, index, index + 1))}
+            >
+              ↓
+            </button>
+          </div>
+        ))}
+      </Section>
+      <SaveButton save={save} onSave={() => run(order, setOrder)} />
     </article>
   )
 }

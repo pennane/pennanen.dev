@@ -2,7 +2,7 @@ import { requireAdmin } from '../../../lib/admin/require-admin'
 import { logAdmin } from '../../../lib/log/admin-api'
 import { QueueHeader } from '../_queue/card'
 import styles from '../_queue/queue.module.css'
-import { AxesForm, KindSettingsForm, TagTitlesForm } from './Settings'
+import { AxesForm, KindOrderForm, KindSettingsForm, TagTitlesForm } from './Settings'
 import { SourcesForm } from './Sources'
 
 export const dynamic = 'force-dynamic'
@@ -28,6 +28,7 @@ export default async function SettingsPage() {
     <div className={styles.queue}>
       <QueueHeader current="settings" />
       <AxesForm initial={presentation.axes} readables={presentation.readables} />
+      <KindOrderForm initial={presentation.kindOrder} />
       {kinds.map((kind) => (
         <KindSettingsForm
           key={kind.name}

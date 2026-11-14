@@ -52,6 +52,7 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("PUT /admin/settings/axes", s.putAxes)
 	admin.HandleFunc("PUT /admin/settings/kinds/{kind}", s.putKindSettings)
 	admin.HandleFunc("PUT /admin/settings/tag-titles", s.putTagTitles)
+	admin.HandleFunc("PUT /admin/settings/kind-order", s.putKindOrder)
 	admin.HandleFunc("GET /admin/items", s.listItems)
 	admin.HandleFunc("POST /admin/items", s.createItem)
 	admin.HandleFunc("GET /admin/items/{id}", s.getItem)
@@ -167,6 +168,18 @@ func (s *Server) putTagTitles(w http.ResponseWriter, r *http.Request) {
 		s.changed()
 	}
 	respond(w, http.StatusOK, titles, err)
+}
+
+func (s *Server) putKindOrder(w http.ResponseWriter, r *http.Request) {
+	var body store.KindOrder
+	if !readJSON(w, r, &body) {
+		return
+	}
+	order, err := s.Store.SetKindOrder(r.Context(), body)
+	if err == nil {
+		s.changed()
+	}
+	respond(w, http.StatusOK, order, err)
 }
 
 func (s *Server) listItems(w http.ResponseWriter, r *http.Request) {

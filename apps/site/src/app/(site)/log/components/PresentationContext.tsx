@@ -8,7 +8,8 @@ const PresentationContext = createContext<Presentation>({
   kinds: {},
   fields: {},
   tagTitles: {},
-  readables: []
+  readables: [],
+  kindOrder: []
 })
 
 export const PresentationProvider = ({

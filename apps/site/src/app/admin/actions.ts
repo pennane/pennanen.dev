@@ -178,3 +178,8 @@ export async function saveTagTitles(titles: Record<string, string>) {
   await requireAdmin()
   return logAdmin.putTagTitles(titles)
 }
+
+export async function saveKindOrder(order: string[]) {
+  await requireAdmin()
+  return logAdmin.putKindOrder(order)
+}

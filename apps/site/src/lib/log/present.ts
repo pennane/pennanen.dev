@@ -7,7 +7,14 @@ type Fields = Record<string, unknown>
 
 type Takes = PublicItem['takes']
 
-export const publicKinds = (presentation: Presentation) => Object.keys(presentation.kinds).sort()
+const placeIn = (order: string[], kind: string) =>
+  order.includes(kind) ? order.indexOf(kind) : order.length
+
+export const publicKinds = (presentation: Presentation) =>
+  Object.keys(presentation.kinds).sort(
+    (a, b) =>
+      placeIn(presentation.kindOrder, a) - placeIn(presentation.kindOrder, b) || a.localeCompare(b)
+  )
 
 export const isPublicKind = (presentation: Presentation, kind: string) =>
   Object.hasOwn(presentation.kinds, kind)

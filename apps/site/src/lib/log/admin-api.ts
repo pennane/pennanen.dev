@@ -56,6 +56,8 @@ export const logAdmin = {
     call<KindSettings>(`/admin/settings/kinds/${encodeURIComponent(kind)}`, send('PUT', settings)),
   putTagTitles: (titles: Record<string, string>) =>
     call<Record<string, string>>('/admin/settings/tag-titles', send('PUT', titles)),
+  putKindOrder: (order: string[]) =>
+    call<string[]>('/admin/settings/kind-order', send('PUT', order)),
   items: (filter: Record<string, string>) =>
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
   entries: (kind: string) => call<ListedEntry[]>(`/admin/entries?${new URLSearchParams({ kind })}`),

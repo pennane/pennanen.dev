@@ -123,7 +123,8 @@ const presentationSchema = z.object({
     .array(
       z.object({ source: z.string(), field: z.string(), from: z.enum(['take', 'description']) })
     )
-    .catch([])
+    .catch([]),
+  kindOrder: z.array(z.string()).catch([])
 })
 
 export const logPublic = {

@@ -90,6 +90,7 @@ export type Presentation = {
   fields: Record<string, PublicField[]>
   tagTitles: Record<string, string>
   readables: Readable[]
+  kindOrder: string[]
 }
 
 export type Kind = {
