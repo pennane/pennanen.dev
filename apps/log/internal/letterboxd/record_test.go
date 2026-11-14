@@ -151,3 +151,42 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 		t.Errorf("heat: %s", v.Kind)
 	}
 }
+
+func TestTheNewestDiaryEntrySetsTheRating(t *testing.T) {
+	ctx := context.Background()
+	d, err := db.Open(ctx, filepath.Join(t.TempDir(), "log.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer d.Close()
+	s := store.New(d)
+	r := &letterboxd.Recorder{Store: s}
+	film := verdict.LetterboxdFilm{ID: "lif1", Slug: "the-life-aquatic-with-steve-zissou", Title: "The Life Aquatic with Steve Zissou", Year: 2004}
+	stars := func(n float64) *float64 { return &n }
+	sync, _ := syncs.New(ctx, "diary", func(ctx context.Context, p *syncs.Progress) error {
+		itemID, err := r.Shelve(ctx, p, film, letterboxd.WatchedShelf)
+		if err != nil {
+			return err
+		}
+		if err := r.PutListTake(ctx, itemID, letterboxd.ListedFilm{Film: film, Rating: stars(4.5)}); err != nil {
+			return err
+		}
+		for _, entry := range []letterboxd.DiaryEntry{
+			{Film: film, WatchedOn: "2026-11-14", Rewatch: letterboxd.Rewatched, Rating: stars(5)},
+			{Film: film, WatchedOn: "2026-07-01", Rating: stars(4)},
+		} {
+			if err := r.RecordWatch(ctx, p, entry, nil); err != nil {
+				return err
+			}
+		}
+		return nil
+	}, s, nil)
+	if report := sync.Run(ctx); report.State != syncs.Succeeded {
+		t.Fatalf("%+v", report)
+	}
+	id, _ := s.FindByIdentity(ctx, kind.SourceLetterboxd, "lif1")
+	v, _ := s.GetItem(ctx, id)
+	if take := v.Takes[0].Values; take["rating"] != 5.0 || take["last_watched"] != "2026-11-14" {
+		t.Errorf("take: %v", take)
+	}
+}

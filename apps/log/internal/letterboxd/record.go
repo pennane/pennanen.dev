@@ -186,6 +186,9 @@ func (r *Recorder) RecordWatch(ctx context.Context, p *syncs.Progress, entry Dia
 	}
 	move := NoMove
 	if err := r.changeTake(ctx, itemID, func(t *verdict.LetterboxdTake) {
+		if entry.WatchedOn >= t.LastWatched && entry.Rating != nil {
+			t.Rating = entry.Rating
+		}
 		if entry.WatchedOn > t.LastWatched {
 			t.LastWatched = entry.WatchedOn
 		}
