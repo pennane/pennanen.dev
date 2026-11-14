@@ -179,6 +179,8 @@ demand: Steam, IGDB matching, and each new source. Its last **sync report**
 (state, counts, problems, when it last succeeded) survives restarts; admin
 warns when a sync failed or hasn't succeeded in two days.
 
+**Stored secret** — a credential that rotates (the Spotify refresh token), kept in the database and replaced from admin or by the sync, not set in env.
+
 **Visibility** — whether an entry shows publicly: `auto` (default, by its
 status), `public` (always) or `private` (never). Prose has no visibility of
 its own; it follows its entry.
