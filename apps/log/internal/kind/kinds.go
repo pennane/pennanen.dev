@@ -38,15 +38,14 @@ const (
 
 func init() {
 	register(Kind{
-		Name:             "game",
-		DefaultTitle:     "games",
-		Statuses:         []string{Untriaged, "never-played", "maybe-played", "playing", "played", "finished", "dropped"},
-		StatusesToScore:  []string{"playing", "played", "finished", "dropped"},
-		StatusesShown:    []string{"maybe-played", "playing", "played", "finished", "dropped"},
-		DefaultAxes:      []string{Prestige, Quality},
-		RankedAxis:       Prestige,
-		UndeclaredFields: RejectUndeclaredFields,
-		IdentitySource:   SourceIGDB,
+		Name:            "game",
+		DefaultTitle:    "games",
+		Statuses:        []string{Untriaged, "never-played", "maybe-played", "playing", "played", "finished", "dropped"},
+		StatusesToScore: []string{"playing", "played", "finished", "dropped"},
+		StatusesShown:   []string{"maybe-played", "playing", "played", "finished", "dropped"},
+		DefaultAxes:     []string{Prestige, Quality},
+		RankedAxis:      Prestige,
+		IdentitySource:  SourceIGDB,
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceIGDB, SourceSteamStore, SourceSteam}},
 			{Name: "cover", Type: URL, SourcesBestFirstAfterAP: []string{SourceSteamStore, SourceIGDB}},
@@ -65,23 +64,6 @@ func init() {
 			{Name: "achievements_unlocked", Type: Int, SourcesBestFirstAfterAP: []string{SourceSteamAchievements}},
 		},
 		GuessStatus: guessGameStatus,
-	})
-
-	register(Kind{
-		Name:             "thing",
-		DefaultTitle:     "things",
-		Statuses:         []string{Untriaged, "seen"},
-		StatusesToScore:  []string{"seen"},
-		StatusesShown:    []string{"seen"},
-		DefaultAxes:      []string{Prestige, Quality},
-		RankedAxis:       Prestige,
-		UndeclaredFields: AcceptUndeclaredFields,
-		Fields: []Field{
-			{Name: FieldTitle, Type: Text},
-			{Name: "description", Type: Text},
-			{Name: "link", Type: URL},
-			{Name: "image", Type: URL},
-		},
 	})
 }
 

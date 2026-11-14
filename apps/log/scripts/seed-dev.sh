@@ -32,7 +32,4 @@ entry "$wilds" '{"status":"finished","visibility":"private","scores":{"enjoyment
 admin POST "/admin/items/$hades/moments" '{"at":"2024-03-02","note":"First clear."}' > /dev/null
 admin POST "/admin/items/$hades/moments" '{"at":"2024-03-05","note":"private moment","visibility":"private"}' > /dev/null
 
-thing=$(admin POST /admin/items '{"kind":"thing","title":"A Very Good Bench","fields":{"description":"In a park."}}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["id"])')
-entry "$thing" '{"status":"seen","visibility":"public","scores":{"enjoyment":75}}'
-
 echo "seeded $LOG_URL"

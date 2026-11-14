@@ -1,6 +1,6 @@
 # 5. Kinds are defined in code, data is generic
 
-**Status:** accepted · 2026-11-09 · axes moved to admin by [ADR 13](./0013-axes-as-data.md) · prose: [ADR 14](./0014-prose-replaces-moments.md)
+**Status:** accepted · 2026-11-09 · axes moved to admin by [ADR 13](./0013-axes-as-data.md) · prose: [ADR 14](./0014-prose-replaces-moments.md) · no `thing`: [ADR 21](./0021-no-catch-all-kind.md)
 
 ## Context
 

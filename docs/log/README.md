@@ -5,7 +5,7 @@ partly public at `/log`. Words: [GLOSSARY](./GLOSSARY.md). Decisions: [adr/](./a
 
 ## v1
 
-1. **Service** — Go in `log/`: SQLite, REST, kinds `game` and `thing`,
+1. **Service** — Go in `log/`: SQLite, REST, kind `game`,
    verdicts, public read endpoints, nightly R2 backup, nightly Steam sync with
    idle hints. Deployed to `/opt/log`, `api.log.pennanen.dev` → `:3005`.
 2. **Identity** — IGDB matching for games; manual-match queue for misses ([ADR 10](./adr/0010-igdb.md)).

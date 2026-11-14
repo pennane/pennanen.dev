@@ -12,6 +12,7 @@ const (
 	lastPerKindAxesVersion = 7
 	lastMomentsVersion     = 8
 	lastBeforeStatusSetBy  = 10
+	lastWithThings         = 12
 )
 
 func openAt(t *testing.T, version int) *sql.DB {
@@ -113,7 +114,7 @@ func TestDivisionsBecomeTiersOnSharedAxes(t *testing.T) {
 			('kind:thing', '{"statusesShown":["seen"],"axisLabels":{"quality":"quality"}}');`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrate(ctx, d); err != nil {
+	if err := migrateUpTo(ctx, d, lastWithThings); err != nil {
 		t.Fatal(err)
 	}
 
@@ -234,7 +235,7 @@ func TestUntriagedEntriesStartSetByTheSourceThatMadeThem(t *testing.T) {
 			(4, 'igdb', '8', '{}', '2024-03-01T00:00:00Z');`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrate(ctx, d); err != nil {
+	if err := migrateUpTo(ctx, d, lastWithThings); err != nil {
 		t.Fatal(err)
 	}
 	want := map[string]string{"hades": "ap", "celeste": "steam", "walk": "ap", "fez": "igdb"}
@@ -246,5 +247,39 @@ func TestUntriagedEntriesStartSetByTheSourceThatMadeThem(t *testing.T) {
 		if got != setBy {
 			t.Errorf("%s set by %q, want %q", slug, got, setBy)
 		}
+	}
+}
+
+func TestThingsAreGone(t *testing.T) {
+	ctx := context.Background()
+	d := openAt(t, lastWithThings)
+	if _, err := d.ExecContext(ctx, `
+		INSERT INTO item (id, kind, slug) VALUES (1, 'game', 'hades'), (2, 'thing', 'walk');
+		INSERT INTO entry (item_id, status) VALUES (1, 'finished'), (2, 'seen');
+		INSERT INTO claim (item_id, source, data) VALUES (2, 'ap', '{"mood":"foggy"}');
+		INSERT INTO setting (key, value) VALUES ('kind:game', '{}'), ('kind:thing', '{}');`); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+	for _, left := range []struct{ what, query string }{
+		{"items", `SELECT count(*) FROM item WHERE kind = 'thing'`},
+		{"entries", `SELECT count(*) FROM entry WHERE item_id = 2`},
+		{"claims", `SELECT count(*) FROM claim WHERE item_id = 2`},
+		{"settings", `SELECT count(*) FROM setting WHERE key = 'kind:thing'`},
+	} {
+		var n int
+		if err := d.QueryRowContext(ctx, left.query).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		if n != 0 {
+			t.Errorf("%d thing %s left", n, left.what)
+		}
+	}
+	var games int
+	d.QueryRowContext(ctx, `SELECT count(*) FROM item WHERE kind = 'game'`).Scan(&games)
+	if games != 1 {
+		t.Errorf("games = %d", games)
 	}
 }

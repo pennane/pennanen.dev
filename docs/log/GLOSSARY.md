@@ -8,11 +8,11 @@ disagrees with the code, one of them is wrong.
 **Item** — something that can be seen: a game, a wine, a region, a person.
 It has a kind and a title, and that's about it. Opinions live elsewhere.
 
-**Kind** — what sort of item it is (`game`, `thing`, later `tabletop`, `wine`…).
+**Kind** — what sort of item it is (`game`, `movie`, later `album`, `wine`…).
 A kind decides the item's fields, its statuses, and which source gives it
 an identity. Kinds are defined in code; which axes a kind uses, its **title**
-(`games`) and its **description** are set in admin. `thing` is the catch-all
-kind: free-form fields, nothing checked, so an odd item never blocks you.
+(`games`) and its **description** are set in admin. There is no catch-all
+kind: something that fits no kind waits until it gets one.
 A `wine` is what every year of it shares; a `vintage` is one bottling of a
 wine, of a single year or **non-vintage** (blended across years, like most
 Champagne). Every bottle ap drinks is a vintage, so all bottles rank

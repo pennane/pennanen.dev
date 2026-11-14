@@ -91,8 +91,8 @@ func TestPublicShowsOnlyWhatIsPublic(t *testing.T) {
 			t.Errorf("public item misses %q: %s", shown, body)
 		}
 	}
-	if status, body := call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token, `{"status":"seen"}`); status != http.StatusUnprocessableEntity {
-		t.Errorf("game accepted thing status: %d %s", status, body)
+	if status, body := call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token, `{"status":"watched"}`); status != http.StatusUnprocessableEntity {
+		t.Errorf("game accepted a movie status: %d %s", status, body)
 	}
 }
 

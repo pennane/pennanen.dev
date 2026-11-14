@@ -11,15 +11,14 @@ const (
 
 func init() {
 	register(Kind{
-		Name:             "movie",
-		DefaultTitle:     "movies",
-		Statuses:         []string{Untriaged, Want, Watched},
-		StatusesToScore:  []string{Watched},
-		StatusesShown:    []string{Watched},
-		DefaultAxes:      []string{Prestige, Quality},
-		RankedAxis:       Prestige,
-		UndeclaredFields: RejectUndeclaredFields,
-		IdentitySource:   SourceTMDB,
+		Name:            "movie",
+		DefaultTitle:    "movies",
+		Statuses:        []string{Untriaged, Want, Watched},
+		StatusesToScore: []string{Watched},
+		StatusesShown:   []string{Watched},
+		DefaultAxes:     []string{Prestige, Quality},
+		RankedAxis:      Prestige,
+		IdentitySource:  SourceTMDB,
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceTMDB, SourceLetterboxd}},
 			{Name: "original_title", Type: Text, SourcesBestFirstAfterAP: []string{SourceTMDB}},

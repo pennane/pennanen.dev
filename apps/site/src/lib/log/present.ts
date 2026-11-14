@@ -3,7 +3,7 @@ import type { Axis, Presentation } from './types'
 
 export type Rank = { place: number; of: number }
 
-const KIND_PLURALS = { game: 'games', thing: 'things' } as const
+const KIND_PLURALS = { game: 'games' } as const
 
 export type PublicKind = keyof typeof KIND_PLURALS
 

@@ -49,14 +49,6 @@ func Decide(k kind.Kind, claims []Claim) Verdicts {
 			}
 		}
 	}
-	if k.UndeclaredFields == kind.AcceptUndeclaredFields {
-		for name, value := range valuesBySource[kind.SourceAP] {
-			if _, declared := k.Field(name); !declared && value != nil {
-				decided.Values[name] = value
-				decided.SourceOf[name] = kind.SourceAP
-			}
-		}
-	}
 	return decided
 }
 

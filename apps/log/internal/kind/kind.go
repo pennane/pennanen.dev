@@ -24,26 +24,18 @@ type Field struct {
 	SourcesBestFirstAfterAP []string  `json:"sourcesBestFirstAfterAp"`
 }
 
-type UndeclaredFields string
-
-const (
-	RejectUndeclaredFields UndeclaredFields = "reject"
-	AcceptUndeclaredFields UndeclaredFields = "accept"
-)
-
 type Kind struct {
-	Name             string                             `json:"name"`
-	DefaultTitle     string                             `json:"-"`
-	Statuses         []string                           `json:"statuses"`
-	StatusesToScore  []string                           `json:"statusesToScore"`
-	StatusesShown    []string                           `json:"statusesShown"`
-	DefaultAxes      []string                           `json:"-"`
-	RankedAxis       string                             `json:"rankedAxis"`
-	Fields           []Field                            `json:"fields"`
-	UndeclaredFields UndeclaredFields                   `json:"undeclaredFields"`
-	IdentitySource   string                             `json:"identitySource,omitempty"`
-	Takes            []Take                             `json:"takes"`
-	GuessStatus      func(verdicts map[string]any) Hint `json:"-"`
+	Name            string                             `json:"name"`
+	DefaultTitle    string                             `json:"-"`
+	Statuses        []string                           `json:"statuses"`
+	StatusesToScore []string                           `json:"statusesToScore"`
+	StatusesShown   []string                           `json:"statusesShown"`
+	DefaultAxes     []string                           `json:"-"`
+	RankedAxis      string                             `json:"rankedAxis"`
+	Fields          []Field                            `json:"fields"`
+	IdentitySource  string                             `json:"identitySource,omitempty"`
+	Takes           []Take                             `json:"takes"`
+	GuessStatus     func(verdicts map[string]any) Hint `json:"-"`
 }
 
 type Take struct {
@@ -103,9 +95,6 @@ func (k Kind) ValidateOverride(name string, value any) error {
 	}
 	field, declared := k.Field(name)
 	if !declared {
-		if k.UndeclaredFields == AcceptUndeclaredFields {
-			return nil
-		}
 		return fmt.Errorf("%s has no field %q", k.Name, name)
 	}
 	if !field.Type.accepts(value) {

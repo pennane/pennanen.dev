@@ -77,12 +77,12 @@ func TestIdleHintFromCardsAndNoAchievements(t *testing.T) {
 func TestEntryRulesFollowKind(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	id, err := s.CreateItem(ctx, "thing", "A Walk", map[string]any{"mood": "foggy"})
+	id, err := s.CreateItem(ctx, "movie", "Stalker", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := s.ChangeEntry(ctx, id, store.EntryChange{Status: ptr("finished")}); err == nil {
-		t.Error("thing accepted a game status")
+		t.Error("movie accepted a game status")
 	}
 	if err := s.ChangeEntry(ctx, id, store.EntryChange{Scores: map[string]*string{"vibes": ptr("good")}}); err == nil {
 		t.Error("accepted an undeclared axis")
@@ -99,9 +99,6 @@ func TestEntryRulesFollowKind(t *testing.T) {
 	favorites, _ := s.ListItems(ctx, store.ItemFilter{Tag: "favorite"})
 	if len(favorites) != 1 || favorites[0].Entry.Tags[0] != "favorite/all-time" || favorites[0].Entry.Scores[kind.Prestige] != "s" {
 		t.Errorf("favorites = %+v", favorites)
-	}
-	if favorites[0].Verdicts.Values["mood"] != "foggy" {
-		t.Errorf("free field lost: %v", favorites[0].Verdicts.Values)
 	}
 }
 
