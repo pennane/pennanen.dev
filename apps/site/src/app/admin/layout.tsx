@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { SyncTroubles } from './_sync/SyncTroubles'
 import styles from './admin.module.css'
 
 export const metadata: Metadata = {
@@ -15,5 +16,10 @@ export const viewport: Viewport = {
 }
 
 export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <div className={styles.shell}>{children}</div>
+  return (
+    <div className={styles.shell}>
+      <SyncTroubles />
+      {children}
+    </div>
+  )
 }

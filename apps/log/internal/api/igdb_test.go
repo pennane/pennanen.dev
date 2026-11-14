@@ -15,6 +15,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 )
 
 const (
@@ -52,7 +53,7 @@ func (f *fakeIGDB) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func newIGDBServer(t *testing.T) (*httptest.Server, *store.Store, *igdb.Matcher, *fakeIGDB) {
+func newIGDBServer(t *testing.T) (*httptest.Server, *store.Store, *syncs.Sync, *fakeIGDB) {
 	t.Helper()
 	d, err := db.Open(context.Background(), filepath.Join(t.TempDir(), "log.db"))
 	if err != nil {
@@ -66,8 +67,11 @@ func newIGDBServer(t *testing.T) (*httptest.Server, *store.Store, *igdb.Matcher,
 	client.TokenURL = upstream.URL + "/token"
 	client.APIURL = upstream.URL + "/v4"
 	st := store.New(d)
-	matcher := igdb.NewMatcher(st, client, nil)
-	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, IGDB: client, IGDBMatch: matcher}).Handler())
+	matcher, err := syncs.New(context.Background(), igdb.SyncName, igdb.NewMatcher(st, client).Work, st, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, IGDB: client, Syncs: []*syncs.Sync{matcher}}).Handler())
 	t.Cleanup(srv.Close)
 	return srv, st, matcher, fake
 }
@@ -118,7 +122,7 @@ func TestSteamGamesMatchByAppID(t *testing.T) {
 	obscureID, _ := st.CreateItemFromSource(ctx, "game", "Obscure", kind.SourceSteam, "999", json.RawMessage(`{"appid":999,"name":"Obscure"}`))
 
 	report := matcher.Run(ctx)
-	if report.State != igdb.Matched || report.Checked != 2 || report.Matched != 1 {
+	if report.State != syncs.Succeeded || report.Counts[igdb.CountChecked] != 2 || report.Counts[igdb.CountMatched] != 1 {
 		t.Fatalf("report: %+v", report)
 	}
 	v, _ := st.GetItem(ctx, hadesID)
@@ -136,7 +140,7 @@ func TestSteamGamesMatchByAppID(t *testing.T) {
 	if _, body := call(t, srv, "GET", "/admin/items?kind=game&needs=match", token, ""); body != "[]\n" {
 		t.Errorf("still unmatched after no match: %s", body)
 	}
-	if report := matcher.Run(ctx); report.Checked != 0 {
+	if report := matcher.Run(ctx); report.Counts[igdb.CountChecked] != 0 {
 		t.Errorf("matcher asked again: %+v", report)
 	}
 	if status, _ := call(t, srv, "PUT", "/admin/items/"+itoa(obscureID)+"/igdb", token, `{"igdbId":113112}`); status != http.StatusConflict {

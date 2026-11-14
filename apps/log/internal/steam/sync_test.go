@@ -13,6 +13,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 )
 
 func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
@@ -50,11 +51,15 @@ func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
 
 	client := steam.NewClient("key", "me")
 	client.WebAPIBaseURL, client.StoreBaseURL = fake.URL, fake.URL
-	syncer := steam.NewSyncer(s, client, nil)
-	syncer.StoreRequestInterval = 1
+	steamSyncer := steam.NewSyncer(s, client)
+	steamSyncer.StoreRequestInterval = 1
+	syncer, err := syncs.New(ctx, steam.SyncName, steamSyncer.Work, s, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	report := syncer.Run(ctx)
-	if report.State != steam.Synced || report.GamesAdded != 2 || len(report.Problems) != 0 {
+	if report.State != syncs.Succeeded || report.Counts[steam.CountGamesAdded] != 2 || len(report.Problems) != 0 {
 		t.Fatalf("first sync: %+v", report)
 	}
 	idled, _ := s.ListItems(ctx, store.ItemFilter{Hint: kind.HintLikelyIdled})
@@ -72,7 +77,7 @@ func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
 	}
 	playtime.Store(400)
 	report = syncer.Run(ctx)
-	if achievementCalls.Load() != 2 || report.GamesAdded != 0 {
+	if achievementCalls.Load() != 2 || report.Counts[steam.CountGamesAdded] != 0 {
 		t.Errorf("playtime change: achievements %d, report %+v", achievementCalls.Load(), report)
 	}
 }

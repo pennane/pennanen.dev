@@ -1,17 +1,16 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import type { IGDBMatchReport } from '../../../lib/log/types'
+import { IGDB_MATCH } from '../../../lib/log/syncs'
+import type { SyncReport } from '../../../lib/log/types'
+import { useSync } from '../_sync/useSync'
 import { formatPlaytime, QueueHeader, SaveStatus, type GameCard } from '../_queue/card'
 import { IGDBSearch } from '../_queue/IGDBSearch'
 import styles from '../_queue/queue.module.css'
 import { useSaveQueue } from '../_queue/useSaveQueue'
-import { igdbMatchStatus, matchIGDB, matchIGDBNone, startIGDBMatch } from '../actions'
+import { matchIGDB, matchIGDBNone } from '../actions'
 
-const MATCH_POLL_MS = 3000
-
-export const Match = ({ cards, report }: { cards: GameCard[]; report?: IGDBMatchReport }) => {
+export const Match = ({ cards, report }: { cards: GameCard[]; report?: SyncReport }) => {
   const [queue, setQueue] = useState(cards)
   const [open, setOpen] = useState<number>()
   const saves = useSaveQueue()
@@ -80,42 +79,31 @@ export const Match = ({ cards, report }: { cards: GameCard[]; report?: IGDBMatch
   )
 }
 
-const MatchButton = ({ initial }: { initial?: IGDBMatchReport }) => {
-  const [report, setReport] = useState(initial)
-  const router = useRouter()
-
-  useEffect(() => {
-    if (report?.state !== 'matching') return
-    const timer = setInterval(async () => {
-      const next = await igdbMatchStatus()
-      setReport(next)
-      if (next.state !== 'matching') router.refresh()
-    }, MATCH_POLL_MS)
-    return () => clearInterval(timer)
-  }, [report?.state, router])
-
+const MatchButton = ({ initial }: { initial?: SyncReport }) => {
+  const { report, start } = useSync(IGDB_MATCH, initial)
   if (!initial) return null
-  const matching = report?.state === 'matching'
   return (
     <button
       className={styles.quiet}
-      disabled={matching}
+      disabled={report?.state === 'running'}
       title={report?.problems.at(-1)}
-      onClick={async () => setReport(await startIGDBMatch())}
+      onClick={start}
     >
       {matchLabel(report)}
     </button>
   )
 }
 
-const matchLabel = (report: IGDBMatchReport | undefined) => {
+const matchLabel = (report: SyncReport | undefined) => {
+  const matched = report?.counts.matched ?? 0
+  const checked = report?.counts.checked ?? 0
   switch (report?.state) {
-    case 'matching':
-      return `matching… ${report.matched} of ${report.checked}`
+    case 'running':
+      return `matching… ${matched} of ${checked}`
     case 'failed':
       return 'match failed, retry'
-    case 'matched':
-      return `last run matched ${report.matched} of ${report.checked} · run again`
+    case 'succeeded':
+      return `last run matched ${matched} of ${checked} · run again`
     default:
       return 'match steam games'
   }

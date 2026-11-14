@@ -90,20 +90,14 @@ export type IGDBResult = {
   itemId?: number
 }
 
-export type IGDBMatchReport = {
-  state: 'never-matched' | 'matching' | 'matched' | 'failed'
-  startedAt?: string
-  finishedAt?: string
-  checked: number
-  matched: number
-  problems: string[]
-}
+export type SyncState = 'never-ran' | 'running' | 'succeeded' | 'failed'
 
-export type SteamSyncReport = {
-  state: 'never-synced' | 'syncing' | 'synced' | 'failed'
+export type SyncReport = {
+  name: string
+  state: SyncState
   startedAt?: string
   finishedAt?: string
-  gamesSeen: number
-  gamesAdded: number
+  lastSucceededAt?: string
+  counts: Record<string, number>
   problems: string[]
 }

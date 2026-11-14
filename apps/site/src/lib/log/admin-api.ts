@@ -1,7 +1,6 @@
 import { requiredEnv } from './env'
 import type {
   EntryChange,
-  IGDBMatchReport,
   IGDBResult,
   ItemView,
   ListedEntry,
@@ -9,7 +8,7 @@ import type {
   Axis,
   KindSettings,
   Presentation,
-  SteamSyncReport,
+  SyncReport,
   UploadTicket
 } from './types'
 
@@ -68,8 +67,6 @@ export const logAdmin = {
     call<ItemView>(`/admin/items/${itemId}/igdb`, send('PUT', { igdbId })),
   matchIGDBNone: (itemId: number) =>
     call<ItemView>(`/admin/items/${itemId}/igdb/none`, { method: 'PUT' }),
-  igdbMatch: () => call<IGDBMatchReport>('/admin/sync/igdb'),
-  startIGDBMatch: () => call<IGDBMatchReport>('/admin/sync/igdb', { method: 'POST' }),
   item: (itemId: number) => call<ItemView>(`/admin/items/${itemId}`),
   uploadTicket: async (): Promise<UploadTicket> => {
     const { ticket, path } = await call<{ ticket: string; path: string }>('/admin/images/ticket', {
@@ -83,6 +80,7 @@ export const logAdmin = {
     call<ItemView>(`/admin/items/${itemId}/fields`, send('PATCH', changes)),
   changeEntries: (itemIds: number[], change: EntryChange) =>
     call<void>('/admin/entries/change', send('POST', { itemIds, change })),
-  steamSync: () => call<SteamSyncReport>('/admin/sync/steam'),
-  startSteamSync: () => call<SteamSyncReport>('/admin/sync/steam', { method: 'POST' })
+  syncReports: () => call<SyncReport[]>('/admin/sync'),
+  syncReport: (name: string) => call<SyncReport>(`/admin/sync/${name}`),
+  startSync: (name: string) => call<SyncReport>(`/admin/sync/${name}`, { method: 'POST' })
 }

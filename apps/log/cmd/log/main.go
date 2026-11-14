@@ -21,6 +21,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/revalidate"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 )
 
 func main() {
@@ -61,27 +62,29 @@ func run() error {
 	}
 
 	var daily []jobs.Job
+	addSync := func(name string, work syncs.Work) error {
+		sync, err := syncs.New(ctx, name, work, st, notifier.Changed)
+		if err != nil {
+			return err
+		}
+		server.Syncs = append(server.Syncs, sync)
+		daily = append(daily, sync.Job())
+		return nil
+	}
+
 	if key, id := os.Getenv("STEAM_API_KEY"), os.Getenv("STEAM_ID"); key != "" && id != "" {
-		server.Steam = steam.NewSyncer(st, steam.NewClient(key, id), notifier.Changed)
-		daily = append(daily, jobs.Job{Name: "steam-sync", Run: func(ctx context.Context) error {
-			if report := server.Steam.Run(ctx); report.State == steam.SyncFailed {
-				return errors.New(report.Problems[len(report.Problems)-1])
-			}
-			return nil
-		}})
+		if err := addSync(steam.SyncName, steam.NewSyncer(st, steam.NewClient(key, id)).Work); err != nil {
+			return err
+		}
 	} else {
 		slog.Warn("STEAM_API_KEY or STEAM_ID missing; steam sync disabled")
 	}
 
 	if id, secret := os.Getenv("IGDB_CLIENT_ID"), os.Getenv("IGDB_CLIENT_SECRET"); id != "" && secret != "" {
 		server.IGDB = igdb.NewClient(id, secret)
-		server.IGDBMatch = igdb.NewMatcher(st, server.IGDB, notifier.Changed)
-		daily = append(daily, jobs.Job{Name: "igdb-match", Run: func(ctx context.Context) error {
-			if report := server.IGDBMatch.Run(ctx); report.State == igdb.MatchFailed {
-				return errors.New(report.Problems[len(report.Problems)-1])
-			}
-			return nil
-		}})
+		if err := addSync(igdb.SyncName, igdb.NewMatcher(st, server.IGDB).Work); err != nil {
+			return err
+		}
 	} else {
 		slog.Warn("IGDB_CLIENT_ID or IGDB_CLIENT_SECRET missing; igdb disabled")
 	}

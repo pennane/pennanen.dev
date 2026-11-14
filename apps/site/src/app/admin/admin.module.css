@@ -49,3 +49,17 @@
 .error {
   color: light-dark(hsl(0 70% 40%), hsl(0 90% 75%));
 }
+
+.syncTroubles {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.syncTrouble {
+  margin: 0 0 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  color: light-dark(hsl(0 70% 40%), hsl(0 90% 75%));
+  background: light-dark(hsl(0 70% 95%), hsl(0 40% 15%));
+}

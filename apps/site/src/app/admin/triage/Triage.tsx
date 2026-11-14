@@ -1,9 +1,10 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PRESTIGE } from '../../../lib/log/present'
-import type { EntryChange, Hint, Kind, SteamSyncReport } from '../../../lib/log/types'
+import { STEAM_SYNC } from '../../../lib/log/syncs'
+import type { EntryChange, Hint, Kind, SyncReport } from '../../../lib/log/types'
+import { useSync } from '../_sync/useSync'
 import {
   ANOTHER_SHOT,
   CardFace,
@@ -19,7 +20,7 @@ import {
   type GameCard
 } from '../_queue/card'
 import styles from '../_queue/queue.module.css'
-import { changeEntries, changeEntry, placeEntry, startSteamSync, steamSyncStatus } from '../actions'
+import { changeEntries, changeEntry, placeEntry } from '../actions'
 import { Compare, compareKeys, useRanked, type Comparing } from '../_queue/Compare'
 import type { Placement, Ranked, Search } from '../_queue/placing'
 import { useSaveQueue } from '../_queue/useSaveQueue'
@@ -35,7 +36,6 @@ type Triaged = { cards: GameCard[] }
 
 const UNTRIAGED = 'untriaged'
 const NEVER_PLAYED = 'never-played'
-const SYNC_POLL_MS = 3000
 
 const TRIAGE_TAGS = [
   { tag: ANOTHER_SHOT, shortcut: 'a', label: 'worth another shot' },
@@ -63,7 +63,7 @@ export const Triage = ({
   kind: Kind
   cards: GameCard[]
   ranked: Ranked
-  steamSync?: SteamSyncReport
+  steamSync?: SyncReport
 }) => {
   const presets = useMemo(() => prestigeDivisions(kind), [kind])
   const { ranked, place, unplace, searchFrom } = useRanked(initialRanked)
@@ -365,34 +365,30 @@ export const Triage = ({
   )
 }
 
-const SteamSyncButton = ({ initial }: { initial?: SteamSyncReport }) => {
-  const [report, setReport] = useState(initial)
-  const router = useRouter()
-
-  useEffect(() => {
-    if (report?.state !== 'syncing') return
-    const timer = setInterval(async () => {
-      const next = await steamSyncStatus()
-      setReport(next)
-      if (next.state !== 'syncing') router.refresh()
-    }, SYNC_POLL_MS)
-    return () => clearInterval(timer)
-  }, [report?.state, router])
-
+const SteamSyncButton = ({ initial }: { initial?: SyncReport }) => {
+  const { report, start } = useSync(STEAM_SYNC, initial)
   if (!initial) return null
-  const syncing = report?.state === 'syncing'
   return (
     <button
       className={styles.quiet}
-      disabled={syncing}
+      disabled={report?.state === 'running'}
       title={report?.problems.at(-1)}
-      onClick={async () => setReport(await startSteamSync())}
+      onClick={start}
     >
-      {syncing
-        ? `syncing steam… ${report.gamesSeen ? `${report.gamesAdded} new` : ''}`
-        : report?.state === 'failed'
-          ? 'steam sync failed, retry'
-          : 'sync steam'}
+      {steamSyncLabel(report)}
     </button>
   )
+}
+
+const steamSyncLabel = (report: SyncReport | undefined) => {
+  switch (report?.state) {
+    case 'running':
+      return report.counts['games-seen']
+        ? `syncing steam… ${report.counts['games-added'] ?? 0} new`
+        : 'syncing steam…'
+    case 'failed':
+      return 'steam sync failed, retry'
+    default:
+      return 'sync steam'
+  }
 }

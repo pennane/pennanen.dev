@@ -156,7 +156,10 @@ album, or an album by an artist ap has logged. Suggestions wait in admin
 until ap looks; they never fill a queue. Dismissing one logs it as
 `dismissed`, so it isn't suggested again.
 
-**Sync** — pulling fresh claims from a source. Steam syncs nightly and on demand.
+**Sync** — pulling fresh claims from a source. Every sync runs nightly and on
+demand: Steam, IGDB matching, and each new source. Its last **sync report**
+(state, counts, problems, when it last succeeded) survives restarts; admin
+warns when a sync failed or hasn't succeeded in two days.
 
 **Visibility** — whether an entry shows publicly: `auto` (default, by its
 status), `public` (always) or `private` (never). Prose has no visibility of

@@ -7,22 +7,22 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 )
 
 type Server struct {
 	Store      *store.Store
 	AdminToken string
-	Steam      *steam.Syncer
+	Syncs      []*syncs.Sync
 	IGDB       *igdb.Client
-	IGDBMatch  *igdb.Matcher
 	Backup     func(ctx context.Context) (string, error)
 	Images     *images.Store
 	Changed    func()
@@ -63,10 +63,9 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("POST /admin/items/from-igdb", s.addFromIGDB)
 	admin.HandleFunc("PUT /admin/items/{id}/igdb", s.matchIGDB)
 	admin.HandleFunc("PUT /admin/items/{id}/igdb/none", s.matchIGDBNone)
-	admin.HandleFunc("GET /admin/sync/igdb", s.igdbMatchStatus)
-	admin.HandleFunc("POST /admin/sync/igdb", s.startIGDBMatch)
-	admin.HandleFunc("GET /admin/sync/steam", s.steamSyncStatus)
-	admin.HandleFunc("POST /admin/sync/steam", s.startSteamSync)
+	admin.HandleFunc("GET /admin/sync", s.syncReports)
+	admin.HandleFunc("GET /admin/sync/{name}", s.syncReport)
+	admin.HandleFunc("POST /admin/sync/{name}", s.startSync)
 	admin.HandleFunc("POST /admin/backup", s.backupNow)
 	admin.HandleFunc("POST /admin/images/ticket", s.uploadTicket)
 	mux.Handle("/admin/", s.requireAdmin(admin))
@@ -255,24 +254,40 @@ func (s *Server) removeRelation(w http.ResponseWriter, r *http.Request) {
 	s.mutated(w, s.Store.RemoveRelation(r.Context(), rel))
 }
 
-func (s *Server) steamSyncStatus(w http.ResponseWriter, r *http.Request) {
-	if s.Steam == nil {
-		writeError(w, http.StatusNotImplemented, "steam is not configured")
-		return
+func (s *Server) syncReports(w http.ResponseWriter, r *http.Request) {
+	reports := make([]syncs.Report, 0, len(s.Syncs))
+	for _, sync := range s.Syncs {
+		reports = append(reports, sync.Last())
 	}
-	writeJSON(w, http.StatusOK, s.Steam.Last())
+	writeJSON(w, http.StatusOK, reports)
 }
 
-func (s *Server) startSteamSync(w http.ResponseWriter, r *http.Request) {
-	if s.Steam == nil {
-		writeError(w, http.StatusNotImplemented, "steam is not configured")
+func (s *Server) syncReport(w http.ResponseWriter, r *http.Request) {
+	if sync, found := s.findSync(w, r); found {
+		writeJSON(w, http.StatusOK, sync.Last())
+	}
+}
+
+func (s *Server) startSync(w http.ResponseWriter, r *http.Request) {
+	sync, found := s.findSync(w, r)
+	if !found {
 		return
 	}
-	if err := s.Steam.Start(context.WithoutCancel(r.Context())); errors.Is(err, steam.ErrAlreadySyncing) {
-		writeJSON(w, http.StatusConflict, s.Steam.Last())
+	if err := sync.Start(context.WithoutCancel(r.Context())); errors.Is(err, syncs.ErrAlreadyRunning) {
+		writeJSON(w, http.StatusConflict, sync.Last())
 		return
 	}
-	writeJSON(w, http.StatusAccepted, s.Steam.Last())
+	writeJSON(w, http.StatusAccepted, sync.Last())
+}
+
+func (s *Server) findSync(w http.ResponseWriter, r *http.Request) (*syncs.Sync, bool) {
+	name := r.PathValue("name")
+	i := slices.IndexFunc(s.Syncs, func(sync *syncs.Sync) bool { return sync.Name() == name })
+	if i < 0 {
+		writeError(w, http.StatusNotImplemented, name+" is not configured")
+		return nil, false
+	}
+	return s.Syncs[i], true
 }
 
 func (s *Server) backupNow(w http.ResponseWriter, r *http.Request) {

@@ -100,24 +100,14 @@ export async function matchIGDBNone(itemId: number) {
   await logAdmin.matchIGDBNone(itemId)
 }
 
-export async function igdbMatchStatus() {
+export async function syncStatus(name: string) {
   await requireAdmin()
-  return logAdmin.igdbMatch()
+  return logAdmin.syncReport(name)
 }
 
-export async function startIGDBMatch() {
+export async function startSync(name: string) {
   await requireAdmin()
-  return logAdmin.startIGDBMatch()
-}
-
-export async function startSteamSync() {
-  await requireAdmin()
-  return logAdmin.startSteamSync()
-}
-
-export async function steamSyncStatus() {
-  await requireAdmin()
-  return logAdmin.steamSync()
+  return logAdmin.startSync(name)
 }
 
 export async function saveAxes(axes: Axis[]) {

@@ -2,6 +2,7 @@ import { requireAdmin } from '../../../lib/admin/require-admin'
 import { logAdmin } from '../../../lib/log/admin-api'
 import { toRanked } from '../_queue/placing'
 import { byPlaytime, toGameCard } from '../_queue/toGameCard'
+import { STEAM_SYNC } from '../../../lib/log/syncs'
 import { Triage } from './Triage'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +15,7 @@ export default async function TriagePage() {
     logAdmin.kinds(),
     logAdmin.items({ kind: TRIAGED_KIND, status: 'untriaged' }),
     logAdmin.entries(TRIAGED_KIND),
-    logAdmin.steamSync().catch(() => undefined)
+    logAdmin.syncReport(STEAM_SYNC).catch(() => undefined)
   ])
   const kind = kinds.find((k) => k.name === TRIAGED_KIND)
   if (!kind) throw new Error(`kind ${TRIAGED_KIND} is missing from the log`)

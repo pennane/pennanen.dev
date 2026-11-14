@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -136,24 +135,4 @@ func (s *Server) fetchIGDBGame(ctx context.Context, igdbID int64) (verdict.IGDBG
 	}
 	var game verdict.IGDBGame
 	return game, raw, json.Unmarshal(raw, &game)
-}
-
-func (s *Server) igdbMatchStatus(w http.ResponseWriter, r *http.Request) {
-	if s.IGDBMatch == nil {
-		s.igdbConfigured(w)
-		return
-	}
-	writeJSON(w, http.StatusOK, s.IGDBMatch.Last())
-}
-
-func (s *Server) startIGDBMatch(w http.ResponseWriter, r *http.Request) {
-	if s.IGDBMatch == nil {
-		s.igdbConfigured(w)
-		return
-	}
-	if err := s.IGDBMatch.Start(context.WithoutCancel(r.Context())); errors.Is(err, igdb.ErrAlreadyMatching) {
-		writeJSON(w, http.StatusConflict, s.IGDBMatch.Last())
-		return
-	}
-	writeJSON(w, http.StatusAccepted, s.IGDBMatch.Last())
 }
