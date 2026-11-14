@@ -187,7 +187,7 @@ func attachVerdicts(claimsByItem map[int64][]verdict.Claim, byID map[int64]*Item
 		if !known {
 			continue
 		}
-		v.Verdicts = verdict.Decide(k, claimsByItem[id])
+		v.Verdicts = verdict.Decide(k, verdict.ReadAll(k, claimsByItem[id]))
 		if v.Entry != nil && v.Entry.Status == kind.Untriaged {
 			v.Hint = k.Hint(v.Verdicts.Values)
 		}
@@ -216,7 +216,7 @@ func (s *Store) attachReadScores(ctx context.Context, claimsByItem map[int64][]v
 			if !settings[k.Name].Uses(axis.Key) {
 				continue
 			}
-			value, present := verdict.Number(k, claimsByItem[id], axis.Reading.Source, axis.Reading.Field)
+			value, present := verdict.Number(k, verdict.ReadAll(k, claimsByItem[id]), axis.Reading.Source, axis.Reading.Field)
 			if !present {
 				continue
 			}

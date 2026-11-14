@@ -43,13 +43,60 @@ func Read(source string, raw json.RawMessage) (map[string]any, error) {
 	return read(raw)
 }
 
-func Decide(k kind.Kind, claims []Claim) Verdicts {
-	valuesBySource := map[string]map[string]any{}
+const ReadersVersion = 1
+
+type Reading struct {
+	Source     string
+	ExternalID string
+	FetchedAt  string
+	Values     map[string]any
+}
+
+type Readability int
+
+const (
+	Unreadable Readability = iota
+	Readable
+)
+
+func ReadClaim(c Claim) (Reading, Readability) {
+	values, err := readValues(c)
+	if err != nil || values == nil {
+		return Reading{}, Unreadable
+	}
+	return Reading{Source: c.Source, ExternalID: c.ExternalID, FetchedAt: c.FetchedAt, Values: values}, Readable
+}
+
+func ReadAll(k kind.Kind, claims []Claim) []Reading {
+	readings := make([]Reading, 0, len(claims))
 	for _, c := range claims {
-		values, err := readValues(k, c)
-		if err == nil {
-			valuesBySource[c.Source] = values
+		if r, readability := ReadClaim(c); readability == Readable {
+			r.Values = normalizeValues(k, r.Source, r.Values)
+			readings = append(readings, r)
 		}
+	}
+	return readings
+}
+
+func Encode(r Reading) (json.RawMessage, error) {
+	return json.Marshal(r.Values)
+}
+
+func Decode(k kind.Kind, source, externalID, fetchedAt string, raw json.RawMessage) (Reading, error) {
+	var values map[string]any
+	if err := json.Unmarshal(raw, &values); err != nil {
+		return Reading{}, err
+	}
+	if values == nil {
+		return Reading{}, fmt.Errorf("reading of %s is null", source)
+	}
+	return Reading{Source: source, ExternalID: externalID, FetchedAt: fetchedAt, Values: normalizeValues(k, source, values)}, nil
+}
+
+func Decide(k kind.Kind, readings []Reading) Verdicts {
+	valuesBySource := map[string]map[string]any{}
+	for _, r := range readings {
+		valuesBySource[r.Source] = r.Values
 	}
 
 	decided := Verdicts{Values: map[string]any{}, SourceOf: map[string]string{}}
@@ -71,31 +118,23 @@ type Take struct {
 	FetchedAt string         `json:"fetchedAt"`
 }
 
-func Takes(k kind.Kind, claims []Claim) []Take {
+func Takes(k kind.Kind, readings []Reading) []Take {
 	takes := []Take{}
-	for _, c := range claims {
-		if _, isTake := k.Take(c.Source); !isTake {
+	for _, r := range readings {
+		if _, isTake := k.Take(r.Source); !isTake {
 			continue
 		}
-		values, err := readValues(k, c)
-		if err != nil || values == nil {
-			continue
-		}
-		takes = append(takes, Take{Source: c.Source, Values: values, FetchedAt: c.FetchedAt})
+		takes = append(takes, Take{Source: r.Source, Values: r.Values, FetchedAt: r.FetchedAt})
 	}
 	return takes
 }
 
-func Number(k kind.Kind, claims []Claim, source, field string) (float64, bool) {
-	for _, c := range claims {
-		if c.Source != source || source == kind.SourceAP {
+func Number(k kind.Kind, readings []Reading, source, field string) (float64, bool) {
+	for _, r := range readings {
+		if r.Source != source || source == kind.SourceAP {
 			continue
 		}
-		values, err := readValues(k, c)
-		if err != nil {
-			return 0, false
-		}
-		return asNumber(values[field])
+		return asNumber(r.Values[field])
 	}
 	return 0, false
 }
@@ -112,9 +151,11 @@ func asNumber(value any) (float64, bool) {
 	return 0, false
 }
 
-func readValues(k kind.Kind, c Claim) (map[string]any, error) {
+func readValues(c Claim) (map[string]any, error) {
 	if c.Source == kind.SourceAP {
-		return readOverride(k, c.Data)
+		var override map[string]any
+		err := json.Unmarshal(c.Data, &override)
+		return override, err
 	}
 	read, known := claimReaders[c.Source]
 	if !known {
@@ -123,26 +164,38 @@ func readValues(k kind.Kind, c Claim) (map[string]any, error) {
 	return read(c.Data)
 }
 
-func readOverride(k kind.Kind, raw json.RawMessage) (map[string]any, error) {
-	var override map[string]any
-	if err := json.Unmarshal(raw, &override); err != nil {
-		return nil, err
+func fieldTypesOf(k kind.Kind, source string) map[string]kind.FieldType {
+	fields := k.Fields
+	if take, isTake := k.Take(source); isTake {
+		fields = take.Fields
 	}
-	for name, value := range override {
-		if field, declared := k.Field(name); declared {
-			override[name] = normalize(field.Type, value)
-		}
+	types := make(map[string]kind.FieldType, len(fields))
+	for _, f := range fields {
+		types[f.Name] = f.Type
 	}
-	return override, nil
+	return types
 }
 
-func normalize(t kind.FieldType, value any) any {
+func normalizeValues(k kind.Kind, source string, values map[string]any) map[string]any {
+	types := fieldTypesOf(k, source)
+	for name, value := range values {
+		if t, declared := types[name]; declared {
+			values[name] = normalize(source, t, value)
+		}
+	}
+	return values
+}
+
+func normalize(source string, t kind.FieldType, value any) any {
 	switch t {
 	case kind.Int, kind.ExternalID:
 		if n, isNumber := value.(float64); isNumber {
 			return int64(n)
 		}
 	case kind.StringList:
+		if value == nil && source != kind.SourceAP {
+			return []string(nil)
+		}
 		if xs, isList := value.([]any); isList {
 			strings := make([]string, 0, len(xs))
 			for _, x := range xs {

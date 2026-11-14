@@ -65,7 +65,7 @@ func (s *Store) attachTakes(ctx context.Context, claimsByItem map[int64][]verdic
 			continue
 		}
 		v.Takes = []TakeView{}
-		for _, take := range verdict.Takes(k, claimsByItem[id]) {
+		for _, take := range verdict.Takes(k, verdict.ReadAll(k, claimsByItem[id])) {
 			declared, _ := k.Take(take.Source)
 			hidden := []string{}
 			for field := range take.Values {
