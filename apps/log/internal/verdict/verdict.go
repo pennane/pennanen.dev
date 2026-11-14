@@ -31,6 +31,8 @@ var claimReaders = map[string]readClaim{
 	kind.SourceLetterboxd:        readLetterboxdFilm,
 	kind.SourceTMDB:              readTMDBMovie,
 	kind.SourceTMDBSeries:        readTMDBSeries,
+	kind.SourceSpotifyArtist:     readSpotifyArtist,
+	kind.SourceSpotifyAlbum:      readSpotifyAlbum,
 }
 
 func Read(source string, raw json.RawMessage) (map[string]any, error) {

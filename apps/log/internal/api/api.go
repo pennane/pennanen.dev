@@ -48,7 +48,7 @@ func (s *Server) Handler() http.Handler {
 
 	admin := http.NewServeMux()
 	admin.HandleFunc("GET /admin/kinds", s.kinds)
-	admin.HandleFunc("GET /admin/settings", s.publicPresentation)
+	admin.HandleFunc("GET /admin/settings", s.adminSettings)
 	admin.HandleFunc("PUT /admin/settings/axes", s.putAxes)
 	admin.HandleFunc("PUT /admin/settings/kinds/{kind}", s.putKindSettings)
 	admin.HandleFunc("PUT /admin/settings/tag-titles", s.putTagTitles)

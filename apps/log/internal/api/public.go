@@ -113,9 +113,42 @@ func (s *Server) presentation(r *http.Request) (Presentation, error) {
 	return Presentation{Axes: axes, Kinds: kinds, Fields: publicFieldsByKind(), TagTitles: titles, Readables: kind.Readables(), KindOrder: order}, err
 }
 
-func (s *Server) publicPresentation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 	presentation, err := s.presentation(r)
 	respond(w, http.StatusOK, presentation, err)
+}
+
+func (s *Server) publicPresentation(w http.ResponseWriter, r *http.Request) {
+	presentation, err := s.presentation(r)
+	if err == nil {
+		err = s.keepKindsWithSomethingPublic(r, &presentation)
+	}
+	respond(w, http.StatusOK, presentation, err)
+}
+
+func (s *Server) keepKindsWithSomethingPublic(r *http.Request, presentation *Presentation) error {
+	isPublic, err := s.publicRule(r)
+	if err != nil {
+		return err
+	}
+	views, err := s.Store.ListItems(r.Context(), store.ItemFilter{})
+	if err != nil {
+		return err
+	}
+	hasPublic := map[string]bool{}
+	for _, v := range views {
+		if isPublic(v) {
+			hasPublic[v.Kind] = true
+		}
+	}
+	presentation.Kinds = maps.Collect(func(yield func(string, store.KindSettings) bool) {
+		for name, settings := range presentation.Kinds {
+			if hasPublic[name] && !yield(name, settings) {
+				return
+			}
+		}
+	})
+	return nil
 }
 
 type publicRule func(store.ItemView) bool

@@ -13,13 +13,13 @@ func TestKindsKeepTheOrderApGaveThemAndNewOnesFollow(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
 	order, err := s.KindOrder(ctx)
-	if err != nil || !slices.Equal(order, store.KindOrder{"game", "movie", "series"}) {
+	if err != nil || !slices.Equal(order, store.KindOrder{"album", "artist", "game", "movie", "series"}) {
 		t.Fatalf("default order %v %v", order, err)
 	}
 	if _, err := s.SetKindOrder(ctx, store.KindOrder{"movie", "series"}); err != nil {
 		t.Fatal(err)
 	}
-	if order, _ := s.KindOrder(ctx); !slices.Equal(order, store.KindOrder{"movie", "series", "game"}) {
+	if order, _ := s.KindOrder(ctx); !slices.Equal(order, store.KindOrder{"movie", "series", "album", "artist", "game"}) {
 		t.Errorf("order %v", order)
 	}
 	if _, err := s.SetKindOrder(ctx, store.KindOrder{"movie", "movie"}); !errors.Is(err, store.ErrInvalid) {

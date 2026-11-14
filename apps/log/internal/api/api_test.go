@@ -464,3 +464,41 @@ func TestKnownItemsStayOutOfEntriesAndPublic(t *testing.T) {
 		t.Errorf("public items = %s", body)
 	}
 }
+
+func TestPublicPresentationListsOnlyKindsWithSomethingPublic(t *testing.T) {
+	srv := newServer(t)
+	status, body := call(t, srv, "POST", "/admin/items", token, `{"kind":"movie","title":"Ran"}`)
+	if status != http.StatusCreated {
+		t.Fatalf("create: %d %s", status, body)
+	}
+	var created struct{ ID int64 }
+	json.Unmarshal([]byte(body), &created)
+	call(t, srv, "PATCH", "/admin/items/"+itoa(created.ID)+"/entry", token, `{"status":"watched"}`)
+
+	kindsOf := func(path, auth string) map[string]json.RawMessage {
+		code, body := call(t, srv, "GET", path, auth, "")
+		if code != http.StatusOK {
+			t.Fatalf("%s: %d %s", path, code, body)
+		}
+		var parsed struct{ Kinds map[string]json.RawMessage }
+		if err := json.Unmarshal([]byte(body), &parsed); err != nil {
+			t.Fatal(err)
+		}
+		return parsed.Kinds
+	}
+	public := kindsOf("/public/presentation", "")
+	if _, shown := public["movie"]; !shown {
+		t.Errorf("public lacks movie: %v", public)
+	}
+	for _, empty := range []string{"artist", "album", "game"} {
+		if _, shown := public[empty]; shown {
+			t.Errorf("public lists %s with nothing public", empty)
+		}
+	}
+	admin := kindsOf("/admin/settings", token)
+	for _, name := range []string{"movie", "artist", "album", "game"} {
+		if _, listed := admin[name]; !listed {
+			t.Errorf("admin settings lacks %s", name)
+		}
+	}
+}
