@@ -64,12 +64,14 @@ const useFacets = (items: ListedItem[], kind: string, axes: Axis[]) => {
 const NO_PARAMS = new URLSearchParams()
 
 const Browser = ({
+  kind,
   items,
   axes,
   facets,
   view,
   onChange
 }: {
+  kind: string
   items: ListedItem[]
   axes: Axis[]
   facets: Facet[]
@@ -78,7 +80,7 @@ const Browser = ({
 }) => {
   const axis = axes.find((a) => a.key === view.axis)
   const filtered = filterItems(items, view, facets)
-  const columns = columnsFor(axes)
+  const columns = columnsFor(axes, kind)
   return (
     <div className={styles.browser}>
       <div className={styles.bar}>
@@ -123,7 +125,9 @@ export const KindBrowser = ({ items, kind }: { items: ListedItem[]; kind: string
   const view = parseView(useSearchParams(), axes, facets)
   const change = (next: View) =>
     window.history.replaceState(null, '', `${window.location.pathname}${searchFor(next, axes)}`)
-  return <Browser items={items} axes={axes} facets={facets} view={view} onChange={change} />
+  return (
+    <Browser kind={kind} items={items} axes={axes} facets={facets} view={view} onChange={change} />
+  )
 }
 
 export const DefaultBoard = ({ items, kind }: { items: ListedItem[]; kind: string }) => {
@@ -131,6 +135,7 @@ export const DefaultBoard = ({ items, kind }: { items: ListedItem[]; kind: strin
   const facets = useFacets(items, kind, axes)
   return (
     <Browser
+      kind={kind}
       items={items}
       axes={axes}
       facets={facets}

@@ -3,15 +3,72 @@ import type { Axis, Presentation } from './types'
 
 export type Rank = { place: number; of: number }
 
-const KIND_PLURALS = { game: 'games' } as const
+type Fields = Record<string, unknown>
 
-export type PublicKind = keyof typeof KIND_PLURALS
+type Takes = PublicItem['takes']
 
-export const PUBLIC_KINDS = Object.keys(KIND_PLURALS) as PublicKind[]
+type KindPresentation = {
+  plural: string
+  makersField: string
+  lastSeen: { label: string; of: (fields: Fields, takes: Takes) => string | undefined }
+}
 
-export const isPublicKind = (kind: string): kind is PublicKind => Object.hasOwn(KIND_PLURALS, kind)
+const LETTERBOXD_TAKE = 'letterboxd-take'
 
-export const kindPlural = (kind: PublicKind) => KIND_PLURALS[kind]
+export const takeValues = (takes: Takes, source: string) =>
+  takes.find((take) => take.source === source)?.values ?? {}
+
+const PUBLIC_KIND_PRESENTATIONS = {
+  game: {
+    plural: 'games',
+    makersField: 'developers',
+    lastSeen: { label: 'last played', of: (fields) => textField(fields, 'last_played') }
+  },
+  movie: {
+    plural: 'movies',
+    makersField: 'directors',
+    lastSeen: {
+      label: 'last watched',
+      of: (_, takes) => textField(takeValues(takes, LETTERBOXD_TAKE), 'last_watched')
+    }
+  }
+} as const satisfies Record<string, KindPresentation>
+
+export type PublicKind = keyof typeof PUBLIC_KIND_PRESENTATIONS
+
+export const PUBLIC_KINDS = Object.keys(PUBLIC_KIND_PRESENTATIONS) as PublicKind[]
+
+export const isPublicKind = (kind: string): kind is PublicKind =>
+  Object.hasOwn(PUBLIC_KIND_PRESENTATIONS, kind)
+
+const presentationOf = (kind: string): KindPresentation | undefined =>
+  isPublicKind(kind) ? PUBLIC_KIND_PRESENTATIONS[kind] : undefined
+
+export const kindPlural = (kind: PublicKind) => PUBLIC_KIND_PRESENTATIONS[kind].plural
+
+const HALF_STAR = 0.5
+
+export const starsOf = (rating: number) =>
+  '★'.repeat(Math.floor(rating)) + (rating % 1 >= HALF_STAR ? '½' : '')
+
+export const letterboxdTakeOf = (item: PublicItem) => {
+  const values = takeValues(item.takes, LETTERBOXD_TAKE)
+  const rating = numberField(values, 'rating')
+  return {
+    stars: rating === undefined ? undefined : starsOf(rating),
+    liked: textField(values, 'reaction') === 'liked'
+  }
+}
+
+export const lastSeenLabel = (kind: string) => presentationOf(kind)?.lastSeen.label ?? 'last seen'
+
+export const lastSeenOf = (item: PublicItem) =>
+  presentationOf(item.kind)?.lastSeen.of(item.fields, item.takes)
+
+export const makersOf = (item: PublicItem) => {
+  const field = presentationOf(item.kind)?.makersField
+  return field ? listField(item.fields, field) : []
+}
 
 export const kindTitle = (presentation: Presentation, kind: PublicKind) =>
   presentation.kinds[kind]?.title.trim() || kindPlural(kind)
@@ -22,8 +79,6 @@ export const plainText = (markdown: string) =>
     .replace(/[*_#>`]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
-
-type Fields = Record<string, unknown>
 
 export const textField = (fields: Fields, name: string) => {
   const value = fields[name]
@@ -57,7 +112,12 @@ const FIELDS_WITH_A_PLACE = new Set([
   'playtime_minutes',
   'last_played',
   'achievements_total',
-  'achievements_unlocked'
+  'achievements_unlocked',
+  'original_title',
+  'directors',
+  'countries',
+  'runtime_minutes',
+  'tmdb_id'
 ])
 
 export const freeFormFields = (fields: Fields) =>
@@ -162,11 +222,11 @@ export type ListedItem = {
   scores: Record<string, string>
   rank: Rank | undefined
   tags: string[]
-  lastPlayed: string | undefined
+  lastSeen: string | undefined
   poster: string | undefined
   released: string | undefined
   genres: string[]
-  developers: string[]
+  makers: string[]
   playtimeMinutes: number | undefined
   proseWords: number
 }
@@ -180,11 +240,11 @@ export const toListed = (item: PublicItem): ListedItem => ({
   scores: item.scores,
   rank: item.rank,
   tags: item.tags,
-  lastPlayed: textField(item.fields, 'last_played'),
+  lastSeen: lastSeenOf(item),
   poster: textField(item.fields, 'poster'),
   released: textField(item.fields, 'released'),
   genres: listField(item.fields, 'genres'),
-  developers: listField(item.fields, 'developers'),
+  makers: makersOf(item),
   playtimeMinutes: numberField(item.fields, 'playtime_minutes'),
   proseWords: item.proseWords
 })

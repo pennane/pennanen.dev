@@ -1,6 +1,7 @@
 import {
   byRank,
   byTitle,
+  lastSeenLabel,
   PRESTIGE,
   statusLabel,
   tagLabel,
@@ -192,7 +193,7 @@ const matchesQuery = (query: string) => {
   return (item: ListedItem) =>
     !needle ||
     item.title.toLowerCase().includes(needle) ||
-    item.developers.some((developer) => developer.toLowerCase().includes(needle))
+    item.makers.some((maker) => maker.toLowerCase().includes(needle))
 }
 
 const matchesFacet = (facet: Facet, chosen: string[] | undefined) => (item: ListedItem) =>
@@ -219,7 +220,9 @@ export type Column = {
 const compareValues = (a: Comparable, b: Comparable) =>
   typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))
 
-export const columnsFor = (axes: Axis[]): Column[] => [
+export const LAST_SEEN = 'last-seen'
+
+export const columnsFor = (axes: Axis[], kind: string): Column[] => [
   { key: RANK_SORT, name: '#', valueOf: (item) => item.rank?.place, order: 'ascending' },
   { key: 'title', name: 'title', valueOf: (item) => item.title, order: 'ascending' },
   ...axes.map((axis): Column => ({
@@ -231,9 +234,9 @@ export const columnsFor = (axes: Axis[]): Column[] => [
   { key: 'status', name: 'status', valueOf: (item) => item.status, order: 'ascending' },
   { key: 'released', name: 'released', valueOf: (item) => item.released, order: 'descending' },
   {
-    key: 'last-played',
-    name: 'last played',
-    valueOf: (item) => item.lastPlayed,
+    key: LAST_SEEN,
+    name: lastSeenLabel(kind),
+    valueOf: (item) => item.lastSeen,
     order: 'descending'
   }
 ]

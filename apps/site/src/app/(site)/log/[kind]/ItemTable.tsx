@@ -9,11 +9,11 @@ import {
 import type { Axis } from '../../../../lib/log/types'
 import styles from './table.module.css'
 import { tierColour } from './tierColours'
-import { axisKey, divisionIndex, type Column, type Sort } from './view'
+import { axisKey, divisionIndex, LAST_SEEN, type Column, type Sort } from './view'
 
 const yearOf = (date: string | undefined) => date?.slice(0, 4)
 
-const META_COLUMNS = ['status', 'released', 'last-played']
+const META_COLUMNS = ['status', 'released', LAST_SEEN]
 
 const ARROWS = { forward: '↓', reverse: '↑' }
 
@@ -118,7 +118,7 @@ export const ItemTable = ({
             <span className={styles.meta}>
               <span>{statusLabel(item.status)}</span>
               <span>{yearOf(item.released)}</span>
-              <span>{item.lastPlayed && formatPartialDate(item.lastPlayed.slice(0, 7))}</span>
+              <span>{item.lastSeen && formatPartialDate(item.lastSeen.slice(0, 7))}</span>
             </span>
           </li>
         ))}

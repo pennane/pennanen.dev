@@ -13,6 +13,11 @@ import {
   isPublicKind,
   itemPath,
   kindTitle,
+  lastSeenLabel,
+  lastSeenOf,
+  letterboxdTakeOf,
+  makersOf,
+  numberField,
   pictureOf,
   statusLabel,
   textField,
@@ -67,15 +72,30 @@ const PICTURE_HEIGHT = 215
 
 const Facts = ({ item }: { item: PublicItem }) => {
   const released = textField(item.fields, 'released')
-  const lastPlayed = textField(item.fields, 'last_played')
+  const runtime = numberField(item.fields, 'runtime_minutes')
+  const makers = makersOf(item)
+  const lastSeen = lastSeenOf(item)
   const link = textField(item.fields, 'link')
+  const letterboxd = letterboxdTakeOf(item)
   return (
     <MetaLine>
       <span>{statusLabel(item.status)}</span>
       <ScoreParts kind={item.kind} scores={item.scores} />
+      {makers.length > 0 && <span>{makers.join(', ')}</span>}
       {released && <span>{formatPartialDate(released)}</span>}
+      {runtime !== undefined && <span>{runtime} min</span>}
       {item.timeSpent && <span>{TIME_SPENT_LABELS[item.timeSpent]}</span>}
-      {lastPlayed && <span>last played {formatPartialDate(lastPlayed)}</span>}
+      {lastSeen && (
+        <span>
+          {lastSeenLabel(item.kind)} {formatPartialDate(lastSeen)}
+        </span>
+      )}
+      {(letterboxd.stars || letterboxd.liked) && (
+        <span>
+          letterboxd {letterboxd.stars}
+          {letterboxd.liked && ' ♥'}
+        </span>
+      )}
       {link && <MetaLink href={link} icon={Link2} />}
     </MetaLine>
   )
