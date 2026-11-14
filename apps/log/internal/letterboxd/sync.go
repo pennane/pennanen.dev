@@ -50,7 +50,7 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 	return ctx.Err()
 }
 
-func (s *Syncer) shelveWatched(ctx context.Context, p *syncs.Progress, listed ListedFilm) {
+func (s *Syncer) shelveWatched(ctx context.Context, p *syncs.Progress, listed ListedFilm) (int64, error) {
 	itemID, err := s.Recorder.Shelve(ctx, p, listed.Film, WatchedShelf)
 	if err == nil {
 		err = s.Recorder.PutListTake(ctx, itemID, listed)
@@ -58,17 +58,27 @@ func (s *Syncer) shelveWatched(ctx context.Context, p *syncs.Progress, listed Li
 	if err != nil {
 		p.Problem("%s: %v", listed.Film.Title, err)
 	}
+	return itemID, err
 }
 
 func (s *Syncer) Import(ctx context.Context, p *syncs.Progress, export Export) error {
 	p.ChangedData()
+	onWatchlist := map[int64]struct{}{}
 	for _, film := range export.Watchlist {
-		if _, err := s.Recorder.Shelve(ctx, p, film, WatchlistShelf); err != nil {
+		itemID, err := s.Recorder.Shelve(ctx, p, film, WatchlistShelf)
+		if err != nil {
 			p.Problem("%s: %v", film.Title, err)
+			continue
 		}
+		onWatchlist[itemID] = struct{}{}
 	}
 	for _, listed := range export.Watched {
-		s.shelveWatched(ctx, p, listed)
+		itemID, err := s.shelveWatched(ctx, p, listed)
+		if _, stillWanted := onWatchlist[itemID]; err == nil && !stillWanted {
+			if err := s.Recorder.LeaveWatchlist(ctx, p, itemID); err != nil {
+				p.Problem("%s: %v", listed.Film.Title, err)
+			}
+		}
 	}
 	for _, entry := range oldestFirst(export.Diary) {
 		if err := s.Recorder.RecordWatch(ctx, p, entry, map[string]string{}); err != nil {

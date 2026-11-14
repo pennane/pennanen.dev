@@ -133,7 +133,7 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 			v.Entry = &Entry{
 				Status: status.String, StatusSetBy: setBy.String, Visibility: Visibility(visibility.String),
 				Blurb: blurb.String, Prose: prose.String, TimeSpent: TimeSpent(timeSpent.String), UpdatedAt: updatedAt.String,
-				Scores: map[string]string{}, ReadScores: map[string]string{}, Tags: []string{},
+				Scores: map[string]string{}, ReadScores: map[string]string{}, Tags: []string{}, TagsAddedBySources: map[string]string{},
 			}
 		}
 		views = append(views, v)
@@ -274,19 +274,22 @@ func (s *Store) attachScoresAndTags(ctx context.Context, ids []int64, byID map[i
 			}
 		}
 		rows.Close()
-		rows, err = s.db.QueryContext(ctx, `SELECT item_id, tag FROM tag WHERE item_id IN (`+in+`) ORDER BY tag`, args...)
+		rows, err = s.db.QueryContext(ctx, `SELECT item_id, tag, added_by FROM tag WHERE item_id IN (`+in+`) ORDER BY tag`, args...)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var id int64
-			var t string
-			if err := rows.Scan(&id, &t); err != nil {
+			var t, addedBy string
+			if err := rows.Scan(&id, &t, &addedBy); err != nil {
 				return err
 			}
 			if v := byID[id]; v.Entry != nil {
 				v.Entry.Tags = append(v.Entry.Tags, t)
+				if addedBy != kind.SourceAP {
+					v.Entry.TagsAddedBySources[t] = addedBy
+				}
 			}
 		}
 		return rows.Err()

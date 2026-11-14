@@ -13,10 +13,11 @@ const (
 )
 
 type LetterboxdTake struct {
-	Rating      *float64           `json:"rating,omitempty"`
-	Reaction    LetterboxdReaction `json:"reaction,omitempty"`
-	Review      string             `json:"review,omitempty"`
-	LastWatched string             `json:"lastWatched,omitempty"`
+	Rating           *float64           `json:"rating,omitempty"`
+	Reaction         LetterboxdReaction `json:"reaction,omitempty"`
+	Review           string             `json:"review,omitempty"`
+	LastWatched      string             `json:"lastWatched,omitempty"`
+	OnWatchlistSince string             `json:"onWatchlistSince,omitempty"`
 }
 
 func readLetterboxdTake(raw json.RawMessage) (map[string]any, error) {
@@ -25,9 +26,10 @@ func readLetterboxdTake(raw json.RawMessage) (map[string]any, error) {
 		return nil, err
 	}
 	values := map[string]any{
-		"reaction":     string(take.Reaction),
-		"review":       take.Review,
-		"last_watched": take.LastWatched,
+		"reaction":           string(take.Reaction),
+		"review":             take.Review,
+		"last_watched":       take.LastWatched,
+		"on_watchlist_since": take.OnWatchlistSince,
 	}
 	if take.Rating != nil {
 		values["rating"] = *take.Rating

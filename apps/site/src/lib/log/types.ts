@@ -62,6 +62,7 @@ export type Entry = {
   readScores: Record<string, string>
   rank?: number
   tags: string[]
+  tagsAddedBySources?: Record<string, string>
   updatedAt: string
 }
 

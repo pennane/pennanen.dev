@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
@@ -18,6 +19,7 @@ const (
 	CountFilmsAdded       = "films-added"
 	CountStatusesFollowed = "statuses-followed"
 	CountWatchesObserved  = "watches-observed"
+	CountTagsFollowed     = "tags-followed"
 
 	SignalWatched = "watched"
 	movieKind     = "movie"
@@ -30,6 +32,14 @@ var statusOn = map[Shelf]string{
 
 type Recorder struct {
 	Store *store.Store
+	Today func() string
+}
+
+func (r *Recorder) today() string {
+	if r.Today != nil {
+		return r.Today()
+	}
+	return time.Now().UTC().Format(time.DateOnly)
 }
 
 func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film verdict.LetterboxdFilm, shelf Shelf) (int64, error) {
@@ -49,13 +59,55 @@ func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film verdict.L
 		}
 	}
 	if shelf == WatchlistShelf {
-		watched, err := r.isWatched(ctx, itemID)
-		if err != nil || watched == AlreadyWatched {
-			return itemID, err
-		}
+		return itemID, r.arriveOnWatchlist(ctx, p, itemID)
 	}
 	return itemID, r.follow(ctx, p, itemID, shelf)
 }
+
+func (r *Recorder) arriveOnWatchlist(ctx context.Context, p *syncs.Progress, itemID int64) error {
+	move := NoMove
+	if err := r.changeTake(ctx, itemID, func(t *verdict.LetterboxdTake) {
+		if t.OnWatchlistSince == "" {
+			t.OnWatchlistSince = r.today()
+			move = Arrived
+		}
+	}); err != nil {
+		return err
+	}
+	watched, err := r.isWatched(ctx, itemID)
+	switch {
+	case err != nil:
+		return err
+	case watched == NotWatchedYet:
+		return r.follow(ctx, p, itemID, WatchlistShelf)
+	case move == Arrived:
+		return r.followTag(ctx, p, itemID, store.TagPresent)
+	}
+	return nil
+}
+
+func (r *Recorder) LeaveWatchlist(ctx context.Context, p *syncs.Progress, itemID int64) error {
+	if err := r.changeTake(ctx, itemID, func(t *verdict.LetterboxdTake) { t.OnWatchlistSince = "" }); err != nil {
+		return err
+	}
+	return r.followTag(ctx, p, itemID, store.TagAbsent)
+}
+
+func (r *Recorder) followTag(ctx context.Context, p *syncs.Progress, itemID int64, presence store.TagPresence) error {
+	outcome, err := r.Store.SetTagFromSource(ctx, itemID, kind.SourceLetterboxd, kind.TagAnotherShot, presence)
+	if outcome == store.TagAdded || outcome == store.TagRemoved {
+		p.Add(CountTagsFollowed, 1)
+	}
+	return err
+}
+
+type WatchlistMove int
+
+const (
+	NoMove WatchlistMove = iota
+	Arrived
+	Left
+)
 
 type Watched int
 
@@ -104,14 +156,24 @@ func (r *Recorder) RecordWatch(ctx context.Context, p *syncs.Progress, entry Dia
 	if err := r.observe(ctx, p, itemID, entry); err != nil {
 		return err
 	}
-	return r.changeTake(ctx, itemID, func(t *verdict.LetterboxdTake) {
+	move := NoMove
+	if err := r.changeTake(ctx, itemID, func(t *verdict.LetterboxdTake) {
 		if entry.WatchedOn > t.LastWatched {
 			t.LastWatched = entry.WatchedOn
 		}
 		if entry.Review != "" {
 			t.Review = entry.Review
 		}
-	})
+		if t.OnWatchlistSince != "" && entry.WatchedOn >= t.OnWatchlistSince {
+			move = Left
+		}
+	}); err != nil {
+		return err
+	}
+	if move == Left {
+		return r.LeaveWatchlist(ctx, p, itemID)
+	}
+	return nil
 }
 
 type watchObserved struct {
@@ -186,6 +248,9 @@ func (r *Recorder) follow(ctx context.Context, p *syncs.Progress, itemID int64, 
 	outcome, err := r.Store.SetStatusFromSource(ctx, itemID, kind.SourceLetterboxd, statusOn[shelf])
 	if outcome == store.StatusFollowed || outcome == store.StatusLogged {
 		p.Add(CountStatusesFollowed, 1)
+	}
+	if err == nil && shelf == WatchedShelf && outcome == store.StatusFollowed {
+		return r.LeaveWatchlist(ctx, p, itemID)
 	}
 	return err
 }

@@ -9,6 +9,8 @@ const (
 	SourceIGDB              = "igdb"
 
 	SteamTradingCardsCategory = "Steam Trading Cards"
+
+	TagAnotherShot = "another-shot"
 )
 
 const (

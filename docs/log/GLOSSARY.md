@@ -87,6 +87,10 @@ claim, not a tag. `another-shot` marks something ap wants to try again,
 whatever its status. `idled` marks a game ap ran for trading cards, whether or
 not ap also played it. A tag's **title** is what public pages show for it;
 the tag itself is its id.
+A tag is **added by** ap or by a source, like a status. A sync adds and
+removes only the tags it added itself; once ap touches one, it's ap's. _A
+watched film back on the Letterboxd watchlist gets `another-shot` from
+Letterboxd, which takes it off again after the rewatch._
 
 **Time spent** — ap's word on how long it took: `not-enough`, `a-bit`,
 `just-right`, `a-lot`, `too-much`. A judgment, not a measurement: Steam's

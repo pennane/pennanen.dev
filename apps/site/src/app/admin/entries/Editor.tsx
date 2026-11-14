@@ -304,6 +304,7 @@ export const Editor = ({
       <Section label="tags">
         <Tags
           tags={tags}
+          addedBySources={entry.tagsAddedBySources ?? {}}
           suggestions={knownTags.filter((t) => !tags.includes(t))}
           onAdd={(tag) => {
             setTags((t) => (t.includes(tag) ? t : [...t, tag]))
@@ -621,11 +622,13 @@ const TAG_SUGGESTIONS = 'tag-suggestions'
 
 const Tags = ({
   tags,
+  addedBySources,
   suggestions,
   onAdd,
   onRemove
 }: {
   tags: string[]
+  addedBySources: Record<string, string>
   suggestions: string[]
   onAdd: (tag: string) => void
   onRemove: (tag: string) => void
@@ -645,9 +648,11 @@ const Tags = ({
           type="button"
           className={styles.chip}
           aria-label={`remove ${tag}`}
+          title={addedBySources[tag] && `added by ${addedBySources[tag]}`}
           onClick={() => onRemove(tag)}
         >
-          {tagLabel(tag)} ×
+          {tagLabel(tag)}
+          {addedBySources[tag] && ` · ${addedBySources[tag]}`} ×
         </button>
       ))}
       <input

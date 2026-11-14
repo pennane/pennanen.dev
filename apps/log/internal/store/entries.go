@@ -129,7 +129,7 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 		}
 	}
 	for _, t := range change.AddTags {
-		if _, err := tx.ExecContext(ctx, `INSERT INTO tag (item_id, tag) VALUES (?, ?) ON CONFLICT DO NOTHING`, itemID, t); err != nil {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO tag (item_id, tag, added_by) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET added_by = excluded.added_by`, itemID, t, kind.SourceAP); err != nil {
 			return err
 		}
 	}

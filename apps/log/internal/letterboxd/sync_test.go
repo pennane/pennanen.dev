@@ -148,8 +148,8 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	if memento := item(t, s, "ccc3"); memento.Entry.Status != kind.Watched || memento.Takes[0].Values["reaction"] != "liked" {
 		t.Errorf("watched off the watchlist: %+v %+v", memento.Entry, memento.Takes)
 	}
-	if stalker := item(t, s, "aaa1"); stalker.Entry.Status != kind.Watched {
-		t.Errorf("a watched film on the watchlist went back to %s", stalker.Entry.Status)
+	if stalker := item(t, s, "aaa1"); stalker.Entry.Status != kind.Watched || stalker.Entry.TagsAddedBySources[kind.TagAnotherShot] != kind.SourceLetterboxd {
+		t.Errorf("a watched film on the watchlist: %+v", stalker.Entry)
 	}
 	decent := item(t, s, "ddd4")
 	if decent.Takes[0].Values["rating"] != 3.5 || decent.Takes[0].Values["review"] != "Better than I & you thought\n\nsecond thought" {
