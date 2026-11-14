@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { LETTERBOXD_EXPORT_FIELD } from '../../../lib/log/syncs'
-import type { SyncReport } from '../../../lib/log/types'
+import type { SpotifyConnection, SyncReport } from '../../../lib/log/types'
 import { useSync } from '../_sync/useSync'
 import { importLetterboxdExport } from '../actions'
 import { Section } from './Settings'
@@ -83,15 +83,48 @@ const LetterboxdExport = () => {
       {result.state === 'imported' && (
         <p className={styles.hint} title={result.report.problems.join('\n')}>
           {countsOf(result.report)}
-          {result.report.problems.length > 0 && `, ${result.report.problems.length} problems`}.
-          tmdb matching runs next.
+          {result.report.problems.length > 0 && `, ${result.report.problems.length} problems`}. tmdb
+          matching runs next.
         </p>
       )}
     </Section>
   )
 }
 
-export const SourcesForm = ({ reports }: { reports: SyncReport[] }) => (
+const SPOTIFY_CONNECT_PATH = '/admin/spotify/connect'
+
+const SpotifyConnect = ({
+  connection,
+  outcome
+}: {
+  connection: SpotifyConnection
+  outcome?: string
+}) => (
+  <Section label="spotify">
+    {connection === 'not-configured' && (
+      <p className={styles.hint}>
+        set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET on the log service
+      </p>
+    )}
+    {connection === 'not-connected' && <a href={SPOTIFY_CONNECT_PATH}>connect</a>}
+    {connection === 'connected' && (
+      <p className={styles.hint}>
+        connected · <a href={SPOTIFY_CONNECT_PATH}>reconnect</a>
+      </p>
+    )}
+    {outcome && <p className={styles.hint}>spotify: {outcome}</p>}
+  </Section>
+)
+
+export const SourcesForm = ({
+  reports,
+  spotifyConnection,
+  spotifyOutcome
+}: {
+  reports: SyncReport[]
+  spotifyConnection: SpotifyConnection
+  spotifyOutcome?: string
+}) => (
   <article className={styles.kind}>
     <h2 className={styles.kindName}>sources</h2>
     <Section label="syncs" hint="each runs nightly; run one now when you can't wait">
@@ -99,6 +132,7 @@ export const SourcesForm = ({ reports }: { reports: SyncReport[] }) => (
         <SyncRow key={report.name} initial={report} />
       ))}
     </Section>
+    <SpotifyConnect connection={spotifyConnection} outcome={spotifyOutcome} />
     <LetterboxdExport />
   </article>
 )

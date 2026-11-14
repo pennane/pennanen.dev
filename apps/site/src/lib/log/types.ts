@@ -183,6 +183,8 @@ export type TMDBResult = TMDBLink & {
   itemId?: number
 }
 
+export type SpotifyConnection = 'not-configured' | 'not-connected' | 'connected'
+
 export type SyncState = 'never-ran' | 'running' | 'succeeded' | 'failed'
 
 export type SyncReport = {

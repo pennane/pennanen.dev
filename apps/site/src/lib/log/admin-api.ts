@@ -11,6 +11,7 @@ import type {
   Axis,
   KindSettings,
   Presentation,
+  SpotifyConnection,
   SyncReport,
   TakeFieldVisibility,
   UploadTicket
@@ -103,6 +104,16 @@ export const logAdmin = {
     call<ItemView>(`/admin/items/${itemId}/fields`, send('PATCH', changes)),
   changeEntries: (itemIds: number[], change: EntryChange) =>
     call<void>('/admin/entries/change', send('POST', { itemIds, change })),
+  spotifyConnection: async () =>
+    (await call<{ connection: SpotifyConnection }>('/admin/spotify')).connection,
+  spotifyAuthorizeURL: async (redirectUri: string, state: string) =>
+    (
+      await call<{ url: string }>(
+        `/admin/spotify/authorize?${new URLSearchParams({ redirect_uri: redirectUri, state })}`
+      )
+    ).url,
+  connectSpotify: (code: string, redirectUri: string) =>
+    call<void>('/admin/spotify/connect', send('POST', { code, redirectUri })),
   syncReports: () => call<SyncReport[]>('/admin/sync'),
   syncReport: (name: string) => call<SyncReport>(`/admin/sync/${name}`),
   startSync: (name: string) => call<SyncReport>(`/admin/sync/${name}`, { method: 'POST' }),

@@ -9,12 +9,18 @@ export const dynamic = 'force-dynamic'
 
 const NEVER_SHOWABLE = ['untriaged', 'dismissed']
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ spotify?: string }>
+}) {
   await requireAdmin()
-  const [kinds, presentation, syncReports] = await Promise.all([
+  const { spotify: spotifyOutcome } = await searchParams
+  const [kinds, presentation, syncReports, spotifyConnection] = await Promise.all([
     logAdmin.kinds(),
     logAdmin.settings(),
-    logAdmin.syncReports()
+    logAdmin.syncReports(),
+    logAdmin.spotifyConnection()
   ])
   const entriesByKind = await Promise.all(kinds.map((k) => logAdmin.entries(k.name)))
   const tagsInUse = [
@@ -41,7 +47,11 @@ export default async function SettingsPage() {
         />
       ))}
       <TagTitlesForm tags={tagsInUse} initial={presentation.tagTitles} />
-      <SourcesForm reports={syncReports} />
+      <SourcesForm
+        reports={syncReports}
+        spotifyConnection={spotifyConnection}
+        spotifyOutcome={spotifyOutcome}
+      />
     </div>
   )
 }
