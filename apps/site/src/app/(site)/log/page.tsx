@@ -3,39 +3,31 @@ import { A } from '../../../components/A'
 import { Gap, Stack } from '../../../components/Stack'
 import { WrapInBox } from '../../../components/WrapInBox'
 import { logPublic } from '../../../lib/log/public-api'
-import { kindTitle, publicKinds, toListed } from '../../../lib/log/present'
-import { overviewSort, sortItems, sortsFor } from './[kind]/view'
+import { baseUrl } from '../../sitemap'
 import { ItemList } from './components/ItemRow'
 import styles from './components/log.module.css'
+import { logOverview } from './components/overview'
+import { logSummary } from './components/summaries'
 
-export const metadata: Metadata = {
-  title: 'things as ap saw them',
-  description: 'A log of games and other things Arttu Pennanen has seen.'
+const TITLE = 'things as ap saw them'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const description = logSummary(await logOverview(await logPublic.presentation()))
+  return {
+    metadataBase: new URL(baseUrl),
+    title: TITLE,
+    description,
+    openGraph: { title: TITLE, description, type: 'website', url: `${baseUrl}/log` },
+    twitter: { card: 'summary_large_image', title: TITLE, description }
+  }
 }
 
 export default async function LogPage() {
-  const presentation = await logPublic.presentation()
-  const sections = await Promise.all(
-    publicKinds(presentation).map(async (kind) => {
-      const settings = presentation.kinds[kind]
-      const fields = presentation.fields[kind] ?? []
-      const axes = settings.axes.flatMap((key) => presentation.axes.filter((a) => a.key === key))
-      const items = (await logPublic.items(kind)).map((item) => toListed(item, fields))
-      const sorts = sortsFor(axes, fields, settings)
-      const sort = overviewSort(items, axes, sorts, settings)
-      return {
-        kind,
-        title: kindTitle(presentation, kind),
-        items: sortItems(items, { by: sort.key, direction: 'forward' }, sorts),
-        shown: settings.overview.count
-      }
-    })
-  )
-  const filled = sections.filter((section) => section.items.length > 0)
+  const filled = await logOverview(await logPublic.presentation())
 
   return (
     <Stack gap={Gap.xLarge} alignItems="stretch">
-      <h1>things as ap saw them</h1>
+      <h1>{TITLE}</h1>
       {filled.length === 0 && <p className={styles.empty}>Nothing here yet.</p>}
       {filled.map(({ kind, title, items, shown }) => (
         <section key={kind}>
