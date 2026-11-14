@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
@@ -141,6 +143,16 @@ func (r *Recorder) RefreshClaims(ctx context.Context, p *syncs.Progress, c *Clie
 	r.refresh(ctx, p, r.albums, kind.SourceSpotifyAlbum, c.Albums)
 }
 
+func stillSimplified(met map[string]*metItem) []string {
+	left := []string{}
+	for id, seen := range met {
+		if seen.detail == Simplified {
+			left = append(left, id)
+		}
+	}
+	return left
+}
+
 func (r *Recorder) refresh(ctx context.Context, p *syncs.Progress, met map[string]*metItem, source string, fetch func(context.Context, []string) ([]json.RawMessage, error)) {
 	missing := []string{}
 	for id, seen := range met {
@@ -153,6 +165,12 @@ func (r *Recorder) refresh(ctx context.Context, p *syncs.Progress, met map[strin
 		if err != nil {
 			p.Problem("%s: %v", source, err)
 		}
+		defer func() {
+			if left := stillSimplified(met); len(left) > 0 {
+				sort.Strings(left)
+				p.Problem("%s never came back in full: %s", source, strings.Join(left, ", "))
+			}
+		}()
 		for _, raw := range fetched {
 			var ref reference
 			if json.Unmarshal(raw, &ref) == nil && met[ref.ID] != nil {

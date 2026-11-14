@@ -101,13 +101,13 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	c.access = token.AccessToken
-	c.accessExpires = time.Now().Add(time.Duration(token.ExpiresIn)*time.Second - tokenExpiryMargin)
 	if token.RefreshToken != "" && token.RefreshToken != refresh {
 		if err := c.secrets.PutSecret(ctx, RefreshTokenSecret, token.RefreshToken); err != nil {
 			return "", err
 		}
 	}
+	c.access = token.AccessToken
+	c.accessExpires = time.Now().Add(time.Duration(token.ExpiresIn)*time.Second - tokenExpiryMargin)
 	return c.access, nil
 }
 

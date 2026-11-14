@@ -138,11 +138,11 @@ func (c *Client) batches(ctx context.Context, what string, ids []string, perCall
 	for batch := range slices.Chunk(ids, perCall) {
 		body, err := c.get(ctx, c.APIURL+"/"+what+"?ids="+url.QueryEscape(strings.Join(batch, ",")))
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", what, err)
+			return found, fmt.Errorf("%s: %w", what, err)
 		}
 		var response map[string][]json.RawMessage
 		if err := json.Unmarshal(body, &response); err != nil {
-			return nil, fmt.Errorf("%s: %w", what, err)
+			return found, fmt.Errorf("%s: %w", what, err)
 		}
 		for _, raw := range response[what] {
 			if string(raw) != "null" {

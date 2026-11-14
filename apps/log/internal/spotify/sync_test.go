@@ -21,6 +21,7 @@ import (
 type fakeSpotify struct {
 	topArtists map[string]string
 	saved      string
+	albumsNull bool
 }
 
 func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +41,10 @@ func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
 	case "/me/albums":
 		fmt.Fprintf(w, `{"items":%s,"next":null}`, f.saved)
 	case "/albums":
+		if f.albumsNull {
+			fmt.Fprint(w, `{"albums":[null]}`)
+			return
+		}
 		items := []string{}
 		for _, id := range strings.Split(r.URL.Query().Get("ids"), ",") {
 			items = append(items, fmt.Sprintf(`{"id":%q,"name":"Album %s","label":"Label %s","artists":[{"id":"X","name":"Xena"}]}`, id, id, id))
@@ -248,5 +253,37 @@ func TestNotConnectedFailsTheRun(t *testing.T) {
 	report := h.run(t)
 	if report.State != syncs.Failed || !strings.Contains(strings.Join(report.Problems, "\n"), "connect it in admin settings") {
 		t.Fatalf("report = %+v", report)
+	}
+}
+
+func TestAnUnreadableSavedAlbumFailsTheRunBeforeAnyUnsave(t *testing.T) {
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	b := h.item(t, kind.SourceSpotifyAlbum, "B")
+
+	fake.saved = `[{"added_at":"2026-11-10T09:00:00Z","album":5}]`
+	h.day = "2026-11-16"
+	report := h.run(t)
+	if report.State != syncs.Failed {
+		t.Fatalf("report = %+v", report)
+	}
+	if got := h.observations(t, b, "unsaved"); len(got) != 0 {
+		t.Fatalf("unsaved = %+v", got)
+	}
+}
+
+func TestAnAlbumTheBatchNeverReturnedIsAProblemNamingIt(t *testing.T) {
+	fake := newFake()
+	fake.albumsNull = true
+	h := newHarness(t, fake, spotify.Connected)
+	report := h.run(t)
+	if !strings.Contains(strings.Join(report.Problems, "\n"), "spotify-album never came back in full: A") {
+		t.Fatalf("problems = %v", report.Problems)
+	}
+	b := h.item(t, kind.SourceSpotifyAlbum, "B")
+	claim, err := h.store.Claim(context.Background(), b, kind.SourceSpotifyAlbum)
+	if err != nil || !strings.Contains(string(claim.Data), `"label":"Lb"`) {
+		t.Fatalf("claim = %s, %v", claim.Data, err)
 	}
 }

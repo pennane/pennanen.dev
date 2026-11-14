@@ -230,3 +230,62 @@ func TestAlbumsAreFetchedTwentyAtATime(t *testing.T) {
 		t.Fatalf("batches = %v", batches)
 	}
 }
+
+type failingPuts struct{ *memorySecrets }
+
+func (failingPuts) PutSecret(ctx context.Context, name, value string) error {
+	return errors.New("disk full")
+}
+
+func TestARotatedTokenThatCannotBeStoredIsNotCached(t *testing.T) {
+	tokenCalls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/token") {
+			tokenCalls++
+			tokenResponse(w, `,"refresh_token":"r2"`)
+			return
+		}
+		fmt.Fprint(w, `{"items":[],"next":null}`)
+	}))
+	defer server.Close()
+	c := clientAgainst(server, failingPuts{newSecrets(map[string]string{spotify.RefreshTokenSecret: "r1"})})
+	for range 2 {
+		if _, err := c.TopArtists(context.Background(), spotify.ShortTerm); err == nil {
+			t.Fatal("expected an error")
+		}
+	}
+	if tokenCalls != 2 {
+		t.Fatalf("token calls = %d, want 2", tokenCalls)
+	}
+}
+
+func TestBatchesBeforeAFailingOneAreKept(t *testing.T) {
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/token") {
+			tokenResponse(w, "")
+			return
+		}
+		calls++
+		if calls == 2 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		ids := strings.Split(r.URL.Query().Get("ids"), ",")
+		items := make([]string, len(ids))
+		for i, id := range ids {
+			items[i] = fmt.Sprintf(`{"id":%q}`, id)
+		}
+		fmt.Fprintf(w, `{"albums":[%s]}`, strings.Join(items, ","))
+	}))
+	defer server.Close()
+	ids := make([]string, 25)
+	for i := range ids {
+		ids[i] = fmt.Sprintf("a%d", i)
+	}
+	c := clientAgainst(server, newSecrets(map[string]string{spotify.RefreshTokenSecret: "r1"}))
+	albums, err := c.Albums(context.Background(), ids)
+	if err == nil || len(albums) != 20 {
+		t.Fatalf("albums = %d, err = %v", len(albums), err)
+	}
+}

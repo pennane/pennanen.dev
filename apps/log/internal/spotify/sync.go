@@ -71,8 +71,12 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 	if err != nil {
 		return err
 	}
+	stillSaved, err := savedIDs(saved)
+	if err != nil {
+		return err
+	}
 	snap.saves(ctx, saved)
-	if err := s.unsaves(ctx, snap, saved); err != nil {
+	if err := s.unsaves(ctx, snap, stillSaved); err != nil {
 		return err
 	}
 	snap.recorder.RefreshClaims(ctx, p, s.Client)
@@ -158,14 +162,22 @@ func (n snapshot) saves(ctx context.Context, saved []SavedAlbum) {
 	}
 }
 
-func (s *Syncer) unsaves(ctx context.Context, n snapshot, saved []SavedAlbum) error {
-	stillSaved := map[string]struct{}{}
+func savedIDs(saved []SavedAlbum) (map[string]struct{}, error) {
+	ids := map[string]struct{}{}
 	for _, save := range saved {
 		var ref reference
-		if err := json.Unmarshal(save.Album, &ref); err == nil {
-			stillSaved[ref.ID] = struct{}{}
+		if err := json.Unmarshal(save.Album, &ref); err != nil {
+			return nil, fmt.Errorf("saved albums: %w", err)
 		}
+		if ref.ID == "" {
+			return nil, errors.New("saved albums: an album without an id")
+		}
+		ids[ref.ID] = struct{}{}
 	}
+	return ids, nil
+}
+
+func (s *Syncer) unsaves(ctx context.Context, n snapshot, stillSaved map[string]struct{}) error {
 	wasSaved, err := s.Store.ItemsLastObservedAs(ctx, ObservationSource, []string{SignalSaved, SignalUnsaved}, SignalSaved)
 	if err != nil {
 		return err
