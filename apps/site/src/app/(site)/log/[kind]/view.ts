@@ -37,7 +37,7 @@ const VALUE_SEPARATOR = ','
 
 export const RANK_SORT = 'rank'
 
-const DEFAULT_SORT: Sort = { by: RANK_SORT, direction: 'forward' }
+export type ViewDefaults = { tiers: Axis[]; facets: Facet[]; mode: Mode; sort: Sort }
 
 const isMode = (text: string | null): text is Mode => MODES.some((mode) => mode === text)
 
@@ -247,27 +247,25 @@ export const splitsItems = (facet: Facet, items: ListedItem[]) => {
   return values.length > 1 || (values.length === 1 && values[0].count < items.length)
 }
 
-export const parseView = (
-  params: ReadableParams,
-  axes: Axis[],
-  facets: Facet[],
-  defaultMode: Mode
-): View => {
+export const parseView = (params: ReadableParams, defaults: ViewDefaults): View => {
   const mode = params.get(PARAMS.mode)
   const axis = params.get(PARAMS.axis)
   const sort = params.get(PARAMS.sort)
   return {
-    mode: isMode(mode) && axes.length > 0 ? mode : defaultMode,
-    axis: axes.some((a) => a.key === axis) && axis ? axis : (axes[0]?.key ?? PRESTIGE),
+    mode: isMode(mode) && defaults.tiers.length > 0 ? mode : defaults.mode,
+    axis:
+      defaults.tiers.some((a) => a.key === axis) && axis
+        ? axis
+        : (defaults.tiers[0]?.key ?? PRESTIGE),
     sort: sort
       ? {
           by: sort,
           direction: params.get(PARAMS.direction) === REVERSED ? 'reverse' : 'forward'
         }
-      : DEFAULT_SORT,
+      : defaults.sort,
     query: params.get(PARAMS.query) ?? '',
     chosen: Object.fromEntries(
-      facets.flatMap((facet) => {
+      defaults.facets.flatMap((facet) => {
         const values = params.get(facet.key)?.split(VALUE_SEPARATOR).filter(Boolean) ?? []
         return values.length > 0 ? [[facet.key, values]] : []
       })
@@ -275,11 +273,11 @@ export const parseView = (
   }
 }
 
-export const searchFor = (view: View, axes: Axis[], defaultMode: Mode) => {
+export const searchFor = (view: View, defaults: ViewDefaults) => {
   const query = new URLSearchParams()
-  if (view.mode !== defaultMode) query.set(PARAMS.mode, view.mode)
-  if (view.axis !== axes[0]?.key) query.set(PARAMS.axis, view.axis)
-  if (view.sort.by !== DEFAULT_SORT.by || view.sort.direction !== DEFAULT_SORT.direction) {
+  if (view.mode !== defaults.mode) query.set(PARAMS.mode, view.mode)
+  if (view.axis !== defaults.tiers[0]?.key) query.set(PARAMS.axis, view.axis)
+  if (view.sort.by !== defaults.sort.by || view.sort.direction !== defaults.sort.direction) {
     query.set(PARAMS.sort, view.sort.by)
     if (view.sort.direction === 'reverse') query.set(PARAMS.direction, REVERSED)
   }
@@ -416,4 +414,23 @@ export const overviewSort = (
       .map((key) => sorts.find((sort) => sort.key === key)!)
       .find((sort) => sort && hasEnough(sort)) ?? rank
   )
+}
+
+export const tiersOf = (items: ListedItem[], axis: Axis) => {
+  const order = rankedFirst(axis.key)
+  return axis.divisions.map((division) => ({
+    division,
+    items: items.filter((item) => item.scores[axis.key] === division.key).toSorted(order)
+  }))
+}
+
+export const orderIn = (
+  items: ListedItem[],
+  view: View,
+  setup: { tiers: Axis[]; facets: Facet[]; searched: PublicField[]; sorts: Column[] }
+) => {
+  const filtered = filterItems(items, view, setup.facets, setup.searched)
+  const axis = setup.tiers.find((a) => a.key === view.axis) ?? setup.tiers[0]
+  if (view.mode === 'tiers' && axis) return tiersOf(filtered, axis).flatMap((tier) => tier.items)
+  return sortItems(filtered, view.sort, setup.sorts)
 }

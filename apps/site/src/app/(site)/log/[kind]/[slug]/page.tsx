@@ -7,7 +7,6 @@ import { Lede, MetaLine, MetaLink } from '../../../../../components/MetaLine'
 import { Gap, Stack } from '../../../../../components/Stack'
 import { WrapInBox } from '../../../../../components/WrapInBox'
 import {
-  byRank,
   isPublicKind,
   itemPath,
   kindTitle,
@@ -20,13 +19,13 @@ import {
   titleOf,
   toListed
 } from '../../../../../lib/log/present'
-import type { Presentation } from '../../../../../lib/log/types'
 import { logPublic, type PublicItem } from '../../../../../lib/log/public-api'
 import { baseUrl } from '../../../../sitemap'
 import { Prose } from '../../components/Prose'
 import { ScoreParts } from '../../components/Scores'
 import { Tags } from '../../components/Tags'
 import logStyles from '../../components/log.module.css'
+import { KindLink, Neighbours } from './InView'
 import styles from './item.module.css'
 
 type Params = Promise<{ kind: string; slug: string }>
@@ -117,53 +116,19 @@ const Visions = ({ prose }: { prose: string }) => (
   </section>
 )
 
-type Neighbour = { title: string; href: string }
-
-const neighboursOf = async (item: PublicItem) => {
-  const ordered = (await logPublic.items(item.kind))
-    .map((listed) => toListed(listed, []))
-    .toSorted(byRank)
-  const at = ordered.findIndex((listed) => listed.slug === item.slug)
-  const linkTo = (index: number): Neighbour | undefined => {
-    const listed = at >= 0 ? ordered[index] : undefined
-    return listed && { title: listed.title, href: itemPath(listed) }
-  }
-  return { previous: linkTo(at - 1), next: linkTo(at + 1) }
-}
-
-const NEIGHBOURS_PLACES = { top: styles.neighboursTop, bottom: styles.neighboursBottom }
-
-const Neighbours = ({
-  previous,
-  next,
-  place
-}: {
-  previous?: Neighbour
-  next?: Neighbour
-  place: keyof typeof NEIGHBOURS_PLACES
-}) => (
-  <nav className={`${styles.neighbours} ${NEIGHBOURS_PLACES[place]}`}>
-    {previous && (
-      <Link href={previous.href} rel="prev" className={styles.previous}>
-        ← {previous.title}
-      </Link>
-    )}
-    {next && (
-      <Link href={next.href} rel="next" className={styles.next}>
-        {next.title} →
-      </Link>
-    )}
-  </nav>
-)
-
 export default async function ItemPage({ params }: { params: Params }) {
   const item = await findItem(params)
   if (!item) notFound()
   const picture = pictureOf(item)
-  const [neighbours, presentation] = await Promise.all([
-    neighboursOf(item),
+  const [listed, presentation] = await Promise.all([
+    logPublic.items(item.kind),
     logPublic.presentation()
   ])
+  const place = {
+    kind: item.kind,
+    slug: item.slug,
+    items: listed.map((other) => toListed(other, presentation.fields[item.kind] ?? []))
+  }
   const extras = pageFieldsOf(item, presentation)
 
   return (
@@ -173,10 +138,10 @@ export default async function ItemPage({ params }: { params: Params }) {
           <nav className={logStyles.crumbs}>
             <Link href="/log">log</Link>
             <span aria-hidden>/</span>
-            <Link href={`/log/${item.kind}`}>{kindTitle(presentation, item.kind)}</Link>
+            <KindLink place={place} title={kindTitle(presentation, item.kind)} />
             <span aria-hidden>/</span>
           </nav>
-          <Neighbours {...neighbours} place="top" />
+          <Neighbours place={place} spot="top" />
           {picture && (
             <Image
               className={styles.picture}
@@ -208,7 +173,7 @@ export default async function ItemPage({ params }: { params: Params }) {
       )}
       <OutsideTakes item={item} />
       {item.prose.trim() && <Visions prose={item.prose} />}
-      <Neighbours {...neighbours} place="bottom" />
+      <Neighbours place={place} spot="bottom" />
     </article>
   )
 }

@@ -6,7 +6,7 @@ import { itemPath, type ListedItem } from '../../../../lib/log/present'
 import type { Axis } from '../../../../lib/log/types'
 import { tierColour } from './tierColours'
 import styles from './tiers.module.css'
-import { rankedFirst } from './view'
+import { tiersOf } from './view'
 
 const WITHOUT_HOVER = '(hover: none)'
 
@@ -14,17 +14,19 @@ type Caption = 'shown' | 'hidden'
 
 const Tile = ({
   item,
+  search,
   caption,
   onReveal
 }: {
   item: ListedItem
+  search: string
   caption: Caption
   onReveal: () => void
 }) => {
   const picture = item.poster ?? item.picture
   return (
     <Link
-      href={itemPath(item)}
+      href={itemPath(item) + search}
       className={styles.tile}
       data-caption={caption}
       aria-label={item.title}
@@ -44,15 +46,18 @@ const Tile = ({
   )
 }
 
-export const TierBoard = ({ items, axis }: { items: ListedItem[]; axis: Axis }) => {
+export const TierBoard = ({
+  items,
+  axis,
+  search
+}: {
+  items: ListedItem[]
+  axis: Axis
+  search: string
+}) => {
   const [revealed, setRevealed] = useState<string>()
-  const order = rankedFirst(axis.key)
-  const tiers = axis.divisions
-    .map((division, i) => ({
-      division,
-      colour: tierColour(i),
-      items: items.filter((item) => item.scores[axis.key] === division.key).toSorted(order)
-    }))
+  const tiers = tiersOf(items, axis)
+    .map((tier, i) => ({ ...tier, colour: tierColour(i) }))
     .filter((tier) => tier.items.length > 0)
 
   if (tiers.length === 0)
@@ -70,6 +75,7 @@ export const TierBoard = ({ items, axis }: { items: ListedItem[]; axis: Axis }) 
               <Tile
                 key={item.slug}
                 item={item}
+                search={search}
                 caption={revealed === item.slug ? 'shown' : 'hidden'}
                 onReveal={() => setRevealed(item.slug)}
               />

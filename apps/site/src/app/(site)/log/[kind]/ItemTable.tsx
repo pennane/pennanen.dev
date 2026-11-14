@@ -84,12 +84,14 @@ export const ItemTable = ({
   axes,
   columns,
   sort,
+  search,
   onSort
 }: {
   items: ListedItem[]
   axes: Axis[]
   columns: Column[]
   sort: Sort
+  search: string
   onSort: (sort: Sort) => void
 }) => {
   const columnFor = (key: string) => columns.find((column) => column.key === key)!
@@ -120,10 +122,10 @@ export const ItemTable = ({
         {items.map((item) => (
           <li key={item.slug} className={styles.row}>
             <span className={styles.rank}>{item.rank?.place}</span>
-            <Link href={itemPath(item)} className={styles.thumb} tabIndex={-1} aria-hidden>
+            <Link href={itemPath(item) + search} className={styles.thumb} tabIndex={-1} aria-hidden>
               {item.picture && <img src={item.picture} alt="" loading="lazy" />}
             </Link>
-            <Link href={itemPath(item)} className={styles.title}>
+            <Link href={itemPath(item) + search} className={styles.title}>
               {item.title}
             </Link>
             {axes.map((axis) => (
