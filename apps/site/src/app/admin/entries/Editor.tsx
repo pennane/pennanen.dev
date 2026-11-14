@@ -20,6 +20,7 @@ import type {
   Kind,
   Visibility
 } from '../../../lib/log/types'
+import { SET_BY_AP } from '../../../lib/log/types'
 import { SaveStatus, useKeys } from '../_queue/card'
 import { Compare, compareKeys, type Comparing } from '../_queue/Compare'
 import {
@@ -100,6 +101,7 @@ export const Editor = ({
   onPlace: (rival: Rival, placement: Placement) => void
 }) => {
   const [status, setStatus] = useState(entry.status)
+  const [statusSetBy, setStatusSetBy] = useState(entry.statusSetBy)
   const [visibility, setVisibility] = useState(entry.visibility)
   const [tags, setTags] = useState(entry.tags)
   const [timeSpent, setTimeSpent] = useState<TimeSpent | typeof UNSAID>(entry.timeSpent ?? UNSAID)
@@ -196,9 +198,13 @@ export const Editor = ({
           chosen={status}
           onChoose={(next) => {
             setStatus(next)
+            setStatusSetBy(SET_BY_AP)
             save(`status → ${next}`, { status: next })
           }}
         />
+        {statusSetBy !== SET_BY_AP && (
+          <p className={styles.note}>set by {statusSetBy}, follows it until you choose one</p>
+        )}
       </Section>
 
       <Section label="visibility">

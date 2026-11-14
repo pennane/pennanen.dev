@@ -67,7 +67,7 @@ func (s *Store) CreateItem(ctx context.Context, kindName, title string, override
 		if err := putClaim(ctx, tx, id, kind.SourceAP, "", override); err != nil {
 			return err
 		}
-		return ensureEntry(ctx, tx, id)
+		return ensureEntry(ctx, tx, id, kind.SourceAP)
 	})
 	return id, err
 }
@@ -82,7 +82,7 @@ func (s *Store) CreateItemFromSource(ctx context.Context, kindName, title, sourc
 		if err := putClaim(ctx, tx, id, source, externalID, data); err != nil {
 			return err
 		}
-		return ensureEntry(ctx, tx, id)
+		return ensureEntry(ctx, tx, id, source)
 	})
 	return id, err
 }
@@ -109,13 +109,9 @@ func insertItem(ctx context.Context, q queryer, kindName, title string) (int64, 
 	}
 }
 
-func ensureEntry(ctx context.Context, q queryer, itemID int64) error {
-	_, err := q.ExecContext(ctx, `INSERT INTO entry (item_id, visibility) VALUES (?, ?) ON CONFLICT DO NOTHING`, itemID, NewEntryVisibility)
+func ensureEntry(ctx context.Context, q queryer, itemID int64, statusSetBy string) error {
+	_, err := q.ExecContext(ctx, `INSERT INTO entry (item_id, visibility, status_set_by) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`, itemID, NewEntryVisibility, statusSetBy)
 	return err
-}
-
-func (s *Store) EnsureEntry(ctx context.Context, itemID int64) error {
-	return ensureEntry(ctx, s.db, itemID)
 }
 
 const untitled = "untitled"

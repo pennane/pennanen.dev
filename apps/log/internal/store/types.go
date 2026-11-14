@@ -46,15 +46,16 @@ type Item struct {
 }
 
 type Entry struct {
-	Status     string            `json:"status"`
-	Visibility Visibility        `json:"visibility"`
-	Blurb      string            `json:"blurb"`
-	Prose      string            `json:"prose"`
-	TimeSpent  TimeSpent         `json:"timeSpent,omitempty"`
-	Scores     map[string]string `json:"scores"`
-	Rank       int               `json:"rank,omitempty"`
-	Tags       []string          `json:"tags"`
-	UpdatedAt  string            `json:"updatedAt"`
+	Status      string            `json:"status"`
+	StatusSetBy string            `json:"statusSetBy"`
+	Visibility  Visibility        `json:"visibility"`
+	Blurb       string            `json:"blurb"`
+	Prose       string            `json:"prose"`
+	TimeSpent   TimeSpent         `json:"timeSpent,omitempty"`
+	Scores      map[string]string `json:"scores"`
+	Rank        int               `json:"rank,omitempty"`
+	Tags        []string          `json:"tags"`
+	UpdatedAt   string            `json:"updatedAt"`
 }
 
 type Relation struct {

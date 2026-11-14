@@ -99,19 +99,20 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 			return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, axis, *division)
 		}
 	}
-	if err := ensureEntry(ctx, tx, itemID); err != nil {
+	if err := ensureEntry(ctx, tx, itemID, kind.SourceAP); err != nil {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, `
 		UPDATE entry SET
 			status = coalesce(?, status),
+			status_set_by = CASE WHEN ? IS NULL THEN status_set_by ELSE ? END,
 			visibility = coalesce(?, visibility),
 			blurb = coalesce(?, blurb),
 			prose = coalesce(?, prose),
 			time_spent = CASE WHEN ? IS NULL THEN time_spent ELSE nullif(?, '') END,
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 		WHERE item_id = ?`,
-		change.Status, change.Visibility, change.Blurb, change.Prose, change.TimeSpent, change.TimeSpent, itemID); err != nil {
+		change.Status, change.Status, kind.SourceAP, change.Visibility, change.Blurb, change.Prose, change.TimeSpent, change.TimeSpent, itemID); err != nil {
 		return err
 	}
 	if change.Status != nil && *change.Status == kind.Dismissed {

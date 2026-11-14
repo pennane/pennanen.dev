@@ -113,7 +113,7 @@ func (s *Store) getOne(ctx context.Context, where string, args ...any) (ItemView
 func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]ItemView, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT i.id, i.kind, i.slug, i.created_at,
-		       e.status, e.visibility, e.blurb, e.prose, e.time_spent, e.updated_at
+		       e.status, e.status_set_by, e.visibility, e.blurb, e.prose, e.time_spent, e.updated_at
 		FROM item i LEFT JOIN entry e ON e.item_id = i.id
 		WHERE `+where+`
 		ORDER BY coalesce(e.updated_at, i.created_at) DESC, i.id DESC`, args...)
@@ -124,14 +124,14 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	byID := map[int64]*ItemView{}
 	for rows.Next() {
 		var v ItemView
-		var status, visibility, blurb, prose, timeSpent, updatedAt sql.NullString
-		if err := rows.Scan(&v.ID, &v.Kind, &v.Slug, &v.CreatedAt, &status, &visibility, &blurb, &prose, &timeSpent, &updatedAt); err != nil {
+		var status, setBy, visibility, blurb, prose, timeSpent, updatedAt sql.NullString
+		if err := rows.Scan(&v.ID, &v.Kind, &v.Slug, &v.CreatedAt, &status, &setBy, &visibility, &blurb, &prose, &timeSpent, &updatedAt); err != nil {
 			rows.Close()
 			return nil, err
 		}
 		if status.Valid {
 			v.Entry = &Entry{
-				Status: status.String, Visibility: Visibility(visibility.String),
+				Status: status.String, StatusSetBy: setBy.String, Visibility: Visibility(visibility.String),
 				Blurb: blurb.String, Prose: prose.String, TimeSpent: TimeSpent(timeSpent.String), UpdatedAt: updatedAt.String,
 				Scores: map[string]string{}, Tags: []string{},
 			}

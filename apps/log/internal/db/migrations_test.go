@@ -11,6 +11,7 @@ const (
 	lastNumberScoreVersion = 6
 	lastPerKindAxesVersion = 7
 	lastMomentsVersion     = 8
+	lastBeforeStatusSetBy  = 10
 )
 
 func openAt(t *testing.T, version int) *sql.DB {
@@ -214,6 +215,36 @@ func TestShownMomentsBecomeProseAndAllAreArchived(t *testing.T) {
 		d.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, gone).Scan(&n)
 		if n != 0 {
 			t.Errorf("table %s still exists", gone)
+		}
+	}
+}
+
+func TestUntriagedEntriesStartSetByTheSourceThatMadeThem(t *testing.T) {
+	ctx := context.Background()
+	d := openAt(t, lastBeforeStatusSetBy)
+	if _, err := d.ExecContext(ctx, `
+		INSERT INTO item (id, kind, slug) VALUES (1, 'game', 'hades'), (2, 'game', 'celeste'), (3, 'thing', 'walk'), (4, 'game', 'fez');
+		INSERT INTO entry (item_id, status) VALUES (1, 'finished'), (2, 'untriaged'), (3, 'untriaged'), (4, 'untriaged');
+		INSERT INTO claim (item_id, source, external_id, data, fetched_at) VALUES
+			(1, 'steam', '1', '{}', '2024-01-01T00:00:00Z'),
+			(2, 'igdb', '9', '{}', '2024-02-01T00:00:00Z'),
+			(2, 'steam', '2', '{}', '2024-01-01T00:00:00Z'),
+			(3, 'ap', NULL, '{}', '2024-01-01T00:00:00Z'),
+			(4, 'ap', NULL, '{}', '2024-01-01T00:00:00Z'),
+			(4, 'igdb', '8', '{}', '2024-03-01T00:00:00Z');`); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"hades": "ap", "celeste": "steam", "walk": "ap", "fez": "igdb"}
+	for slug, setBy := range want {
+		var got string
+		if err := d.QueryRowContext(ctx, `SELECT status_set_by FROM entry JOIN item ON item.id = entry.item_id WHERE slug = ?`, slug).Scan(&got); err != nil {
+			t.Fatal(err)
+		}
+		if got != setBy {
+			t.Errorf("%s set by %q, want %q", slug, got, setBy)
 		}
 	}
 }

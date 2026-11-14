@@ -31,8 +31,11 @@ export type Kind = {
   fields: { name: string; type: string }[]
 }
 
+export const SET_BY_AP = 'ap'
+
 export type Entry = {
   status: string
+  statusSetBy: string
   visibility: Visibility
   blurb: string
   prose: string
