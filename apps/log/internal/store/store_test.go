@@ -179,3 +179,22 @@ func TestAKnownItemHasNoEntry(t *testing.T) {
 		t.Errorf("FindByIdentity = %d, %v; want %d", found, err, id)
 	}
 }
+
+func TestAKnownItemIsNotListed(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	if _, err := s.KnowItemFromSource(ctx, kind.Movie, "Heat", kind.SourceTMDB, "949", json.RawMessage(`{}`)); err != nil {
+		t.Fatal(err)
+	}
+	logged, err := s.CreateItem(ctx, kind.Movie, "Ronin", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	views, err := s.ListItems(ctx, store.ItemFilter{Kind: kind.Movie})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(views) != 1 || views[0].ID != logged {
+		t.Errorf("listed %+v, want only the logged item %d", views, logged)
+	}
+}

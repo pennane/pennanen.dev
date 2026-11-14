@@ -13,8 +13,10 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
+const loggedItems = "e.item_id IS NOT NULL"
+
 func (s *Store) ListItems(ctx context.Context, filter ItemFilter) ([]ItemView, error) {
-	where, args := []string{"1 = 1"}, []any{}
+	where, args := []string{loggedItems}, []any{}
 	if filter.Kind != "" {
 		where, args = append(where, "i.kind = ?"), append(args, filter.Kind)
 	}

@@ -456,7 +456,7 @@ func TestKnownItemsStayOutOfEntriesAndPublic(t *testing.T) {
 	for _, i := range items {
 		entryOf[i.Slug] = i.Entry != nil
 	}
-	if len(items) != 2 || entryOf["heat"] || !entryOf["ran"] || !strings.Contains(body, `"entry":null`) {
+	if len(items) != 1 || !entryOf["ran"] {
 		t.Errorf("admin items = %s", body)
 	}
 	_, body = call(t, srv, "GET", "/public/items?kind=movie", "", "")
