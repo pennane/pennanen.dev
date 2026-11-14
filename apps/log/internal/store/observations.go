@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 type Observation struct {
@@ -59,4 +60,35 @@ func (s *Store) Observations(ctx context.Context, itemID int64, source, signal s
 		observations = append(observations, o)
 	}
 	return observations, rows.Err()
+}
+
+func (s *Store) ItemsLastObservedAs(ctx context.Context, source string, signals []string, last string) ([]int64, error) {
+	if len(signals) == 0 {
+		return []int64{}, nil
+	}
+	marks := strings.TrimSuffix(strings.Repeat("?, ", len(signals)), ", ")
+	args := []any{source}
+	for _, signal := range signals {
+		args = append(args, signal)
+	}
+	args = append(args, last)
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT item_id FROM (
+			SELECT item_id, signal, ROW_NUMBER() OVER (PARTITION BY item_id ORDER BY observed_at DESC, id DESC) AS recency
+			FROM observation WHERE source = ? AND signal IN (`+marks+`)
+		) WHERE recency = 1 AND signal = ?
+		ORDER BY item_id`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	itemIDs := []int64{}
+	for rows.Next() {
+		var itemID int64
+		if err := rows.Scan(&itemID); err != nil {
+			return nil, err
+		}
+		itemIDs = append(itemIDs, itemID)
+	}
+	return itemIDs, rows.Err()
 }
