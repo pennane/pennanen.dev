@@ -11,7 +11,9 @@ It has a kind and a title, and that's about it. Opinions live elsewhere.
 **Kind** — what sort of item it is (`game`, `movie`, later `album`, `wine`…).
 A kind decides the item's fields, its statuses, and which source gives it
 an identity. Kinds are defined in code; which axes a kind uses, its **title**
-(`games`) and its **description** are set in admin. There is no catch-all
+(`games`) and its **description** are set in admin. A field is for everyone
+or **only ap** (Steam playtime); only ap's never leave the log. A field's
+type decides how public pages use it, unless admin says otherwise. There is no catch-all
 kind: something that fits no kind waits until it gets one.
 A `wine` is what every year of it shares; a `vintage` is one bottling of a
 wine, of a single year or **non-vintage** (blended across years, like most
@@ -174,4 +176,8 @@ status), `public` (always) or `private` (never). Prose has no visibility of
 its own; it follows its entry.
 
 **Tier list** — a kind's shown entries laid out by division on one axis,
-best division first; entries with no score on that axis are left off.
+best division first; entries with no score on that axis are left off. Admin
+picks which axes get one.
+
+**Overview** — the log's front page: a few shown entries per kind, picked by
+the kind's overview sort, set in admin.

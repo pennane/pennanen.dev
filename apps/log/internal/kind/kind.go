@@ -13,6 +13,8 @@ type FieldType string
 const (
 	Text        FieldType = "text"
 	Int         FieldType = "int"
+	Number      FieldType = "number"
+	ExternalID  FieldType = "external-id"
 	PartialDate FieldType = "partial-date"
 	URL         FieldType = "url"
 	StringList  FieldType = "string-list"
@@ -22,7 +24,15 @@ type Field struct {
 	Name                    string    `json:"name"`
 	Type                    FieldType `json:"type"`
 	SourcesBestFirstAfterAP []string  `json:"sourcesBestFirstAfterAp"`
+	Reach                   Reach     `json:"reach"`
 }
+
+type Reach string
+
+const (
+	Everyone Reach = ""
+	OnlyAP   Reach = "only-ap"
+)
 
 type Kind struct {
 	Name            string                             `json:"name"`
@@ -41,6 +51,7 @@ type Kind struct {
 type Take struct {
 	Source        string   `json:"source"`
 	PrivateFields []string `json:"privateFields"`
+	Fields        []Field  `json:"fields"`
 }
 
 func (k Kind) Take(source string) (Take, bool) {
@@ -108,9 +119,12 @@ func (t FieldType) accepts(value any) bool {
 	case Text:
 		_, isString := value.(string)
 		return isString
-	case Int:
+	case Int, ExternalID:
 		n, isNumber := value.(float64)
 		return isNumber && n == float64(int64(n))
+	case Number:
+		_, isNumber := value.(float64)
+		return isNumber
 	case PartialDate:
 		s, isString := value.(string)
 		return isString && partialDate.MatchString(s)
@@ -135,6 +149,11 @@ func register(k Kind) {
 	k.Statuses = append(k.Statuses, Dismissed)
 	if k.Takes == nil {
 		k.Takes = []Take{}
+	}
+	for i := range k.Takes {
+		if k.Takes[i].Fields == nil {
+			k.Takes[i].Fields = []Field{}
+		}
 	}
 	registry[k.Name] = k
 }

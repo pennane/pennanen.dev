@@ -61,11 +61,41 @@ func (a Axis) DivisionReadAs(value float64) (string, bool) {
 type Axes []Axis
 
 type KindSettings struct {
-	Title         string   `json:"title"`
-	Description   string   `json:"description"`
-	StatusesShown []string `json:"statusesShown"`
-	Axes          []string `json:"axes"`
+	Title            string                     `json:"title"`
+	Description      string                     `json:"description"`
+	StatusesShown    []string                   `json:"statusesShown"`
+	Axes             []string                   `json:"axes"`
+	DefaultView      View                       `json:"defaultView"`
+	AxesWithoutTiers []string                   `json:"axesWithoutTiers"`
+	FieldUses        map[string][]kind.FieldUse `json:"fieldUses"`
+	FieldNames       map[string]string          `json:"fieldNames"`
+	Overview         Overview                   `json:"overview"`
 }
+
+type View string
+
+const (
+	AutoView  View = "auto"
+	TiersView View = "tiers"
+	ListView  View = "list"
+)
+
+var Views = []View{AutoView, TiersView, ListView}
+
+type Overview struct {
+	Sort  string `json:"sort"`
+	Count int    `json:"count"`
+}
+
+const (
+	AutoSort        = ""
+	RankSort        = "rank"
+	TitleSort       = "title"
+	ScoreSortPrefix = "score-"
+
+	DefaultOverviewCount = 5
+	MostInOverview       = 20
+)
 
 type TagTitles map[string]string
 
@@ -243,11 +273,54 @@ func (s *Store) refuseDroppingScored(ctx context.Context, axes Axes) error {
 }
 
 func DefaultKindSettings(k kind.Kind) KindSettings {
-	return KindSettings{
-		Title:         k.DefaultTitle,
-		StatusesShown: slices.Clone(k.StatusesShown),
-		Axes:          slices.Clone(k.DefaultAxes),
+	uses := map[string][]kind.FieldUse{}
+	for _, f := range k.PublicFields() {
+		uses[f.Key] = f.DefaultUses
 	}
+	return KindSettings{
+		Title:            k.DefaultTitle,
+		StatusesShown:    slices.Clone(k.StatusesShown),
+		Axes:             slices.Clone(k.DefaultAxes),
+		DefaultView:      AutoView,
+		AxesWithoutTiers: []string{},
+		FieldUses:        uses,
+		FieldNames:       map[string]string{},
+		Overview:         Overview{Sort: AutoSort, Count: DefaultOverviewCount},
+	}
+}
+
+func (ks KindSettings) filledFrom(defaults KindSettings) KindSettings {
+	if ks.DefaultView == "" {
+		ks.DefaultView = defaults.DefaultView
+	}
+	if ks.AxesWithoutTiers == nil {
+		ks.AxesWithoutTiers = defaults.AxesWithoutTiers
+	}
+	if ks.Overview.Count == 0 {
+		ks.Overview.Count = defaults.Overview.Count
+	}
+	uses := defaults.FieldUses
+	maps.Copy(uses, ks.FieldUses)
+	ks.FieldUses = uses
+	names := map[string]string{}
+	for key, name := range ks.FieldNames {
+		if name = strings.TrimSpace(name); name != "" {
+			names[key] = name
+		}
+	}
+	ks.FieldNames = names
+	return ks
+}
+
+func (ks KindSettings) withoutStale(k kind.Kind, axes Axes) KindSettings {
+	ks.Axes = slices.DeleteFunc(ks.Axes, func(axis string) bool { return !axes.Has(axis) })
+	ks.AxesWithoutTiers = slices.DeleteFunc(ks.AxesWithoutTiers, func(axis string) bool { return !ks.Uses(axis) })
+	maps.DeleteFunc(ks.FieldUses, func(key string, _ []kind.FieldUse) bool { _, known := k.PublicField(key); return !known })
+	maps.DeleteFunc(ks.FieldNames, func(key string, _ string) bool { _, known := k.PublicField(key); return !known })
+	if validOverviewSort(k, ks, ks.Overview.Sort) != nil {
+		ks.Overview.Sort = AutoSort
+	}
+	return ks
 }
 
 func (ks KindSettings) Shows(status string) bool { return slices.Contains(ks.StatusesShown, status) }
@@ -266,8 +339,7 @@ func (s *Store) kindSettings(ctx context.Context, k kind.Kind, axes Axes) (KindS
 	if _, err := s.readSetting(ctx, kindSettingsKey(k), &settings); err != nil {
 		return settings, err
 	}
-	settings.Axes = slices.DeleteFunc(settings.Axes, func(axis string) bool { return !axes.Has(axis) })
-	return settings, nil
+	return settings.withoutStale(k, axes), nil
 }
 
 func (s *Store) AllKindSettings(ctx context.Context) (map[string]KindSettings, error) {
@@ -291,6 +363,7 @@ func (s *Store) SetKindSettings(ctx context.Context, k kind.Kind, settings KindS
 	if err != nil {
 		return settings, err
 	}
+	settings = settings.filledFrom(DefaultKindSettings(k))
 	if err := validKindSettings(k, axes, settings); err != nil {
 		return settings, err
 	}
@@ -320,7 +393,51 @@ func validKindSettings(k kind.Kind, axes Axes, settings KindSettings) error {
 	if k.RankedAxis != "" && !settings.Uses(k.RankedAxis) {
 		return fmt.Errorf("%w: %s ranks by %s, so it keeps that axis", ErrInvalid, k.Name, k.RankedAxis)
 	}
-	return nil
+	return validPublicSettings(k, settings)
+}
+
+func validPublicSettings(k kind.Kind, settings KindSettings) error {
+	if !slices.Contains(Views, settings.DefaultView) {
+		return fmt.Errorf("%w: the default view must be one of %v", ErrInvalid, Views)
+	}
+	for _, axis := range settings.AxesWithoutTiers {
+		if !settings.Uses(axis) {
+			return fmt.Errorf("%w: %s has no axis %q to leave without tiers", ErrInvalid, k.Name, axis)
+		}
+	}
+	for key, uses := range settings.FieldUses {
+		if _, known := k.PublicField(key); !known {
+			return fmt.Errorf("%w: %s has no public field %q", ErrInvalid, k.Name, key)
+		}
+		for _, use := range uses {
+			if !slices.Contains(kind.FieldUses, use) {
+				return fmt.Errorf("%w: a field is used as one of %v, not %q", ErrInvalid, kind.FieldUses, use)
+			}
+		}
+	}
+	for key := range settings.FieldNames {
+		if _, known := k.PublicField(key); !known {
+			return fmt.Errorf("%w: %s has no public field %q to name", ErrInvalid, k.Name, key)
+		}
+	}
+	if settings.Overview.Count < 1 || settings.Overview.Count > MostInOverview {
+		return fmt.Errorf("%w: the overview shows 1 to %d entries", ErrInvalid, MostInOverview)
+	}
+	return validOverviewSort(k, settings, settings.Overview.Sort)
+}
+
+func validOverviewSort(k kind.Kind, settings KindSettings, sort string) error {
+	switch sort {
+	case AutoSort, RankSort, TitleSort:
+		return nil
+	}
+	if axis, isScore := strings.CutPrefix(sort, ScoreSortPrefix); isScore && settings.Uses(axis) {
+		return nil
+	}
+	if f, known := k.PublicField(sort); known && f.Type.Sortable() {
+		return nil
+	}
+	return fmt.Errorf("%w: %s can't be sorted by %q", ErrInvalid, k.Name, sort)
 }
 
 func (s *Store) refuseDroppingKindAxes(ctx context.Context, k kind.Kind, settings KindSettings) error {

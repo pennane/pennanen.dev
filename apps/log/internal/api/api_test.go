@@ -342,3 +342,58 @@ func TestImagesUploadWithATicketAndServePublicly(t *testing.T) {
 		t.Errorf("serve %s: %d", uploaded.Name, status)
 	}
 }
+
+func TestPublicFieldsComeFromTheKindAndPrivateOnesNeverShow(t *testing.T) {
+	srv := newServer(t)
+	id := createGame(t, srv, "Hades", `{"status":"finished"}`)
+	if status, body := call(t, srv, "PATCH", "/admin/items/"+id+"/fields", token, `{"released":"2020","playtime_minutes":600}`); status != http.StatusOK {
+		t.Fatalf("fields: %d %s", status, body)
+	}
+	if _, body := call(t, srv, "GET", "/public/items/game/hades", "", ""); !strings.Contains(body, `"released":"2020"`) || strings.Contains(body, "playtime") {
+		t.Errorf("public item: %s", body)
+	}
+
+	_, body := call(t, srv, "GET", "/public/presentation", "", "")
+	var presentation struct {
+		Kinds  map[string]store.KindSettings
+		Fields map[string][]struct{ Key string }
+	}
+	if err := json.Unmarshal([]byte(body), &presentation); err != nil {
+		t.Fatal(err)
+	}
+	keys := map[string][]string{}
+	for kind, fields := range presentation.Fields {
+		for _, f := range fields {
+			keys[kind] = append(keys[kind], f.Key)
+		}
+	}
+	if strings.Contains(strings.Join(keys["game"], " "), "playtime") || !strings.Contains(strings.Join(keys["movie"], " "), "letterboxd-take.rating") || strings.Contains(strings.Join(keys["movie"], " "), "on_watchlist_since") {
+		t.Errorf("public fields: %v", keys)
+	}
+	game := presentation.Kinds["game"]
+	if strings.Join(toStrings(game.FieldUses["genres"]), ",") != "filter,page" || game.Overview.Count != 5 || game.DefaultView != store.AutoView {
+		t.Errorf("game defaults: %+v", game)
+	}
+
+	movie := `{"title":"movies","statusesShown":["watched"],"axes":["prestige"],"fieldUses":{"genres":[]},"overview":{"sort":"letterboxd-take.rating","count":8}}`
+	if status, body := call(t, srv, "PUT", "/admin/settings/kinds/movie", token, movie); status != http.StatusOK || !strings.Contains(body, `"genres":[]`) || !strings.Contains(body, `"released":["filter","column","page"]`) {
+		t.Errorf("movie settings: %d %s", status, body)
+	}
+	for _, refused := range []string{
+		`{"title":"games","statusesShown":["played"],"axes":["prestige"],"overview":{"sort":"genres"}}`,
+		`{"title":"games","statusesShown":["played"],"axes":["prestige"],"fieldUses":{"playtime_minutes":["column"]}}`,
+		`{"title":"games","statusesShown":["played"],"axes":["prestige"],"defaultView":"grid"}`,
+	} {
+		if status, _ := call(t, srv, "PUT", "/admin/settings/kinds/game", token, refused); status != http.StatusUnprocessableEntity {
+			t.Errorf("accepted %s: %d", refused, status)
+		}
+	}
+}
+
+func toStrings[T ~string](xs []T) []string {
+	out := make([]string, len(xs))
+	for i, x := range xs {
+		out[i] = string(x)
+	}
+	return out
+}

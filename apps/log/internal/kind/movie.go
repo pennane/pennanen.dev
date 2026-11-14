@@ -29,9 +29,16 @@ func init() {
 			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceTMDB}},
 			{Name: "countries", Type: StringList, SourcesBestFirstAfterAP: []string{SourceTMDB}},
 			{Name: "runtime_minutes", Type: Int, SourcesBestFirstAfterAP: []string{SourceTMDB}},
-			{Name: "tmdb_id", Type: Int, SourcesBestFirstAfterAP: []string{SourceTMDB}},
+			{Name: "tmdb_id", Type: ExternalID, SourcesBestFirstAfterAP: []string{SourceTMDB}},
 			{Name: "link", Type: URL, SourcesBestFirstAfterAP: []string{SourceLetterboxd}},
 		},
-		Takes: []Take{{Source: SourceLetterboxdTake, PrivateFields: []string{}}},
+		Takes: []Take{{
+			Source:        SourceLetterboxdTake,
+			PrivateFields: []string{"on_watchlist_since"},
+			Fields: []Field{
+				{Name: "rating", Type: Number},
+				{Name: "last_watched", Type: PartialDate},
+			},
+		}},
 	})
 }

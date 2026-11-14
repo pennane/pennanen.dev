@@ -2,6 +2,7 @@ package api
 
 import (
 	"cmp"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -81,7 +82,16 @@ func (s *Server) publicKind(w http.ResponseWriter, r *http.Request) {
 type Presentation struct {
 	Axes      store.Axes                    `json:"axes"`
 	Kinds     map[string]store.KindSettings `json:"kinds"`
+	Fields    map[string][]kind.PublicField `json:"fields"`
 	TagTitles store.TagTitles               `json:"tagTitles"`
+}
+
+func publicFieldsByKind() map[string][]kind.PublicField {
+	fields := map[string][]kind.PublicField{}
+	for _, k := range kind.All() {
+		fields[k.Name] = k.PublicFields()
+	}
+	return fields
 }
 
 func (s *Server) presentation(r *http.Request) (Presentation, error) {
@@ -94,7 +104,7 @@ func (s *Server) presentation(r *http.Request) (Presentation, error) {
 		return Presentation{}, err
 	}
 	titles, err := s.Store.TagTitles(r.Context())
-	return Presentation{Axes: axes, Kinds: kinds, TagTitles: titles}, err
+	return Presentation{Axes: axes, Kinds: kinds, Fields: publicFieldsByKind(), TagTitles: titles}, err
 }
 
 func (s *Server) publicPresentation(w http.ResponseWriter, r *http.Request) {
@@ -190,7 +200,7 @@ func publicItem(v store.ItemView) PublicItem {
 	return PublicItem{
 		Kind:       v.Kind,
 		Slug:       v.Slug,
-		Fields:     v.Verdicts.Values,
+		Fields:     withoutPrivateFields(v.Kind, v.Verdicts.Values),
 		Status:     v.Entry.Status,
 		Scores:     v.Entry.EveryScore(),
 		Tags:       v.Entry.Tags,
@@ -200,6 +210,18 @@ func publicItem(v store.ItemView) PublicItem {
 		ProseWords: len(strings.Fields(v.Entry.Prose)),
 		Takes:      publicTakes(v.Takes),
 	}
+}
+
+func withoutPrivateFields(kindName string, values map[string]any) map[string]any {
+	k, known := kind.Get(kindName)
+	if !known {
+		return values
+	}
+	public := maps.Clone(values)
+	for _, name := range k.PrivateFieldNames() {
+		delete(public, name)
+	}
+	return public
 }
 
 func publicTakes(takes []store.TakeView) []verdict.Take {

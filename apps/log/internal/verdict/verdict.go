@@ -125,7 +125,7 @@ func readOverride(k kind.Kind, raw json.RawMessage) (map[string]any, error) {
 
 func normalize(t kind.FieldType, value any) any {
 	switch t {
-	case kind.Int:
+	case kind.Int, kind.ExternalID:
 		if n, isNumber := value.(float64); isNumber {
 			return int64(n)
 		}
