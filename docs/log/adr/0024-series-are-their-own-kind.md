@@ -16,9 +16,9 @@ Letterboxd's film page links the right one, `themoviedb.org/movie/…` or
 
 ## Decision
 
-`series` is a kind of its own. It has the same statuses, axes and Letterboxd
-take as `movie`, and fields of its own: creators, seasons and episodes in
-place of directors and runtime. Its identity is a TMDB series id, kept by the
+`series` is a kind of its own. It has the statuses of `movie` plus `dropped`,
+the same axes and Letterboxd take, and fields of its own: creators, seasons
+and episodes in place of directors and runtime. Its identity is a TMDB series id, kept by the
 source `tmdb-tv` so it can't collide with a film's.
 
 The Letterboxd claim records which TMDB entry a film is, `tmdbType` (`movie`
