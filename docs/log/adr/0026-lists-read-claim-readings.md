@@ -16,7 +16,8 @@ full record is what a later reader change replays from.
 
 Each claim has a **reading**, what its source's reader takes from it, stored
 in `claim_reading` beside the claim and tagged with `verdict.ReadersVersion`.
-`putClaim` writes the reading with the claim, on the same transaction. A claim
+The claim and its reading are written in one transaction, and the reading
+copies the claim's fetch time. A claim
 the reader rejects, or whose source has no reader, has no reading.
 
 Lists and verdicts, takes and read scores are decided from readings. Values
@@ -35,4 +36,5 @@ The claim itself is never altered, trimmed or dropped.
   records they come from.
 - A claim no reader can read is looked at again on every start, as it never
   gets a reading to mark it done.
-- A list no longer touches `claim.data`; the claim's tail pages stay unread.
+- A list reads no column of `claim` that sits after `data`, so a record's
+  overflow pages stay unread.

@@ -24,9 +24,11 @@ func putReading(ctx context.Context, q queryer, itemID int64, source string, dat
 		return err
 	}
 	_, err = q.ExecContext(ctx, `
-		INSERT INTO claim_reading (item_id, source, version, reading) VALUES (?, ?, ?, ?)
-		ON CONFLICT (item_id, source) DO UPDATE SET version = excluded.version, reading = excluded.reading`,
-		itemID, source, verdict.ReadersVersion, string(encoded))
+		INSERT INTO claim_reading (item_id, source, version, reading, fetched_at)
+		SELECT item_id, source, ?, ?, fetched_at FROM claim WHERE item_id = ? AND source = ?
+		ON CONFLICT (item_id, source) DO UPDATE SET
+			version = excluded.version, reading = excluded.reading, fetched_at = excluded.fetched_at`,
+		verdict.ReadersVersion, string(encoded), itemID, source)
 	return err
 }
 
@@ -100,7 +102,7 @@ func (s *Store) readingsByItem(ctx context.Context, byID map[int64]*ItemView) (m
 	byItem := map[int64][]verdict.Reading{}
 	err := forChunks(ids, func(chunk []int64) error {
 		rows, err := s.db.QueryContext(ctx, `
-			SELECT r.item_id, r.source, coalesce(c.external_id, ''), c.fetched_at, r.reading
+			SELECT r.item_id, r.source, coalesce(c.external_id, ''), r.fetched_at, r.reading
 			FROM claim_reading r JOIN claim c ON c.item_id = r.item_id AND c.source = r.source
 			WHERE r.item_id IN (`+placeholders(len(chunk))+`) ORDER BY r.item_id, r.source`, int64sAsArgs(chunk)...)
 		if err != nil {

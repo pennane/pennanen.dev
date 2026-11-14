@@ -176,3 +176,28 @@ func TestRemovingAClaimRemovesItsReading(t *testing.T) {
 		t.Errorf("readings = %v, want only tmdb-series", got)
 	}
 }
+
+func TestListedTakesKeepTheirClaimsFetchTime(t *testing.T) {
+	ctx := context.Background()
+	s, d := openStoreWithDB(t)
+	id := loggedMovie(t, s, kind.SourceTMDB, matrix)
+	if err := s.PutClaim(ctx, id, kind.SourceLetterboxdTake, "matrix", json.RawMessage(`{"rating":4.5}`)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.Exec(`UPDATE claim SET fetched_at = '2020-01-02T03:04:05Z' WHERE item_id = ? AND source = ?`, id, kind.SourceLetterboxdTake); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.Exec(`DELETE FROM claim_reading`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.RereadClaims(ctx); err != nil {
+		t.Fatal(err)
+	}
+	views, err := s.ListItems(ctx, store.ItemFilter{})
+	if err != nil || len(views) != 1 || len(views[0].Takes) != 1 {
+		t.Fatalf("list = %+v, %v", views, err)
+	}
+	if got := views[0].Takes[0].FetchedAt; got != "2020-01-02T03:04:05Z" {
+		t.Errorf("take fetchedAt = %q", got)
+	}
+}

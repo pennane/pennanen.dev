@@ -168,7 +168,9 @@ func (s *Store) FindByIdentity(ctx context.Context, source, externalID string) (
 }
 
 func (s *Store) PutClaim(ctx context.Context, itemID int64, source, externalID string, data any) error {
-	return putClaim(ctx, s.db, itemID, source, externalID, data)
+	return s.inTx(ctx, func(tx *sql.Tx) error {
+		return putClaim(ctx, tx, itemID, source, externalID, data)
+	})
 }
 
 func putClaim(ctx context.Context, q queryer, itemID int64, source, externalID string, data any) error {
