@@ -158,3 +158,24 @@ func TestKindTitleAndDescriptionAreKeptAndATitleIsOwed(t *testing.T) {
 		t.Errorf("blank title accepted: %v", err)
 	}
 }
+
+func TestAKnownItemHasNoEntry(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	data := json.RawMessage(`{"id":949,"title":"Heat"}`)
+	id, err := s.KnowItemFromSource(ctx, kind.Movie, "Heat", kind.SourceTMDB, "949", data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := s.GetItem(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.Entry != nil {
+		t.Errorf("known item has entry %+v", v.Entry)
+	}
+	found, err := s.FindByIdentity(ctx, kind.SourceTMDB, "949")
+	if err != nil || found != id {
+		t.Errorf("FindByIdentity = %d, %v; want %d", found, err, id)
+	}
+}

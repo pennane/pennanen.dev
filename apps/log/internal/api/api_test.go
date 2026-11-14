@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/api"
 	"github.com/pennane/pennanen.dev/apps/log/internal/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/images"
+	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 )
 
@@ -396,4 +398,69 @@ func toStrings[T ~string](xs []T) []string {
 		out[i] = string(x)
 	}
 	return out
+}
+
+func TestKnownItemsStayOutOfEntriesAndPublic(t *testing.T) {
+	ctx := context.Background()
+	d, err := db.Open(ctx, filepath.Join(t.TempDir(), "log.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { d.Close() })
+	st := store.New(d)
+	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, Images: &images.Store{Dir: t.TempDir()}}).Handler())
+	t.Cleanup(srv.Close)
+
+	if _, err := st.KnowItemFromSource(ctx, kind.Movie, "Heat", kind.SourceTMDB, "949", json.RawMessage(`{"id":949,"title":"Heat"}`)); err != nil {
+		t.Fatal(err)
+	}
+	logged, err := st.CreateItem(ctx, kind.Movie, "Ran", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	status := "watched"
+	if err := st.ChangeEntries(ctx, []int64{logged}, store.EntryChange{Status: &status}); err != nil {
+		t.Fatal(err)
+	}
+
+	titles := func(path string) []string {
+		code, body := call(t, srv, "GET", path, token, "")
+		if code != http.StatusOK {
+			t.Fatalf("%s: %d %s", path, code, body)
+		}
+		var listed []struct{ Title, Slug string }
+		if err := json.Unmarshal([]byte(body), &listed); err != nil {
+			t.Fatal(err)
+		}
+		var names []string
+		for _, l := range listed {
+			names = append(names, cmp.Or(l.Title, l.Slug))
+		}
+		return names
+	}
+	if got := titles("/admin/entries?kind=movie"); len(got) != 1 || got[0] != "Ran" {
+		t.Errorf("entries = %v", got)
+	}
+	code, body := call(t, srv, "GET", "/admin/items?kind=movie", token, "")
+	if code != http.StatusOK {
+		t.Fatalf("items: %d %s", code, body)
+	}
+	var items []struct {
+		Slug  string
+		Entry *json.RawMessage
+	}
+	if err := json.Unmarshal([]byte(body), &items); err != nil {
+		t.Fatal(err)
+	}
+	entryOf := map[string]bool{}
+	for _, i := range items {
+		entryOf[i.Slug] = i.Entry != nil
+	}
+	if len(items) != 2 || entryOf["heat"] || !entryOf["ran"] || !strings.Contains(body, `"entry":null`) {
+		t.Errorf("admin items = %s", body)
+	}
+	_, body = call(t, srv, "GET", "/public/items?kind=movie", "", "")
+	if strings.Contains(body, `"slug":"heat"`) || !strings.Contains(body, `"slug":"ran"`) {
+		t.Errorf("public items = %s", body)
+	}
 }

@@ -76,15 +76,30 @@ func (s *Store) CreateItemFromSource(ctx context.Context, kindName, title, sourc
 	var id int64
 	err := s.inTx(ctx, func(tx *sql.Tx) error {
 		var err error
-		if id, err = insertItem(ctx, tx, kindName, title); err != nil {
-			return err
-		}
-		if err := putClaim(ctx, tx, id, source, externalID, data); err != nil {
+		if id, err = insertItemWithClaim(ctx, tx, kindName, title, source, externalID, data); err != nil {
 			return err
 		}
 		return ensureEntry(ctx, tx, id, source)
 	})
 	return id, err
+}
+
+func (s *Store) KnowItemFromSource(ctx context.Context, kindName, title, source, externalID string, data any) (int64, error) {
+	var id int64
+	err := s.inTx(ctx, func(tx *sql.Tx) error {
+		var err error
+		id, err = insertItemWithClaim(ctx, tx, kindName, title, source, externalID, data)
+		return err
+	})
+	return id, err
+}
+
+func insertItemWithClaim(ctx context.Context, q queryer, kindName, title, source, externalID string, data any) (int64, error) {
+	id, err := insertItem(ctx, q, kindName, title)
+	if err != nil {
+		return 0, err
+	}
+	return id, putClaim(ctx, q, id, source, externalID, data)
 }
 
 func insertItem(ctx context.Context, q queryer, kindName, title string) (int64, error) {
