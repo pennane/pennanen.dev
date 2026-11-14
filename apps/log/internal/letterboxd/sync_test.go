@@ -80,6 +80,10 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 			fmt.Fprint(w, watchlist)
 		case r.URL.Path == "/me/rss/":
 			fmt.Fprint(w, rss)
+		case r.URL.Path == "/boxd/aaa1":
+			fmt.Fprint(w, `<a href="https://www.themoviedb.org/movie/1398/" class="micro-button" data-track-action="TMDB">TMDB</a>`)
+		case strings.HasPrefix(r.URL.Path, "/boxd/") || strings.HasPrefix(r.URL.Path, "/film/"):
+			fmt.Fprint(w, `<p>a film page without a tmdb link</p>`)
 		case r.URL.Path == "/3/search/movie":
 			searches++
 			if r.Header.Get("Authorization") != "Bearer token" {
@@ -106,6 +110,7 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 
 	client := letterboxd.NewClient("me")
 	client.BaseURL = fake.URL
+	client.ShortLinkBase = fake.URL + "/boxd"
 	syncer := letterboxd.NewSyncer(s, client)
 
 	imported, err := syncs.New(ctx, "letterboxd-export", func(ctx context.Context, p *syncs.Progress) error {
@@ -164,7 +169,7 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 
 	tmdbClient := tmdb.NewClient("token")
 	tmdbClient.BaseURL = fake.URL
-	matcher := tmdb.NewMatcher(s, tmdbClient)
+	matcher := tmdb.NewMatcher(s, tmdbClient, client)
 	matcher.RequestInterval = 1
 	matching, err := syncs.New(ctx, tmdb.SyncName, matcher.Work, s, nil)
 	if err != nil {
@@ -174,8 +179,8 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	if report.Counts[tmdb.CountMatched] != 2 || report.Counts[tmdb.CountUnmatched] != 2 || len(report.Problems) != 0 {
 		t.Fatalf("tmdb match: %+v", report)
 	}
-	if searches != 3 {
-		t.Errorf("searched %d times; the film with a tmdb id from the diary needs no search", searches)
+	if searches != 2 {
+		t.Errorf("searched %d times; films whose page or diary gave a tmdb id need no search", searches)
 	}
 	stalker = item(t, s, "aaa1")
 	values := stalker.Verdicts.Values

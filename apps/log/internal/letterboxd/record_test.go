@@ -2,6 +2,7 @@ package letterboxd_test
 
 import (
 	"context"
+	"encoding/json"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -86,5 +87,67 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 	})
 	if e := entryOf("bbb2"); !slices.Contains(e.Tags, kind.TagAnotherShot) || e.TagsAddedBySources[kind.TagAnotherShot] != "" {
 		t.Errorf("ap's own another shot was taken by the sync: %+v", e)
+	}
+}
+
+type pagesLinking map[string]verdict.TMDBLink
+
+func (p pagesLinking) TMDBLinkOf(_ context.Context, film verdict.LetterboxdFilm) (verdict.TMDBLink, error) {
+	if link, linked := p[film.ID]; linked {
+		return link, nil
+	}
+	return verdict.TMDBLink{}, letterboxd.ErrNoTMDBLink
+}
+
+func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
+	ctx := context.Background()
+	d, err := db.Open(ctx, filepath.Join(t.TempDir(), "log.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer d.Close()
+	s := store.New(d)
+	added, err := s.CreateItemFromSource(ctx, kind.Series, "Ripley", kind.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028,"name":"Ripley"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := &letterboxd.Recorder{Store: s, Links: pagesLinking{
+		"rip1": {Type: verdict.SeriesOnTMDB, ID: 94028},
+		"twp1": {Type: verdict.SeriesOnTMDB, ID: 1920},
+	}}
+	sync, _ := syncs.New(ctx, "shelve", func(ctx context.Context, p *syncs.Progress) error {
+		for _, film := range []verdict.LetterboxdFilm{
+			{ID: "rip1", Slug: "ripley-2024", Title: "Ripley", Year: 2024},
+			{ID: "twp1", Slug: "twin-peaks", Title: "Twin Peaks", Year: 1990},
+			{ID: "hea1", Slug: "heat", Title: "Heat", Year: 1995},
+		} {
+			if _, err := r.Shelve(ctx, p, film, letterboxd.WatchedShelf); err != nil {
+				return err
+			}
+		}
+		return nil
+	}, s, nil)
+	if report := sync.Run(ctx); report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 2 || len(report.Problems) != 0 {
+		t.Fatalf("shelve: %+v", report)
+	}
+
+	ripley, _ := s.FindByIdentity(ctx, kind.SourceLetterboxd, "rip1")
+	if ripley != added {
+		t.Fatalf("ripley became item %d, not the one ap added (%d)", ripley, added)
+	}
+	if v, _ := s.GetItem(ctx, ripley); v.Kind != kind.Series || v.Entry.Status != kind.Watched {
+		t.Errorf("ripley: %s %+v", v.Kind, v.Entry)
+	}
+	twinPeaks, _ := s.FindByIdentity(ctx, kind.SourceLetterboxd, "twp1")
+	v, _ := s.GetItem(ctx, twinPeaks)
+	var claim verdict.LetterboxdFilm
+	c, _ := s.Claim(ctx, twinPeaks, kind.SourceLetterboxd)
+	json.Unmarshal(c.Data, &claim)
+	if v.Kind != kind.Series || claim.TMDBType != verdict.SeriesOnTMDB || claim.TMDBID != 1920 {
+		t.Errorf("twin peaks: %s %+v", v.Kind, claim)
+	}
+	heat, _ := s.FindByIdentity(ctx, kind.SourceLetterboxd, "hea1")
+	if v, _ := s.GetItem(ctx, heat); v.Kind != kind.Movie {
+		t.Errorf("heat: %s", v.Kind)
 	}
 }

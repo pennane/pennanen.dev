@@ -20,7 +20,8 @@ import type {
   Kind,
   Visibility
 } from '../../../lib/log/types'
-import { SET_BY_AP, sortOf, TMDB_ID } from '../../../lib/log/types'
+import { SET_BY_AP, sortOf, TMDB_ID, TMDB_TYPE_OF_SOURCE, tmdbPage } from '../../../lib/log/types'
+import type { TMDBLink, TMDBType } from '../../../lib/log/types'
 import type { TakeFieldVisibility, TakeView } from '../../../lib/log/types'
 import { SaveStatus, useKeys } from '../_queue/card'
 import { Compare, compareKeys, type Comparing } from '../_queue/Compare'
@@ -86,11 +87,12 @@ export type EntrySubject = {
   entry: Entry
   lastPlayed: FieldValue
   takes: TakeView[]
-  tmdbId: number | undefined
+  kind: string
+  tmdb: TMDBLink | undefined
 }
 
 export const Editor = ({
-  subject: { itemId, title, cover, publicPath, entry, lastPlayed, takes, tmdbId },
+  subject: { itemId, title, cover, publicPath, entry, lastPlayed, takes, tmdb },
   kind,
   knownTags,
   ranked,
@@ -233,7 +235,12 @@ export const Editor = ({
       {takes.length > 0 && <Takes itemId={itemId} kind={kind} initial={takes} />}
 
       {kind.fields.some((field) => field.name === TMDB_ID) && (
-        <TMDBMatch itemId={itemId} tmdbId={tmdbId} onRematched={onRematched} />
+        <TMDBMatch
+          itemId={itemId}
+          tmdb={tmdb}
+          tmdbType={TMDB_TYPE_OF_SOURCE[kind.identitySource ?? ''] ?? 'movie'}
+          onRematched={onRematched}
+        />
       )}
 
       {outsideSays.length > 0 && <p className={styles.note}>{outsideSays.join(' · ')}</p>}
@@ -565,25 +572,25 @@ const Takes = ({ itemId, kind, initial }: { itemId: number; kind: Kind; initial:
   )
 }
 
-const TMDB_MOVIE_LINK = /themoviedb\.org\/movie\/(\d+)/
-const TMDB_SERIES_LINK = /themoviedb\.org\/tv\//
+const TMDB_LINK = /themoviedb\.org\/(movie|tv)\/(\d+)/
 
-const tmdbIdIn = (text: string): number | string => {
+const tmdbLinkIn = (text: string, tmdbType: TMDBType): TMDBLink | string => {
   const trimmed = text.trim()
-  if (/^\d+$/.test(trimmed)) return Number(trimmed)
-  const linked = TMDB_MOVIE_LINK.exec(trimmed)
-  if (linked) return Number(linked[1])
-  if (TMDB_SERIES_LINK.test(trimmed)) return 'series are not matched on tmdb yet; answer no match'
-  return 'paste a themoviedb.org/movie link or a tmdb id'
+  if (/^\d+$/.test(trimmed)) return { tmdbType, tmdbId: Number(trimmed) }
+  const linked = TMDB_LINK.exec(trimmed)
+  if (linked) return { tmdbType: linked[1] as TMDBType, tmdbId: Number(linked[2]) }
+  return 'paste a themoviedb.org/movie or /tv link, or a tmdb id'
 }
 
 const TMDBMatch = ({
   itemId,
-  tmdbId,
+  tmdb,
+  tmdbType,
   onRematched
 }: {
   itemId: number
-  tmdbId: number | undefined
+  tmdb: TMDBLink | undefined
+  tmdbType: TMDBType
   onRematched: (subject: EntrySubject) => void
 }) => {
   const [draft, setDraft] = useState('')
@@ -602,18 +609,18 @@ const TMDBMatch = ({
     }
   }
   const pick = () => {
-    const found = tmdbIdIn(draft)
+    const found = tmdbLinkIn(draft, tmdbType)
     if (typeof found === 'string') return setProblem(found)
     run(() => matchTMDB(itemId, found))
   }
   return (
     <Section label="tmdb">
       <p className={styles.note}>
-        {tmdbId === undefined ? (
+        {tmdb === undefined ? (
           'no match'
         ) : (
-          <a href={`https://www.themoviedb.org/movie/${tmdbId}`} target="_blank" rel="noreferrer">
-            matched to tmdb {tmdbId}
+          <a href={tmdbPage(tmdb)} target="_blank" rel="noreferrer">
+            matched to tmdb {tmdb.tmdbType} {tmdb.tmdbId}
           </a>
         )}
       </p>
@@ -636,7 +643,7 @@ const TMDBMatch = ({
         >
           match
         </button>
-        {tmdbId !== undefined && (
+        {tmdb !== undefined && (
           <button
             type="button"
             className={styles.quiet}

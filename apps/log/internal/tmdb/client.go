@@ -10,9 +10,11 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
-var ErrNoSuchMovie = errors.New("tmdb has no such movie")
+var ErrNoSuchEntry = errors.New("tmdb has no such entry")
 
 type Client struct {
 	ReadToken string
@@ -37,11 +39,28 @@ func (c *Client) Movie(ctx context.Context, id int64) (json.RawMessage, error) {
 	return raw, nil
 }
 
+func (c *Client) Series(ctx context.Context, id int64) (json.RawMessage, error) {
+	var raw json.RawMessage
+	q := url.Values{"language": {"en-US"}}
+	if err := c.getJSON(ctx, "/3/tv/"+strconv.FormatInt(id, 10)+"?"+q.Encode(), &raw); err != nil {
+		return nil, fmt.Errorf("series %d: %w", id, err)
+	}
+	return raw, nil
+}
+
+func (c *Client) Entry(ctx context.Context, link verdict.TMDBLink) (json.RawMessage, error) {
+	if link.Type == verdict.SeriesOnTMDB {
+		return c.Series(ctx, link.ID)
+	}
+	return c.Movie(ctx, link.ID)
+}
+
 type Found struct {
 	ID            int64  `json:"id"`
 	Title         string `json:"title"`
 	OriginalTitle string `json:"original_title"`
 	ReleaseDate   string `json:"release_date"`
+	PosterPath    string `json:"poster_path"`
 }
 
 func (f Found) Year() int {
@@ -66,6 +85,29 @@ func (c *Client) SearchMovies(ctx context.Context, title string, year int) ([]Fo
 	return body.Results, nil
 }
 
+type foundSeries struct {
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	OriginalName string `json:"original_name"`
+	FirstAirDate string `json:"first_air_date"`
+	PosterPath   string `json:"poster_path"`
+}
+
+func (c *Client) SearchSeries(ctx context.Context, title string) ([]Found, error) {
+	q := url.Values{"query": {title}, "include_adult": {"false"}, "language": {"en-US"}}
+	var body struct {
+		Results []foundSeries `json:"results"`
+	}
+	if err := c.getJSON(ctx, "/3/search/tv?"+q.Encode(), &body); err != nil {
+		return nil, fmt.Errorf("search series %q: %w", title, err)
+	}
+	found := make([]Found, 0, len(body.Results))
+	for _, r := range body.Results {
+		found = append(found, Found{ID: r.ID, Title: r.Name, OriginalTitle: r.OriginalName, ReleaseDate: r.FirstAirDate, PosterPath: r.PosterPath})
+	}
+	return found, nil
+}
+
 func (c *Client) getJSON(ctx context.Context, path string, into any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+path, nil)
 	if err != nil {
@@ -87,7 +129,7 @@ func (c *Client) getJSON(ctx context.Context, path string, into any) error {
 		return err
 	}
 	if res.StatusCode == http.StatusNotFound {
-		return ErrNoSuchMovie
+		return ErrNoSuchEntry
 	}
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("status %d", res.StatusCode)

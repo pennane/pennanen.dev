@@ -2,6 +2,9 @@ import { requiredEnv } from './env'
 import type {
   EntryChange,
   IGDBResult,
+  TMDBLink,
+  TMDBResult,
+  TMDBType,
   ItemView,
   ListedEntry,
   Kind,
@@ -66,8 +69,11 @@ export const logAdmin = {
     call<ItemView>('/admin/items/from-igdb', send('POST', { igdbId })),
   matchIGDB: (itemId: number, igdbId: number) =>
     call<ItemView>(`/admin/items/${itemId}/igdb`, send('PUT', { igdbId })),
-  matchTMDB: (itemId: number, tmdbId: number) =>
-    call<ItemView>(`/admin/items/${itemId}/tmdb`, send('PUT', { tmdbId })),
+  searchTMDB: (tmdbType: TMDBType, query: string) =>
+    call<TMDBResult[]>(`/admin/tmdb/search?${new URLSearchParams({ type: tmdbType, q: query })}`),
+  addFromTMDB: (link: TMDBLink) => call<ItemView>('/admin/items/from-tmdb', send('POST', link)),
+  matchTMDB: (itemId: number, link: TMDBLink) =>
+    call<ItemView>(`/admin/items/${itemId}/tmdb`, send('PUT', link)),
   matchTMDBNone: (itemId: number) =>
     call<ItemView>(`/admin/items/${itemId}/tmdb/none`, { method: 'PUT' }),
   matchIGDBNone: (itemId: number) =>

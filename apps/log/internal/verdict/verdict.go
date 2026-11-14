@@ -2,6 +2,7 @@ package verdict
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 )
@@ -28,6 +29,15 @@ var claimReaders = map[string]readClaim{
 	kind.SourceLetterboxdTake:    readLetterboxdTake,
 	kind.SourceLetterboxd:        readLetterboxdFilm,
 	kind.SourceTMDB:              readTMDBMovie,
+	kind.SourceTMDBSeries:        readTMDBSeries,
+}
+
+func Read(source string, raw json.RawMessage) (map[string]any, error) {
+	read, known := claimReaders[source]
+	if !known {
+		return nil, fmt.Errorf("no reader for %s", source)
+	}
+	return read(raw)
 }
 
 func Decide(k kind.Kind, claims []Claim) Verdicts {

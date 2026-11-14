@@ -17,6 +17,15 @@ export type Reading = {
 
 export const TMDB_ID = 'tmdb_id'
 
+export type TMDBType = 'movie' | 'tv'
+
+export type TMDBLink = { tmdbType: TMDBType; tmdbId: number }
+
+export const TMDB_TYPE_OF_SOURCE: Record<string, TMDBType> = { tmdb: 'movie', 'tmdb-tv': 'tv' }
+
+export const tmdbPage = ({ tmdbType, tmdbId }: TMDBLink) =>
+  `https://www.themoviedb.org/${tmdbType}/${tmdbId}`
+
 export type ReadFrom = 'take' | 'description'
 
 export type Readable = { source: string; field: string; from: ReadFrom }
@@ -92,6 +101,7 @@ export type Kind = {
   axes: Axis[]
   fields: { name: string; type: string }[]
   takes: { source: string; privateFields: string[] }[]
+  identitySource?: string
 }
 
 export type Take = { source: string; values: Record<string, unknown>; fetchedAt: string }
@@ -161,6 +171,13 @@ export type IGDBResult = {
   name: string
   year?: string
   platforms: string[]
+  poster?: string
+  itemId?: number
+}
+
+export type TMDBResult = TMDBLink & {
+  name: string
+  year?: string
   poster?: string
   itemId?: number
 }

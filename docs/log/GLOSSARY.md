@@ -8,7 +8,7 @@ disagrees with the code, one of them is wrong.
 **Item** — something that can be seen: a game, a wine, a region, a person.
 It has a kind and a title, and that's about it. Opinions live elsewhere.
 
-**Kind** — what sort of item it is (`game`, `movie`, later `album`, `wine`…).
+**Kind** — what sort of item it is (`game`, `movie`, `series`, later `album`, `wine`…).
 A kind decides the item's fields, its statuses, and which source gives it
 an identity. Kinds are defined in code; which axes a kind uses, its **title**
 (`games`) and its **description** are set in admin. A field is for everyone
@@ -19,6 +19,9 @@ A `wine` is what every year of it shares; a `vintage` is one bottling of a
 wine, of a single year or **non-vintage** (blended across years, like most
 Champagne). Every bottle ap drinks is a vintage, so all bottles rank
 together; a wine itself is only ever logged as `want`.
+A `series` is a TV series as a whole; seasons and episodes aren't items.
+Letterboxd calls series films too, so a film found to be a series **moves**
+to `series`, keeping its entry and going to the bottom of its division.
 
 **Relation** — a named link between two items. _Margaux 2015 is a
 `vintage-of` Château Margaux, which is `part-of` Margaux._ Follow the links
@@ -137,18 +140,20 @@ value, the verdict comes from the item it's related to, one step away. _A
 vintage with no grapes of its own shows its wine's grapes._
 
 **Identity** — the external ID that says two claims are about the same item.
-For games, the IGDB ID. Optional: an item with no identity is just ap's.
+For games, the IGDB ID; for films and series, the TMDB ID, which TMDB numbers
+separately for each. Optional: an item with no identity is just ap's.
 
 **Match** — giving an item its identity. Steam games match by app id on their
 own; the rest wait in the match queue until ap picks a game or answers
 **no match**, which IGDB's claim then records so nobody asks again.
-Films match TMDB: by the id Letterboxd's diary gives, or by searching
-title and year when exactly one film has both; the rest stay unmatched and
-are tried again each night. ap can correct a film's match with a TMDB id, or
-answer no match, which TMDB's claim then records.
+Films match TMDB: by the id Letterboxd's diary gives, by the TMDB link on
+the film's Letterboxd page, which also tells a series from a film, or by
+searching title and year when exactly one film has both; the rest stay
+unmatched and are tried again each night. ap can correct a match with a TMDB
+link or id, or answer no match, which TMDB's claim then records.
 
-**Quick-add** — adding an item by searching IGDB, or by title alone when IGDB
-has nothing.
+**Quick-add** — adding an item by searching its kind's catalogue (IGDB for
+games, TMDB for films and series), or by title alone when it has nothing.
 
 **Cover / poster** — an item's wide picture and its tall box art.
 

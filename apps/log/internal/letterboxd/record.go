@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
@@ -22,7 +21,6 @@ const (
 	CountTagsFollowed     = "tags-followed"
 
 	SignalWatched = "watched"
-	movieKind     = "movie"
 )
 
 var statusOn = map[Shelf]string{
@@ -30,8 +28,13 @@ var statusOn = map[Shelf]string{
 	WatchlistShelf: kind.Want,
 }
 
+type TMDBLinks interface {
+	TMDBLinkOf(ctx context.Context, film verdict.LetterboxdFilm) (verdict.TMDBLink, error)
+}
+
 type Recorder struct {
 	Store *store.Store
+	Links TMDBLinks
 	Today func() string
 }
 
@@ -45,9 +48,13 @@ func (r *Recorder) today() string {
 func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film verdict.LetterboxdFilm, shelf Shelf) (int64, error) {
 	p.Add(CountFilmsSeen, 1)
 	itemID, err := r.itemOf(ctx, film)
+	if errors.Is(err, store.ErrNotFound) && film.ID != "" {
+		film = r.identified(ctx, p, film)
+		itemID, err = r.itemOf(ctx, film)
+	}
 	switch {
 	case errors.Is(err, store.ErrNotFound) && film.ID != "":
-		if itemID, err = r.Store.CreateItemFromSource(ctx, movieKind, film.Title, kind.SourceLetterboxd, film.ID, film); err != nil {
+		if itemID, err = r.Store.CreateItemFromSource(ctx, kindOf(film), film.Title, kind.SourceLetterboxd, film.ID, film); err != nil {
 			return 0, err
 		}
 		p.Add(CountFilmsAdded, 1)
@@ -62,6 +69,27 @@ func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film verdict.L
 		return itemID, r.arriveOnWatchlist(ctx, p, itemID)
 	}
 	return itemID, r.follow(ctx, p, itemID, shelf)
+}
+
+func (r *Recorder) identified(ctx context.Context, p *syncs.Progress, film verdict.LetterboxdFilm) verdict.LetterboxdFilm {
+	if _, known := film.TMDB(); known || r.Links == nil {
+		return film
+	}
+	link, err := r.Links.TMDBLinkOf(ctx, film)
+	if err != nil {
+		if !errors.Is(err, ErrNoTMDBLink) {
+			p.Problem("%s: %v", film.Title, err)
+		}
+		return film
+	}
+	return film.Linked(link)
+}
+
+func kindOf(film verdict.LetterboxdFilm) string {
+	if link, known := film.TMDB(); known {
+		return link.Type.Kind()
+	}
+	return kind.Movie
 }
 
 func (r *Recorder) arriveOnWatchlist(ctx context.Context, p *syncs.Progress, itemID int64) error {
@@ -209,8 +237,8 @@ func (r *Recorder) itemOf(ctx context.Context, film verdict.LetterboxdFilm) (int
 			return itemID, err
 		}
 	}
-	if film.TMDBID > 0 {
-		return r.Store.FindByIdentity(ctx, kind.SourceTMDB, strconv.FormatInt(film.TMDBID, 10))
+	if link, known := film.TMDB(); known {
+		return r.Store.FindByIdentity(ctx, link.Type.Source(), link.ExternalID())
 	}
 	return 0, store.ErrNotFound
 }
@@ -233,7 +261,7 @@ func (r *Recorder) remember(ctx context.Context, itemID int64, film verdict.Lett
 		merged.Year = known.Year
 	}
 	if merged.TMDBID == 0 {
-		merged.TMDBID = known.TMDBID
+		merged.TMDBID, merged.TMDBType = known.TMDBID, known.TMDBType
 	}
 	if merged.ID == "" {
 		return nil

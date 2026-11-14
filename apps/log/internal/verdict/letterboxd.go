@@ -38,11 +38,27 @@ func readLetterboxdTake(raw json.RawMessage) (map[string]any, error) {
 }
 
 type LetterboxdFilm struct {
-	ID     string `json:"id"`
-	Slug   string `json:"slug,omitempty"`
-	Title  string `json:"title"`
-	Year   int    `json:"year,omitempty"`
-	TMDBID int64  `json:"tmdbId,omitempty"`
+	ID       string   `json:"id"`
+	Slug     string   `json:"slug,omitempty"`
+	Title    string   `json:"title"`
+	Year     int      `json:"year,omitempty"`
+	TMDBID   int64    `json:"tmdbId,omitempty"`
+	TMDBType TMDBType `json:"tmdbType,omitempty"`
+}
+
+func (f LetterboxdFilm) TMDB() (TMDBLink, bool) {
+	if f.TMDBID == 0 {
+		return TMDBLink{}, false
+	}
+	if f.TMDBType == "" {
+		return TMDBLink{Type: MovieOnTMDB, ID: f.TMDBID}, true
+	}
+	return TMDBLink{Type: f.TMDBType, ID: f.TMDBID}, true
+}
+
+func (f LetterboxdFilm) Linked(link TMDBLink) LetterboxdFilm {
+	f.TMDBID, f.TMDBType = link.ID, link.Type
+	return f
 }
 
 func (f LetterboxdFilm) Link() string {

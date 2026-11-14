@@ -1,6 +1,8 @@
 package kind
 
 const (
+	Movie = "movie"
+
 	SourceTMDB           = "tmdb"
 	SourceLetterboxd     = "letterboxd"
 	SourceLetterboxdTake = "letterboxd-take"
@@ -9,9 +11,18 @@ const (
 	Watched = "watched"
 )
 
+var letterboxdTake = Take{
+	Source:        SourceLetterboxdTake,
+	PrivateFields: []string{"on_watchlist_since"},
+	Fields: []Field{
+		{Name: "rating", Type: Number},
+		{Name: "last_watched", Type: PartialDate},
+	},
+}
+
 func init() {
 	register(Kind{
-		Name:            "movie",
+		Name:            Movie,
 		DefaultTitle:    "movies",
 		Statuses:        []string{Untriaged, Want, Watched},
 		StatusesToScore: []string{Watched},
@@ -32,13 +43,6 @@ func init() {
 			{Name: "tmdb_id", Type: ExternalID, SourcesBestFirstAfterAP: []string{SourceTMDB}},
 			{Name: "link", Type: URL, SourcesBestFirstAfterAP: []string{SourceLetterboxd}},
 		},
-		Takes: []Take{{
-			Source:        SourceLetterboxdTake,
-			PrivateFields: []string{"on_watchlist_since"},
-			Fields: []Field{
-				{Name: "rating", Type: Number},
-				{Name: "last_watched", Type: PartialDate},
-			},
-		}},
+		Takes: []Take{letterboxdTake},
 	})
 }

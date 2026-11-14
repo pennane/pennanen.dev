@@ -88,7 +88,18 @@ func (s *Store) CreateItemFromSource(ctx context.Context, kindName, title, sourc
 }
 
 func insertItem(ctx context.Context, q queryer, kindName, title string) (int64, error) {
-	base := Slugify(title)
+	slug, err := freeSlug(ctx, q, kindName, Slugify(title))
+	if err != nil {
+		return 0, err
+	}
+	result, err := q.ExecContext(ctx, `INSERT INTO item (kind, slug) VALUES (?, ?)`, kindName, slug)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+func freeSlug(ctx context.Context, q queryer, kindName, base string) (string, error) {
 	for attempt := 1; ; attempt++ {
 		slug := base
 		if attempt > 1 {
@@ -96,16 +107,11 @@ func insertItem(ctx context.Context, q queryer, kindName, title string) (int64, 
 		}
 		var taken int
 		if err := q.QueryRowContext(ctx, `SELECT count(*) FROM item WHERE kind = ? AND slug = ?`, kindName, slug).Scan(&taken); err != nil {
-			return 0, err
+			return "", err
 		}
-		if taken > 0 {
-			continue
+		if taken == 0 {
+			return slug, nil
 		}
-		result, err := q.ExecContext(ctx, `INSERT INTO item (kind, slug) VALUES (?, ?)`, kindName, slug)
-		if err != nil {
-			return 0, err
-		}
-		return result.LastInsertId()
 	}
 }
 
@@ -172,13 +178,14 @@ func isIdentityTaken(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed: claim.source, claim.external_id")
 }
 
-func (s *Store) IdentitiesLackingSource(ctx context.Context, have, lacking string) (map[string]int64, error) {
+func (s *Store) IdentitiesLackingSources(ctx context.Context, have string, lacking ...string) (map[string]int64, error) {
+	args := append([]any{have, kind.Dismissed}, stringsAsArgs(lacking)...)
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.external_id, c.item_id FROM claim c
 		JOIN entry e ON e.item_id = c.item_id
 		WHERE c.source = ? AND c.external_id IS NOT NULL AND e.status <> ?
-		  AND NOT EXISTS (SELECT 1 FROM claim l WHERE l.item_id = c.item_id AND l.source = ?)`,
-		have, kind.Dismissed, lacking)
+		  AND NOT EXISTS (SELECT 1 FROM claim l WHERE l.item_id = c.item_id AND l.source IN (`+placeholders(len(lacking))+`))`,
+		args...)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +200,14 @@ func (s *Store) IdentitiesLackingSource(ctx context.Context, have, lacking strin
 		itemOf[externalID] = itemID
 	}
 	return itemOf, rows.Err()
+}
+
+func stringsAsArgs(xs []string) []any {
+	args := make([]any, len(xs))
+	for i, x := range xs {
+		args[i] = x
+	}
+	return args
 }
 
 func asJSON(data any) ([]byte, error) {

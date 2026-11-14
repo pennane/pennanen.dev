@@ -1,6 +1,11 @@
 package verdict
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strconv"
+
+	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+)
 
 const (
 	tmdbPosterBase = "https://image.tmdb.org/t/p/w500"
@@ -86,3 +91,88 @@ func names(xs []struct {
 	}
 	return out
 }
+
+type TMDBType string
+
+const (
+	MovieOnTMDB  TMDBType = "movie"
+	SeriesOnTMDB TMDBType = "tv"
+)
+
+var TMDBTypes = []TMDBType{MovieOnTMDB, SeriesOnTMDB}
+
+func (t TMDBType) Source() string {
+	if t == SeriesOnTMDB {
+		return kind.SourceTMDBSeries
+	}
+	return kind.SourceTMDB
+}
+
+func (t TMDBType) Kind() string {
+	if t == SeriesOnTMDB {
+		return kind.Series
+	}
+	return kind.Movie
+}
+
+type TMDBLink struct {
+	Type TMDBType `json:"tmdbType"`
+	ID   int64    `json:"tmdbId"`
+}
+
+func (l TMDBLink) ExternalID() string { return strconv.FormatInt(l.ID, 10) }
+
+type TMDBSeries struct {
+	ID               int64   `json:"id"`
+	Name             string  `json:"name"`
+	OriginalName     string  `json:"original_name"`
+	FirstAirDate     string  `json:"first_air_date"`
+	PosterPath       string  `json:"poster_path"`
+	BackdropPath     string  `json:"backdrop_path"`
+	NumberOfSeasons  int64   `json:"number_of_seasons"`
+	NumberOfEpisodes int64   `json:"number_of_episodes"`
+	VoteAverage      float64 `json:"vote_average"`
+	VoteCount        int64   `json:"vote_count"`
+	CreatedBy        []struct {
+		Name string `json:"name"`
+	} `json:"created_by"`
+	Genres []struct {
+		Name string `json:"name"`
+	} `json:"genres"`
+	ProductionCountries []struct {
+		Name string `json:"name"`
+	} `json:"production_countries"`
+}
+
+func readTMDBSeries(raw json.RawMessage) (map[string]any, error) {
+	var s TMDBSeries
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return nil, err
+	}
+	values := map[string]any{
+		"title":          s.Name,
+		"original_title": s.OriginalName,
+		"released":       s.FirstAirDate,
+		"poster":         prefixed(tmdbPosterBase, s.PosterPath),
+		"cover":          prefixed(tmdbCoverBase, s.BackdropPath),
+		"creators":       names(s.CreatedBy),
+		"genres":         names(s.Genres),
+		"countries":      names(s.ProductionCountries),
+	}
+	if s.ID > 0 {
+		values["tmdb_id"] = s.ID
+	}
+	if s.NumberOfSeasons > 0 {
+		values["seasons"] = s.NumberOfSeasons
+	}
+	if s.NumberOfEpisodes > 0 {
+		values["episodes"] = s.NumberOfEpisodes
+	}
+	if s.VoteCount > 0 {
+		values["vote_average"] = s.VoteAverage
+		values["vote_count"] = s.VoteCount
+	}
+	return withoutEmpty(values), nil
+}
+
+func TMDBPosterURL(path string) string { return prefixed(tmdbPosterBase, path) }

@@ -15,7 +15,7 @@ type Syncer struct {
 }
 
 func NewSyncer(s *store.Store, c *Client) *Syncer {
-	return &Syncer{Recorder: &Recorder{Store: s}, Client: c}
+	return &Syncer{Recorder: &Recorder{Store: s, Links: c}, Client: c}
 }
 
 func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {

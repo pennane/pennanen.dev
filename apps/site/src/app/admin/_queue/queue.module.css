@@ -43,13 +43,15 @@
   font-size: 0.875rem;
 }
 
-.filter[aria-pressed='true'] {
+.filter[aria-pressed='true'],
+.filter[aria-current='true'] {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--background);
 }
 
-.filter[aria-pressed='true'] .count {
+.filter[aria-pressed='true'] .count,
+.filter[aria-current='true'] .count {
   color: inherit;
 }
 

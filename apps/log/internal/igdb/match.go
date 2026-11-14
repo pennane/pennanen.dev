@@ -31,7 +31,7 @@ func NewMatcher(s *store.Store, c *Client) *Matcher {
 }
 
 func (m *Matcher) Work(ctx context.Context, p *syncs.Progress) error {
-	itemOfApp, err := m.Store.IdentitiesLackingSource(ctx, kind.SourceSteam, kind.SourceIGDB)
+	itemOfApp, err := m.Store.IdentitiesLackingSources(ctx, kind.SourceSteam, kind.SourceIGDB)
 	if err != nil {
 		return err
 	}

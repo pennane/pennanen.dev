@@ -91,8 +91,11 @@ func run() error {
 		slog.Warn("IGDB_CLIENT_ID or IGDB_CLIENT_SECRET missing; igdb disabled")
 	}
 
+	var letterboxdPages tmdb.LetterboxdPages
 	if username := os.Getenv("LETTERBOXD_USERNAME"); username != "" {
-		server.Letterboxd = letterboxd.NewSyncer(st, letterboxd.NewClient(username))
+		client := letterboxd.NewClient(username)
+		letterboxdPages = client
+		server.Letterboxd = letterboxd.NewSyncer(st, client)
 		if err := addSync(letterboxd.SyncName, server.Letterboxd.Work); err != nil {
 			return err
 		}
@@ -102,7 +105,7 @@ func run() error {
 
 	if token := os.Getenv("TMDB_READ_TOKEN"); token != "" {
 		server.TMDB = tmdb.NewClient(token)
-		if err := addSync(tmdb.SyncName, tmdb.NewMatcher(st, server.TMDB).Work); err != nil {
+		if err := addSync(tmdb.SyncName, tmdb.NewMatcher(st, server.TMDB, letterboxdPages).Work); err != nil {
 			return err
 		}
 	} else {

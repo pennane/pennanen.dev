@@ -4,16 +4,45 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { PRESTIGE, statusLabel } from '../../../lib/log/present'
-import type { IGDBResult, Kind } from '../../../lib/log/types'
+import type { IGDBResult, Kind, TMDBResult } from '../../../lib/log/types'
+import { TMDB_TYPE_OF_SOURCE } from '../../../lib/log/types'
 import { prestigeDivisions, prestigeName, QueueHeader, useKeys } from '../_queue/card'
 import { IGDBSearch } from '../_queue/IGDBSearch'
+import { TMDBSearch } from '../_queue/TMDBSearch'
 import styles from '../_queue/queue.module.css'
-import { addByTitle, addFromIGDB, changeEntry, placeEntry } from '../actions'
+import { addByTitle, addFromIGDB, addFromTMDB, changeEntry, placeEntry } from '../actions'
 import { Compare, compareKeys, useRanked, type Comparing } from '../_queue/Compare'
 import type { Placement, Ranked, Search } from '../_queue/placing'
 
 const UNTRIAGED = 'untriaged'
 const NO_KEYS = {}
+const IGDB = 'igdb'
+
+const hasMeaningfulTitle = (query: string) => query.trim() !== ''
+
+const ByTitle = ({ onAdd }: { onAdd: (title: string) => void }) => {
+  const [title, setTitle] = useState('')
+  return (
+    <form
+      className={styles.choices}
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (hasMeaningfulTitle(title)) onAdd(title.trim())
+      }}
+    >
+      <input
+        className={styles.choice}
+        value={title}
+        autoFocus
+        placeholder="title"
+        onChange={(event) => setTitle(event.target.value)}
+      />
+      <button type="submit" className={styles.choice} disabled={!hasMeaningfulTitle(title)}>
+        add
+      </button>
+    </form>
+  )
+}
 
 type Step =
   | { phase: 'search' }
@@ -24,7 +53,15 @@ type Step =
   | { phase: 'saved'; itemId: number; title: string; outcome: string }
   | { phase: 'failed'; title: string; error: string }
 
-export const Add = ({ kind, ranked: initialRanked }: { kind: Kind; ranked: Ranked }) => {
+export const Add = ({
+  kind,
+  ranked: initialRanked,
+  children
+}: {
+  kind: Kind
+  ranked: Ranked
+  children?: React.ReactNode
+}) => {
   const presets = prestigeDivisions(kind)
   const { ranked, place, searchFrom } = useRanked(initialRanked)
   const [step, setStep] = useState<Step>({ phase: 'search' })
@@ -39,13 +76,23 @@ export const Add = ({ kind, ranked: initialRanked }: { kind: Kind; ranked: Ranke
     }
   }
 
-  const pick = (result: IGDBResult) => {
+  const openOrAdd = (result: { name: string; itemId?: number }, create: () => Promise<number>) => {
     if (result.itemId !== undefined) {
       router.push(`/admin/entries/${result.itemId}`)
       return
     }
-    add(result.name, () => addFromIGDB(result.igdbId))
+    add(result.name, create)
   }
+  const pickGame = (result: IGDBResult) => openOrAdd(result, () => addFromIGDB(result.igdbId))
+  const pickFromTMDB = (result: TMDBResult) =>
+    openOrAdd(result, () => addFromTMDB({ tmdbType: result.tmdbType, tmdbId: result.tmdbId }))
+  const addTitled = (title: string) => add(title, () => addByTitle(kind.name, title))
+  const nothingFits = (query: string) => (
+    <button type="button" className={styles.quiet} onClick={() => addTitled(query)}>
+      not here? add “{query}” by hand
+    </button>
+  )
+  const tmdbType = TMDB_TYPE_OF_SOURCE[kind.identitySource ?? '']
 
   const save = async (itemId: number, title: string, status: string, placement?: Placement) => {
     const outcome = placement
@@ -92,21 +139,22 @@ export const Add = ({ kind, ranked: initialRanked }: { kind: Kind; ranked: Ranke
     <div className={styles.queue}>
       <QueueHeader current="add" />
 
-      {step.phase === 'search' && (
-        <IGDBSearch
-          autoFocus
-          onPick={pick}
-          nothingFits={(query) => (
-            <button
-              type="button"
-              className={styles.quiet}
-              onClick={() => add(query, () => addByTitle(kind.name, query))}
-            >
-              not here? add “{query}” by hand
-            </button>
-          )}
-        />
-      )}
+      {step.phase === 'search' && children}
+
+      {step.phase === 'search' &&
+        (kind.identitySource === IGDB ? (
+          <IGDBSearch autoFocus onPick={pickGame} nothingFits={nothingFits} />
+        ) : tmdbType ? (
+          <TMDBSearch
+            key={tmdbType}
+            tmdbType={tmdbType}
+            autoFocus
+            onPick={pickFromTMDB}
+            nothingFits={nothingFits}
+          />
+        ) : (
+          <ByTitle onAdd={addTitled} />
+        ))}
 
       {step.phase === 'adding' && <p className={styles.empty}>adding {step.title}…</p>}
 

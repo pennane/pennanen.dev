@@ -68,6 +68,8 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("POST /admin/items/from-igdb", s.addFromIGDB)
 	admin.HandleFunc("PUT /admin/items/{id}/igdb", s.matchIGDB)
 	admin.HandleFunc("PUT /admin/items/{id}/igdb/none", s.matchIGDBNone)
+	admin.HandleFunc("GET /admin/tmdb/search", s.searchTMDB)
+	admin.HandleFunc("POST /admin/items/from-tmdb", s.addFromTMDB)
 	admin.HandleFunc("PUT /admin/items/{id}/tmdb", s.matchTMDB)
 	admin.HandleFunc("PUT /admin/items/{id}/tmdb/none", s.matchTMDBNone)
 	admin.HandleFunc("GET /admin/sync", s.syncReports)

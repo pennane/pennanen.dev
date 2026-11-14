@@ -7,17 +7,27 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strconv"
 	"time"
+
+	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 type Client struct {
-	Username string
-	HTTP     *http.Client
-	BaseURL  string
+	Username      string
+	HTTP          *http.Client
+	BaseURL       string
+	ShortLinkBase string
 }
 
 func NewClient(username string) *Client {
-	return &Client{Username: username, HTTP: &http.Client{Timeout: 30 * time.Second}, BaseURL: "https://letterboxd.com"}
+	return &Client{
+		Username:      username,
+		HTTP:          &http.Client{Timeout: 30 * time.Second},
+		BaseURL:       "https://letterboxd.com",
+		ShortLinkBase: "https://boxd.it",
+	}
 }
 
 func (c *Client) RecentFilms(ctx context.Context) ([]ListedFilm, error) {
@@ -49,7 +59,11 @@ func (c *Client) RecentDiary(ctx context.Context) ([]DiaryEntry, error) {
 }
 
 func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+path, nil)
+	return c.getURL(ctx, c.BaseURL+path)
+}
+
+func (c *Client) getURL(ctx context.Context, address string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, address, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -70,4 +84,33 @@ func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
 		return nil, fmt.Errorf("status %d", res.StatusCode)
 	}
 	return body, nil
+}
+
+var (
+	tmdbLinkOnPage = regexp.MustCompile(`themoviedb\.org/(movie|tv)/(\d+)`)
+	ErrNoTMDBLink  = errors.New("the film's letterboxd page links to no tmdb entry")
+)
+
+func (c *Client) TMDBLinkOf(ctx context.Context, film verdict.LetterboxdFilm) (verdict.TMDBLink, error) {
+	address := c.ShortLinkBase + "/" + film.ID
+	if film.Slug != "" {
+		address = c.BaseURL + "/film/" + film.Slug + "/"
+	}
+	page, err := c.getURL(ctx, address)
+	if err != nil {
+		return verdict.TMDBLink{}, fmt.Errorf("film page: %w", err)
+	}
+	return tmdbLinkIn(string(page))
+}
+
+func tmdbLinkIn(page string) (verdict.TMDBLink, error) {
+	m := tmdbLinkOnPage.FindStringSubmatch(page)
+	if m == nil {
+		return verdict.TMDBLink{}, ErrNoTMDBLink
+	}
+	id, err := strconv.ParseInt(m[2], 10, 64)
+	if err != nil {
+		return verdict.TMDBLink{}, err
+	}
+	return verdict.TMDBLink{Type: verdict.TMDBType(m[1]), ID: id}, nil
 }

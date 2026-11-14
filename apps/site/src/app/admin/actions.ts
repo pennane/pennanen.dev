@@ -11,9 +11,11 @@ import type {
   ItemLink,
   ItemView,
   KindSettings,
-  TakeFieldVisibility
+  TakeFieldVisibility,
+  TMDBLink,
+  TMDBType
 } from '../../lib/log/types'
-import { TMDB_ID } from '../../lib/log/types'
+import { TMDB_ID, TMDB_TYPE_OF_SOURCE } from '../../lib/log/types'
 import type { EntrySubject } from './entries/Editor'
 
 const LAST_PLAYED = 'last_played'
@@ -27,9 +29,14 @@ export async function openEntry(itemId: number): Promise<EntrySubject> {
   return subjectOf(await logAdmin.item(itemId))
 }
 
+const tmdbLinkOf = (item: ItemView): TMDBLink | undefined => {
+  const tmdbId = item.verdicts.values[TMDB_ID]
+  const tmdbType = TMDB_TYPE_OF_SOURCE[item.verdicts.sourceOf[TMDB_ID] ?? '']
+  return typeof tmdbId === 'number' && tmdbType ? { tmdbType, tmdbId } : undefined
+}
+
 const subjectOf = (item: ItemView): EntrySubject => {
   if (!item.entry) throw new Error(`item ${item.id} has no entry`)
-  const tmdbId = item.verdicts.values[TMDB_ID]
   return {
     itemId: item.id,
     title: textField(item.verdicts.values, 'title') ?? item.slug,
@@ -38,13 +45,25 @@ const subjectOf = (item: ItemView): EntrySubject => {
     entry: item.entry,
     lastPlayed: lastPlayedOf(item),
     takes: item.takes,
-    tmdbId: typeof tmdbId === 'number' ? tmdbId : undefined
+    kind: item.kind,
+    tmdb: tmdbLinkOf(item)
   }
 }
 
-export async function matchTMDB(itemId: number, tmdbId: number) {
+export async function matchTMDB(itemId: number, link: TMDBLink) {
   await requireAdmin()
-  return subjectOf(await logAdmin.matchTMDB(itemId, tmdbId))
+  return subjectOf(await logAdmin.matchTMDB(itemId, link))
+}
+
+export async function searchTMDB(tmdbType: TMDBType, query: string) {
+  await requireAdmin()
+  return logAdmin.searchTMDB(tmdbType, query)
+}
+
+export async function addFromTMDB(link: TMDBLink) {
+  await requireAdmin()
+  const item = await logAdmin.addFromTMDB(link)
+  return item.id
 }
 
 export async function matchTMDBNone(itemId: number) {

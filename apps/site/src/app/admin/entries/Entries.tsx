@@ -288,6 +288,10 @@ export const Entries = ({
             onChange={(change) => patchEntry(panel.id, change)}
             onPlace={placeEntry}
             onRematched={(subject) => {
+              if (subject.kind !== kind.name) {
+                window.location.assign(`/admin/entries?kind=${subject.kind}&open=${subject.itemId}`)
+                return
+              }
               setPanel({ state: 'open', id: panel.id, subject })
               setEntries((all) =>
                 all.map((e) =>
