@@ -149,12 +149,20 @@ export const splitsItems = (facet: Facet, items: ListedItem[]) => {
   return values.length > 1 || (values.length === 1 && values[0].count < items.length)
 }
 
-export const parseView = (params: ReadableParams, axes: Axis[], facets: Facet[]): View => {
+export const defaultModeFor = (items: ListedItem[], axes: Axis[]): Mode =>
+  items.some((item) => axes.some((axis) => item.scores[axis.key])) ? 'tiers' : 'list'
+
+export const parseView = (
+  params: ReadableParams,
+  axes: Axis[],
+  facets: Facet[],
+  defaultMode: Mode
+): View => {
   const mode = params.get(PARAMS.mode)
   const axis = params.get(PARAMS.axis)
   const sort = params.get(PARAMS.sort)
   return {
-    mode: isMode(mode) ? mode : 'tiers',
+    mode: isMode(mode) ? mode : defaultMode,
     axis: axes.some((a) => a.key === axis) && axis ? axis : (axes[0]?.key ?? PRESTIGE),
     sort: sort
       ? {
@@ -172,9 +180,9 @@ export const parseView = (params: ReadableParams, axes: Axis[], facets: Facet[])
   }
 }
 
-export const searchFor = (view: View, axes: Axis[]) => {
+export const searchFor = (view: View, axes: Axis[], defaultMode: Mode) => {
   const query = new URLSearchParams()
-  if (view.mode !== 'tiers') query.set(PARAMS.mode, view.mode)
+  if (view.mode !== defaultMode) query.set(PARAMS.mode, view.mode)
   if (view.axis !== axes[0]?.key) query.set(PARAMS.axis, view.axis)
   if (view.sort.by !== DEFAULT_SORT.by || view.sort.direction !== DEFAULT_SORT.direction) {
     query.set(PARAMS.sort, view.sort.by)

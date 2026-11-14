@@ -10,6 +10,7 @@ import { TierBoard } from './TierBoard'
 import { Toolbar } from './Toolbar'
 import {
   columnsFor,
+  defaultModeFor,
   facetsFor,
   filterItems,
   MODES,
@@ -122,9 +123,14 @@ const Browser = ({
 export const KindBrowser = ({ items, kind }: { items: ListedItem[]; kind: string }) => {
   const axes = useKindAxes(kind)
   const facets = useFacets(items, kind, axes)
-  const view = parseView(useSearchParams(), axes, facets)
+  const defaultMode = defaultModeFor(items, axes)
+  const view = parseView(useSearchParams(), axes, facets, defaultMode)
   const change = (next: View) =>
-    window.history.replaceState(null, '', `${window.location.pathname}${searchFor(next, axes)}`)
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${searchFor(next, axes, defaultMode)}`
+    )
   return (
     <Browser kind={kind} items={items} axes={axes} facets={facets} view={view} onChange={change} />
   )
@@ -139,7 +145,7 @@ export const DefaultBoard = ({ items, kind }: { items: ListedItem[]; kind: strin
       items={items}
       axes={axes}
       facets={facets}
-      view={parseView(NO_PARAMS, axes, facets)}
+      view={parseView(NO_PARAMS, axes, facets, defaultModeFor(items, axes))}
       onChange={() => undefined}
     />
   )
