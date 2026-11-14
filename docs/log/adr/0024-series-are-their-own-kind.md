@@ -16,10 +16,11 @@ Letterboxd's film page links the right one, `themoviedb.org/movie/…` or
 
 ## Decision
 
-`series` is a kind of its own. It has the statuses of `movie` plus `dropped`,
-the same axes and Letterboxd take, and fields of its own: creators, seasons
-and episodes in place of directors and runtime. Its identity is a TMDB series id, kept by the
-source `tmdb-tv` so it can't collide with a film's.
+`series` is a kind of its own. It has the statuses of `movie` plus `watching`
+and `dropped`, the same axes and Letterboxd take, and fields of its own:
+creators, seasons and episodes in place of directors and runtime. Its identity
+is a TMDB series id, kept by the source `tmdb-tv` so it can't collide with a
+film's.
 
 The Letterboxd claim records which TMDB entry a film is, `tmdbType` (`movie`
 or `tv`) next to `tmdbId`. A film from Letterboxd with no TMDB id yet gets one
@@ -32,7 +33,8 @@ entry, scores, tags, prose, takes and observations, and gets a new slug if its
 own is taken there. Ranks are per kind, so it goes to the bottom of its
 division in the new kind.
 
-Seasons and episodes aren't tracked, and there's no `watching` status.
+Seasons and episodes aren't tracked; `watching` says only that ap is partway
+through. Letterboxd never sets it.
 
 ## Consequences
 

@@ -4,16 +4,17 @@ const (
 	Series           = "series"
 	SourceTMDBSeries = "tmdb-tv"
 
-	Dropped = "dropped"
+	Watching = "watching"
+	Dropped  = "dropped"
 )
 
 func init() {
 	register(Kind{
 		Name:            Series,
 		DefaultTitle:    "series",
-		Statuses:        []string{Untriaged, Want, Watched, Dropped},
-		StatusesToScore: []string{Watched, Dropped},
-		StatusesShown:   []string{Watched, Dropped},
+		Statuses:        []string{Untriaged, Want, Watching, Watched, Dropped},
+		StatusesToScore: []string{Watching, Watched, Dropped},
+		StatusesShown:   []string{Watching, Watched, Dropped},
 		DefaultAxes:     []string{Prestige, Quality},
 		RankedAxis:      Prestige,
 		IdentitySource:  SourceTMDBSeries,
