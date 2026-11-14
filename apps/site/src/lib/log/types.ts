@@ -19,16 +19,54 @@ export type Axis = { key: string; name: string; divisions: Division[]; reading?:
 
 export const sortOf = (axis: Axis): AxisSort => axis.reading?.sort ?? 'own'
 
+export const DEFAULT_VIEWS = ['auto', 'tiers', 'list'] as const
+
+export type DefaultView = (typeof DEFAULT_VIEWS)[number]
+
+export const FIELD_USES = ['filter', 'column', 'page'] as const
+
+export type FieldUse = (typeof FIELD_USES)[number]
+
+export const FIELD_TYPES = [
+  'text',
+  'int',
+  'number',
+  'partial-date',
+  'url',
+  'string-list',
+  'external-id'
+] as const
+
+export type FieldType = (typeof FIELD_TYPES)[number]
+
+export const DEFAULT_OVERVIEW_COUNT = 5
+
+export type PublicField = {
+  key: string
+  name: string
+  type: FieldType
+  take?: string
+  defaultUses: FieldUse[]
+}
+
+export type Overview = { sort: string; count: number }
+
 export type KindSettings = {
   title: string
   description: string
   statusesShown: string[]
   axes: string[]
+  defaultView: DefaultView
+  axesWithoutTiers: string[]
+  fieldUses: Record<string, FieldUse[]>
+  fieldNames: Record<string, string>
+  overview: Overview
 }
 
 export type Presentation = {
   axes: Axis[]
   kinds: Record<string, KindSettings>
+  fields: Record<string, PublicField[]>
   tagTitles: Record<string, string>
 }
 

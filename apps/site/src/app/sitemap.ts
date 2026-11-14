@@ -1,4 +1,4 @@
-import { itemPath, PUBLIC_KINDS } from '../lib/log/present'
+import { itemPath, publicKinds } from '../lib/log/present'
 import { logPublic } from '../lib/log/public-api'
 import { getProjects } from '../lib/projects'
 import { getBlogPosts } from './(site)/entries/lib'
@@ -22,14 +22,16 @@ export default async function sitemap() {
     lastModified: formatDateForSitemap(project.date)
   }))
 
-  const logItems = (await Promise.all(PUBLIC_KINDS.map((kind) => logPublic.items(kind))))
+  const kinds = publicKinds(await logPublic.presentation())
+
+  const logItems = (await Promise.all(kinds.map((kind) => logPublic.items(kind))))
     .flat()
     .map((item) => ({
       url: `${baseUrl}${itemPath(item)}`,
       lastModified: formatDateForSitemap(new Date(item.updatedAt))
     }))
 
-  const logRoutes = ['/log', ...PUBLIC_KINDS.map((kind) => `/log/${kind}`)]
+  const logRoutes = ['/log', ...kinds.map((kind) => `/log/${kind}`)]
 
   const routes = ['', '/uncurated', '/entries', '/projects', ...logRoutes].map((route) => ({
     url: `${baseUrl}${route}`,

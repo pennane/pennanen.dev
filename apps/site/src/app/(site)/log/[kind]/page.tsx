@@ -8,7 +8,7 @@ import {
   isPublicKind,
   kindTitle,
   plainText,
-  PUBLIC_KINDS,
+  publicKinds,
   toListed
 } from '../../../../lib/log/present'
 import { Prose } from '../components/Prose'
@@ -19,14 +19,14 @@ type Params = Promise<{ kind: string }>
 
 export const dynamicParams = false
 
-export function generateStaticParams() {
-  return PUBLIC_KINDS.map((kind) => ({ kind }))
+export async function generateStaticParams() {
+  return publicKinds(await logPublic.presentation()).map((kind) => ({ kind }))
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { kind } = await params
-  if (!isPublicKind(kind)) return {}
   const presentation = await logPublic.presentation()
+  if (!isPublicKind(presentation, kind)) return {}
   const title = kindTitle(presentation, kind)
   const description = plainText(presentation.kinds[kind]?.description ?? '')
   return {
@@ -37,15 +37,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function KindPage({ params }: { params: Params }) {
   const { kind } = await params
-  if (!isPublicKind(kind)) notFound()
-  const [listed, { untriaged }, presentation] = await Promise.all([
-    logPublic.items(kind),
-    logPublic.kind(kind),
-    logPublic.presentation()
-  ])
+  const presentation = await logPublic.presentation()
+  if (!isPublicKind(presentation, kind)) notFound()
+  const [listed, { untriaged }] = await Promise.all([logPublic.items(kind), logPublic.kind(kind)])
   const title = kindTitle(presentation, kind)
   const description = presentation.kinds[kind]?.description.trim() ?? ''
-  const items = listed.map(toListed)
+  const items = listed.map((item) => toListed(item, presentation.fields[kind] ?? []))
 
   return (
     <Stack gap={Gap.large} alignItems="stretch">

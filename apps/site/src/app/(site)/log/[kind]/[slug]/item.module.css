@@ -58,3 +58,12 @@
   grid-column: 2;
   text-align: right;
 }
+
+.take p {
+  white-space: pre-line;
+}
+
+.takeMarks {
+  color: var(--foreground-secondary);
+  letter-spacing: 0.05em;
+}

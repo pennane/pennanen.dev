@@ -2,8 +2,18 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { PRESTIGE, statusLabel } from '../../../lib/log/present'
-import type { Axis, AxisSort, Division, KindSettings, Reading } from '../../../lib/log/types'
+import { fieldName, PRESTIGE, statusLabel, usesOf } from '../../../lib/log/present'
+import type {
+  Axis,
+  AxisSort,
+  DefaultView,
+  Division,
+  FieldUse,
+  KindSettings,
+  PublicField,
+  Reading
+} from '../../../lib/log/types'
+import { DEFAULT_VIEWS, FIELD_USES } from '../../../lib/log/types'
 import { sortOf } from '../../../lib/log/types'
 import { saveAxes, saveKindSettings, saveTagTitles } from '../actions'
 import editor from '../entries/editor.module.css'
@@ -171,17 +181,32 @@ export const AxesForm = ({ initial }: { initial: Axis[] }) => {
   )
 }
 
+const VIEW_LABELS: Record<DefaultView, string> = {
+  auto: 'tiers once something is scored',
+  tiers: 'tiers',
+  list: 'list'
+}
+
+const AUTO_SORT = ''
+
+const SORTED_TYPES = new Set(['partial-date', 'number', 'int', 'text'])
+
+const toggledIn = <T,>(list: T[], value: T) =>
+  list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
+
 export const KindSettingsForm = ({
   kind,
   statuses,
   axes,
   rankedAxis,
+  fields,
   initial
 }: {
   kind: string
   statuses: string[]
   axes: Axis[]
   rankedAxis: string
+  fields: PublicField[]
   initial: KindSettings
 }) => {
   const [settings, setSettings] = useState(initial)
@@ -201,6 +226,23 @@ export const KindSettingsForm = ({
 
   const nameOf = (key: string) => axes.find((axis) => axis.key === key)?.name ?? key
   const unused = axes.filter((axis) => !settings.axes.includes(axis.key))
+  const toggleUse = (field: PublicField, use: FieldUse) =>
+    change({
+      fieldUses: { ...settings.fieldUses, [field.key]: toggledIn(usesOf(settings, field), use) }
+    })
+  const rename = (field: PublicField, name: string) => {
+    const { [field.key]: _, ...others } = settings.fieldNames
+    change({ fieldNames: name.trim() ? { ...others, [field.key]: name } : others })
+  }
+  const sorts = [
+    { key: AUTO_SORT, name: 'automatic: rank, else the first sort most entries have' },
+    { key: 'rank', name: 'rank' },
+    { key: 'title', name: 'title' },
+    ...settings.axes.map((key) => ({ key: `score-${key}`, name: nameOf(key) })),
+    ...fields
+      .filter((field) => SORTED_TYPES.has(field.type))
+      .map((field) => ({ key: field.key, name: fieldName(settings, field) }))
+  ]
 
   return (
     <article className={styles.kind}>
@@ -288,6 +330,96 @@ export const KindSettingsForm = ({
             ))}
           </div>
         )}
+      </Section>
+
+      <Section label="public view" hint="what the kind's page opens on">
+        <select
+          className={styles.input}
+          value={settings.defaultView}
+          onChange={(event) => change({ defaultView: event.target.value as DefaultView })}
+        >
+          {DEFAULT_VIEWS.map((view) => (
+            <option key={view} value={view}>
+              {VIEW_LABELS[view]}
+            </option>
+          ))}
+        </select>
+      </Section>
+
+      <Section label="tier lists" hint="axes with a tier list on the public page">
+        <div className={editor.chips}>
+          {settings.axes.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={editor.chip}
+              aria-pressed={!settings.axesWithoutTiers.includes(key)}
+              onClick={() =>
+                change({ axesWithoutTiers: toggledIn(settings.axesWithoutTiers, key) })
+              }
+            >
+              {nameOf(key)}
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <Section label="overview" hint="which entries the log's front page shows, and how many">
+        <div className={styles.row}>
+          <select
+            className={styles.input}
+            value={settings.overview.sort}
+            onChange={(event) =>
+              change({ overview: { ...settings.overview, sort: event.target.value } })
+            }
+          >
+            {sorts.map((sort) => (
+              <option key={sort.key} value={sort.key}>
+                {sort.name}
+              </option>
+            ))}
+          </select>
+          <input
+            className={styles.from}
+            type="number"
+            min={1}
+            max={20}
+            value={settings.overview.count}
+            onChange={(event) =>
+              change({ overview: { ...settings.overview, count: Number(event.target.value) } })
+            }
+          />
+        </div>
+      </Section>
+
+      <Section
+        label="fields"
+        hint="new fields start on what their type allows; name one to rename it publicly"
+      >
+        {fields.map((field) => (
+          <div key={field.key} className={styles.row}>
+            <input
+              className={styles.input}
+              value={settings.fieldNames[field.key] ?? ''}
+              placeholder={fieldName(undefined, field)}
+              aria-label={`name for ${field.key}`}
+              onChange={(event) => rename(field, event.target.value)}
+            />
+            <div className={editor.chips}>
+              {FIELD_USES.map((use) => (
+                <button
+                  key={use}
+                  type="button"
+                  className={editor.chip}
+                  aria-pressed={usesOf(settings, field).includes(use)}
+                  onClick={() => toggleUse(field, use)}
+                >
+                  {use}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </Section>
 
       <SaveButton save={save} onSave={() => run(settings, setSettings)} />

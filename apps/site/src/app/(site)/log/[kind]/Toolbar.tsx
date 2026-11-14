@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import type { ListedItem } from '../../../../lib/log/present'
+import type { PublicField } from '../../../../lib/log/types'
 import styles from './toolbar.module.css'
 import { filterItems, valuesIn, type Facet, type View } from './view'
 
@@ -36,16 +37,18 @@ const FacetMenu = ({
   items,
   view,
   facets,
+  searched,
   onChoose
 }: {
   facet: Facet
   items: ListedItem[]
   view: View
   facets: Facet[]
+  searched: PublicField[]
   onChoose: (values: string[]) => void
 }) => {
   const chosen = view.chosen[facet.key] ?? []
-  const counted = valuesIn(facet, filterItems(items, view, facets, facet.key))
+  const counted = valuesIn(facet, filterItems(items, view, facets, searched, facet.key))
   const known = new Set(counted.map(({ value }) => value))
   const options = [
     ...counted,
@@ -77,14 +80,21 @@ const FacetMenu = ({
   )
 }
 
+const SEARCH_HINTS = 2
+
+const placeholderFor = (searched: PublicField[]) =>
+  `search ${['title', ...searched.slice(0, SEARCH_HINTS).map((field) => field.name.replaceAll('_', ' '))].join(', ')}`
+
 export const Toolbar = ({
   items,
   facets,
+  searched,
   view,
   onChange
 }: {
   items: ListedItem[]
   facets: Facet[]
+  searched: PublicField[]
   view: View
   onChange: (view: View) => void
 }) => {
@@ -101,7 +111,7 @@ export const Toolbar = ({
           className={styles.search}
           type="search"
           value={view.query}
-          placeholder="search title or developer"
+          placeholder={placeholderFor(searched)}
           aria-label="search"
           onChange={(event) => onChange({ ...view, query: event.target.value })}
         />
@@ -112,6 +122,7 @@ export const Toolbar = ({
             items={items}
             view={view}
             facets={facets}
+            searched={searched}
             onChoose={(values) => choose(facet, values)}
           />
         ))}

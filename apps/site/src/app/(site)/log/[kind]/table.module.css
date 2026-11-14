@@ -14,7 +14,7 @@
   display: grid;
   grid-template-columns:
     2rem 3.5rem minmax(0, 1fr) var(--axis-columns)
-    4.25rem 3.75rem 4.75rem;
+    var(--meta-columns);
   align-items: center;
   gap: 0 0.5rem;
   padding: 0.3rem 0;
@@ -23,6 +23,12 @@
 
 .meta {
   display: contents;
+}
+
+.metaValue {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .head {

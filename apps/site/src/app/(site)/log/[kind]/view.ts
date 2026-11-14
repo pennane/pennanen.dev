@@ -1,14 +1,15 @@
 import {
   byRank,
   byTitle,
-  lastSeenLabel,
+  fieldName,
   PRESTIGE,
   statusLabel,
   tagLabel,
   tagWithAncestors,
+  type FieldValue,
   type ListedItem
 } from '../../../../lib/log/present'
-import type { Axis } from '../../../../lib/log/types'
+import type { Axis, DefaultView, KindSettings, PublicField } from '../../../../lib/log/types'
 
 export const MODES = ['tiers', 'list'] as const
 
@@ -34,7 +35,7 @@ const REVERSED = 'reverse'
 
 const VALUE_SEPARATOR = ','
 
-const RANK_SORT = 'rank'
+export const RANK_SORT = 'rank'
 
 const DEFAULT_SORT: Sort = { by: RANK_SORT, direction: 'forward' }
 
@@ -47,6 +48,19 @@ export const divisionIndex = (axis: Axis, item: ListedItem) => {
   return at === -1 ? undefined : at
 }
 
+export const tierAxes = (axes: Axis[], settings: KindSettings | undefined) =>
+  axes.filter((axis) => !settings?.axesWithoutTiers.includes(axis.key))
+
+export const defaultModeFor = (
+  items: ListedItem[],
+  axes: Axis[],
+  chosen: DefaultView | undefined
+): Mode => {
+  if (axes.length === 0) return 'list'
+  if (chosen === 'tiers' || chosen === 'list') return chosen
+  return items.some((item) => axes.some((axis) => item.scores[axis.key])) ? 'tiers' : 'list'
+}
+
 export type Facet = {
   key: string
   name: string
@@ -55,24 +69,115 @@ export type Facet = {
   order: (a: string, b: string) => number
 }
 
-const decadeOf = (date: string | undefined) => {
-  const year = Number(date?.slice(0, 4))
-  return year ? [`${Math.floor(year / 10) * 10}s`] : []
+const alphabetical = (a: string, b: string) => a.localeCompare(b)
+
+const numerically = (a: string, b: string) => Number(a) - Number(b)
+
+const numberIn = (value: FieldValue | undefined) => (typeof value === 'number' ? value : undefined)
+
+const textIn = (value: FieldValue | undefined) => (typeof value === 'string' ? value : undefined)
+
+const listIn = (value: FieldValue | undefined): string[] =>
+  Array.isArray(value) ? value : typeof value === 'string' ? [value] : []
+
+const YEARS_LISTED_WITHIN_DECADES = 2
+
+const yearOf = (date: string | undefined) => Number(date?.slice(0, 4)) || undefined
+
+const decadeOf = (year: number) => `${Math.floor(year / 10) * 10}s`
+
+const dateFacet = (field: PublicField, name: string, items: ListedItem[]): Facet => {
+  const years = items.flatMap((item) => yearOf(textIn(item.values[field.key])) ?? [])
+  const byYear = new Set(years.map(decadeOf)).size <= YEARS_LISTED_WITHIN_DECADES
+  return {
+    key: field.key,
+    name,
+    valuesOf: (item) => {
+      const year = yearOf(textIn(item.values[field.key]))
+      if (!year) return []
+      return [byYear ? String(year) : decadeOf(year)]
+    },
+    labelOf: (value) => value,
+    order: alphabetical
+  }
 }
 
-const PLAYTIME_BANDS = [
-  { key: 'under-2h', label: 'under 2 h', below: 2 * 60 },
-  { key: '2-10h', label: '2–10 h', below: 10 * 60 },
-  { key: '10-50h', label: '10–50 h', below: 50 * 60 },
-  { key: '50h-plus', label: '50 h +', below: Number.POSITIVE_INFINITY }
-]
+const DISTINCT_NUMBERS_LISTED = 12
 
-const bandOf = (minutes: number | undefined) =>
-  minutes === undefined ? [] : [PLAYTIME_BANDS.find((band) => minutes < band.below)!.key]
+const BAND_QUANTILES = [0.25, 0.5, 0.75]
 
-const bandOrder = (key: string) => PLAYTIME_BANDS.findIndex((band) => band.key === key)
+const SIGNIFICANT_DIGITS = 2
 
-const alphabetical = (a: string, b: string) => a.localeCompare(b)
+const rounded = (n: number) => Number(n.toPrecision(SIGNIFICANT_DIGITS))
+
+const numberFacet = (field: PublicField, name: string, items: ListedItem[]): Facet => {
+  const numbers = items
+    .flatMap((item) => numberIn(item.values[field.key]) ?? [])
+    .toSorted((a, b) => a - b)
+  const distinct = [...new Set(numbers)]
+  if (distinct.length <= DISTINCT_NUMBERS_LISTED) {
+    return {
+      key: field.key,
+      name,
+      valuesOf: (item) => {
+        const n = numberIn(item.values[field.key])
+        return n === undefined ? [] : [String(n)]
+      },
+      labelOf: (value) => value,
+      order: numerically
+    }
+  }
+  const bounds = [
+    ...new Set(BAND_QUANTILES.map((q) => rounded(numbers[Math.floor(q * numbers.length)])))
+  ]
+  const bandOf = (n: number) => {
+    const at = bounds.findIndex((bound) => n < bound)
+    return at === -1 ? bounds.length : at
+  }
+  const labelOf = (band: number) => {
+    if (band === 0) return `under ${bounds[0]}`
+    if (band === bounds.length) return `${bounds[band - 1]} +`
+    return `${bounds[band - 1]}–${bounds[band]}`
+  }
+  return {
+    key: field.key,
+    name,
+    valuesOf: (item) => {
+      const n = numberIn(item.values[field.key])
+      return n === undefined ? [] : [String(bandOf(n))]
+    },
+    labelOf: (value) => labelOf(Number(value)),
+    order: numerically
+  }
+}
+
+const valuesFacet = (field: PublicField, name: string): Facet => ({
+  key: field.key,
+  name,
+  valuesOf: (item) => listIn(item.values[field.key]),
+  labelOf: (value) => value,
+  order: alphabetical
+})
+
+const fieldFacet = (
+  field: PublicField,
+  settings: KindSettings | undefined,
+  items: ListedItem[]
+): Facet[] => {
+  const name = fieldName(settings, field)
+  switch (field.type) {
+    case 'partial-date':
+      return [dateFacet(field, name, items)]
+    case 'int':
+    case 'number':
+      return [numberFacet(field, name, items)]
+    case 'text':
+    case 'string-list':
+      return [valuesFacet(field, name)]
+    default:
+      return []
+  }
+}
 
 const HAS_VISIONS = '+visions'
 
@@ -80,11 +185,21 @@ const SCORE_PREFIX = 'score-'
 
 export const axisKey = (axis: Axis) => SCORE_PREFIX + axis.key
 
-export const facetsFor = (
-  axes: Axis[],
-  statuses: string[],
+export const facetsFor = ({
+  axes,
+  statuses,
+  tagTitle,
+  fields,
+  settings,
+  items
+}: {
+  axes: Axis[]
+  statuses: string[]
   tagTitle: (tag: string) => string | undefined
-): Facet[] => [
+  fields: PublicField[]
+  settings: KindSettings | undefined
+  items: ListedItem[]
+}): Facet[] => [
   {
     key: 'status',
     name: 'status',
@@ -100,27 +215,7 @@ export const facetsFor = (
     order: (a: string, b: string) =>
       axis.divisions.findIndex((d) => d.key === a) - axis.divisions.findIndex((d) => d.key === b)
   })),
-  {
-    key: 'genre',
-    name: 'genre',
-    valuesOf: (item) => item.genres,
-    labelOf: (value) => value.toLowerCase(),
-    order: alphabetical
-  },
-  {
-    key: 'released',
-    name: 'released',
-    valuesOf: (item) => decadeOf(item.released),
-    labelOf: (value) => value,
-    order: alphabetical
-  },
-  {
-    key: 'playtime',
-    name: 'playtime',
-    valuesOf: (item) => bandOf(item.playtimeMinutes),
-    labelOf: (value) => PLAYTIME_BANDS.find((band) => band.key === value)?.label ?? value,
-    order: (a, b) => bandOrder(a) - bandOrder(b)
-  },
+  ...fields.flatMap((field) => fieldFacet(field, settings, items)),
   {
     key: 'tag',
     name: 'tag',
@@ -149,9 +244,6 @@ export const splitsItems = (facet: Facet, items: ListedItem[]) => {
   return values.length > 1 || (values.length === 1 && values[0].count < items.length)
 }
 
-export const defaultModeFor = (items: ListedItem[], axes: Axis[]): Mode =>
-  items.some((item) => axes.some((axis) => item.scores[axis.key])) ? 'tiers' : 'list'
-
 export const parseView = (
   params: ReadableParams,
   axes: Axis[],
@@ -162,7 +254,7 @@ export const parseView = (
   const axis = params.get(PARAMS.axis)
   const sort = params.get(PARAMS.sort)
   return {
-    mode: isMode(mode) ? mode : defaultMode,
+    mode: isMode(mode) && axes.length > 0 ? mode : defaultMode,
     axis: axes.some((a) => a.key === axis) && axis ? axis : (axes[0]?.key ?? PRESTIGE),
     sort: sort
       ? {
@@ -196,20 +288,33 @@ export const searchFor = (view: View, axes: Axis[], defaultMode: Mode) => {
   return search ? `?${search}` : ''
 }
 
-const matchesQuery = (query: string) => {
+const SEARCHED_TYPES = new Set(['text', 'string-list'])
+
+export const searchedFields = (fields: PublicField[]) =>
+  fields.filter((field) => SEARCHED_TYPES.has(field.type))
+
+const matchesQuery = (query: string, searched: PublicField[]) => {
   const needle = query.trim().toLowerCase()
   return (item: ListedItem) =>
     !needle ||
     item.title.toLowerCase().includes(needle) ||
-    item.makers.some((maker) => maker.toLowerCase().includes(needle))
+    searched.some((field) =>
+      listIn(item.values[field.key]).some((value) => value.toLowerCase().includes(needle))
+    )
 }
 
 const matchesFacet = (facet: Facet, chosen: string[] | undefined) => (item: ListedItem) =>
   !chosen || chosen.length === 0 || facet.valuesOf(item).some((value) => chosen.includes(value))
 
-export const filterItems = (items: ListedItem[], view: View, facets: Facet[], except?: string) =>
+export const filterItems = (
+  items: ListedItem[],
+  view: View,
+  facets: Facet[],
+  searched: PublicField[],
+  except?: string
+) =>
   items
-    .filter(matchesQuery(view.query))
+    .filter(matchesQuery(view.query, searched))
     .filter((item) =>
       facets.every(
         (facet) => facet.key === except || matchesFacet(facet, view.chosen[facet.key])(item)
@@ -223,14 +328,30 @@ export type Column = {
   name: string
   valueOf: (item: ListedItem) => Comparable | undefined
   order: 'ascending' | 'descending'
+  field?: PublicField
 }
 
 const compareValues = (a: Comparable, b: Comparable) =>
   typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))
 
-export const LAST_SEEN = 'last-seen'
+const SORTED_TYPES = new Set(['partial-date', 'number', 'int', 'text'])
 
-export const columnsFor = (axes: Axis[], kind: string): Column[] => [
+const fieldColumn = (field: PublicField, settings: KindSettings | undefined): Column => ({
+  key: field.key,
+  name: fieldName(settings, field),
+  valueOf: (item) => {
+    const value = item.values[field.key]
+    return Array.isArray(value) ? undefined : value
+  },
+  order: field.type === 'text' ? 'ascending' : 'descending',
+  field
+})
+
+export const sortsFor = (
+  axes: Axis[],
+  fields: PublicField[],
+  settings: KindSettings | undefined
+): Column[] => [
   { key: RANK_SORT, name: '#', valueOf: (item) => item.rank?.place, order: 'ascending' },
   { key: 'title', name: 'title', valueOf: (item) => item.title, order: 'ascending' },
   ...axes.map((axis): Column => ({
@@ -240,13 +361,9 @@ export const columnsFor = (axes: Axis[], kind: string): Column[] => [
     order: 'ascending'
   })),
   { key: 'status', name: 'status', valueOf: (item) => item.status, order: 'ascending' },
-  { key: 'released', name: 'released', valueOf: (item) => item.released, order: 'descending' },
-  {
-    key: LAST_SEEN,
-    name: lastSeenLabel(kind),
-    valueOf: (item) => item.lastSeen,
-    order: 'descending'
-  }
+  ...fields
+    .filter((field) => SORTED_TYPES.has(field.type))
+    .map((field) => fieldColumn(field, settings))
 ]
 
 const SIGNS = { ascending: 1, descending: -1 }
@@ -264,4 +381,36 @@ export const sortItems = (items: ListedItem[], sort: Sort, columns: Column[]) =>
     }
     return sign * compareValues(va, vb) || byRank(a, b)
   })
+}
+
+const AUTO_SORT = ''
+
+const ENOUGH_VALUES = 0.5
+
+const OVERVIEW_CANDIDATE_TYPES = ['number', 'int', 'partial-date']
+
+export const overviewSort = (
+  items: ListedItem[],
+  axes: Axis[],
+  sorts: Column[],
+  settings: KindSettings | undefined
+): Column => {
+  const chosen = settings?.overview.sort ?? AUTO_SORT
+  const found = sorts.find((sort) => sort.key === chosen)
+  if (chosen !== AUTO_SORT && found) return found
+  const rank = sorts.find((sort) => sort.key === RANK_SORT)!
+  if (items.some((item) => item.rank)) return rank
+  const hasEnough = (sort: Column) =>
+    items.filter((item) => sort.valueOf(item) !== undefined).length >= items.length * ENOUGH_VALUES
+  const candidates = [
+    ...axes.map((axis) => axisKey(axis)),
+    ...OVERVIEW_CANDIDATE_TYPES.flatMap((type) =>
+      sorts.filter((sort) => sort.field?.type === type).map((sort) => sort.key)
+    )
+  ]
+  return (
+    candidates
+      .map((key) => sorts.find((sort) => sort.key === key)!)
+      .find((sort) => sort && hasEnough(sort)) ?? rank
+  )
 }

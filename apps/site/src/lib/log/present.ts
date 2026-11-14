@@ -1,5 +1,5 @@
 import type { PublicItem } from './public-api'
-import type { Axis, Presentation } from './types'
+import type { Axis, FieldUse, KindSettings, Presentation, PublicField } from './types'
 
 export type Rank = { place: number; of: number }
 
@@ -7,71 +7,16 @@ type Fields = Record<string, unknown>
 
 type Takes = PublicItem['takes']
 
-type KindPresentation = {
-  plural: string
-  makersField: string
-  lastSeen: { label: string; of: (fields: Fields, takes: Takes) => string | undefined }
-}
+export const publicKinds = (presentation: Presentation) => Object.keys(presentation.kinds).sort()
 
-const LETTERBOXD_TAKE = 'letterboxd-take'
+export const isPublicKind = (presentation: Presentation, kind: string) =>
+  Object.hasOwn(presentation.kinds, kind)
 
 export const takeValues = (takes: Takes, source: string) =>
   takes.find((take) => take.source === source)?.values ?? {}
 
-const PUBLIC_KIND_PRESENTATIONS = {
-  game: {
-    plural: 'games',
-    makersField: 'developers',
-    lastSeen: { label: 'last played', of: (fields) => textField(fields, 'last_played') }
-  },
-  movie: {
-    plural: 'movies',
-    makersField: 'directors',
-    lastSeen: {
-      label: 'last watched',
-      of: (_, takes) => textField(takeValues(takes, LETTERBOXD_TAKE), 'last_watched')
-    }
-  }
-} as const satisfies Record<string, KindPresentation>
-
-export type PublicKind = keyof typeof PUBLIC_KIND_PRESENTATIONS
-
-export const PUBLIC_KINDS = Object.keys(PUBLIC_KIND_PRESENTATIONS) as PublicKind[]
-
-export const isPublicKind = (kind: string): kind is PublicKind =>
-  Object.hasOwn(PUBLIC_KIND_PRESENTATIONS, kind)
-
-const presentationOf = (kind: string): KindPresentation | undefined =>
-  isPublicKind(kind) ? PUBLIC_KIND_PRESENTATIONS[kind] : undefined
-
-export const kindPlural = (kind: PublicKind) => PUBLIC_KIND_PRESENTATIONS[kind].plural
-
-const HALF_STAR = 0.5
-
-export const starsOf = (rating: number) =>
-  '★'.repeat(Math.floor(rating)) + (rating % 1 >= HALF_STAR ? '½' : '')
-
-export const letterboxdTakeOf = (item: PublicItem) => {
-  const values = takeValues(item.takes, LETTERBOXD_TAKE)
-  const rating = numberField(values, 'rating')
-  return {
-    stars: rating === undefined ? undefined : starsOf(rating),
-    liked: textField(values, 'reaction') === 'liked'
-  }
-}
-
-export const lastSeenLabel = (kind: string) => presentationOf(kind)?.lastSeen.label ?? 'last seen'
-
-export const lastSeenOf = (item: PublicItem) =>
-  presentationOf(item.kind)?.lastSeen.of(item.fields, item.takes)
-
-export const makersOf = (item: PublicItem) => {
-  const field = presentationOf(item.kind)?.makersField
-  return field ? listField(item.fields, field) : []
-}
-
-export const kindTitle = (presentation: Presentation, kind: PublicKind) =>
-  presentation.kinds[kind]?.title.trim() || kindPlural(kind)
+export const kindTitle = (presentation: Presentation, kind: string) =>
+  presentation.kinds[kind]?.title.trim() || kind
 
 export const plainText = (markdown: string) =>
   markdown
@@ -94,40 +39,6 @@ export const listField = (fields: Fields, name: string) => {
   const value = fields[name]
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
 }
-
-const FIELDS_WITH_A_PLACE = new Set([
-  'title',
-  'description',
-  'link',
-  'image',
-  'cover',
-  'poster',
-  'platforms',
-  'released',
-  'developers',
-  'genres',
-  'platform',
-  'steam_categories',
-  'steam_appid',
-  'playtime_minutes',
-  'last_played',
-  'achievements_total',
-  'achievements_unlocked',
-  'original_title',
-  'directors',
-  'countries',
-  'runtime_minutes',
-  'tmdb_id'
-])
-
-export const freeFormFields = (fields: Fields) =>
-  Object.entries(fields)
-    .filter(([name]) => !FIELDS_WITH_A_PLACE.has(name))
-    .flatMap(([name, value]) =>
-      typeof value === 'string' || typeof value === 'number'
-        ? [{ name: name.replaceAll('_', ' '), value: String(value) }]
-        : []
-    )
 
 export const titleOf = (item: PublicItem) => textField(item.fields, 'title') ?? item.slug
 
@@ -213,41 +124,80 @@ export const TIME_SPENT_CHOICES = Object.keys(TIME_SPENT_LABELS) as TimeSpent[]
 export const isTimeSpent = (value: unknown): value is TimeSpent =>
   typeof value === 'string' && Object.hasOwn(TIME_SPENT_LABELS, value)
 
+export type FieldValue = string | number | string[]
+
 export type ListedItem = {
   kind: string
   slug: string
   title: string
   picture: string | undefined
+  poster: string | undefined
   status: string
   scores: Record<string, string>
   rank: Rank | undefined
   tags: string[]
-  lastSeen: string | undefined
-  poster: string | undefined
-  released: string | undefined
-  genres: string[]
-  makers: string[]
-  playtimeMinutes: number | undefined
   proseWords: number
+  values: Record<string, FieldValue>
 }
 
-export const toListed = (item: PublicItem): ListedItem => ({
+const asFieldValue = (value: unknown): FieldValue | undefined => {
+  if (typeof value === 'string') return value === '' ? undefined : value
+  if (typeof value === 'number') return value
+  if (Array.isArray(value)) {
+    const strings = value.filter((v): v is string => typeof v === 'string')
+    return strings.length > 0 ? strings : undefined
+  }
+  return undefined
+}
+
+export const fieldValueOf = (item: PublicItem, field: PublicField) =>
+  asFieldValue(field.take ? takeValues(item.takes, field.take)[field.name] : item.fields[field.key])
+
+export const toListed = (item: PublicItem, fields: PublicField[]): ListedItem => ({
   kind: item.kind,
   slug: item.slug,
   title: titleOf(item),
   picture: pictureOf(item),
+  poster: textField(item.fields, 'poster'),
   status: item.status,
   scores: item.scores,
   rank: item.rank,
   tags: item.tags,
-  lastSeen: lastSeenOf(item),
-  poster: textField(item.fields, 'poster'),
-  released: textField(item.fields, 'released'),
-  genres: listField(item.fields, 'genres'),
-  makers: makersOf(item),
-  playtimeMinutes: numberField(item.fields, 'playtime_minutes'),
-  proseWords: item.proseWords
+  proseWords: item.proseWords,
+  values: Object.fromEntries(
+    fields.flatMap((field) => {
+      const value = fieldValueOf(item, field)
+      return value === undefined ? [] : [[field.key, value]]
+    })
+  )
 })
+
+const TAKE_SUFFIX = '-take'
+
+export const sourceName = (source: string) =>
+  source.endsWith(TAKE_SUFFIX) ? source.slice(0, -TAKE_SUFFIX.length) : source
+
+export const fieldName = (settings: KindSettings | undefined, field: PublicField) =>
+  settings?.fieldNames[field.key] ??
+  [field.take && sourceName(field.take), field.name.replaceAll('_', ' ')].filter(Boolean).join(' ')
+
+export const usesOf = (settings: KindSettings | undefined, field: PublicField) =>
+  settings?.fieldUses[field.key] ?? field.defaultUses
+
+export const fieldsUsedAs = (
+  presentation: Presentation,
+  kind: string,
+  use: FieldUse
+): PublicField[] =>
+  (presentation.fields[kind] ?? []).filter((field) =>
+    usesOf(presentation.kinds[kind], field).includes(use)
+  )
+
+export const formatFieldValue = (field: PublicField, value: FieldValue) => {
+  if (Array.isArray(value)) return value.join(', ')
+  if (field.type === 'partial-date' && typeof value === 'string') return formatPartialDate(value)
+  return String(value)
+}
 
 export const byTitle = (a: ListedItem, b: ListedItem) => a.title.localeCompare(b.title)
 
@@ -266,4 +216,26 @@ export const presenceOf = (
   if (entry.status === NEVER_SHOWN || entry.visibility === 'private') return 'hidden'
   if (entry.visibility === 'public') return 'shown'
   return statusesShown.includes(entry.status) ? 'shown' : 'hidden'
+}
+
+const HALF_STAR = 0.5
+
+const starsOf = (rating: number) =>
+  '★'.repeat(Math.floor(rating)) + (rating % 1 >= HALF_STAR ? '½' : '')
+
+const RATED_IN_STARS = new Set(['letterboxd-take'])
+
+const LIKED = 'liked'
+
+const TEXT_KEYS = ['review', 'note']
+
+export type ShownTake = { source: string; marks: string[]; text: string | undefined }
+
+export const shownTake = (take: PublicItem['takes'][number]): ShownTake => {
+  const rating = numberField(take.values, 'rating')
+  const ratingMark =
+    rating === undefined ? [] : [RATED_IN_STARS.has(take.source) ? starsOf(rating) : String(rating)]
+  const likedMark = textField(take.values, 'reaction') === LIKED ? ['♥'] : []
+  const text = TEXT_KEYS.map((key) => textField(take.values, key)).find(Boolean)
+  return { source: sourceName(take.source), marks: [...ratingMark, ...likedMark], text }
 }

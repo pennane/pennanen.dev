@@ -1,24 +1,28 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import type { ListedItem } from '../../../../lib/log/present'
-import type { Axis } from '../../../../lib/log/types'
+import { fieldsUsedAs, type ListedItem } from '../../../../lib/log/present'
+import type { Axis, KindSettings, PublicField } from '../../../../lib/log/types'
 import { usePresentation, useTagTitle } from '../components/PresentationContext'
 import { ItemTable } from './ItemTable'
 import styles from './kind.module.css'
 import { TierBoard } from './TierBoard'
 import { Toolbar } from './Toolbar'
 import {
-  columnsFor,
   defaultModeFor,
   facetsFor,
   filterItems,
   MODES,
   parseView,
+  searchedFields,
   searchFor,
   sortItems,
+  sortsFor,
   splitsItems,
+  tierAxes,
+  type Column,
   type Facet,
+  type Mode,
   type View
 } from './view'
 
@@ -54,62 +58,90 @@ const Switch = <T extends string>({
   </div>
 )
 
-const useFacets = (items: ListedItem[], kind: string, axes: Axis[]) => {
-  const { kinds } = usePresentation()
-  const tagTitle = useTagTitle()
-  return facetsFor(axes, kinds[kind]?.statusesShown ?? [], tagTitle).filter((facet) =>
-    splitsItems(facet, items)
-  )
+type Setup = {
+  axes: Axis[]
+  tiers: Axis[]
+  facets: Facet[]
+  searched: PublicField[]
+  sorts: Column[]
+  columns: Column[]
+  defaultMode: Mode
 }
 
-const NO_PARAMS = new URLSearchParams()
+const useSetup = (items: ListedItem[], kind: string): Setup => {
+  const presentation = usePresentation()
+  const tagTitle = useTagTitle()
+  const settings: KindSettings | undefined = presentation.kinds[kind]
+  const axes = useKindAxes(kind)
+  const tiers = tierAxes(axes, settings)
+  const fields = presentation.fields[kind] ?? []
+  const facets = facetsFor({
+    axes,
+    statuses: settings?.statusesShown ?? [],
+    tagTitle,
+    fields: fieldsUsedAs(presentation, kind, 'filter'),
+    settings,
+    items
+  }).filter((facet) => splitsItems(facet, items))
+  const sorts = sortsFor(axes, fields, settings)
+  const columnKeys = new Set(fieldsUsedAs(presentation, kind, 'column').map((field) => field.key))
+  const columns = sorts.filter((sort) => !sort.field || columnKeys.has(sort.key))
+  return {
+    axes,
+    tiers,
+    facets,
+    searched: searchedFields(fields),
+    sorts,
+    columns,
+    defaultMode: defaultModeFor(items, tiers, settings?.defaultView)
+  }
+}
 
 const Browser = ({
-  kind,
   items,
-  axes,
-  facets,
+  setup,
   view,
   onChange
 }: {
-  kind: string
   items: ListedItem[]
-  axes: Axis[]
-  facets: Facet[]
+  setup: Setup
   view: View
   onChange: (view: View) => void
 }) => {
-  const axis = axes.find((a) => a.key === view.axis)
-  const filtered = filterItems(items, view, facets)
-  const columns = columnsFor(axes, kind)
+  const { axes, tiers, facets, searched, sorts, columns } = setup
+  const axis = tiers.find((a) => a.key === view.axis) ?? tiers[0]
+  const filtered = filterItems(items, view, facets, searched)
+  const mode = tiers.length > 0 ? view.mode : 'list'
   return (
     <div className={styles.browser}>
       <div className={styles.bar}>
-        <Switch
-          label="view"
-          options={MODES.map((mode) => ({ value: mode, label: MODE_LABELS[mode] }))}
-          chosen={view.mode}
-          onChoose={(mode) => onChange({ ...view, mode })}
-        />
-        {view.mode === 'tiers' && axes.length > 1 && (
+        {tiers.length > 0 && (
+          <Switch
+            label="view"
+            options={MODES.map((m) => ({ value: m, label: MODE_LABELS[m] }))}
+            chosen={mode}
+            onChoose={(next) => onChange({ ...view, mode: next })}
+          />
+        )}
+        {mode === 'tiers' && tiers.length > 1 && axis && (
           <Switch
             label="axis"
-            options={axes.map((a) => ({ value: a.key, label: a.name }))}
-            chosen={view.axis}
+            options={tiers.map((a) => ({ value: a.key, label: a.name }))}
+            chosen={axis.key}
             onChoose={(key) => onChange({ ...view, axis: key })}
           />
         )}
       </div>
-      <Toolbar items={items} facets={facets} view={view} onChange={onChange} />
+      <Toolbar items={items} facets={facets} searched={searched} view={view} onChange={onChange} />
       <p className={styles.count}>
         {filtered.length === items.length
           ? `${items.length}`
           : `${filtered.length} of ${items.length}`}
       </p>
-      {view.mode === 'tiers' && axis && <TierBoard items={filtered} axis={axis} />}
-      {view.mode === 'list' && (
+      {mode === 'tiers' && axis && <TierBoard items={filtered} axis={axis} />}
+      {mode === 'list' && (
         <ItemTable
-          items={sortItems(filtered, view.sort, columns)}
+          items={sortItems(filtered, view.sort, sorts)}
           axes={axes}
           columns={columns}
           sort={view.sort}
@@ -121,31 +153,26 @@ const Browser = ({
 }
 
 export const KindBrowser = ({ items, kind }: { items: ListedItem[]; kind: string }) => {
-  const axes = useKindAxes(kind)
-  const facets = useFacets(items, kind, axes)
-  const defaultMode = defaultModeFor(items, axes)
-  const view = parseView(useSearchParams(), axes, facets, defaultMode)
+  const setup = useSetup(items, kind)
+  const view = parseView(useSearchParams(), setup.tiers, setup.facets, setup.defaultMode)
   const change = (next: View) =>
     window.history.replaceState(
       null,
       '',
-      `${window.location.pathname}${searchFor(next, axes, defaultMode)}`
+      `${window.location.pathname}${searchFor(next, setup.tiers, setup.defaultMode)}`
     )
-  return (
-    <Browser kind={kind} items={items} axes={axes} facets={facets} view={view} onChange={change} />
-  )
+  return <Browser items={items} setup={setup} view={view} onChange={change} />
 }
 
+const NO_PARAMS = new URLSearchParams()
+
 export const DefaultBoard = ({ items, kind }: { items: ListedItem[]; kind: string }) => {
-  const axes = useKindAxes(kind)
-  const facets = useFacets(items, kind, axes)
+  const setup = useSetup(items, kind)
   return (
     <Browser
-      kind={kind}
       items={items}
-      axes={axes}
-      facets={facets}
-      view={parseView(NO_PARAMS, axes, facets, defaultModeFor(items, axes))}
+      setup={setup}
+      view={parseView(NO_PARAMS, setup.tiers, setup.facets, setup.defaultMode)}
       onChange={() => undefined}
     />
   )

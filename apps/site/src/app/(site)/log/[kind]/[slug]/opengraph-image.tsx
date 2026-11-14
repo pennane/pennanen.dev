@@ -26,10 +26,8 @@ export default async function OpenGraphImage({
   params: Promise<{ kind: string; slug: string }>
 }) {
   const { kind, slug } = await params
-  const [item, presentation] = await Promise.all([
-    isPublicKind(kind) ? logPublic.item(kind, slug) : undefined,
-    logPublic.presentation()
-  ])
+  const presentation = await logPublic.presentation()
+  const item = isPublicKind(presentation, kind) ? await logPublic.item(kind, slug) : undefined
   const [regular, medium, bold, logo, fallbackBackground] = await Promise.all([
     font('Inter-Regular.ttf'),
     font('Inter-Medium.ttf'),

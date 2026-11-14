@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import {
+  formatFieldValue,
   formatPartialDate,
   itemPath,
   statusLabel,
@@ -9,16 +10,26 @@ import {
 import type { Axis } from '../../../../lib/log/types'
 import styles from './table.module.css'
 import { tierColour } from './tierColours'
-import { axisKey, divisionIndex, LAST_SEEN, type Column, type Sort } from './view'
+import { axisKey, divisionIndex, type Column, type Sort } from './view'
 
-const yearOf = (date: string | undefined) => date?.slice(0, 4)
+const META_COLUMN_WIDTH = '4.75rem'
 
-const META_COLUMNS = ['status', 'released', LAST_SEEN]
+const shownValue = (column: Column, item: ListedItem) => {
+  const value = column.valueOf(item)
+  if (value === undefined || !column.field) return value
+  if (column.field.type === 'partial-date' && typeof value === 'string') {
+    return value.length > 4 ? formatPartialDate(value.slice(0, 7)) : value
+  }
+  return formatFieldValue(column.field, value)
+}
 
 const ARROWS = { forward: '↓', reverse: '↑' }
 
-const gridFor = (axes: Axis[]) =>
-  ({ '--axis-columns': `repeat(${axes.length}, 2.25rem)` }) as CSSProperties
+const gridFor = (axes: Axis[], metaColumns: Column[]) =>
+  ({
+    '--axis-columns': `repeat(${axes.length}, 2.25rem)`,
+    '--meta-columns': `repeat(${metaColumns.length}, ${META_COLUMN_WIDTH})`
+  }) as CSSProperties
 
 const Heading = ({
   column,
@@ -85,9 +96,12 @@ export const ItemTable = ({
   const rank = columnFor('rank')
   const title = columnFor('title')
   const axisColumns = axes.map((axis) => columnFor(axisKey(axis)))
-  const metaColumns = META_COLUMNS.map(columnFor)
+  const axisKeys = new Set(axes.map(axisKey))
+  const metaColumns = columns.filter(
+    (column) => column !== rank && column !== title && !axisKeys.has(column.key)
+  )
   return (
-    <div className={styles.table} style={gridFor(axes)}>
+    <div className={styles.table} style={gridFor(axes, metaColumns)}>
       <div className={`${styles.row} ${styles.head}`}>
         <Heading column={rank} sort={sort} onSort={onSort} className={styles.rank} />
         <span />
@@ -116,9 +130,11 @@ export const ItemTable = ({
               <AxisCell key={axis.key} axis={axis} item={item} />
             ))}
             <span className={styles.meta}>
-              <span>{statusLabel(item.status)}</span>
-              <span>{yearOf(item.released)}</span>
-              <span>{item.lastSeen && formatPartialDate(item.lastSeen.slice(0, 7))}</span>
+              {metaColumns.map((column) => (
+                <span key={column.key} className={styles.metaValue}>
+                  {column.key === 'status' ? statusLabel(item.status) : shownValue(column, item)}
+                </span>
+              ))}
             </span>
           </li>
         ))}

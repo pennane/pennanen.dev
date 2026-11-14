@@ -35,6 +35,7 @@ export default async function SettingsPage() {
           statuses={kind.statuses.filter((s) => !NEVER_SHOWABLE.includes(s))}
           axes={presentation.axes}
           rankedAxis={kind.rankedAxis}
+          fields={presentation.fields[kind.name] ?? []}
           initial={presentation.kinds[kind.name]}
         />
       ))}

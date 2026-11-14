@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { requiredEnv } from './env'
 import { isTimeSpent } from './present'
+import { DEFAULT_OVERVIEW_COUNT, DEFAULT_VIEWS, FIELD_TYPES, FIELD_USES } from './types'
 
 export const LOG_CACHE_TAG = 'log'
 
@@ -93,9 +94,29 @@ const presentationSchema = z.object({
         .nullish()
         .transform((description) => description ?? ''),
       statusesShown: z.array(z.string()),
-      axes: z.array(z.string())
+      axes: z.array(z.string()),
+      defaultView: z.enum(DEFAULT_VIEWS).catch('auto'),
+      axesWithoutTiers: z.array(z.string()).catch([]),
+      fieldUses: z.record(z.array(z.enum(FIELD_USES))).catch({}),
+      fieldNames: z.record(z.string()).catch({}),
+      overview: z
+        .object({ sort: z.string(), count: z.number() })
+        .catch({ sort: '', count: DEFAULT_OVERVIEW_COUNT })
     })
   ),
+  fields: z
+    .record(
+      z.array(
+        z.object({
+          key: z.string(),
+          name: z.string(),
+          type: z.enum(FIELD_TYPES).catch('url'),
+          take: z.string().optional(),
+          defaultUses: z.array(z.enum(FIELD_USES))
+        })
+      )
+    )
+    .catch({}),
   tagTitles: z.record(z.string())
 })
 

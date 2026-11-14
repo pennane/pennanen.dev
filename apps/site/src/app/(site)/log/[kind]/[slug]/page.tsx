@@ -8,23 +8,22 @@ import { Gap, Stack } from '../../../../../components/Stack'
 import { WrapInBox } from '../../../../../components/WrapInBox'
 import {
   byRank,
-  formatPartialDate,
-  freeFormFields,
+  fieldName,
+  fieldsUsedAs,
+  fieldValueOf,
+  formatFieldValue,
   isPublicKind,
   itemPath,
   kindTitle,
-  lastSeenLabel,
-  lastSeenOf,
-  letterboxdTakeOf,
-  makersOf,
-  numberField,
   pictureOf,
+  shownTake,
   statusLabel,
   textField,
   TIME_SPENT_LABELS,
   titleOf,
   toListed
 } from '../../../../../lib/log/present'
+import type { Presentation } from '../../../../../lib/log/types'
 import { logPublic, type PublicItem } from '../../../../../lib/log/public-api'
 import { baseUrl } from '../../../../sitemap'
 import { Prose } from '../../components/Prose'
@@ -37,7 +36,7 @@ type Params = Promise<{ kind: string; slug: string }>
 
 const findItem = async (params: Params) => {
   const { kind, slug } = await params
-  if (!isPublicKind(kind)) return undefined
+  if (!isPublicKind(await logPublic.presentation(), kind)) return undefined
   return logPublic.item(kind, slug)
 }
 
@@ -71,33 +70,54 @@ const PICTURE_WIDTH = 460
 const PICTURE_HEIGHT = 215
 
 const Facts = ({ item }: { item: PublicItem }) => {
-  const released = textField(item.fields, 'released')
-  const runtime = numberField(item.fields, 'runtime_minutes')
-  const makers = makersOf(item)
-  const lastSeen = lastSeenOf(item)
   const link = textField(item.fields, 'link')
-  const letterboxd = letterboxdTakeOf(item)
   return (
     <MetaLine>
       <span>{statusLabel(item.status)}</span>
       <ScoreParts kind={item.kind} scores={item.scores} />
-      {makers.length > 0 && <span>{makers.join(', ')}</span>}
-      {released && <span>{formatPartialDate(released)}</span>}
-      {runtime !== undefined && <span>{runtime} min</span>}
       {item.timeSpent && <span>{TIME_SPENT_LABELS[item.timeSpent]}</span>}
-      {lastSeen && (
-        <span>
-          {lastSeenLabel(item.kind)} {formatPartialDate(lastSeen)}
-        </span>
-      )}
-      {(letterboxd.stars || letterboxd.liked) && (
-        <span>
-          letterboxd {letterboxd.stars}
-          {letterboxd.liked && ' ♥'}
-        </span>
-      )}
       {link && <MetaLink href={link} icon={Link2} />}
     </MetaLine>
+  )
+}
+
+const pageFieldsOf = (item: PublicItem, presentation: Presentation) =>
+  fieldsUsedAs(presentation, item.kind, 'page').flatMap((field) => {
+    const value = fieldValueOf(item, field)
+    return value === undefined
+      ? []
+      : [
+          {
+            key: field.key,
+            name: fieldName(presentation.kinds[item.kind], field),
+            value: formatFieldValue(field, value)
+          }
+        ]
+  })
+
+const PARAGRAPH_BREAK = /\n\s*\n/
+
+const OutsideTakes = ({ item }: { item: PublicItem }) => {
+  const takes = item.takes.map(shownTake).filter((take) => take.marks.length > 0 || take.text)
+  if (takes.length === 0) return null
+  return (
+    <>
+      {takes.map((take) => (
+        <section key={take.source} className={styles.take}>
+          <Stack gap={Gap.medium} alignItems="stretch">
+            <header>
+              <WrapInBox>
+                <h3>{take.source}</h3>
+              </WrapInBox>
+            </header>
+            {take.marks.length > 0 && <p className={styles.takeMarks}>{take.marks.join(' ')}</p>}
+            {take.text?.split(PARAGRAPH_BREAK).map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
+          </Stack>
+        </section>
+      ))}
+    </>
   )
 }
 
@@ -117,7 +137,9 @@ const Visions = ({ prose }: { prose: string }) => (
 type Neighbour = { title: string; href: string }
 
 const neighboursOf = async (item: PublicItem) => {
-  const ordered = (await logPublic.items(item.kind)).map(toListed).toSorted(byRank)
+  const ordered = (await logPublic.items(item.kind))
+    .map((listed) => toListed(listed, []))
+    .toSorted(byRank)
   const at = ordered.findIndex((listed) => listed.slug === item.slug)
   const linkTo = (index: number): Neighbour | undefined => {
     const listed = at >= 0 ? ordered[index] : undefined
@@ -153,13 +175,13 @@ const Neighbours = ({
 
 export default async function ItemPage({ params }: { params: Params }) {
   const item = await findItem(params)
-  if (!item || !isPublicKind(item.kind)) notFound()
+  if (!item) notFound()
   const picture = pictureOf(item)
-  const extras = freeFormFields(item.fields)
   const [neighbours, presentation] = await Promise.all([
     neighboursOf(item),
     logPublic.presentation()
   ])
+  const extras = pageFieldsOf(item, presentation)
 
   return (
     <article>
@@ -193,14 +215,15 @@ export default async function ItemPage({ params }: { params: Params }) {
       <Tags tags={item.tags} />
       {extras.length > 0 && (
         <dl className={styles.fields}>
-          {extras.map(({ name, value }) => (
-            <div key={name}>
+          {extras.map(({ key, name, value }) => (
+            <div key={key}>
               <dt>{name}</dt>
               <dd>{value}</dd>
             </div>
           ))}
         </dl>
       )}
+      <OutsideTakes item={item} />
       {item.prose.trim() && <Visions prose={item.prose} />}
       <Neighbours {...neighbours} place="bottom" />
     </article>
