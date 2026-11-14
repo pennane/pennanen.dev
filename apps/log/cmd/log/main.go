@@ -20,6 +20,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/jobs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/letterboxd"
 	"github.com/pennane/pennanen.dev/apps/log/internal/revalidate"
+	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
@@ -110,6 +111,15 @@ func run() error {
 		}
 	} else {
 		slog.Warn("TMDB_READ_TOKEN missing; tmdb matching disabled")
+	}
+
+	if id, secret := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET"); id != "" && secret != "" {
+		server.Spotify = spotify.NewClient(id, secret, st)
+		if err := addSync(spotify.SyncName, spotify.NewSyncer(st, server.Spotify).Work); err != nil {
+			return err
+		}
+	} else {
+		slog.Warn("SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET missing; spotify sync disabled")
 	}
 
 	if target, configured := r2FromEnv(); configured {

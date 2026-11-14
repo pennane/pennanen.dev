@@ -54,6 +54,9 @@ Admin routes need `Authorization: Bearer $LOG_ADMIN_TOKEN`.
 | `PUT /admin/items/{id}/igdb/none` | IGDB has no match; never asked again |
 | `GET`/`POST /admin/sync/igdb` | match Steam games by app id: status / start |
 | `GET`/`POST /admin/sync/steam` | sync status / start |
+| `GET /admin/spotify` | `{connection}`: `not-configured`, `not-connected` or `connected` |
+| `GET /admin/spotify/authorize?redirect_uri=&state=` | `{url}` to send the browser to on Spotify |
+| `POST /admin/spotify/connect` | `{code, redirectUri}`; 204 once connected, 400 with Spotify's text when it refuses the code |
 | `POST /admin/backup` | back up now |
 | `POST /admin/images/ticket` | `{ticket, path}`: lets a browser upload images for 10 minutes |
 | `POST /images` | `Authorization: Ticket <ticket>`, the image as the body (jpg, png, webp or gif, at most 10 MB); `{name}`, named by its content |

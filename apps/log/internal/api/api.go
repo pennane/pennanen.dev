@@ -15,6 +15,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/letterboxd"
+	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/tmdb"
@@ -27,6 +28,7 @@ type Server struct {
 	IGDB       *igdb.Client
 	TMDB       *tmdb.Client
 	Letterboxd *letterboxd.Syncer
+	Spotify    *spotify.Client
 	Backup     func(ctx context.Context) (string, error)
 	Images     *images.Store
 	Changed    func()
@@ -77,6 +79,9 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("GET /admin/sync/{name}", s.syncReport)
 	admin.HandleFunc("POST /admin/sync/{name}", s.startSync)
 	admin.HandleFunc("POST /admin/letterboxd/export", s.importLetterboxdExport)
+	admin.HandleFunc("GET /admin/spotify", s.spotifyConnection)
+	admin.HandleFunc("GET /admin/spotify/authorize", s.spotifyAuthorize)
+	admin.HandleFunc("POST /admin/spotify/connect", s.spotifyConnect)
 	admin.HandleFunc("POST /admin/backup", s.backupNow)
 	admin.HandleFunc("POST /admin/images/ticket", s.uploadTicket)
 	mux.Handle("/admin/", s.requireAdmin(admin))
