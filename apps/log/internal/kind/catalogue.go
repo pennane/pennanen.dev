@@ -1,5 +1,7 @@
 package kind
 
+import "slices"
+
 type FieldUse string
 
 const (
@@ -43,6 +45,7 @@ func (k Kind) PublicFields() []PublicField {
 			}
 			field := publicField(t.Source+takeFieldSeparator+f.Name, f)
 			field.Take = t.Source
+			field.DefaultUses = slices.DeleteFunc(field.DefaultUses, func(use FieldUse) bool { return use == PageUse })
 			fields = append(fields, field)
 		}
 	}
