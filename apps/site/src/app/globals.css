@@ -24,6 +24,7 @@
   --accent-2: light-dark(var(--accent-light-secondary), var(--accent-dark-secondary));
   --heading-gradient: linear-gradient(to right, var(--foreground), var(--foreground-secondary));
   --gradient: linear-gradient(to right, var(--accent), var(--accent-2));
+  --glyph-overhang: 0.25em;
   --link-color: var(--accent);
   --line-color: light-dark(var(--line-color-light), var(--line-color-dark));
 }
@@ -114,8 +115,8 @@ h6 {
   color: transparent;
   background: var(--heading-gradient);
   background-clip: text;
-  padding-bottom: 0.25rem;
-  margin-bottom: -0.25rem;
+  padding-block: var(--glyph-overhang);
+  margin-block: calc(-1 * var(--glyph-overhang));
   line-height: 1;
 }
 

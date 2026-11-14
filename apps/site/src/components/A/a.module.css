@@ -2,8 +2,8 @@
   color: transparent;
   background: var(--gradient);
   background-clip: text;
-  padding: 0 0.05rem;
-  margin: 0 -0.05rem;
+  padding: var(--glyph-overhang) 0.05rem;
+  margin: calc(-1 * var(--glyph-overhang)) -0.05rem;
 }
 
 .link:hover {
