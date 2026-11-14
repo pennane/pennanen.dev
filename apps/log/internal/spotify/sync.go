@@ -75,7 +75,9 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 	if err != nil {
 		return err
 	}
-	snap.saves(ctx, saved)
+	if err := s.saves(ctx, snap, saved); err != nil {
+		return err
+	}
 	if err := s.unsaves(ctx, snap, stillSaved); err != nil {
 		return err
 	}
@@ -83,11 +85,25 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 	return ctx.Err()
 }
 
+func (n snapshot) listAlreadyRecorded(ctx context.Context, signal string, timeRange TimeRange) bool {
+	prefix := fmt.Sprintf("%s:%s:%s:", signal, timeRange, n.day)
+	recorded, err := n.recorder.Store.HasObservationKeyWithPrefix(ctx, ObservationSource, prefix)
+	if err != nil {
+		n.p.Problem("%s %s: %v", signal, timeRange, err)
+		return true
+	}
+	return recorded
+}
+
 func (n snapshot) topArtists(ctx context.Context, timeRange TimeRange, artists []json.RawMessage) {
+	skip := n.listAlreadyRecorded(ctx, SignalTopArtist, timeRange)
 	for i, raw := range artists {
 		itemID, err := n.recorder.KnowArtist(ctx, n.p, raw, Full)
 		if err != nil {
 			n.p.Problem("top artist: %v", err)
+			continue
+		}
+		if skip {
 			continue
 		}
 		var ref reference
@@ -104,6 +120,7 @@ func (n snapshot) topArtists(ctx context.Context, timeRange TimeRange, artists [
 }
 
 func (n snapshot) topTracks(ctx context.Context, timeRange TimeRange, tracks []json.RawMessage) {
+	skip := n.listAlreadyRecorded(ctx, SignalTopTrack, timeRange)
 	for i, raw := range tracks {
 		var t track
 		if err := json.Unmarshal(raw, &t); err != nil {
@@ -113,6 +130,9 @@ func (n snapshot) topTracks(ctx context.Context, timeRange TimeRange, tracks []j
 		itemID, err := n.recorder.KnowAlbum(ctx, n.p, t.Album, Simplified)
 		if err != nil {
 			n.p.Problem("top track %s: %v", t.Name, err)
+			continue
+		}
+		if skip {
 			continue
 		}
 		key := fmt.Sprintf("%s:%s:%s:%s", SignalTopTrack, timeRange, n.day, t.ID)
@@ -143,7 +163,20 @@ func (n snapshot) plays(ctx context.Context, plays []Play) {
 	}
 }
 
-func (n snapshot) saves(ctx context.Context, saved []SavedAlbum) {
+func (s *Syncer) saves(ctx context.Context, n snapshot, saved []SavedAlbum) error {
+	unsavedItems, err := s.Store.ItemsLastObservedAs(ctx, ObservationSource, []string{SignalSaved, SignalUnsaved}, SignalUnsaved)
+	if err != nil {
+		return err
+	}
+	wasUnsaved := map[int64]struct{}{}
+	for _, itemID := range unsavedItems {
+		wasUnsaved[itemID] = struct{}{}
+	}
+	n.recordSaves(ctx, saved, wasUnsaved)
+	return nil
+}
+
+func (n snapshot) recordSaves(ctx context.Context, saved []SavedAlbum, wasUnsaved map[int64]struct{}) {
 	for _, save := range saved {
 		itemID, err := n.recorder.KnowAlbum(ctx, n.p, save.Album, Full)
 		if err != nil {
@@ -158,6 +191,12 @@ func (n snapshot) saves(ctx context.Context, saved []SavedAlbum) {
 		key := fmt.Sprintf("%s:%s:%s", SignalSaved, ref.ID, save.AddedAt)
 		if err := n.recorder.Observe(ctx, n.p, itemID, SignalSaved, key, save.AddedAt, CountSaves, map[string]any{"addedAt": save.AddedAt}); err != nil {
 			n.p.Problem("saved %s: %v", ref.Name, err)
+		}
+		if _, unsaved := wasUnsaved[itemID]; unsaved {
+			resavedKey := fmt.Sprintf("%s:%s:%s:%s", SignalSaved, ref.ID, save.AddedAt, n.day)
+			if err := n.recorder.Observe(ctx, n.p, itemID, SignalSaved, resavedKey, n.start, CountSaves, map[string]any{"addedAt": save.AddedAt}); err != nil {
+				n.p.Problem("saved again %s: %v", ref.Name, err)
+			}
 		}
 	}
 }

@@ -3,6 +3,7 @@ package spotify
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +30,7 @@ const (
 	artistsPerCall = 50
 	albumsPerCall  = 20
 	maxAttempts    = 5
+	maxRetryWait   = 60 * time.Second
 )
 
 type Client struct {
@@ -68,6 +70,12 @@ func NewClient(clientID, clientSecret string, secrets Secrets) *Client {
 type page struct {
 	Items []json.RawMessage `json:"items"`
 	Next  *string           `json:"next"`
+	Total *int              `json:"total"`
+}
+
+type listing struct {
+	items []json.RawMessage
+	total *int
 }
 
 func (c *Client) TopArtists(ctx context.Context, timeRange TimeRange) ([]json.RawMessage, error) {
@@ -88,12 +96,13 @@ func (c *Client) topItems(ctx context.Context, what string, timeRange TimeRange)
 }
 
 func (c *Client) SavedAlbums(ctx context.Context) ([]SavedAlbum, error) {
-	items, err := c.pages(ctx, c.APIURL+"/me/albums?limit="+strconv.Itoa(pageSize))
+	listed, err := c.pageListing(ctx, c.APIURL+"/me/albums?limit="+strconv.Itoa(pageSize))
 	if err != nil {
 		return nil, fmt.Errorf("saved albums: %w", err)
 	}
-	saved := make([]SavedAlbum, 0, len(items))
-	for _, raw := range items {
+	saved := make([]SavedAlbum, 0, len(listed.items))
+	distinct := map[string]struct{}{}
+	for _, raw := range listed.items {
 		var item struct {
 			AddedAt string          `json:"added_at"`
 			Album   json.RawMessage `json:"album"`
@@ -101,7 +110,20 @@ func (c *Client) SavedAlbums(ctx context.Context) ([]SavedAlbum, error) {
 		if err := json.Unmarshal(raw, &item); err != nil {
 			return nil, fmt.Errorf("saved albums: %w", err)
 		}
+		var album struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(item.Album, &album); err != nil {
+			return nil, fmt.Errorf("saved albums: %w", err)
+		}
+		distinct[album.ID] = struct{}{}
 		saved = append(saved, SavedAlbum{AddedAt: item.AddedAt, Album: item.Album})
+	}
+	if listed.total == nil {
+		return nil, errors.New("saved albums: spotify reported no total")
+	}
+	if len(distinct) != *listed.total {
+		return nil, fmt.Errorf("saved albums: read %d distinct albums but spotify reports %d", len(distinct), *listed.total)
 	}
 	return saved, nil
 }
@@ -154,16 +176,25 @@ func (c *Client) batches(ctx context.Context, what string, ids []string, perCall
 }
 
 func (c *Client) pages(ctx context.Context, first string) ([]json.RawMessage, error) {
+	listed, err := c.pageListing(ctx, first)
+	return listed.items, err
+}
+
+func (c *Client) pageListing(ctx context.Context, first string) (listing, error) {
 	items := []json.RawMessage{}
+	var total *int
 	next := first
 	for next != "" {
 		body, err := c.get(ctx, next)
 		if err != nil {
-			return nil, err
+			return listing{}, err
 		}
 		var p page
 		if err := json.Unmarshal(body, &p); err != nil {
-			return nil, err
+			return listing{}, err
+		}
+		if next == first {
+			total = p.Total
 		}
 		items = append(items, p.Items...)
 		next = ""
@@ -171,10 +202,11 @@ func (c *Client) pages(ctx context.Context, first string) ([]json.RawMessage, er
 			next = *p.Next
 		}
 	}
-	return items, nil
+	return listing{items: items, total: total}, nil
 }
 
 func (c *Client) get(ctx context.Context, address string) ([]byte, error) {
+	reauthorisations := 0
 	for attempt := 1; ; attempt++ {
 		token, err := c.accessToken(ctx)
 		if err != nil {
@@ -195,8 +227,17 @@ func (c *Client) get(ctx context.Context, address string) ([]byte, error) {
 			return nil, err
 		}
 		switch {
+		case res.StatusCode == http.StatusUnauthorized && reauthorisations == 0:
+			reauthorisations++
+			c.forgetAccess()
+		case res.StatusCode == http.StatusUnauthorized:
+			return nil, ErrNotConnected
 		case res.StatusCode == http.StatusTooManyRequests && attempt < maxAttempts:
-			if err := sleep(ctx, retryAfter(res)); err != nil {
+			wait := retryAfter(res)
+			if wait > maxRetryWait {
+				return nil, fmt.Errorf("spotify asks to wait %s, longer than the %s allowed", wait, maxRetryWait)
+			}
+			if err := sleep(ctx, wait); err != nil {
 				return nil, err
 			}
 		case res.StatusCode != http.StatusOK:
@@ -216,8 +257,10 @@ func retryAfter(res *http.Response) time.Duration {
 }
 
 func sleep(ctx context.Context, d time.Duration) error {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
 	select {
-	case <-time.After(d):
+	case <-timer.C:
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()

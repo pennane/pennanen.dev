@@ -141,9 +141,14 @@ func TestNoOrRevokedTokenIsNotConnected(t *testing.T) {
 	if _, err := none.TopArtists(context.Background(), spotify.ShortTerm); !errors.Is(err, spotify.ErrNotConnected) {
 		t.Fatalf("no secret err = %v", err)
 	}
-	revoked := clientAgainst(server, newSecrets(map[string]string{spotify.RefreshTokenSecret: "gone"}))
+	secrets := newSecrets(map[string]string{spotify.RefreshTokenSecret: "gone"})
+	revoked := clientAgainst(server, secrets)
 	if _, err := revoked.TopArtists(context.Background(), spotify.ShortTerm); !errors.Is(err, spotify.ErrNotConnected) {
 		t.Fatalf("revoked err = %v", err)
+	}
+	connection, err := revoked.Connection(context.Background())
+	if err != nil || connection != spotify.NotConnected {
+		t.Fatalf("connection after a revoke = %q, %v", connection, err)
 	}
 }
 
@@ -231,6 +236,13 @@ func TestAlbumsAreFetchedTwentyAtATime(t *testing.T) {
 	}
 }
 
+func (m *memorySecrets) DeleteSecret(ctx context.Context, name string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.values, name)
+	return nil
+}
+
 type failingPuts struct{ *memorySecrets }
 
 func (failingPuts) PutSecret(ctx context.Context, name, value string) error {
@@ -287,5 +299,82 @@ func TestBatchesBeforeAFailingOneAreKept(t *testing.T) {
 	albums, err := c.Albums(context.Background(), ids)
 	if err == nil || len(albums) != 20 {
 		t.Fatalf("albums = %d, err = %v", len(albums), err)
+	}
+}
+
+func TestAWaitLongerThanTheCapIsAnErrorNamingIt(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/token") {
+			tokenResponse(w, "")
+			return
+		}
+		w.Header().Set("Retry-After", "3600")
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+	c := clientAgainst(server, newSecrets(map[string]string{spotify.RefreshTokenSecret: "r1"}))
+	_, err := c.TopArtists(context.Background(), spotify.LongTerm)
+	if err == nil || !strings.Contains(err.Error(), "1h0m0s") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestAConnectThatCannotStoreTheTokenDoesNotCacheIt(t *testing.T) {
+	apiCalls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/token") {
+			tokenResponse(w, `,"refresh_token":"r1"`)
+			return
+		}
+		apiCalls++
+		fmt.Fprint(w, `{"items":[],"next":null}`)
+	}))
+	defer server.Close()
+	c := clientAgainst(server, failingPuts{newSecrets(nil)})
+	if err := c.Connect(context.Background(), "code", "https://x.test/callback"); err == nil {
+		t.Fatal("expected an error")
+	}
+	if _, err := c.TopArtists(context.Background(), spotify.ShortTerm); !errors.Is(err, spotify.ErrNotConnected) {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestARefusedCodeIsTypedAndOtherFailuresAreNot(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, `{"error":"invalid_grant"}`)
+	}))
+	defer server.Close()
+	c := clientAgainst(server, newSecrets(nil))
+	if err := c.Connect(context.Background(), "bad", "https://x.test/callback"); !errors.Is(err, spotify.ErrCodeRefused) {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestAnUnauthorizedAccessTokenIsRefreshedOnceThenNotConnected(t *testing.T) {
+	tokenCalls, apiCalls := 0, 0
+	rejectAll := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/token") {
+			tokenCalls++
+			tokenResponse(w, "")
+			return
+		}
+		apiCalls++
+		if rejectAll || apiCalls == 1 {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		fmt.Fprint(w, `{"items":[{"id":"a"}],"next":null}`)
+	}))
+	defer server.Close()
+	c := clientAgainst(server, newSecrets(map[string]string{spotify.RefreshTokenSecret: "r1"}))
+	artists, err := c.TopArtists(context.Background(), spotify.ShortTerm)
+	if err != nil || len(artists) != 1 || tokenCalls != 2 {
+		t.Fatalf("artists = %d, token calls = %d, err = %v", len(artists), tokenCalls, err)
+	}
+	rejectAll = true
+	if _, err := c.TopArtists(context.Background(), spotify.ShortTerm); !errors.Is(err, spotify.ErrNotConnected) {
+		t.Fatalf("err = %v", err)
 	}
 }

@@ -154,12 +154,7 @@ func stillSimplified(met map[string]*metItem) []string {
 }
 
 func (r *Recorder) refresh(ctx context.Context, p *syncs.Progress, met map[string]*metItem, source string, fetch func(context.Context, []string) ([]json.RawMessage, error)) {
-	missing := []string{}
-	for id, seen := range met {
-		if seen.detail == Simplified {
-			missing = append(missing, id)
-		}
-	}
+	missing := stillSimplified(met)
 	if len(missing) > 0 {
 		fetched, err := fetch(ctx, missing)
 		if err != nil {

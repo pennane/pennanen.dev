@@ -23,3 +23,8 @@ func (s *Store) PutSecret(ctx context.Context, name, value string) error {
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')`, name, value)
 	return err
 }
+
+func (s *Store) DeleteSecret(ctx context.Context, name string) error {
+	_, err := s.db.ExecContext(ctx, `DELETE FROM secret WHERE name = ?`, name)
+	return err
+}

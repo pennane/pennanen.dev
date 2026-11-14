@@ -20,6 +20,8 @@ const scopes = "user-top-read user-library-read user-read-recently-played"
 
 const tokenExpiryMargin = 30 * time.Second
 
+var ErrCodeRefused = errors.New("spotify refused the authorization code")
+
 var ErrNotConnected = errors.New("spotify is not connected; connect it in admin settings")
 
 type Connection string
@@ -32,6 +34,7 @@ const (
 type Secrets interface {
 	Secret(ctx context.Context, name string) (string, error)
 	PutSecret(ctx context.Context, name, value string) error
+	DeleteSecret(ctx context.Context, name string) error
 }
 
 type tokenResponse struct {
@@ -66,8 +69,11 @@ func (c *Client) Connect(ctx context.Context, code, redirectURI string) error {
 	if token.RefreshToken == "" {
 		return errors.New("spotify returned no refresh token")
 	}
+	if err := c.secrets.PutSecret(ctx, RefreshTokenSecret, token.RefreshToken); err != nil {
+		return err
+	}
 	c.remember(token)
-	return c.secrets.PutSecret(ctx, RefreshTokenSecret, token.RefreshToken)
+	return nil
 }
 
 func (c *Client) Connection(ctx context.Context) (Connection, error) {
@@ -98,6 +104,12 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 		"grant_type":    {"refresh_token"},
 		"refresh_token": {refresh},
 	})
+	if errors.Is(err, ErrNotConnected) {
+		if err := c.secrets.DeleteSecret(ctx, RefreshTokenSecret); err != nil {
+			return "", err
+		}
+		return "", ErrNotConnected
+	}
 	if err != nil {
 		return "", err
 	}
@@ -109,6 +121,12 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	c.access = token.AccessToken
 	c.accessExpires = time.Now().Add(time.Duration(token.ExpiresIn)*time.Second - tokenExpiryMargin)
 	return c.access, nil
+}
+
+func (c *Client) forgetAccess() {
+	c.tokenMu.Lock()
+	defer c.tokenMu.Unlock()
+	c.access = ""
 }
 
 func (c *Client) remember(token tokenResponse) {
@@ -139,7 +157,11 @@ func (c *Client) requestToken(ctx context.Context, form url.Values) (tokenRespon
 		if json.Unmarshal(body, &failure) == nil && failure.Error == "invalid_grant" && form.Get("grant_type") == "refresh_token" {
 			return tokenResponse{}, ErrNotConnected
 		}
-		return tokenResponse{}, fmt.Errorf("spotify token: %s: %s", res.Status, strings.TrimSpace(string(body)))
+		detail := fmt.Errorf("spotify token: %s: %s", res.Status, strings.TrimSpace(string(body)))
+		if form.Get("grant_type") == "authorization_code" && res.StatusCode >= 400 && res.StatusCode < 500 {
+			return tokenResponse{}, fmt.Errorf("%w: %w", ErrCodeRefused, detail)
+		}
+		return tokenResponse{}, detail
 	}
 	var token tokenResponse
 	if err := json.Unmarshal(body, &token); err != nil {

@@ -1,8 +1,11 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
 )
 
 type spotifyConnection string
@@ -61,7 +64,11 @@ func (s *Server) spotifyConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.Spotify.Connect(r.Context(), request.Code, request.RedirectURI); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		status := http.StatusInternalServerError
+		if errors.Is(err, spotify.ErrCodeRefused) {
+			status = http.StatusBadRequest
+		}
+		writeError(w, status, err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -22,6 +23,7 @@ type fakeSpotify struct {
 	topArtists map[string]string
 	saved      string
 	albumsNull bool
+	savedTotal *int
 }
 
 func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +41,13 @@ func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
 	case "/me/player/recently-played":
 		fmt.Fprint(w, `{"items":[{"played_at":"2026-11-14T20:00:00.000Z","track":{"id":"T","name":"Track","album":{"id":"A","name":"Alpha","artists":[{"id":"X","name":"Xena"}]},"artists":[{"id":"X","name":"Xena"}]}}],"next":null}`)
 	case "/me/albums":
-		fmt.Fprintf(w, `{"items":%s,"next":null}`, f.saved)
+		var listed []json.RawMessage
+		json.Unmarshal([]byte(f.saved), &listed)
+		total := len(listed)
+		if f.savedTotal != nil {
+			total = *f.savedTotal
+		}
+		fmt.Fprintf(w, `{"items":%s,"next":null,"total":%d}`, f.saved, total)
 	case "/albums":
 		if f.albumsNull {
 			fmt.Fprint(w, `{"albums":[null]}`)
@@ -285,5 +293,66 @@ func TestAnAlbumTheBatchNeverReturnedIsAProblemNamingIt(t *testing.T) {
 	claim, err := h.store.Claim(context.Background(), b, kind.SourceSpotifyAlbum)
 	if err != nil || !strings.Contains(string(claim.Data), `"label":"Lb"`) {
 		t.Fatalf("claim = %s, %v", claim.Data, err)
+	}
+}
+
+func TestAnAlbumSavedAgainAfterAnUnsaveIsSavedAgain(t *testing.T) {
+	ctx := context.Background()
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	b := h.item(t, kind.SourceSpotifyAlbum, "B")
+
+	fake.saved = `[]`
+	h.day = "2026-11-16"
+	h.run(t)
+	fake.saved = savedAlbum
+	h.day = "2026-11-17"
+	h.run(t)
+
+	latestSaved, err := h.store.ItemsLastObservedAs(ctx, spotify.ObservationSource, []string{"saved", "unsaved"}, "saved")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(latestSaved, b) {
+		t.Fatalf("saved = %v, want it to include %d", latestSaved, b)
+	}
+	if got := h.observations(t, b, "saved"); len(got) != 2 || got[1].Key != "saved:B:2026-11-10T09:00:00Z:2026-11-17" {
+		t.Fatalf("saved = %+v", got)
+	}
+}
+
+func TestASavedTotalThatDoesNotMatchFailsTheRunBeforeAnyUnsave(t *testing.T) {
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	b := h.item(t, kind.SourceSpotifyAlbum, "B")
+
+	missing := 1
+	fake.saved = `[]`
+	fake.savedTotal = &missing
+	h.day = "2026-11-16"
+	report := h.run(t)
+	if report.State != syncs.Failed {
+		t.Fatalf("report = %+v", report)
+	}
+	if got := h.observations(t, b, "unsaved"); len(got) != 0 {
+		t.Fatalf("unsaved = %+v", got)
+	}
+}
+
+func TestRunningAgainTheSameDayWithAnotherOrderRecordsNoSecondSnapshot(t *testing.T) {
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	x := h.item(t, kind.SourceSpotifyArtist, "X")
+	y := h.item(t, kind.SourceSpotifyArtist, "Y")
+	before := len(h.observations(t, x, "top-artist")) + len(h.observations(t, y, "top-artist"))
+
+	fake.topArtists["long_term"] = "[" + fullY + "," + fullX + "]"
+	report := h.run(t)
+	after := len(h.observations(t, x, "top-artist")) + len(h.observations(t, y, "top-artist"))
+	if before != after || report.Counts[spotify.CountSnapshots] != 0 {
+		t.Fatalf("before = %d, after = %d, counts = %v", before, after, report.Counts)
 	}
 }

@@ -24,3 +24,17 @@ func TestSecretIsMissingUntilPutThenReplaced(t *testing.T) {
 		}
 	}
 }
+
+func TestDeletedSecretIsMissing(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	if err := s.PutSecret(ctx, "k", "v"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DeleteSecret(ctx, "k"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Secret(ctx, "k"); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("err = %v", err)
+	}
+}
