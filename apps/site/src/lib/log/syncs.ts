@@ -2,6 +2,7 @@ import type { SyncReport } from './types'
 
 export const STEAM_SYNC = 'steam'
 export const IGDB_MATCH = 'igdb-match'
+export const LETTERBOXD_EXPORT_FIELD = 'export'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const OVERDUE_AFTER_MS = 2 * DAY_MS

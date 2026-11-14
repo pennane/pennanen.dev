@@ -3,6 +3,7 @@ import { logAdmin } from '../../../lib/log/admin-api'
 import { QueueHeader } from '../_queue/card'
 import styles from '../_queue/queue.module.css'
 import { AxesForm, KindSettingsForm, TagTitlesForm } from './Settings'
+import { SourcesForm } from './Sources'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,11 @@ const NEVER_SHOWABLE = ['untriaged', 'dismissed']
 
 export default async function SettingsPage() {
   await requireAdmin()
-  const [kinds, presentation] = await Promise.all([logAdmin.kinds(), logAdmin.settings()])
+  const [kinds, presentation, syncReports] = await Promise.all([
+    logAdmin.kinds(),
+    logAdmin.settings(),
+    logAdmin.syncReports()
+  ])
   const entriesByKind = await Promise.all(kinds.map((k) => logAdmin.entries(k.name)))
   const tagsInUse = [
     ...new Set([
@@ -34,6 +39,7 @@ export default async function SettingsPage() {
         />
       ))}
       <TagTitlesForm tags={tagsInUse} initial={presentation.tagTitles} />
+      <SourcesForm reports={syncReports} />
     </div>
   )
 }

@@ -93,5 +93,11 @@ export const logAdmin = {
     call<void>('/admin/entries/change', send('POST', { itemIds, change })),
   syncReports: () => call<SyncReport[]>('/admin/sync'),
   syncReport: (name: string) => call<SyncReport>(`/admin/sync/${name}`),
-  startSync: (name: string) => call<SyncReport>(`/admin/sync/${name}`, { method: 'POST' })
+  startSync: (name: string) => call<SyncReport>(`/admin/sync/${name}`, { method: 'POST' }),
+  importLetterboxdExport: (archive: ArrayBuffer) =>
+    call<SyncReport>('/admin/letterboxd/export', {
+      method: 'POST',
+      body: archive,
+      headers: { 'Content-Type': 'application/zip' }
+    })
 }

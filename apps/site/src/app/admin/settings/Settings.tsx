@@ -56,7 +56,7 @@ const SaveButton = ({ save, onSave }: { save: Save; onSave: () => void }) => (
   </div>
 )
 
-const Section = ({
+export const Section = ({
   label,
   hint,
   children

@@ -14,6 +14,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/letterboxd"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 )
@@ -23,6 +24,7 @@ type Server struct {
 	AdminToken string
 	Syncs      []*syncs.Sync
 	IGDB       *igdb.Client
+	Letterboxd *letterboxd.Syncer
 	Backup     func(ctx context.Context) (string, error)
 	Images     *images.Store
 	Changed    func()
@@ -67,6 +69,7 @@ func (s *Server) Handler() http.Handler {
 	admin.HandleFunc("GET /admin/sync", s.syncReports)
 	admin.HandleFunc("GET /admin/sync/{name}", s.syncReport)
 	admin.HandleFunc("POST /admin/sync/{name}", s.startSync)
+	admin.HandleFunc("POST /admin/letterboxd/export", s.importLetterboxdExport)
 	admin.HandleFunc("POST /admin/backup", s.backupNow)
 	admin.HandleFunc("POST /admin/images/ticket", s.uploadTicket)
 	mux.Handle("/admin/", s.requireAdmin(admin))

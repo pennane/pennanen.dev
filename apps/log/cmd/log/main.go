@@ -18,10 +18,12 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/jobs"
+	"github.com/pennane/pennanen.dev/apps/log/internal/letterboxd"
 	"github.com/pennane/pennanen.dev/apps/log/internal/revalidate"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
+	"github.com/pennane/pennanen.dev/apps/log/internal/tmdb"
 )
 
 func main() {
@@ -87,6 +89,23 @@ func run() error {
 		}
 	} else {
 		slog.Warn("IGDB_CLIENT_ID or IGDB_CLIENT_SECRET missing; igdb disabled")
+	}
+
+	if username := os.Getenv("LETTERBOXD_USERNAME"); username != "" {
+		server.Letterboxd = letterboxd.NewSyncer(st, letterboxd.NewClient(username))
+		if err := addSync(letterboxd.SyncName, server.Letterboxd.Work); err != nil {
+			return err
+		}
+	} else {
+		slog.Warn("LETTERBOXD_USERNAME missing; letterboxd sync disabled")
+	}
+
+	if token := os.Getenv("TMDB_READ_TOKEN"); token != "" {
+		if err := addSync(tmdb.SyncName, tmdb.NewMatcher(st, tmdb.NewClient(token)).Work); err != nil {
+			return err
+		}
+	} else {
+		slog.Warn("TMDB_READ_TOKEN missing; tmdb matching disabled")
 	}
 
 	if target, configured := r2FromEnv(); configured {

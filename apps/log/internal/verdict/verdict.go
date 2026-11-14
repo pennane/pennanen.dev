@@ -26,6 +26,8 @@ var claimReaders = map[string]readClaim{
 	kind.SourceSteamAchievements: readSteamAchievements,
 	kind.SourceIGDB:              readIGDBGame,
 	kind.SourceLetterboxdTake:    readLetterboxdTake,
+	kind.SourceLetterboxd:        readLetterboxdFilm,
+	kind.SourceTMDB:              readTMDBMovie,
 }
 
 func Decide(k kind.Kind, claims []Claim) Verdicts {

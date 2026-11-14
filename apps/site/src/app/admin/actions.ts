@@ -3,6 +3,7 @@
 import { requireAdmin } from '../../lib/admin/require-admin'
 import { logAdmin } from '../../lib/log/admin-api'
 import { itemPath, textField } from '../../lib/log/present'
+import { LETTERBOXD_EXPORT_FIELD } from '../../lib/log/syncs'
 import type {
   Axis,
   EntryChange,
@@ -120,6 +121,13 @@ export async function syncStatus(name: string) {
 export async function startSync(name: string) {
   await requireAdmin()
   return logAdmin.startSync(name)
+}
+
+export async function importLetterboxdExport(form: FormData) {
+  await requireAdmin()
+  const archive = form.get(LETTERBOXD_EXPORT_FIELD)
+  if (!(archive instanceof File)) throw new Error('no export file was sent')
+  return logAdmin.importLetterboxdExport(await archive.arrayBuffer())
 }
 
 export async function saveAxes(axes: Axis[]) {

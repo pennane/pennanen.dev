@@ -134,6 +134,9 @@ For games, the IGDB ID. Optional: an item with no identity is just ap's.
 **Match** — giving an item its identity. Steam games match by app id on their
 own; the rest wait in the match queue until ap picks a game or answers
 **no match**, which IGDB's claim then records so nobody asks again.
+Films match TMDB: by the id Letterboxd's diary gives, or by searching
+title and year when exactly one film fits; the rest stay unmatched and are
+tried again each night.
 
 **Quick-add** — adding an item by searching IGDB, or by title alone when IGDB
 has nothing.
