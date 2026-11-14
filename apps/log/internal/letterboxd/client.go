@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
@@ -19,7 +20,12 @@ type Client struct {
 	HTTP          *http.Client
 	BaseURL       string
 	ShortLinkBase string
+	PageInterval  time.Duration
+	pages         sync.Mutex
+	lastPage      time.Time
 }
+
+const letterboxdRateLimitsBackToBackPages = 5 * time.Second
 
 func NewClient(username string) *Client {
 	return &Client{
@@ -27,6 +33,7 @@ func NewClient(username string) *Client {
 		HTTP:          &http.Client{Timeout: 30 * time.Second},
 		BaseURL:       "https://letterboxd.com",
 		ShortLinkBase: "https://boxd.it",
+		PageInterval:  letterboxdRateLimitsBackToBackPages,
 	}
 }
 
@@ -96,11 +103,28 @@ func (c *Client) TMDBLinkOf(ctx context.Context, film verdict.LetterboxdFilm) (v
 	if film.Slug != "" {
 		address = c.BaseURL + "/film/" + film.Slug + "/"
 	}
+	if err := c.waitForPageTurn(ctx); err != nil {
+		return verdict.TMDBLink{}, err
+	}
 	page, err := c.getURL(ctx, address)
 	if err != nil {
 		return verdict.TMDBLink{}, fmt.Errorf("film page: %w", err)
 	}
 	return tmdbLinkIn(string(page))
+}
+
+func (c *Client) waitForPageTurn(ctx context.Context) error {
+	c.pages.Lock()
+	defer c.pages.Unlock()
+	if wait := time.Until(c.lastPage.Add(c.PageInterval)); wait > 0 {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(wait):
+		}
+	}
+	c.lastPage = time.Now()
+	return nil
 }
 
 func tmdbLinkIn(page string) (verdict.TMDBLink, error) {

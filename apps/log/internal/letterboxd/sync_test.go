@@ -111,6 +111,7 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	client := letterboxd.NewClient("me")
 	client.BaseURL = fake.URL
 	client.ShortLinkBase = fake.URL + "/boxd"
+	client.PageInterval = 0
 	syncer := letterboxd.NewSyncer(s, client)
 
 	imported, err := syncs.New(ctx, "letterboxd-export", func(ctx context.Context, p *syncs.Progress) error {
