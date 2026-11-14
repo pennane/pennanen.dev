@@ -15,6 +15,15 @@ export type Reading = {
   floors: number[]
 }
 
+export type ReadFrom = 'take' | 'description'
+
+export type Readable = { source: string; field: string; from: ReadFrom }
+
+export const READ_FROM_BY_SORT: Record<Reading['sort'], ReadFrom> = {
+  outside: 'take',
+  crowd: 'description'
+}
+
 export type Axis = { key: string; name: string; divisions: Division[]; reading?: Reading }
 
 export const sortOf = (axis: Axis): AxisSort => axis.reading?.sort ?? 'own'
@@ -68,6 +77,7 @@ export type Presentation = {
   kinds: Record<string, KindSettings>
   fields: Record<string, PublicField[]>
   tagTitles: Record<string, string>
+  readables: Readable[]
 }
 
 export type Kind = {

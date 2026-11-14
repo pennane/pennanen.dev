@@ -117,7 +117,12 @@ const presentationSchema = z.object({
       )
     )
     .catch({}),
-  tagTitles: z.record(z.string())
+  tagTitles: z.record(z.string()),
+  readables: z
+    .array(
+      z.object({ source: z.string(), field: z.string(), from: z.enum(['take', 'description']) })
+    )
+    .catch([])
 })
 
 export const logPublic = {

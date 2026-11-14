@@ -86,6 +86,10 @@ func TestReadingsMustBeWhole(t *testing.T) {
 		"own as a sort":    append(axes, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: tiers(), Reading: playtimeReading(store.OwnAxis)}),
 		"a missing floor": append(axes, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: append(tiers(), store.Division{Key: "z", Name: "Z"}),
 			Reading: playtimeReading(store.CrowdAxis)}),
+		"a source no kind has": append(axes, store.Axis{Key: "stars", Name: "stars", Divisions: tiers(),
+			Reading: &store.Reading{Sort: store.OutsideAxis, Source: "letterboxd", Field: "rating", Floors: []float64{4, 3, 0.5}}}),
+		"a take read as the crowd": append(axes, store.Axis{Key: "stars", Name: "stars", Divisions: tiers(),
+			Reading: &store.Reading{Sort: store.CrowdAxis, Source: kind.SourceLetterboxdTake, Field: "rating", Floors: []float64{4, 3, 0.5}}}),
 	}
 	for name, candidate := range cases {
 		if _, err := s.SetAxes(ctx, candidate); !errors.Is(err, store.ErrInvalid) {
@@ -117,5 +121,33 @@ func TestAnAxisScoredByHandIsNotReadFromASource(t *testing.T) {
 	}
 	if _, err := s.SetAxes(ctx, axes); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("hand scores would vanish: %v", err)
+	}
+}
+
+func TestAnOutsideAxisReadsApsRatingFromTheTake(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	axes, _ := s.Axes(ctx)
+	stars := store.Axis{Key: "stars", Name: "stars", Divisions: tiers(),
+		Reading: &store.Reading{Sort: store.OutsideAxis, Source: kind.SourceLetterboxdTake, Field: "rating", Floors: []float64{4.5, 3, 0.5}}}
+	if _, err := s.SetAxes(ctx, append(axes, stars)); err != nil {
+		t.Fatal(err)
+	}
+	movie, _ := kind.Get("movie")
+	settings, _ := s.KindSettings(ctx, movie)
+	settings.Axes = append(settings.Axes, stars.Key)
+	if _, err := s.SetKindSettings(ctx, movie, settings); err != nil {
+		t.Fatal(err)
+	}
+	id, _ := s.CreateItem(ctx, "movie", "Stalker", nil)
+	if err := s.PutClaim(ctx, id, kind.SourceLetterboxdTake, "stalker", json.RawMessage(`{"rating":3.5}`)); err != nil {
+		t.Fatal(err)
+	}
+	v, err := s.GetItem(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.Entry.ReadScores[stars.Key] != "a" {
+		t.Errorf("3.5 stars read as %v", v.Entry.ReadScores)
 	}
 }

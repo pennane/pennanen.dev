@@ -27,7 +27,7 @@ export default async function SettingsPage() {
   return (
     <div className={styles.queue}>
       <QueueHeader current="settings" />
-      <AxesForm initial={presentation.axes} />
+      <AxesForm initial={presentation.axes} readables={presentation.readables} />
       {kinds.map((kind) => (
         <KindSettingsForm
           key={kind.name}

@@ -33,6 +33,11 @@ const (
 	CrowdAxis   AxisSort = "crowd"
 )
 
+var readFromBySort = map[AxisSort]kind.ReadFrom{
+	OutsideAxis: kind.FromTake,
+	CrowdAxis:   kind.FromDescription,
+}
+
 type Reading struct {
 	Sort   AxisSort  `json:"sort"`
 	Source string    `json:"source"`
@@ -208,6 +213,9 @@ func validReading(axis Axis) error {
 	}
 	if r.Source == "" || r.Source == kind.SourceAP || r.Field == "" {
 		return fmt.Errorf("%w: %s needs a source other than ap and a field to read", ErrInvalid, axis.Key)
+	}
+	if !kind.IsReadable(r.Source, r.Field, readFromBySort[r.Sort]) {
+		return fmt.Errorf("%w: %s reads %s %s, which no kind has as a number for a %s axis", ErrInvalid, axis.Key, r.Source, r.Field, r.Sort)
 	}
 	if len(r.Floors) != len(axis.Divisions) {
 		return fmt.Errorf("%w: %s needs a floor for each division", ErrInvalid, axis.Key)

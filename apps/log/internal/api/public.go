@@ -84,6 +84,7 @@ type Presentation struct {
 	Kinds     map[string]store.KindSettings `json:"kinds"`
 	Fields    map[string][]kind.PublicField `json:"fields"`
 	TagTitles store.TagTitles               `json:"tagTitles"`
+	Readables []kind.Readable               `json:"readables"`
 }
 
 func publicFieldsByKind() map[string][]kind.PublicField {
@@ -104,7 +105,7 @@ func (s *Server) presentation(r *http.Request) (Presentation, error) {
 		return Presentation{}, err
 	}
 	titles, err := s.Store.TagTitles(r.Context())
-	return Presentation{Axes: axes, Kinds: kinds, Fields: publicFieldsByKind(), TagTitles: titles}, err
+	return Presentation{Axes: axes, Kinds: kinds, Fields: publicFieldsByKind(), TagTitles: titles, Readables: kind.Readables()}, err
 }
 
 func (s *Server) publicPresentation(w http.ResponseWriter, r *http.Request) {

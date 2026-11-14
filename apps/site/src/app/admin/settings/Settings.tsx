@@ -11,9 +11,10 @@ import type {
   FieldUse,
   KindSettings,
   PublicField,
+  Readable,
   Reading
 } from '../../../lib/log/types'
-import { DEFAULT_VIEWS, FIELD_USES } from '../../../lib/log/types'
+import { DEFAULT_VIEWS, FIELD_USES, READ_FROM_BY_SORT } from '../../../lib/log/types'
 import { sortOf } from '../../../lib/log/types'
 import { saveAxes, saveKindSettings, saveTagTitles } from '../actions'
 import editor from '../entries/editor.module.css'
@@ -82,7 +83,7 @@ export const Section = ({
   </section>
 )
 
-export const AxesForm = ({ initial }: { initial: Axis[] }) => {
+export const AxesForm = ({ initial, readables }: { initial: Axis[]; readables: Readable[] }) => {
   const router = useRouter()
   const [axes, setAxes] = useState(initial)
   const { save, changed, run } = useSave(saveAxes)
@@ -148,7 +149,11 @@ export const AxesForm = ({ initial }: { initial: Axis[] }) => {
             onChange={(divisions) => changeAxis(index, { divisions })}
           />
           {axis.key !== PRESTIGE && (
-            <ReadingForm axis={axis} onChange={(reading) => changeAxis(index, { reading })} />
+            <ReadingForm
+              axis={axis}
+              readables={readables}
+              onChange={(reading) => changeAxis(index, { reading })}
+            />
           )}
         </Section>
       ))}
@@ -433,30 +438,44 @@ const SORTS: { sort: AxisSort; label: string }[] = [
   { sort: 'crowd', label: "crowd, a site's average" }
 ]
 
+const readableKey = ({ source, field }: { source: string; field: string }) => `${source} ${field}`
+
 const ReadingForm = ({
   axis,
+  readables,
   onChange
 }: {
   axis: Axis
+  readables: Readable[]
   onChange: (reading: Reading | undefined) => void
 }) => {
   const reading = axis.reading
-  const choose = (sort: AxisSort) =>
-    onChange(
-      sort === 'own'
-        ? undefined
-        : {
-            sort,
-            source: reading?.source ?? '',
-            field: reading?.field ?? '',
-            floors: reading?.floors ?? []
-          }
-    )
+  const readableFor = (sort: Reading['sort']) =>
+    readables.filter((readable) => readable.from === READ_FROM_BY_SORT[sort])
+  const choose = (sort: AxisSort) => {
+    if (sort === 'own') return onChange(undefined)
+    const offered = readableFor(sort)
+    const kept = reading && offered.find((r) => readableKey(r) === readableKey(reading))
+    const picked = kept ?? offered[0]
+    onChange({
+      sort,
+      source: picked?.source ?? '',
+      field: picked?.field ?? '',
+      floors: reading?.floors ?? []
+    })
+  }
   const setFloor = (index: number, text: string) => {
     if (!reading) return
     const floors = axis.divisions.map((_, i) => reading.floors[i] ?? 0)
     floors[index] = Number(text)
     onChange({ ...reading, floors })
+  }
+  const offered = reading ? readableFor(reading.sort) : []
+  const current = reading ? readableKey(reading) : ''
+  const known = offered.some((r) => readableKey(r) === current)
+  const pick = (key: string) => {
+    const picked = offered.find((r) => readableKey(r) === key)
+    if (reading && picked) onChange({ ...reading, source: picked.source, field: picked.field })
   }
   return (
     <>
@@ -476,19 +495,26 @@ const ReadingForm = ({
       </div>
       {reading && (
         <>
+          <p className={styles.hint}>reads</p>
           <div className={styles.row}>
-            <input
+            <select
               className={styles.input}
-              value={reading.source}
-              placeholder="source, like letterboxd-take"
-              onChange={(event) => onChange({ ...reading, source: event.target.value })}
-            />
-            <input
-              className={styles.input}
-              value={reading.field}
-              placeholder="field, like rating"
-              onChange={(event) => onChange({ ...reading, field: event.target.value })}
-            />
+              value={current}
+              onChange={(event) => pick(event.target.value)}
+            >
+              {!known && (
+                <option value={current}>
+                  {reading.source
+                    ? `${reading.source} · ${reading.field}, which nothing has`
+                    : 'nothing to read yet'}
+                </option>
+              )}
+              {offered.map((r) => (
+                <option key={readableKey(r)} value={readableKey(r)}>
+                  {r.source} · {r.field}
+                </option>
+              ))}
+            </select>
           </div>
           <p className={styles.hint}>lowest value for each division, best first</p>
           {axis.divisions.map((division, index) => (
