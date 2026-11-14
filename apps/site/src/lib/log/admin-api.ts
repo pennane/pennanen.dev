@@ -17,7 +17,7 @@ import type {
   UploadTicket
 } from './types'
 
-class LogApiError extends Error {
+export class LogApiError extends Error {
   constructor(
     readonly status: number,
     message: string

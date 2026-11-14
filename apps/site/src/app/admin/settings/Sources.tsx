@@ -91,6 +91,12 @@ const LetterboxdExport = () => {
   )
 }
 
+const SPOTIFY_OUTCOME_MESSAGES: Record<string, string> = {
+  connected: 'connected',
+  refused: 'spotify refused the connection; try again',
+  failed: 'connecting failed; try again'
+}
+
 const SPOTIFY_CONNECT_PATH = '/admin/spotify/connect'
 
 const SpotifyConnect = ({
@@ -112,7 +118,9 @@ const SpotifyConnect = ({
         connected · <a href={SPOTIFY_CONNECT_PATH}>reconnect</a>
       </p>
     )}
-    {outcome && <p className={styles.hint}>spotify: {outcome}</p>}
+    {outcome && SPOTIFY_OUTCOME_MESSAGES[outcome] && (
+      <p className={styles.hint}>{SPOTIFY_OUTCOME_MESSAGES[outcome]}</p>
+    )}
   </Section>
 )
 

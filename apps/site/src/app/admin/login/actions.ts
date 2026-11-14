@@ -23,7 +23,7 @@ export async function logIn(_previous: LoginState, form: FormData): Promise<Logi
   ;(await cookies()).set(SESSION_COOKIE, session.value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     path: '/admin',
     expires: session.expiresAt
   })
