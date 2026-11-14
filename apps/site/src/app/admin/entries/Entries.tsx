@@ -287,6 +287,14 @@ export const Entries = ({
             ranked={ranked}
             onChange={(change) => patchEntry(panel.id, change)}
             onPlace={placeEntry}
+            onRematched={(subject) => {
+              setPanel({ state: 'open', id: panel.id, subject })
+              setEntries((all) =>
+                all.map((e) =>
+                  e.id === panel.id ? { ...e, title: subject.title, cover: subject.cover } : e
+                )
+              )
+            }}
           />
         )}
       </aside>

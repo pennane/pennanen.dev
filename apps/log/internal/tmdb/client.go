@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var ErrNoSuchMovie = errors.New("tmdb has no such movie")
+
 type Client struct {
 	ReadToken string
 	HTTP      *http.Client
@@ -83,6 +85,9 @@ func (c *Client) getJSON(ctx context.Context, path string, into any) error {
 	body, err := io.ReadAll(io.LimitReader(res.Body, 8<<20))
 	if err != nil {
 		return err
+	}
+	if res.StatusCode == http.StatusNotFound {
+		return ErrNoSuchMovie
 	}
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("status %d", res.StatusCode)

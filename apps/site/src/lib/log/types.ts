@@ -15,6 +15,8 @@ export type Reading = {
   floors: number[]
 }
 
+export const TMDB_ID = 'tmdb_id'
+
 export type ReadFrom = 'take' | 'description'
 
 export type Readable = { source: string; field: string; from: ReadFrom }

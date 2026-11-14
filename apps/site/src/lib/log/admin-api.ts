@@ -66,6 +66,10 @@ export const logAdmin = {
     call<ItemView>('/admin/items/from-igdb', send('POST', { igdbId })),
   matchIGDB: (itemId: number, igdbId: number) =>
     call<ItemView>(`/admin/items/${itemId}/igdb`, send('PUT', { igdbId })),
+  matchTMDB: (itemId: number, tmdbId: number) =>
+    call<ItemView>(`/admin/items/${itemId}/tmdb`, send('PUT', { tmdbId })),
+  matchTMDBNone: (itemId: number) =>
+    call<ItemView>(`/admin/items/${itemId}/tmdb/none`, { method: 'PUT' }),
   matchIGDBNone: (itemId: number) =>
     call<ItemView>(`/admin/items/${itemId}/igdb/none`, { method: 'PUT' }),
   item: (itemId: number) => call<ItemView>(`/admin/items/${itemId}`),

@@ -20,7 +20,7 @@ import type {
   Kind,
   Visibility
 } from '../../../lib/log/types'
-import { SET_BY_AP, sortOf } from '../../../lib/log/types'
+import { SET_BY_AP, sortOf, TMDB_ID } from '../../../lib/log/types'
 import type { TakeFieldVisibility, TakeView } from '../../../lib/log/types'
 import { SaveStatus, useKeys } from '../_queue/card'
 import { Compare, compareKeys, type Comparing } from '../_queue/Compare'
@@ -42,6 +42,8 @@ import {
   changeLastPlayed,
   findItemLinks,
   imageUploadTicket,
+  matchTMDB,
+  matchTMDBNone,
   placeEntry,
   setTakeFieldVisibility
 } from '../actions'
@@ -84,16 +86,18 @@ export type EntrySubject = {
   entry: Entry
   lastPlayed: FieldValue
   takes: TakeView[]
+  tmdbId: number | undefined
 }
 
 export const Editor = ({
-  subject: { itemId, title, cover, publicPath, entry, lastPlayed, takes },
+  subject: { itemId, title, cover, publicPath, entry, lastPlayed, takes, tmdbId },
   kind,
   knownTags,
   ranked,
   onClose,
   onChange,
-  onPlace
+  onPlace,
+  onRematched
 }: {
   subject: EntrySubject
   kind: Kind
@@ -102,6 +106,7 @@ export const Editor = ({
   onClose: () => void
   onChange: (change: EntryChange) => void
   onPlace: (rival: Rival, placement: Placement) => void
+  onRematched: (subject: EntrySubject) => void
 }) => {
   const [status, setStatus] = useState(entry.status)
   const [statusSetBy, setStatusSetBy] = useState(entry.statusSetBy)
@@ -226,6 +231,10 @@ export const Editor = ({
       </Section>
 
       {takes.length > 0 && <Takes itemId={itemId} kind={kind} initial={takes} />}
+
+      {kind.fields.some((field) => field.name === TMDB_ID) && (
+        <TMDBMatch itemId={itemId} tmdbId={tmdbId} onRematched={onRematched} />
+      )}
 
       {outsideSays.length > 0 && <p className={styles.note}>{outsideSays.join(' · ')}</p>}
 
@@ -553,6 +562,93 @@ const Takes = ({ itemId, kind, initial }: { itemId: number; kind: Kind; initial:
       })}
       {problem && <p className={styles.note}>{problem}</p>}
     </>
+  )
+}
+
+const TMDB_MOVIE_LINK = /themoviedb\.org\/movie\/(\d+)/
+const TMDB_SERIES_LINK = /themoviedb\.org\/tv\//
+
+const tmdbIdIn = (text: string): number | string => {
+  const trimmed = text.trim()
+  if (/^\d+$/.test(trimmed)) return Number(trimmed)
+  const linked = TMDB_MOVIE_LINK.exec(trimmed)
+  if (linked) return Number(linked[1])
+  if (TMDB_SERIES_LINK.test(trimmed)) return 'series are not matched on tmdb yet; answer no match'
+  return 'paste a themoviedb.org/movie link or a tmdb id'
+}
+
+const TMDBMatch = ({
+  itemId,
+  tmdbId,
+  onRematched
+}: {
+  itemId: number
+  tmdbId: number | undefined
+  onRematched: (subject: EntrySubject) => void
+}) => {
+  const [draft, setDraft] = useState('')
+  const [problem, setProblem] = useState<string>()
+  const [busy, setBusy] = useState(false)
+  const run = async (work: () => Promise<EntrySubject>) => {
+    setBusy(true)
+    try {
+      onRematched(await work())
+      setDraft('')
+      setProblem(undefined)
+    } catch (error) {
+      setProblem(String(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const pick = () => {
+    const found = tmdbIdIn(draft)
+    if (typeof found === 'string') return setProblem(found)
+    run(() => matchTMDB(itemId, found))
+  }
+  return (
+    <Section label="tmdb">
+      <p className={styles.note}>
+        {tmdbId === undefined ? (
+          'no match'
+        ) : (
+          <a href={`https://www.themoviedb.org/movie/${tmdbId}`} target="_blank" rel="noreferrer">
+            matched to tmdb {tmdbId}
+          </a>
+        )}
+      </p>
+      <div className={styles.chips}>
+        <input
+          className={styles.tagInput}
+          value={draft}
+          placeholder="tmdb link or id"
+          disabled={busy}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') pick()
+          }}
+        />
+        <button
+          type="button"
+          className={styles.quiet}
+          disabled={busy || !draft.trim()}
+          onClick={pick}
+        >
+          match
+        </button>
+        {tmdbId !== undefined && (
+          <button
+            type="button"
+            className={styles.quiet}
+            disabled={busy}
+            onClick={() => run(() => matchTMDBNone(itemId))}
+          >
+            no match
+          </button>
+        )}
+      </div>
+      {problem && <p className={styles.problem}>{problem}</p>}
+    </Section>
   )
 }
 

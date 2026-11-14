@@ -101,7 +101,8 @@ func run() error {
 	}
 
 	if token := os.Getenv("TMDB_READ_TOKEN"); token != "" {
-		if err := addSync(tmdb.SyncName, tmdb.NewMatcher(st, tmdb.NewClient(token)).Work); err != nil {
+		server.TMDB = tmdb.NewClient(token)
+		if err := addSync(tmdb.SyncName, tmdb.NewMatcher(st, server.TMDB).Work); err != nil {
 			return err
 		}
 	} else {

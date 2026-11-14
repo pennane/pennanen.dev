@@ -13,10 +13,10 @@ import type {
   KindSettings,
   TakeFieldVisibility
 } from '../../lib/log/types'
+import { TMDB_ID } from '../../lib/log/types'
 import type { EntrySubject } from './entries/Editor'
 
 const LAST_PLAYED = 'last_played'
-
 export async function changeEntry(itemId: number, change: EntryChange) {
   await requireAdmin()
   await logAdmin.changeEntry(itemId, change)
@@ -24,8 +24,12 @@ export async function changeEntry(itemId: number, change: EntryChange) {
 
 export async function openEntry(itemId: number): Promise<EntrySubject> {
   await requireAdmin()
-  const item = await logAdmin.item(itemId)
-  if (!item.entry) throw new Error(`item ${itemId} has no entry`)
+  return subjectOf(await logAdmin.item(itemId))
+}
+
+const subjectOf = (item: ItemView): EntrySubject => {
+  if (!item.entry) throw new Error(`item ${item.id} has no entry`)
+  const tmdbId = item.verdicts.values[TMDB_ID]
   return {
     itemId: item.id,
     title: textField(item.verdicts.values, 'title') ?? item.slug,
@@ -33,8 +37,19 @@ export async function openEntry(itemId: number): Promise<EntrySubject> {
     publicPath: `/log/${item.kind}/${item.slug}`,
     entry: item.entry,
     lastPlayed: lastPlayedOf(item),
-    takes: item.takes
+    takes: item.takes,
+    tmdbId: typeof tmdbId === 'number' ? tmdbId : undefined
   }
+}
+
+export async function matchTMDB(itemId: number, tmdbId: number) {
+  await requireAdmin()
+  return subjectOf(await logAdmin.matchTMDB(itemId, tmdbId))
+}
+
+export async function matchTMDBNone(itemId: number) {
+  await requireAdmin()
+  return subjectOf(await logAdmin.matchTMDBNone(itemId))
 }
 
 export async function setTakeFieldVisibility(

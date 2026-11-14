@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
@@ -16,6 +17,8 @@ import (
 )
 
 const SyncName = "tmdb-match"
+
+var NoMatch = json.RawMessage(`{"match":"none"}`)
 
 const (
 	CountChecked   = "checked"
@@ -94,29 +97,26 @@ func (m *Matcher) match(ctx context.Context, itemID int64, p *syncs.Progress, al
 }
 
 func onlyMatch(film verdict.LetterboxdFilm, found []Found) (int64, bool) {
-	sameYear := []Found{}
+	fits := []Found{}
 	for _, f := range found {
-		if film.Year == 0 || f.Year() == film.Year {
-			sameYear = append(sameYear, f)
+		sameYear := film.Year == 0 || f.Year() == film.Year
+		if sameYear && (sameWords(f.Title, film.Title) || sameWords(f.OriginalTitle, film.Title)) {
+			fits = append(fits, f)
 		}
 	}
-	sameTitle := []Found{}
-	for _, f := range sameYear {
-		if sameWords(f.Title, film.Title) || sameWords(f.OriginalTitle, film.Title) {
-			sameTitle = append(sameTitle, f)
-		}
+	if len(fits) != 1 {
+		return 0, false
 	}
-	switch {
-	case len(sameTitle) == 1:
-		return sameTitle[0].ID, true
-	case len(sameTitle) == 0 && len(sameYear) == 1:
-		return sameYear[0].ID, true
-	}
-	return 0, false
+	return fits[0].ID, true
 }
 
 func sameWords(a, b string) bool {
-	return strings.EqualFold(strings.Join(strings.Fields(a), " "), strings.Join(strings.Fields(b), " "))
+	words := func(s string) string {
+		return strings.Join(strings.FieldsFunc(strings.ToLower(s), func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+		}), " ")
+	}
+	return words(a) == words(b)
 }
 
 func wait(ctx context.Context, allowed <-chan time.Time) error {
