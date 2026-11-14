@@ -26,6 +26,7 @@ var claimReaders = map[string]readClaim{
 	kind.SourceSteamStore:        readSteamStoreDetails,
 	kind.SourceSteamAchievements: readSteamAchievements,
 	kind.SourceIGDB:              readIGDBGame,
+	kind.SourceSteamTake:         readSteamTake,
 	kind.SourceLetterboxdTake:    readLetterboxdTake,
 	kind.SourceLetterboxd:        readLetterboxdFilm,
 	kind.SourceTMDB:              readTMDBMovie,

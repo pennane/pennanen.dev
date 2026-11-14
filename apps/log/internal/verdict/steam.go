@@ -129,3 +129,33 @@ func withoutEmpty(values map[string]any) map[string]any {
 	}
 	return values
 }
+
+type SteamRecommendation string
+
+const (
+	Recommended    SteamRecommendation = "recommended"
+	NotRecommended SteamRecommendation = "not-recommended"
+)
+
+type SteamTake struct {
+	Recommendation SteamRecommendation `json:"recommendation"`
+	Review         string              `json:"review,omitempty"`
+	ReviewedOn     string              `json:"reviewedOn,omitempty"`
+	HoursAtReview  *float64            `json:"hoursAtReview,omitempty"`
+}
+
+func readSteamTake(raw json.RawMessage) (map[string]any, error) {
+	var take SteamTake
+	if err := json.Unmarshal(raw, &take); err != nil {
+		return nil, err
+	}
+	values := map[string]any{
+		"recommendation": string(take.Recommendation),
+		"review":         take.Review,
+		"reviewed_on":    take.ReviewedOn,
+	}
+	if take.HoursAtReview != nil {
+		values["hours_at_review"] = *take.HoursAtReview
+	}
+	return withoutEmpty(values), nil
+}

@@ -43,6 +43,10 @@ func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
 			achievementCalls.Add(1)
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(w, `{"playerstats":{"error":"Requested app has no stats","success":false}}`)
+		case "/profiles/me/recommended/":
+			if r.URL.Query().Get("p") == "1" {
+				fmt.Fprint(w, `<div class="review_box"><a href="https://steamcommunity.com/app/1"></a><img src="/icon_thumbsDown.png"><div class="content ">farms cards</div></div>`)
+			}
 		default:
 			http.NotFound(w, r)
 		}
@@ -50,7 +54,7 @@ func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
 	defer fake.Close()
 
 	client := steam.NewClient("key", "me")
-	client.WebAPIBaseURL, client.StoreBaseURL = fake.URL, fake.URL
+	client.WebAPIBaseURL, client.StoreBaseURL, client.CommunityBaseURL = fake.URL, fake.URL, fake.URL
 	steamSyncer := steam.NewSyncer(s, client)
 	steamSyncer.StoreRequestInterval = 1
 	syncer, err := syncs.New(ctx, steam.SyncName, steamSyncer.Work, s, nil)
@@ -69,6 +73,11 @@ func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
 	}
 	if idled[0].Verdicts.Values["title"] != "Store 1" || idled[0].Verdicts.Values["released"] != "2020-12-04" {
 		t.Errorf("verdicts %v", idled[0].Verdicts.Values)
+	}
+	if takes := idled[0].Takes; len(takes) != 1 || takes[0].Source != kind.SourceSteamTake ||
+		takes[0].Values["recommendation"] != "not-recommended" || takes[0].Values["review"] != "farms cards" ||
+		report.Counts[steam.CountReviewsRecorded] != 1 {
+		t.Errorf("takes %+v counts %v", takes, report.Counts)
 	}
 
 	syncer.Run(ctx)

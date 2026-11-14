@@ -227,6 +227,11 @@ const RATED_IN_STARS = new Set(['letterboxd-take'])
 
 const LIKED = 'liked'
 
+const RECOMMENDATION_MARKS: Record<string, string> = {
+  recommended: '👍',
+  'not-recommended': '👎'
+}
+
 const TEXT_KEYS = ['review', 'note']
 
 export type ShownTake = { source: string; marks: string[]; text: string | undefined }
@@ -236,6 +241,15 @@ export const shownTake = (take: PublicItem['takes'][number]): ShownTake => {
   const ratingMark =
     rating === undefined ? [] : [RATED_IN_STARS.has(take.source) ? starsOf(rating) : String(rating)]
   const likedMark = textField(take.values, 'reaction') === LIKED ? ['♥'] : []
+  const recommendation = textField(take.values, 'recommendation')
+  const recommendationMark =
+    recommendation && Object.hasOwn(RECOMMENDATION_MARKS, recommendation)
+      ? [RECOMMENDATION_MARKS[recommendation]]
+      : []
   const text = TEXT_KEYS.map((key) => textField(take.values, key)).find(Boolean)
-  return { source: sourceName(take.source), marks: [...ratingMark, ...likedMark], text }
+  return {
+    source: sourceName(take.source),
+    marks: [...ratingMark, ...likedMark, ...recommendationMark],
+    text
+  }
 }

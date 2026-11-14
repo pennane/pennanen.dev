@@ -7,6 +7,7 @@ const (
 	SourceSteamStore        = "steam-store"
 	SourceSteamAchievements = "steam-achievements"
 	SourceIGDB              = "igdb"
+	SourceSteamTake         = "steam-take"
 
 	SteamTradingCardsCategory = "Steam Trading Cards"
 
@@ -38,13 +39,21 @@ const (
 	clearlyPlayedAfterMinutes           = 120
 )
 
+var steamTake = Take{
+	Source:        SourceSteamTake,
+	PrivateFields: []string{"hours_at_review"},
+	Fields: []Field{
+		{Name: "reviewed_on", Type: PartialDate},
+	},
+}
+
 func init() {
 	register(Kind{
 		Name:            "game",
 		DefaultTitle:    "games",
-		Statuses:        []string{Untriaged, "never-played", "maybe-played", "playing", "played", "finished", "dropped"},
-		StatusesToScore: []string{"playing", "played", "finished", "dropped"},
-		StatusesShown:   []string{"maybe-played", "playing", "played", "finished", "dropped"},
+		Statuses:        []string{Untriaged, "never-played", "maybe-played", "playing", "played", "finished", Dropped},
+		StatusesToScore: []string{"playing", "played", "finished", Dropped},
+		StatusesShown:   []string{"maybe-played", "playing", "played", "finished", Dropped},
 		DefaultAxes:     []string{Prestige, Quality},
 		RankedAxis:      Prestige,
 		IdentitySource:  SourceIGDB,
@@ -65,6 +74,7 @@ func init() {
 			{Name: "achievements_total", Type: Int, SourcesBestFirstAfterAP: []string{SourceSteamAchievements}},
 			{Name: "achievements_unlocked", Type: Int, SourcesBestFirstAfterAP: []string{SourceSteamAchievements}},
 		},
+		Takes:       []Take{steamTake},
 		GuessStatus: guessGameStatus,
 	})
 }

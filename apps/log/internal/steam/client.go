@@ -14,20 +14,22 @@ import (
 )
 
 type Client struct {
-	APIKey        string
-	SteamID       string
-	HTTP          *http.Client
-	WebAPIBaseURL string
-	StoreBaseURL  string
+	APIKey           string
+	SteamID          string
+	HTTP             *http.Client
+	WebAPIBaseURL    string
+	StoreBaseURL     string
+	CommunityBaseURL string
 }
 
 func NewClient(apiKey, steamID string) *Client {
 	return &Client{
-		APIKey:        apiKey,
-		SteamID:       steamID,
-		HTTP:          &http.Client{Timeout: 30 * time.Second},
-		WebAPIBaseURL: "https://api.steampowered.com",
-		StoreBaseURL:  "https://store.steampowered.com",
+		APIKey:           apiKey,
+		SteamID:          steamID,
+		HTTP:             &http.Client{Timeout: 30 * time.Second},
+		WebAPIBaseURL:    "https://api.steampowered.com",
+		StoreBaseURL:     "https://store.steampowered.com",
+		CommunityBaseURL: "https://steamcommunity.com",
 	}
 }
 

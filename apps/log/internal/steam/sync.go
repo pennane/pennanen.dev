@@ -19,6 +19,7 @@ const (
 	CountGamesAdded          = "games-added"
 	CountStoreDetailsFetched = "store-details-fetched"
 	CountAchievementsFetched = "achievements-fetched"
+	CountReviewsRecorded     = "reviews-recorded"
 )
 
 type Syncer struct {
@@ -50,6 +51,31 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 			p.Problem("%d %s: %v", g.AppID, g.Name, err)
 		}
 	}
+	return s.recordReviews(ctx, p)
+}
+
+func (s *Syncer) recordReviews(ctx context.Context, p *syncs.Progress) error {
+	reviews, err := s.Client.Reviews(ctx)
+	if err != nil {
+		p.Problem("%v", err)
+		return nil
+	}
+	for _, r := range reviews {
+		appID := strconv.FormatInt(r.AppID, 10)
+		itemID, err := s.Store.FindByIdentity(ctx, kind.SourceSteam, appID)
+		if errors.Is(err, store.ErrNotFound) {
+			p.Problem("review of %d: no game with that app id", r.AppID)
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if err := s.Store.PutClaim(ctx, itemID, kind.SourceSteamTake, appID, r.Take); err != nil {
+			return err
+		}
+		p.Add(CountReviewsRecorded, 1)
+	}
+	p.ChangedData()
 	return nil
 }
 

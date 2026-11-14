@@ -123,7 +123,7 @@ Never edited; a re-sync replaces only that source's claim.
 
 **Outside take** — ap's take recorded on another site: Letterboxd stars, a
 Goodreads shelf and review, a Vivino rating and tasting note. Kept as claims
-from its own source (`letterboxd-take`, `vivino-take`), apart from what the
+from its own source (`letterboxd-take`, `steam-take`, `vivino-take`), apart from what the
 site says about the thing itself. Shown alongside the entry, never merged into
 it. Private parts, like the price paid, show only in admin.
 
