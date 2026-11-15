@@ -20,7 +20,7 @@ were three tables with three sets of code: relations, parts and mentions.
   link or suppressing one, are takes, and resolve by the newest word
   ([ADR 7](./0007-proposals-and-the-newest-word.md)).
 - A **part** is an item linked `part-of` a whole at a position: a track of an
-  album, a season of a series, an episode of a season. One item can be a
+  album, and later a season of a series or an episode of a season. One item can be a
   part of several wholes, at a position in each. Parts are items like any
   other: known until ap logs one, ranked against their own kind.
 - **Inheritance**: a field can declare a link type it inherits through.
