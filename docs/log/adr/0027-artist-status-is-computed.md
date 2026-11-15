@@ -16,19 +16,22 @@ decide it.
   `listened`, never gone.
 - An artist's status is a **computed status**, set by `spotify`. It is
   `listening` when the artist is in the 4-week list of the newest day any
-  top-artist list was recorded, and `listened` otherwise. A quiet month that
-  leaves the newest 4-week list empty makes nobody `listening`.
+  top-artist list was recorded, and `listened` otherwise. While any top list
+  is non-empty, a quiet month that leaves the newest 4-week list empty makes
+  nobody `listening`. If every list is empty nothing is recorded, and the
+  last snapshot stands.
 - The nightly sync recomputes every such artist after refreshing claims.
 - Artists never pass through triage; their statuses are `listening`,
   `listened` and `dismissed`.
 - This departs from ADR 17, where a status ap sets is never touched again.
   For a kind with a computed status only `dismissed` sticks. Any other
   status ap picks hands the status back to `spotify`, and the next sync
-  computes it again. The kind names the source that computes its statuses.
+  computes it again. The sync also recomputes every entry whose status
+  it set, so a status ap picked on an artist never listed settles too. The kind names the source that computes its statuses.
 
 ## Consequences
 
 - ap can rank and score artists without sorting them first.
 - ap can't pin an artist to `listening`; the lists decide, and ap can only
   rule an artist out.
-- Admin says so on the status chips of such a kind.
+- Admin says so in a note under the status chips of such a kind.

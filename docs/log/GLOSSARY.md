@@ -46,7 +46,8 @@ in admin: an `auto` entry shows publicly when its status is one of them.
 `want` is the status for something ap means to get to, from a watchlist,
 to-read shelf or wishlist; it isn't shown by default.
 A status is **set by** ap or by a source's sync. A sync changes only a
-status it set itself; once ap sets one, no sync touches it again.
+status it set itself; once ap sets one, no sync touches it again, except for
+a **computed status**, where only `dismissed` sticks.
 
 **Computed status** — a status a source works out instead of ap choosing it.
 Artists have one: the source `spotify` sets it on every sync. Only
