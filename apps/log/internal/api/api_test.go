@@ -168,6 +168,17 @@ func TestPublicItemsNeverIncludeDismissed(t *testing.T) {
 	if _, body := call(t, srv, "GET", "/admin/items?kind=game", token, ""); strings.Contains(body, "wallpaper-engine") {
 		t.Errorf("dismissed item in the admin list: %s", body)
 	}
+	for _, path := range []string{"/admin/items?kind=game&dismissal=dismissed", "/admin/entries?kind=game&dismissal=dismissed"} {
+		if _, body := call(t, srv, "GET", path, token, ""); !strings.Contains(body, "Wallpaper Engine") && !strings.Contains(body, "wallpaper-engine") {
+			t.Errorf("%s misses the dismissed item: %s", path, body)
+		}
+	}
+	if status, _ := call(t, srv, "GET", "/public/items?kind=game&dismissal=dismissed", "", ""); status != http.StatusOK {
+		t.Errorf("public ignores the filter: %d", status)
+	}
+	if _, body := call(t, srv, "GET", "/public/items?kind=game&dismissal=dismissed", "", ""); strings.Contains(body, "wallpaper-engine") {
+		t.Errorf("public dismissed filter leaks: %s", body)
+	}
 }
 
 func TestAnEntryTellsWhoDecidedIt(t *testing.T) {

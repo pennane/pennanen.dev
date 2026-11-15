@@ -20,7 +20,11 @@ type listedEntry struct {
 }
 
 func (s *Server) listEntries(w http.ResponseWriter, r *http.Request) {
-	views, err := s.Store.ListItems(r.Context(), store.ItemFilter{Kind: r.URL.Query().Get("kind")})
+	q := r.URL.Query()
+	views, err := s.Store.ListItems(r.Context(), store.ItemFilter{
+		Kind:      q.Get("kind"),
+		Dismissal: store.DismissalChange(q.Get("dismissal")),
+	})
 	entries := []listedEntry{}
 	for _, v := range views {
 		if isListed(v.Entry) {
