@@ -53,10 +53,12 @@ func (s *Syncer) snapshotNow(p *syncs.Progress) snapshot {
 func (s *Syncer) WorkPlays(ctx context.Context, p *syncs.Progress) error {
 	snap := s.snapshotNow(p)
 	plays, err := s.Client.RecentlyPlayed(ctx)
+	if errors.Is(err, ErrNotConnected) {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
-	p.ChangedData()
 	snap.plays(ctx, plays)
 	snap.recorder.RefreshClaims(ctx, p, s.Client)
 	return ctx.Err()
@@ -129,7 +131,7 @@ func (n snapshot) topArtists(ctx context.Context, timeRange TimeRange, artists [
 		}
 		key := fmt.Sprintf("%s:%s:%s:%s", SignalTopArtist, timeRange, n.day, ref.ID)
 		data := map[string]any{"range": timeRange, "rank": i + 1, "day": n.day}
-		if err := n.recorder.Observe(ctx, n.p, itemID, SignalTopArtist, key, n.start, CountSnapshots, data); err != nil {
+		if _, err := n.recorder.Observe(ctx, n.p, itemID, SignalTopArtist, key, n.start, CountSnapshots, data); err != nil {
 			n.p.Problem("%s: %v", ref.Name, err)
 		}
 	}
@@ -153,7 +155,7 @@ func (n snapshot) topTracks(ctx context.Context, timeRange TimeRange, tracks []j
 		}
 		key := fmt.Sprintf("%s:%s:%s:%s", SignalTopTrack, timeRange, n.day, t.ID)
 		data := map[string]any{"range": timeRange, "rank": i + 1, "day": n.day, "trackId": t.ID, "trackName": t.Name}
-		if err := n.recorder.Observe(ctx, n.p, itemID, SignalTopTrack, key, n.start, CountSnapshots, data); err != nil {
+		if _, err := n.recorder.Observe(ctx, n.p, itemID, SignalTopTrack, key, n.start, CountSnapshots, data); err != nil {
 			n.p.Problem("top track %s: %v", t.Name, err)
 		}
 	}
@@ -173,8 +175,13 @@ func (n snapshot) plays(ctx context.Context, plays []Play) {
 		}
 		key := fmt.Sprintf("%s:%s:%s", SignalPlay, play.PlayedAt, t.ID)
 		data := map[string]any{"trackId": t.ID, "trackName": t.Name, "playedAt": play.PlayedAt}
-		if err := n.recorder.Observe(ctx, n.p, itemID, SignalPlay, key, play.PlayedAt, CountPlays, data); err != nil {
+		outcome, err := n.recorder.Observe(ctx, n.p, itemID, SignalPlay, key, play.PlayedAt, CountPlays, data)
+		if err != nil {
 			n.p.Problem("play %s: %v", t.Name, err)
+			continue
+		}
+		if outcome == store.Observed {
+			n.p.ChangedData()
 		}
 	}
 }
@@ -205,12 +212,12 @@ func (n snapshot) recordSaves(ctx context.Context, saved []SavedAlbum, wasUnsave
 			continue
 		}
 		key := fmt.Sprintf("%s:%s:%s", SignalSaved, ref.ID, save.AddedAt)
-		if err := n.recorder.Observe(ctx, n.p, itemID, SignalSaved, key, save.AddedAt, CountSaves, map[string]any{"addedAt": save.AddedAt}); err != nil {
+		if _, err := n.recorder.Observe(ctx, n.p, itemID, SignalSaved, key, save.AddedAt, CountSaves, map[string]any{"addedAt": save.AddedAt}); err != nil {
 			n.p.Problem("saved %s: %v", ref.Name, err)
 		}
 		if _, unsaved := wasUnsaved[itemID]; unsaved {
 			resavedKey := fmt.Sprintf("%s:%s:%s:%s", SignalSaved, ref.ID, save.AddedAt, n.day)
-			if err := n.recorder.Observe(ctx, n.p, itemID, SignalSaved, resavedKey, n.start, CountSaves, map[string]any{"addedAt": save.AddedAt}); err != nil {
+			if _, err := n.recorder.Observe(ctx, n.p, itemID, SignalSaved, resavedKey, n.start, CountSaves, map[string]any{"addedAt": save.AddedAt}); err != nil {
 				n.p.Problem("saved again %s: %v", ref.Name, err)
 			}
 		}
@@ -249,7 +256,7 @@ func (s *Syncer) unsaves(ctx context.Context, n snapshot, stillSaved map[string]
 			continue
 		}
 		key := fmt.Sprintf("%s:%s:%s", SignalUnsaved, claim.ExternalID, n.day)
-		if err := n.recorder.Observe(ctx, n.p, itemID, SignalUnsaved, key, n.start, CountUnsaves, map[string]any{"day": n.day}); err != nil {
+		if _, err := n.recorder.Observe(ctx, n.p, itemID, SignalUnsaved, key, n.start, CountUnsaves, map[string]any{"day": n.day}); err != nil {
 			n.p.Problem("unsaved %s: %v", claim.ExternalID, err)
 		}
 	}

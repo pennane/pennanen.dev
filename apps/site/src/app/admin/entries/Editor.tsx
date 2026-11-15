@@ -222,7 +222,7 @@ export const Editor = ({
             status follows {kind.statusComputedBy}; only dismissing sticks
           </p>
         )}
-        {statusSetBy !== SET_BY_AP && (
+        {statusSetBy !== SET_BY_AP && !kind.statusComputedBy && (
           <p className={styles.note}>set by {statusSetBy}, follows it until you choose one</p>
         )}
       </Section>

@@ -35,6 +35,7 @@ type Detail int
 const (
 	Simplified Detail = iota
 	Full
+	Kept
 )
 
 type metItem struct {
@@ -101,12 +102,16 @@ func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*
 		return 0, fmt.Errorf("a spotify %s without an id", kindName)
 	}
 	if seen, ok := met[ref.ID]; ok {
-		if detail == Full && seen.detail == Simplified {
+		if detail == Full && seen.detail != Full {
 			seen.detail, seen.raw = Full, raw
 		}
 		return seen.itemID, nil
 	}
+	known := detail
 	itemID, err := r.Store.FindByIdentity(ctx, source, ref.ID)
+	if err == nil && detail == Simplified && r.storedClaimIsFull(ctx, itemID, source) {
+		known = Kept
+	}
 	if errors.Is(err, store.ErrNotFound) {
 		itemID, err = r.Store.KnowItemFromSource(ctx, kindName, ref.Name, source, ref.ID, raw)
 		switch {
@@ -119,14 +124,14 @@ func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*
 	if err != nil {
 		return 0, err
 	}
-	met[ref.ID] = &metItem{itemID: itemID, externalID: ref.ID, detail: detail, raw: raw}
+	met[ref.ID] = &metItem{itemID: itemID, externalID: ref.ID, detail: known, raw: raw}
 	return itemID, nil
 }
 
-func (r *Recorder) Observe(ctx context.Context, p *syncs.Progress, itemID int64, signal, key, observedAt, count string, data any) error {
+func (r *Recorder) Observe(ctx context.Context, p *syncs.Progress, itemID int64, signal, key, observedAt, count string, data any) (store.ObserveOutcome, error) {
 	encoded, err := json.Marshal(data)
 	if err != nil {
-		return err
+		return "", err
 	}
 	outcome, err := r.Store.Observe(ctx, store.Observation{
 		ItemID:     itemID,
@@ -139,7 +144,7 @@ func (r *Recorder) Observe(ctx context.Context, p *syncs.Progress, itemID int64,
 	if outcome == store.Observed {
 		p.Add(count, 1)
 	}
-	return err
+	return outcome, err
 }
 
 func (r *Recorder) RefreshClaims(ctx context.Context, p *syncs.Progress, c *Client) {
@@ -185,4 +190,15 @@ func (r *Recorder) refresh(ctx context.Context, p *syncs.Progress, met map[strin
 			p.Problem("%s %s: %v", source, id, err)
 		}
 	}
+}
+
+func (r *Recorder) storedClaimIsFull(ctx context.Context, itemID int64, source string) bool {
+	claim, err := r.Store.Claim(ctx, itemID, source)
+	if err != nil {
+		return false
+	}
+	var stored struct {
+		Popularity *int64 `json:"popularity"`
+	}
+	return json.Unmarshal(claim.Data, &stored) == nil && stored.Popularity != nil
 }

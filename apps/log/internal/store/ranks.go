@@ -34,7 +34,7 @@ func (s *Store) Place(ctx context.Context, itemID int64, division string, index 
 		return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, k.RankedAxis, division)
 	}
 	return s.inTx(ctx, func(tx *sql.Tx) error {
-		if err := ensureEntry(ctx, tx, itemID, kind.SourceAP); err != nil {
+		if err := ensureEntry(ctx, tx, itemID, entrySetter(k)); err != nil {
 			return err
 		}
 		return moveTo(ctx, tx, k, itemID, division, index)

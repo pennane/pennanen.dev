@@ -58,3 +58,7 @@ func (s *Store) SetStatusFromSource(ctx context.Context, itemID int64, source, s
 func sourceMayChange(source, current, setBy string) bool {
 	return setBy == source || (setBy != kind.SourceAP && current == kind.Untriaged)
 }
+
+func (s *Store) ItemsWithStatusSetBy(ctx context.Context, source string) ([]int64, error) {
+	return s.itemIDs(ctx, `SELECT item_id FROM entry WHERE status_set_by = ? ORDER BY item_id`, source)
+}

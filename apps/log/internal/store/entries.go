@@ -102,7 +102,7 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 			return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, axis, *division)
 		}
 	}
-	if err := ensureEntry(ctx, tx, itemID, kind.SourceAP); err != nil {
+	if err := ensureEntry(ctx, tx, itemID, entrySetter(k)); err != nil {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, `
@@ -165,6 +165,13 @@ func lookupKind(ctx context.Context, q queryer, itemID int64) (kind.Kind, error)
 
 func statusSetBy(k kind.Kind, chosen *string) string {
 	if k.StatusComputedBy != "" && chosen != nil && *chosen != kind.Dismissed {
+		return k.StatusComputedBy
+	}
+	return kind.SourceAP
+}
+
+func entrySetter(k kind.Kind) string {
+	if k.StatusComputedBy != "" {
 		return k.StatusComputedBy
 	}
 	return kind.SourceAP

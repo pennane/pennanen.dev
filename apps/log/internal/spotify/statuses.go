@@ -20,7 +20,11 @@ func computeArtistStatuses(ctx context.Context, st *store.Store, p *syncs.Progre
 	if err != nil {
 		return err
 	}
-	for _, itemID := range everListed {
+	handPicked, err := st.ItemsWithStatusSetBy(ctx, kind.SourceSpotify)
+	if err != nil {
+		return err
+	}
+	for _, itemID := range slices.Compact(slices.Sorted(slices.Values(slices.Concat(everListed, handPicked)))) {
 		status := kind.Listened
 		if slices.Contains(listening, itemID) {
 			status = kind.Listening

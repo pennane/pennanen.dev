@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -21,12 +22,13 @@ import (
 )
 
 type fakeSpotify struct {
-	topArtists  map[string]string
-	saved       string
-	albumsNull  bool
-	savedTotal  *int
-	artistsGone bool
-	plays       string
+	topArtists       map[string]string
+	saved            string
+	albumsNull       bool
+	savedTotal       *int
+	artistsGone      bool
+	plays            string
+	catalogueFetches atomic.Int64
 }
 
 func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
@@ -52,16 +54,18 @@ func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(w, `{"items":%s,"next":null,"total":%d}`, f.saved, total)
 	case "/albums":
+		f.catalogueFetches.Add(1)
 		if f.albumsNull {
 			fmt.Fprint(w, `{"albums":[null]}`)
 			return
 		}
 		items := []string{}
 		for _, id := range strings.Split(r.URL.Query().Get("ids"), ",") {
-			items = append(items, fmt.Sprintf(`{"id":%q,"name":"Album %s","label":"Label %s","artists":[{"id":"X","name":"Xena"}]}`, id, id, id))
+			items = append(items, fmt.Sprintf(`{"id":%q,"name":"Album %s","label":"Label %s","popularity":3,"artists":[{"id":"X","name":"Xena"}]}`, id, id, id))
 		}
 		fmt.Fprintf(w, `{"albums":[%s]}`, strings.Join(items, ","))
 	case "/artists":
+		f.catalogueFetches.Add(1)
 		if f.artistsGone {
 			http.NotFound(w, r)
 			return
@@ -562,3 +566,70 @@ func TestThePlaysSyncAndTheNightlySyncCanOverlap(t *testing.T) {
 }
 
 const overlapRounds = 5
+
+func TestTheHourlySyncFetchesNothingForAlbumsItAlreadyHasInFull(t *testing.T) {
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	if report := h.runPlays(t); report.State != syncs.Succeeded {
+		t.Fatalf("report = %+v", report)
+	}
+	fetchesBefore := fake.catalogueFetches.Load()
+	a := h.item(t, kind.SourceSpotifyAlbum, "A")
+	before, err := h.store.Claim(context.Background(), a, kind.SourceSpotifyAlbum)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h.runPlays(t)
+	if got := fake.catalogueFetches.Load(); got != fetchesBefore {
+		t.Fatalf("catalogue fetches went from %d to %d", fetchesBefore, got)
+	}
+	after, err := h.store.Claim(context.Background(), a, kind.SourceSpotifyAlbum)
+	if err != nil || string(after.Data) != string(before.Data) || after.FetchedAt != before.FetchedAt {
+		t.Fatalf("claim changed: %+v -> %+v, %v", before, after, err)
+	}
+}
+
+func TestThePlaysSyncSucceedsWithNothingToDoWhenNotConnected(t *testing.T) {
+	h := newHarness(t, newFake(), spotify.NotConnected)
+	if report := h.runPlays(t); report.State != syncs.Succeeded || len(report.Problems) != 0 {
+		t.Fatalf("report = %+v", report)
+	}
+}
+
+func TestAnArtistApTaggedBeforeAnySyncStillGetsItsComputedStatus(t *testing.T) {
+	h := newHarness(t, newFake(), spotify.Connected)
+	h.run(t)
+	z, err := h.store.KnowItemFromSource(context.Background(), kind.Artist, "Zed", kind.SourceSpotifyArtist, "Z", json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := h.store.ChangeEntry(context.Background(), z, store.EntryChange{AddTags: []string{"favorite"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.store.Observe(context.Background(), store.Observation{ItemID: z, Source: spotify.ObservationSource, Signal: spotify.SignalTopArtist, Key: "top-artist:long_term:2026-11-15:Z", ObservedAt: "2026-11-15T03:00:00Z", Data: json.RawMessage(`{}`)}); err != nil {
+		t.Fatal(err)
+	}
+	h.run(t)
+	if status, setBy := h.status(t, z); status != kind.Listened || setBy != kind.SourceSpotify {
+		t.Fatalf("Z = %s by %s", status, setBy)
+	}
+}
+
+func TestAHandPickedListeningOnAnUnlistedArtistIsRecomputed(t *testing.T) {
+	h := newHarness(t, newFake(), spotify.Connected)
+	h.run(t)
+	z, err := h.store.KnowItemFromSource(context.Background(), kind.Artist, "Zed", kind.SourceSpotifyArtist, "Z", json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	listening := kind.Listening
+	if err := h.store.ChangeEntry(context.Background(), z, store.EntryChange{Status: &listening}); err != nil {
+		t.Fatal(err)
+	}
+	h.run(t)
+	if status, setBy := h.status(t, z); status != kind.Listened || setBy != kind.SourceSpotify {
+		t.Fatalf("Z = %s by %s, want listened by spotify", status, setBy)
+	}
+}
