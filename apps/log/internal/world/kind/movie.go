@@ -13,7 +13,7 @@ const (
 
 var letterboxdTake = Take{
 	Source:        record.SourceLetterboxdTake,
-	PrivateFields: []string{"on_watchlist_since"},
+	PrivateFields: []string{"on_watchlist_since", "on_watched_shelf_since"},
 	Fields: []Field{
 		{Name: "rating", Type: Number},
 		{Name: "last_watched", Type: PartialDate},

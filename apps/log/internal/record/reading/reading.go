@@ -44,7 +44,7 @@ func Read(source string, raw json.RawMessage) (map[string]any, error) {
 	return read(raw)
 }
 
-const ReadersVersion = 4
+const ReadersVersion = 5
 
 type Reading struct {
 	Source     string
