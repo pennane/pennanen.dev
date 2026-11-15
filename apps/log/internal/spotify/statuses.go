@@ -26,6 +26,13 @@ func setComputed(ctx context.Context, st *store.Store, p *syncs.Progress, countP
 		return
 	}
 	p.Add(countPrefix+string(outcome), 1)
+	if changesTheLog(outcome) {
+		p.ChangedData()
+	}
+}
+
+func changesTheLog(outcome store.StatusOutcome) bool {
+	return outcome == store.StatusLogged || outcome == store.StatusFollowed
 }
 
 func computeAlbumStatuses(ctx context.Context, st *store.Store, p *syncs.Progress) error {
@@ -44,7 +51,7 @@ func computeAlbumStatuses(ctx context.Context, st *store.Store, p *syncs.Progres
 	heard := distinct(inTopTracks, played)
 	for _, itemID := range saved {
 		status := kind.Want
-		if slices.Contains(heard, itemID) {
+		if _, wasHeard := slices.BinarySearch(heard, itemID); wasHeard {
 			status = kind.Listened
 		}
 		setComputed(ctx, st, p, albumCountPrefix, itemID, status)

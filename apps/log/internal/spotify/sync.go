@@ -61,6 +61,9 @@ func (s *Syncer) WorkPlays(ctx context.Context, p *syncs.Progress) error {
 	}
 	snap.plays(ctx, plays)
 	snap.recorder.RefreshClaims(ctx, p, s.Client)
+	if err := computeAlbumStatuses(ctx, s.Store, p); err != nil {
+		return err
+	}
 	return ctx.Err()
 }
 

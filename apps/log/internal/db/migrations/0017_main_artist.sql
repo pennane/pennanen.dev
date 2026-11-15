@@ -4,6 +4,7 @@ FROM relation credit
 JOIN claim album ON album.item_id = credit.from_id AND album.source = 'spotify-album'
 JOIN claim artist ON artist.item_id = credit.to_id AND artist.source = 'spotify-artist'
 WHERE credit.type = 'by'
+  AND json_extract(album.data, '$.artists[0].id') IS NOT NULL
   AND (artist.external_id IS NOT json_extract(album.data, '$.artists[0].id')
        OR artist.external_id = '0LyfQWJT6nXafLPZqxe9Of');
 

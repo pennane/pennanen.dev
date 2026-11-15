@@ -77,6 +77,10 @@ func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.Ra
 	if err := json.Unmarshal(raw, &album); err != nil {
 		return 0, err
 	}
+	if len(album.Artists) == 0 {
+		return itemID, nil
+	}
+	credits := make([]store.Relation, 0, len(album.Artists))
 	for position, credited := range album.Artists {
 		creditedRaw, err := json.Marshal(credited)
 		if err != nil {
@@ -86,13 +90,15 @@ func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.Ra
 		if err != nil {
 			return 0, err
 		}
-		relation := store.Relation{FromID: itemID, Type: creditRelation(position, credited.ID), ToID: artistID}
-		if err := r.Store.AddRelation(ctx, relation); err != nil {
-			return 0, err
-		}
+		credits = append(credits, store.Relation{FromID: itemID, Type: creditRelation(position, credited.ID), ToID: artistID})
+	}
+	if err := r.Store.ReplaceRelationsFrom(ctx, itemID, creditRelations, credits); err != nil {
+		return 0, err
 	}
 	return itemID, nil
 }
+
+var creditRelations = []string{kind.RelationBy, kind.RelationWith}
 
 const firstCredited = 0
 

@@ -794,3 +794,71 @@ func TestACollabLogsOnlyItsMainArtist(t *testing.T) {
 		t.Fatalf("compilation genres = %v, want none", genres)
 	}
 }
+
+func savedWithCredits(credits ...string) string {
+	artists := []string{}
+	for _, id := range credits {
+		artists = append(artists, fmt.Sprintf(`{"id":%q,"name":"Artist %s"}`, id, id))
+	}
+	return `[{"added_at":"2026-11-10T09:00:00Z","album":{"id":"K","name":"Kappa","artists":[` + strings.Join(artists, ",") + `]}}]`
+}
+
+func TestAnAlbumsCreditsFollowSpotify(t *testing.T) {
+	fake := newFake()
+	fake.saved = savedWithCredits("CA", "CB")
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	fake.saved = savedWithCredits("CB", "CA")
+	h.day = "2026-11-16"
+	if report := h.run(t); len(report.Problems) != 0 {
+		t.Fatalf("report = %+v", report)
+	}
+	album := h.item(t, kind.SourceSpotifyAlbum, "K")
+	want := map[store.Relation]struct{}{
+		{FromID: album, Type: kind.RelationBy, ToID: h.item(t, kind.SourceSpotifyArtist, "CB")}:   {},
+		{FromID: album, Type: kind.RelationWith, ToID: h.item(t, kind.SourceSpotifyArtist, "CA")}: {},
+	}
+	if got := h.relations(t, album); !reflect.DeepEqual(got, want) {
+		t.Fatalf("relations = %v, want %v", got, want)
+	}
+}
+
+func TestAnAlbumMetWithoutCreditsKeepsItsRelations(t *testing.T) {
+	fake := newFake()
+	fake.saved = savedWithCredits("CA")
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	fake.saved = `[{"added_at":"2026-11-10T09:00:00Z","album":{"id":"K","name":"Kappa"}}]`
+	h.day = "2026-11-16"
+	h.run(t)
+	album := h.item(t, kind.SourceSpotifyAlbum, "K")
+	want := map[store.Relation]struct{}{
+		{FromID: album, Type: kind.RelationBy, ToID: h.item(t, kind.SourceSpotifyArtist, "CA")}: {},
+	}
+	if got := h.relations(t, album); !reflect.DeepEqual(got, want) {
+		t.Fatalf("relations = %v, want %v", got, want)
+	}
+}
+
+func playOf(album, at string) string {
+	return fmt.Sprintf(`[{"played_at":%q,"track":{"id":"ST","name":"Sigma Track","album":%s,"artists":[{"id":"Z","name":"Zed"}]}}]`, at, album)
+}
+
+func TestAPlayMovesAWantedAlbumToListenedWithinTheHour(t *testing.T) {
+	fake := newFake()
+	fake.saved = savedZedAlbum
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	s := h.item(t, kind.SourceSpotifyAlbum, "S")
+	if status, _ := h.status(t, s); status != kind.Want {
+		t.Fatalf("album = %s, want want", status)
+	}
+	fake.plays = playOf(zedAlbum, "2026-11-15T10:00:00.000Z")
+	report := h.runPlays(t)
+	if report.State != syncs.Succeeded || len(report.Problems) != 0 {
+		t.Fatalf("report = %+v", report)
+	}
+	if status, setBy := h.status(t, s); status != kind.Listened || setBy != kind.SourceSpotify {
+		t.Fatalf("album after a play = %s by %s, want listened by spotify", status, setBy)
+	}
+}

@@ -326,3 +326,27 @@ func TestOnlyTheFirstCreditedArtistStaysBy(t *testing.T) {
 		t.Errorf("relations = %v, want %v", got, want)
 	}
 }
+
+func TestAnAlbumClaimWithoutArtistsKeepsItsRelations(t *testing.T) {
+	ctx := context.Background()
+	d := openAt(t, lastWithEveryArtistBy)
+	if _, err := d.ExecContext(ctx, `
+		INSERT INTO item (id, kind, slug) VALUES (1, 'album', 'bare'), (2, 'artist', 'a'), (3, 'artist', 'b');
+		INSERT INTO claim (item_id, source, external_id, data) VALUES
+			(1, 'spotify-album', 'N', '{"id":"N"}'),
+			(2, 'spotify-artist', 'A', '{"id":"A"}'),
+			(3, 'spotify-artist', 'B', '{"id":"B"}');
+		INSERT INTO relation (from_id, type, to_id) VALUES (1, 'by', 2), (1, 'by', 3);`); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+	var withs int
+	if err := d.QueryRowContext(ctx, `SELECT count(*) FROM relation WHERE type <> 'by'`).Scan(&withs); err != nil {
+		t.Fatal(err)
+	}
+	if withs != 0 {
+		t.Errorf("%d relations rewritten for an album claim without artists", withs)
+	}
+}
