@@ -176,7 +176,10 @@ func (s *Store) AnswerNoMatch(ctx context.Context, itemID int64, source string) 
 		if err := s.takeOffTheItem(ctx, tx, replaced); err != nil {
 			return err
 		}
-		return s.settle(ctx, tx, answer, key)
+		if err := s.settle(ctx, tx, answer, key); err != nil {
+			return err
+		}
+		return s.rekeyOffAReplacedKey(ctx, tx, itemID, key, replaced, s.nextKey)
 	})
 }
 
@@ -214,7 +217,10 @@ func (s *Store) answer(ctx context.Context, tx *sql.Tx, itemID int64, id record.
 	if err := s.settle(ctx, tx, id, answer, key); err != nil {
 		return err
 	}
-	return s.requireLanded(ctx, tx, itemID, id)
+	if err := s.requireLanded(ctx, tx, itemID, id); err != nil {
+		return err
+	}
+	return s.rekeyOffAReplacedKey(ctx, tx, itemID, key, replaced, theAnswer(id))
 }
 
 func (s *Store) IdentitiesLackingSources(ctx context.Context, have string, lacking ...string) (map[string]int64, error) {

@@ -351,8 +351,11 @@ func TestIdentifyingAFilmAsASeriesMovesItAndItsRank(t *testing.T) {
 	if _, kept := claimsStored(t, d)["tmdb:603"]; kept {
 		t.Error("the tmdb claim stayed")
 	}
-	if answer := claimData(t, d, "ap:match/tmdb-tv/tmdb:603"); !reflect.DeepEqual(answer, map[string]any{"to": "94028"}) {
+	if answer := claimData(t, d, "ap:match/tmdb-tv/tmdb-tv:94028"); !reflect.DeepEqual(answer, map[string]any{"to": "94028"}) {
 		t.Errorf("answer = %v", answer)
+	}
+	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "603"); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("tmdb:603 still belongs to %d, %v", owner, err)
 	}
 	removed, err := s.Observations(ctx, ripley, kind.SourceTMDB, "claim-removed")
 	if err != nil {
