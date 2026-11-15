@@ -1,7 +1,7 @@
 'use server'
 
 import { requireAdmin } from '../../lib/admin/require-admin'
-import { logAdmin } from '../../lib/log/admin-api'
+import { LogApiError, logAdmin } from '../../lib/log/admin-api'
 import { itemPath, textField } from '../../lib/log/present'
 import { LETTERBOXD_EXPORT_FIELD } from '../../lib/log/syncs'
 import type {
@@ -200,22 +200,33 @@ export async function importLetterboxdExport(form: FormData) {
   return logAdmin.importLetterboxdExport(await archive.arrayBuffer())
 }
 
+export type Saved<T> = { saved: T } | { refused: string }
+
+const refusedByTheLog = async <T>(save: () => Promise<T>): Promise<Saved<T>> => {
+  try {
+    return { saved: await save() }
+  } catch (error) {
+    if (error instanceof LogApiError) return { refused: error.message }
+    throw error
+  }
+}
+
 export async function saveAxes(axes: Axis[]) {
   await requireAdmin()
-  return logAdmin.putAxes(axes)
+  return refusedByTheLog(() => logAdmin.putAxes(axes))
 }
 
 export async function saveKindSettings(kind: string, settings: KindSettings) {
   await requireAdmin()
-  return logAdmin.putKindSettings(kind, settings)
+  return refusedByTheLog(() => logAdmin.putKindSettings(kind, settings))
 }
 
 export async function saveTagTitles(titles: Record<string, string>) {
   await requireAdmin()
-  return logAdmin.putTagTitles(titles)
+  return refusedByTheLog(() => logAdmin.putTagTitles(titles))
 }
 
 export async function saveKindOrder(order: string[]) {
   await requireAdmin()
-  return logAdmin.putKindOrder(order)
+  return refusedByTheLog(() => logAdmin.putKindOrder(order))
 }

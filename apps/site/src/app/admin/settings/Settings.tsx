@@ -17,6 +17,7 @@ import type {
 import { DEFAULT_VIEWS, FIELD_USES, READ_FROM_BY_SORT } from '../../../lib/log/types'
 import { sortOf } from '../../../lib/log/types'
 import { saveAxes, saveKindOrder, saveKindSettings, saveTagTitles } from '../actions'
+import type { Saved } from '../actions'
 import editor from '../entries/editor.module.css'
 import styles from './settings.module.css'
 
@@ -39,12 +40,17 @@ type Save =
   | { state: 'saved' }
   | { state: 'failed'; error: string }
 
-const useSave = <T,>(store: (value: T) => Promise<T>) => {
+const useSave = <T,>(store: (value: T) => Promise<Saved<T>>) => {
   const [save, setSave] = useState<Save>({ state: 'unchanged' })
   const run = async (value: T, settle: (saved: T) => void) => {
     setSave({ state: 'saving' })
     try {
-      settle(await store(value))
+      const result = await store(value)
+      if ('refused' in result) {
+        setSave({ state: 'failed', error: result.refused })
+        return
+      }
+      settle(result.saved)
       setSave({ state: 'saved' })
     } catch (error) {
       setSave({ state: 'failed', error: String(error) })
