@@ -128,4 +128,7 @@ func TestSteamProposerReadsStoredRecords(t *testing.T) {
 	if Proposer.Source != "steam" {
 		t.Errorf("source = %s", Proposer.Source)
 	}
+	if _, err := rule.Run(ctx, d, Proposer, "public"); err != nil {
+		t.Errorf("running the proposals = %v", err)
+	}
 }

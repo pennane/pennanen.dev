@@ -98,4 +98,7 @@ func TestLetterboxdProposerReadsStoredRecords(t *testing.T) {
 	if Proposer.Source != "letterboxd" {
 		t.Errorf("source = %s", Proposer.Source)
 	}
+	if _, err := rule.Run(ctx, d, Proposer, "public"); err != nil {
+		t.Errorf("running the proposals = %v", err)
+	}
 }
