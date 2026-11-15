@@ -424,3 +424,21 @@ func TestTheDismissalFilterListsOnlyDismissedItems(t *testing.T) {
 		t.Errorf("kept filter error = %v", err)
 	}
 }
+
+func TestKeepingAnItemThatWasNeverDismissedChangesNothing(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	id := handMadeGame(t, s, "Hades")
+	kept := store.Kept
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{Dismissal: &kept}); err != nil {
+		t.Fatal(err)
+	}
+	v, err := s.GetItem(ctx, id)
+	if err != nil || v.DismissedAt != "" || v.Entry == nil {
+		t.Fatalf("kept item = %+v, %v", v, err)
+	}
+	shown, err := s.ListItems(ctx, store.ItemFilter{Kind: kind.Game})
+	if err != nil || len(shown) != 1 {
+		t.Fatalf("shown = %+v, %v", shown, err)
+	}
+}

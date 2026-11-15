@@ -185,6 +185,7 @@ export const Triage = ({
     saves.enqueue(`undo ${last.cards.length}`, () =>
       changeEntries(ids, {
         status: UNTRIAGED,
+        dismissal: 'kept',
         scores: { [PRESTIGE]: null },
         removeTags: TRIAGE_TAGS.map((t) => t.tag)
       })
