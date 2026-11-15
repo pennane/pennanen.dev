@@ -28,7 +28,7 @@ func init() {
 	register(Kind{
 		Name:             Artist,
 		DefaultTitle:     "artists",
-		Statuses:         []string{Listening, Listened},
+		Statuses:         []string{Untriaged, Listening, Listened},
 		StatusesToScore:  []string{Listening, Listened},
 		StatusesShown:    []string{Listening, Listened},
 		DefaultAxes:      []string{Prestige, Quality},
