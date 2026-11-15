@@ -7,14 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"unicode"
-
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 )
 
 type Store struct {
@@ -115,19 +111,7 @@ func insertItem(ctx context.Context, q queryer, kindName, title string) (int64, 
 }
 
 func freeSlug(ctx context.Context, q queryer, kindName, base string) (string, error) {
-	for attempt := 1; ; attempt++ {
-		slug := base
-		if attempt > 1 {
-			slug = fmt.Sprintf("%s-%d", base, attempt)
-		}
-		var taken int
-		if err := q.QueryRowContext(ctx, `SELECT count(*) FROM item WHERE kind = ? AND slug = ?`, kindName, slug).Scan(&taken); err != nil {
-			return "", err
-		}
-		if taken == 0 {
-			return slug, nil
-		}
-	}
+	return world.FreeSlug(ctx, q, kindName, base)
 }
 
 func ensureEntry(ctx context.Context, q queryer, itemID int64, statusSetBy string) error {
@@ -135,27 +119,8 @@ func ensureEntry(ctx context.Context, q queryer, itemID int64, statusSetBy strin
 	return err
 }
 
-const untitled = "untitled"
-
 func Slugify(title string) string {
-	withoutAccents, _, _ := transform.String(transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC), title)
-	var b strings.Builder
-	lastWasDash := true
-	for _, r := range strings.ToLower(withoutAccents) {
-		switch {
-		case r < unicode.MaxASCII && (unicode.IsLetter(r) || unicode.IsDigit(r)):
-			b.WriteRune(r)
-			lastWasDash = false
-		case !lastWasDash:
-			b.WriteRune('-')
-			lastWasDash = true
-		}
-	}
-	slug := strings.TrimSuffix(b.String(), "-")
-	if slug == "" {
-		return untitled
-	}
-	return slug
+	return world.Slugify(title)
 }
 
 func (s *Store) FindByIdentity(ctx context.Context, source, externalID string) (int64, error) {
