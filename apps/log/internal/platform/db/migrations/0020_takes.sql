@@ -107,7 +107,15 @@ INSERT INTO tag_choice (item_id, tag, presence, chosen_at)
 
 CREATE TEMP TABLE watched_shelf AS
   SELECT e.item_id,
-         k.source || ':' || k.external_id AS take_external_id,
+         coalesce(
+           (SELECT c.external_id
+            FROM item_identity i
+            JOIN record_claim c ON c.source = i.source AND c.external_id = i.external_id
+            WHERE i.item_id = e.item_id AND i.source = 'letterboxd-take'
+            ORDER BY c.fetched_at DESC, c.external_id
+            LIMIT 1),
+           k.source || ':' || k.external_id
+         ) AS take_external_id,
          substr(e.updated_at, 1, 10) AS since,
          e.updated_at
   FROM entry e
