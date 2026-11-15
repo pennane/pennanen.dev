@@ -91,3 +91,35 @@ func TestAnIdentityAnotherItemHasIsRefused(t *testing.T) {
 		t.Errorf("the series changed: %s", v.Kind)
 	}
 }
+
+func TestASeriesWhoseStatusAFilmCannotHaveIsNotMovedToFilms(t *testing.T) {
+	ctx := context.Background()
+	s, d := openStoreWithDB(t)
+	series, err := s.CreateItemFromSource(ctx, kind.Series, "Ripley", kind.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028,"name":"Ripley"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ChangeEntry(ctx, series, store.EntryChange{Status: ptr(kind.Dropped)}); err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.Identify(ctx, series, store.Identity{Kind: kind.Movie, Source: kind.SourceTMDB, ExternalID: "603", Data: json.RawMessage(matrix)},
+		[]string{kind.SourceTMDB, kind.SourceTMDBSeries})
+	if !errors.Is(err, store.ErrInvalid) {
+		t.Fatalf("err = %v, want ErrInvalid", err)
+	}
+
+	v, err := s.GetItem(ctx, series)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.Kind != kind.Series || v.Entry.Status != kind.Dropped {
+		t.Errorf("item = %s with status %s", v.Kind, v.Entry.Status)
+	}
+	if _, kept := claimsStored(t, d)["tmdb-tv:94028"]; !kept {
+		t.Error("the tmdb-tv claim was removed")
+	}
+	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDBSeries, "94028"); err != nil || owner != series {
+		t.Errorf("tmdb-tv:94028 belongs to %d, %v", owner, err)
+	}
+}
