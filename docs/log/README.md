@@ -3,20 +3,33 @@
 A log of things ap has seen — games first, then whatever else. Mainly for ap,
 partly public at `/log`. Words: [GLOSSARY](./GLOSSARY.md). Decisions: [adr/](./adr).
 
-## v1
+The service is Go in `apps/log`, deployed to `/opt/log`, with
+`api.log.pennanen.dev` → `:3005` ([ADR 1](./adr/0001-one-binary-on-the-vps.md)).
+Admin and public pages are in `apps/site` ([ADR 2](./adr/0002-next-renders-go-resolves.md)).
 
-1. **Service** — Go in `log/`: SQLite, REST, kind `game`,
-   verdicts, public read endpoints, nightly R2 backup, nightly Steam sync with
-   idle hints. Deployed to `/opt/log`, `api.log.pennanen.dev` → `:3005`.
-2. **Identity** — IGDB matching for games; manual-match queue for misses ([ADR 10](./adr/0010-igdb.md)).
-3. **Admin** — `/admin` PWA: triage (with bulk actions) first, then the
-   add-anything search box with one-tap prestige, then entry editing.
-4. **Public** — `/log`, `/log/<kind>`, `/log/<kind>/<slug>` for games and movies with ap's prose ([ADR 14](./adr/0014-prose-replaces-moments.md)).
-5. **Ranks** — prestige divisions and a strict order per kind ([ADR 12](./adr/0012-divisions-and-ranks.md)); axes set in admin ([ADR 13](./adr/0013-axes-as-data.md)).
-6. **Rating** — public by default, triage then rate ([ADR 9](./adr/0009-public-by-default.md)); what shows and how is set in admin ([ADR 11](./adr/0011-presentation-settings.md)).
+## The model
+
+Five layers, each reading only those below ([ADR 3](./adr/0003-the-layered-model.md)):
+
+1. **Records** — what sources said, kept as received ([ADR 4](./adr/0004-records-are-lossless.md)).
+2. **World** — items, their kinds, fields and links, derived from records
+   ([ADR 5](./adr/0005-kinds-are-code.md), [ADR 9](./adr/0009-links.md)).
+3. **Takes** — what ap decided; the only thing ap writes ([ADR 6](./adr/0006-takes-are-irreplaceable.md)).
+   Scoring is part of it ([ADR 8](./adr/0008-scoring.md)).
+4. **Rules** — proposals from evidence; the newest word wins ([ADR 7](./adr/0007-proposals-and-the-newest-word.md)).
+5. **Presentation** — what each public page shows, stored ([ADR 10](./adr/0010-presentation-is-a-stored-projection.md)).
+
+## Sources
+
+- **Steam** — the game library, playtime, achievements, ap's reviews.
+- **IGDB** — game identity, titles, dates, genres, developers, pictures.
+- **TMDB** — film and series identity, credits, pictures.
+- **Letterboxd** — ap's films: diary, ratings, watchlist; export ZIP for the rest.
+- **Spotify** — top lists, plays, saved albums; artists, albums, tracks.
 
 ## Later
 
-`want` status · `person` kind and redacting private items on public pages ·
-`tabletop` (BoardGameGeek) · wine · books · music · relations on public pages ·
-importers beyond Steam · offline support.
+`want` beyond films · `person` kind · tabletop · wine · books · offline support.
+
+The ADRs were rewritten and renumbered on 2026-11-15; the old set is in git
+history (`git log -- docs/log/adr`).
