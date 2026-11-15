@@ -28,15 +28,15 @@ func weighed(points map[string]float64) float64 {
 }
 
 func listeningWeights(ctx context.Context, st *store.Store) (albums, artists map[int64]float64, err error) {
-	trackPoints, err := st.TopListPoints(ctx, ObservationSource, SignalTopTrack)
+	trackPoints, err := st.TopListPoints(ctx, ObservationSource, record.SignalTopTrack)
 	if err != nil {
 		return nil, nil, err
 	}
-	artistPoints, err := st.TopListPoints(ctx, ObservationSource, SignalTopArtist)
+	artistPoints, err := st.TopListPoints(ctx, ObservationSource, record.SignalTopArtist)
 	if err != nil {
 		return nil, nil, err
 	}
-	plays, err := st.ObservationCounts(ctx, ObservationSource, SignalPlay)
+	plays, err := st.ObservationCounts(ctx, ObservationSource, record.SignalPlay)
 	if err != nil {
 		return nil, nil, err
 	}

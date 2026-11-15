@@ -37,15 +37,15 @@ func changesTheLog(outcome store.StatusOutcome) bool {
 }
 
 func computeAlbumStatuses(ctx context.Context, st *store.Store, p *syncs.Progress) error {
-	saved, err := st.ItemsObserved(ctx, ObservationSource, SignalSaved)
+	saved, err := st.ItemsObserved(ctx, ObservationSource, record.SignalSaved)
 	if err != nil {
 		return err
 	}
-	inTopTracks, err := st.ItemsObserved(ctx, ObservationSource, SignalTopTrack)
+	inTopTracks, err := st.ItemsObserved(ctx, ObservationSource, record.SignalTopTrack)
 	if err != nil {
 		return err
 	}
-	played, err := st.ItemsObserved(ctx, ObservationSource, SignalPlay)
+	played, err := st.ItemsObserved(ctx, ObservationSource, record.SignalPlay)
 	if err != nil {
 		return err
 	}
@@ -61,12 +61,12 @@ func computeAlbumStatuses(ctx context.Context, st *store.Store, p *syncs.Progres
 }
 
 func computeArtistStatuses(ctx context.Context, st *store.Store, p *syncs.Progress) error {
-	shortTermPrefix := fmt.Sprintf("%s:%s:", SignalTopArtist, ShortTerm)
-	listening, err := st.ItemsInNewestSnapshot(ctx, ObservationSource, SignalTopArtist, shortTermPrefix)
+	shortTermPrefix := fmt.Sprintf("%s:%s:", record.SignalTopArtist, ShortTerm)
+	listening, err := st.ItemsInNewestSnapshot(ctx, ObservationSource, record.SignalTopArtist, shortTermPrefix)
 	if err != nil {
 		return err
 	}
-	everListed, err := st.ItemsObserved(ctx, ObservationSource, SignalTopArtist)
+	everListed, err := st.ItemsObserved(ctx, ObservationSource, record.SignalTopArtist)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func computeArtistStatuses(ctx context.Context, st *store.Store, p *syncs.Progre
 	if err != nil {
 		return err
 	}
-	saved, err := st.ItemsObserved(ctx, ObservationSource, SignalSaved)
+	saved, err := st.ItemsObserved(ctx, ObservationSource, record.SignalSaved)
 	if err != nil {
 		return err
 	}

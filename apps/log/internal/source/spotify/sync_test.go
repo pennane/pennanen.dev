@@ -648,7 +648,7 @@ func TestAnArtistApTaggedBeforeAnySyncStillGetsItsComputedStatus(t *testing.T) {
 	if err := h.store.ChangeEntry(context.Background(), z, store.EntryChange{AddTags: []string{"favorite"}}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.store.Observe(context.Background(), store.Observation{ItemID: z, Source: spotify.ObservationSource, Signal: spotify.SignalTopArtist, Key: "top-artist:long_term:2026-11-15:Z", ObservedAt: "2026-11-15T03:00:00Z", Data: json.RawMessage(`{}`)}); err != nil {
+	if _, err := h.store.Observe(context.Background(), store.Observation{ItemID: z, Source: spotify.ObservationSource, Signal: record.SignalTopArtist, Key: "top-artist:long_term:2026-11-15:Z", ObservedAt: "2026-11-15T03:00:00Z", Data: json.RawMessage(`{}`)}); err != nil {
 		t.Fatal(err)
 	}
 	h.run(t)
@@ -757,7 +757,7 @@ func TestASavedAlbumIsWantedUntilHeard(t *testing.T) {
 	fake.shortTermTracks = `[]`
 	h.day = "2026-11-17"
 	h.run(t)
-	if got := h.observations(t, s, spotify.SignalUnsaved); len(got) != 1 {
+	if got := h.observations(t, s, record.SignalUnsaved); len(got) != 1 {
 		t.Fatalf("unsaved = %+v", got)
 	}
 	if status, setBy := h.status(t, s); status != kind.Listened || setBy != record.SourceSpotify {

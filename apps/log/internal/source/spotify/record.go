@@ -23,12 +23,6 @@ const (
 	CountPlays     = "plays"
 	CountSaves     = "saves"
 	CountUnsaves   = "unsaves"
-
-	SignalTopArtist = "top-artist"
-	SignalTopTrack  = "top-track"
-	SignalPlay      = "play"
-	SignalSaved     = "saved"
-	SignalUnsaved   = "unsaved"
 )
 
 type Detail int

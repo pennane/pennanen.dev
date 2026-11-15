@@ -20,8 +20,6 @@ const (
 	CountStatusesFollowed = "statuses-followed"
 	CountWatchesObserved  = "watches-observed"
 	CountTagsFollowed     = "tags-followed"
-
-	SignalWatched = "watched"
 )
 
 var statusOn = map[Shelf]string{
@@ -228,7 +226,7 @@ func (r *Recorder) observe(ctx context.Context, p *syncs.Progress, itemID int64,
 	outcome, err := r.Store.Observe(ctx, store.Observation{
 		ItemID:     itemID,
 		Source:     record.SourceLetterboxd,
-		Signal:     SignalWatched,
+		Signal:     record.SignalWatched,
 		Key:        fmt.Sprintf("item/%d/watched/%s", itemID, entry.WatchedOn),
 		ObservedAt: entry.WatchedOn,
 		Data:       data,

@@ -20,3 +20,12 @@ const (
 	SourceTMDB              = "tmdb"
 	SourceTMDBSeries        = "tmdb-tv"
 )
+
+const (
+	SignalTopArtist = "top-artist"
+	SignalTopTrack  = "top-track"
+	SignalPlay      = "play"
+	SignalSaved     = "saved"
+	SignalUnsaved   = "unsaved"
+	SignalWatched   = "watched"
+)
