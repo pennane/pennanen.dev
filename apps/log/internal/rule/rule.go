@@ -76,23 +76,21 @@ func Run(ctx context.Context, d *sql.DB, p Proposer, visibility string) (Report,
 		return Report{}, err
 	}
 	defer tx.Rollback()
-	proposals, err := p.Propose(ctx, tx)
-	if err != nil {
-		return Report{}, err
-	}
 	var report Report
 	var stored []Proposal
-	for _, proposal := range proposals {
-		if proposal.Subject != SubjectEntry {
-			stored = append(stored, proposal)
-			continue
-		}
-		outcome, err := logUnlessDismissed(ctx, tx, proposal, visibility)
+	for {
+		proposals, err := p.Propose(ctx, tx)
 		if err != nil {
 			return Report{}, err
 		}
-		if outcome == entryLogged {
-			report.Logged = append(report.Logged, proposal.ItemID)
+		var newlyLogged []int64
+		stored, newlyLogged, err = logEntries(ctx, tx, proposals, visibility)
+		if err != nil {
+			return Report{}, err
+		}
+		report.Logged = append(report.Logged, newlyLogged...)
+		if len(newlyLogged) == 0 {
+			break
 		}
 	}
 	if _, err := tx.ExecContext(ctx, `DELETE FROM proposal WHERE source = ?`, p.Source); err != nil {
@@ -105,6 +103,25 @@ func Run(ctx context.Context, d *sql.DB, p Proposer, visibility string) (Report,
 	}
 	report.Proposals = len(stored)
 	return report, tx.Commit()
+}
+
+func logEntries(ctx context.Context, q record.Queryer, proposals []Proposal, visibility string) ([]Proposal, []int64, error) {
+	var stored []Proposal
+	var newlyLogged []int64
+	for _, proposal := range proposals {
+		if proposal.Subject != SubjectEntry {
+			stored = append(stored, proposal)
+			continue
+		}
+		outcome, err := logUnlessDismissed(ctx, q, proposal, visibility)
+		if err != nil {
+			return nil, nil, err
+		}
+		if outcome == entryLogged {
+			newlyLogged = append(newlyLogged, proposal.ItemID)
+		}
+	}
+	return stored, newlyLogged, nil
 }
 
 type entryOutcome string

@@ -206,3 +206,26 @@ func TestADuplicateProposalFailsTheRunAndKeepsThePreviousOnes(t *testing.T) {
 		t.Fatalf("kept = %q, %v", kept, err)
 	}
 }
+
+func TestARuleSeesTheEntriesItsOwnRunLogged(t *testing.T) {
+	ctx, d := openLog(t)
+	addItem(t, d, 1)
+	hintsLoggedItems := rule.Proposer{Source: "a", Propose: func(ctx context.Context, q record.Queryer) ([]rule.Proposal, error) {
+		proposals := []rule.Proposal{{ItemID: 1, Rule: "ra", Subject: rule.SubjectEntry, Value: rule.EntryLogged, Strength: rule.Applying}}
+		var logged int
+		if err := q.QueryRowContext(ctx, `SELECT count(*) FROM entry WHERE item_id = 1`).Scan(&logged); err != nil {
+			return nil, err
+		}
+		if logged == 1 {
+			proposals = append(proposals, rule.Proposal{ItemID: 1, Rule: "ra", Subject: rule.SubjectTag, Value: "hinted", Strength: rule.Suggesting})
+		}
+		return proposals, nil
+	}}
+	report, err := rule.Run(ctx, d, hintsLoggedItems, "public")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := countProposals(t, d, "a"); got != 1 || len(report.Logged) != 1 || report.Proposals != 1 {
+		t.Fatalf("one run left %d proposals, report %+v", got, report)
+	}
+}
