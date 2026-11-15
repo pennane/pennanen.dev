@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/take"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"slices"
@@ -156,23 +157,26 @@ func chooseStatus(ctx context.Context, tx *sql.Tx, itemID int64, status, at stri
 	if status == kind.Untriaged {
 		return take.WithdrawStatusChoice(ctx, tx, itemID)
 	}
-	choices, err := take.StatusChoices(ctx, tx, []int64{itemID})
-	if err != nil {
+	var decided, decidedBy string
+	if err := tx.QueryRowContext(ctx, `SELECT status, decided_by FROM entry_status WHERE item_id = ?`, itemID).Scan(&decided, &decidedBy); err != nil {
 		return err
 	}
-	if current, chosen := choices[itemID]; chosen && current.Status == status {
+	if decided == status && decidedBy == record.SourceAP {
 		return nil
 	}
 	return take.ChooseStatus(ctx, tx, itemID, status, at)
 }
 
 func chooseTag(ctx context.Context, tx *sql.Tx, itemID int64, tag string, presence take.TagPresence, at string) error {
-	var current take.TagPresence
-	err := tx.QueryRowContext(ctx, `SELECT presence FROM tag_choice WHERE item_id = ? AND tag = ?`, itemID, tag).Scan(&current)
-	switch {
-	case err != nil && !isNoRows(err):
+	newest, saidBy := take.TagRemoved, take.Nobody
+	err := tx.QueryRowContext(ctx, `
+		SELECT presence, said_by FROM tag_word WHERE item_id = ? AND tag = ?
+		ORDER BY coalesce(said_at, '') DESC, said_by = ? DESC, said_by LIMIT 1`,
+		itemID, tag, record.SourceAP).Scan(&newest, &saidBy)
+	if err != nil && !isNoRows(err) {
 		return err
-	case current == presence:
+	}
+	if newest == presence && (saidBy == record.SourceAP || saidBy == take.Nobody) {
 		return nil
 	}
 	return take.ChooseTag(ctx, tx, itemID, tag, presence, at)

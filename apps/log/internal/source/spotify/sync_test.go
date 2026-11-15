@@ -467,6 +467,12 @@ func TestArtistsAreLoggedFromTopLists(t *testing.T) {
 	fake.topArtists["long_term"] = "[" + fullX + "," + fullY + "]"
 	h.day = "2026-11-16"
 	h.run(t)
+	t.Run("X after an empty four weeks is listened", func(t *testing.T) {
+		t.Skip("waits for Task 5: an empty short-term list stores no observation, so the rule never sees the snapshot X dropped out of")
+		if status, _ := h.status(t, x); status != kind.Listened {
+			t.Fatalf("X after an empty four weeks = %s, want listened", status)
+		}
+	})
 	if status, _ := h.status(t, y); status != kind.Listened {
 		t.Fatalf("Y stays logged as %s", status)
 	}

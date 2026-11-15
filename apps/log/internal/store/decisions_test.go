@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	longerAgo = "2019-01-01T00:00:00Z"
 	longAgo   = "2020-01-01T00:00:00Z"
 	farAhead  = "2999-01-01T00:00:00Z"
 	ruleLists = "lists"
@@ -208,7 +209,7 @@ func TestDismissingKeepsTheEntryButHidesIt(t *testing.T) {
 func TestTagsFromRulesAreReportedApart(t *testing.T) {
 	ctx := context.Background()
 	var id int64
-	s, _ := openStoreProposing(t, saying(func() []rule.Proposal {
+	s, d := openStoreProposing(t, saying(func() []rule.Proposal {
 		return []rule.Proposal{{ItemID: id, Rule: ruleLists, Subject: rule.SubjectTag, Value: kind.TagAnotherShot, Strength: rule.Applying, ChangedAt: longAgo}}
 	}))
 	id = handMadeGame(t, s, "Hades")
@@ -237,16 +238,40 @@ func TestTagsFromRulesAreReportedApart(t *testing.T) {
 	if !slices.Equal(e.Tags, []string{"comfort"}) || len(e.TagsFromRules) != 0 {
 		t.Errorf("after ap removed the rule's tag: %v, %v", e.Tags, e.TagsFromRules)
 	}
+
+	if _, err := d.Exec(`UPDATE tag_choice SET chosen_at = ? WHERE item_id = ? AND tag = ?`, longerAgo, id, kind.TagAnotherShot); err != nil {
+		t.Fatal(err)
+	}
+	if e := entryOf(t, s, id); !slices.Contains(e.Tags, kind.TagAnotherShot) {
+		t.Fatalf("a newer rule did not put the tag back: %v", e.Tags)
+	}
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{RemoveTags: []string{kind.TagAnotherShot}}); err != nil {
+		t.Fatal(err)
+	}
+	if e := entryOf(t, s, id); slices.Contains(e.Tags, kind.TagAnotherShot) {
+		t.Errorf("removing again left the rule's newer tag: %v", e.Tags)
+	}
+
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{RemoveTags: []string{"never-had"}}); err != nil {
+		t.Fatal(err)
+	}
+	var stored int
+	if err := d.QueryRow(`SELECT count(*) FROM tag_choice WHERE item_id = ? AND tag = 'never-had'`, id).Scan(&stored); err != nil || stored != 0 {
+		t.Errorf("removing a tag the entry never had stored %d choices, %v", stored, err)
+	}
 }
 
 func TestTheEditorSeesWhenTheListsDisagree(t *testing.T) {
 	ctx := context.Background()
 	var artist int64
 	s, d := openStoreProposing(t, saying(func() []rule.Proposal {
-		return []rule.Proposal{applyingStatus(artist, kind.Listening, farAhead)}
+		return []rule.Proposal{applyingStatus(artist, kind.Listening, longAgo)}
 	}))
 	artist = knowArtist(t, s, "x", "Pendulum")
 	if err := s.ChangeEntry(ctx, artist, store.EntryChange{Status: ptr(kind.Listened)}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.Exec(`UPDATE status_choice SET chosen_at = ? WHERE item_id = ?`, longerAgo, artist); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.ProposeAll(ctx); err != nil {
@@ -259,9 +284,15 @@ func TestTheEditorSeesWhenTheListsDisagree(t *testing.T) {
 	if e.StatusChoice == nil || e.StatusChoice.Status != kind.Listened || e.StatusChoice.Standing != store.ChoiceOutvoted {
 		t.Errorf("choice = %+v", e.StatusChoice)
 	}
-	want := []store.StatusProposal{{Rule: ruleLists, Value: kind.Listening, ChangedAt: farAhead}}
+	want := []store.StatusProposal{{Rule: ruleLists, Value: kind.Listening, ChangedAt: longAgo}}
 	if !slices.Equal(e.StatusProposals, want) {
 		t.Errorf("proposals = %+v, want %+v", e.StatusProposals, want)
+	}
+	if err := s.ChangeEntry(ctx, artist, store.EntryChange{Status: ptr(kind.Listened)}); err != nil {
+		t.Fatal(err)
+	}
+	if e := entryOf(t, s, artist); e.Status != kind.Listened || e.StatusChoice == nil || e.StatusChoice.Standing != store.ChoiceDecides {
+		t.Errorf("re-picking an outvoted choice: %s, %+v", e.Status, e.StatusChoice)
 	}
 
 	game := handMadeGame(t, s, "Moved Here")

@@ -57,6 +57,12 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 		_, err := r.Shelve(ctx, p, memento, letterboxd.WatchlistShelf)
 		return err
 	})
+	t.Run("heat back on the watchlist is watched with another shot", func(t *testing.T) {
+		t.Skip("waits for Task 5: the recorder does not write onWatchedShelfSince, so a shelved film without a diary date is not watched")
+		if e := entryOf("bbb2"); e.Status != kind.Watched || !slices.Contains(e.Tags, kind.TagAnotherShot) || e.TagsFromRules[kind.TagAnotherShot] != letterboxd.RuleLetterboxd {
+			t.Fatalf("heat back on the watchlist: %+v", e)
+		}
+	})
 	if e := entryOf("ccc3"); e.Status != kind.Want || len(e.Tags) != 0 {
 		t.Errorf("an unwatched film on the watchlist is wanted, not another shot: %+v", e)
 	}
@@ -74,6 +80,12 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 	if e := entryOf("bbb2"); slices.Contains(e.Tags, kind.TagAnotherShot) {
 		t.Errorf("rewatched, still another shot: %+v %+v", e, report)
 	}
+	t.Run("the rewatch counts the tag it followed", func(t *testing.T) {
+		t.Skip("waits for Task 5: the sync counts tags through SetTagFromSource, a shim until the sync reports its rules' work")
+		if report.Counts[letterboxd.CountTagsFollowed] != 1 {
+			t.Errorf("tags followed = %+v", report)
+		}
+	})
 
 	heatID := item(t, s, "bbb2").ID
 	if err := s.ChangeEntry(ctx, heatID, store.EntryChange{AddTags: []string{kind.TagAnotherShot}}); err != nil {
@@ -204,6 +216,12 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 	if v, _ := s.GetItem(ctx, ripley); v.Kind != kind.Series || v.Entry == nil {
 		t.Errorf("ripley: %s %+v", v.Kind, v.Entry)
 	}
+	t.Run("ripley shelved watched is watched", func(t *testing.T) {
+		t.Skip("waits for Task 5: the recorder does not write onWatchedShelfSince, so a shelved film without a diary date is not watched")
+		if v, _ := s.GetItem(ctx, ripley); v.Entry.Status != kind.Watched {
+			t.Errorf("ripley: %+v", v.Entry)
+		}
+	})
 	twinPeaks, _ := s.FindByIdentity(ctx, record.SourceLetterboxd, "twp1")
 	v, _ := s.GetItem(ctx, twinPeaks)
 	var claim reading.LetterboxdFilm

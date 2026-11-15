@@ -162,6 +162,12 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	if memento := item(t, s, "ccc3"); memento.Takes[0].Values["reaction"] != "liked" {
 		t.Errorf("watched off the watchlist: %+v %+v", memento.Entry, memento.Takes)
 	}
+	t.Run("memento watched off the watchlist is watched", func(t *testing.T) {
+		t.Skip("waits for Task 5: the recorder does not write onWatchedShelfSince, so a shelved film without a diary date is not watched")
+		if memento := item(t, s, "ccc3"); memento.Entry.Status != kind.Watched {
+			t.Errorf("watched off the watchlist: %+v", memento.Entry)
+		}
+	})
 	if stalker := item(t, s, "aaa1"); stalker.Entry.Status != kind.Watched || stalker.Entry.TagsFromRules[kind.TagAnotherShot] != letterboxd.RuleLetterboxd {
 		t.Errorf("a watched film on the watchlist: %+v", stalker.Entry)
 	}
