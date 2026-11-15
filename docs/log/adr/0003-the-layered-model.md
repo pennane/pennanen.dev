@@ -33,6 +33,18 @@ The log is five layers:
   touches **dirty**; one derivation pass rederives each dirty item and its
   one-step neighbours through links, then reruns rules and the projection
   for them.
+- Items are part of the world, derived like everything else in it. An
+  **item** is the records that share an **identity**. It has a stable id
+  and slug and a set of identities; identities that arrive later, like an
+  IGDB match on a Steam game, join the set without changing either.
+  **Matching** links records across sources: a sure match is derived, an
+  unsure one is a suggesting proposal ([ADR 7](./0007-proposals-and-the-newest-word.md)),
+  and ap's answer is a take. An item's **kind** is derived too, so a film
+  found to be a series **moves**, keeping its id and entry.
+- Two items found to share an identity are one item. The one whose entry
+  was edited last keeps its id and slug; the other's entry is parked and
+  proposed for **merging** in triage. Yes folds it in, no keeps the items
+  apart for good. Nothing is lost either way.
 - A full **rebuild** runs at start, before serving, only when a derive,
   reader, rule or projection version changes, in batches with one
   transaction each.
