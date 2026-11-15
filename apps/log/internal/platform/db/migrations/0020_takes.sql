@@ -105,6 +105,23 @@ INSERT INTO tag_choice (item_id, tag, presence, chosen_at)
   FROM tag
   WHERE added_by = 'ap';
 
+CREATE TEMP TABLE only_on_watchlist AS
+  SELECT i.item_id
+  FROM item_identity i
+  JOIN record_claim c ON c.source = i.source AND c.external_id = i.external_id
+  WHERE i.source = 'letterboxd-take'
+  GROUP BY i.item_id
+  HAVING max(json_extract(c.data, '$.onWatchlistSince') IS NOT NULL) = 1
+     AND max(coalesce(json_extract(c.data, '$.lastWatched'), json_extract(c.data, '$.rating'), json_extract(c.data, '$.reaction')) IS NOT NULL) = 0;
+
+CREATE TEMP TABLE ap_chose_for_a_shelved_film AS
+  SELECT e.item_id
+  FROM entry e
+  WHERE e.status_set_by = 'ap'
+    AND e.status NOT IN ('untriaged', 'dismissed')
+    AND EXISTS (SELECT 1 FROM item_identity l WHERE l.item_id = e.item_id AND l.source = 'letterboxd')
+    AND NOT (e.status = 'want' AND e.item_id IN (SELECT item_id FROM only_on_watchlist));
+
 CREATE TEMP TABLE watched_shelf AS
   SELECT e.item_id,
          coalesce(
@@ -120,7 +137,8 @@ CREATE TEMP TABLE watched_shelf AS
          e.updated_at
   FROM entry e
   JOIN item_identity k ON k.id = (SELECT min(id) FROM item_identity WHERE item_id = e.item_id)
-  WHERE e.status_set_by = 'letterboxd' AND e.status = 'watched';
+  WHERE (e.status_set_by = 'letterboxd' AND e.status = 'watched')
+     OR e.item_id IN (SELECT item_id FROM ap_chose_for_a_shelved_film);
 
 UPDATE record_claim
   SET data = json_set(data, '$.onWatchedShelfSince', (
@@ -145,6 +163,10 @@ DELETE FROM record_reading
     AND external_id IN (SELECT take_external_id FROM watched_shelf);
 
 DROP TABLE watched_shelf;
+
+DROP TABLE ap_chose_for_a_shelved_film;
+
+DROP TABLE only_on_watchlist;
 
 ALTER TABLE entry DROP COLUMN status;
 
