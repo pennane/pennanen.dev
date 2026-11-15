@@ -85,11 +85,11 @@ func Run(ctx context.Context, d *sql.DB, p Proposer, visibility string) (Report,
 			stored = append(stored, proposal)
 			continue
 		}
-		newlyLogged, err := logUnlessDismissed(ctx, tx, proposal, visibility)
+		outcome, err := logUnlessDismissed(ctx, tx, proposal, visibility)
 		if err != nil {
 			return Report{}, err
 		}
-		if newlyLogged {
+		if outcome == entryLogged {
 			report.Logged = append(report.Logged, proposal.ItemID)
 		}
 	}
@@ -105,14 +105,31 @@ func Run(ctx context.Context, d *sql.DB, p Proposer, visibility string) (Report,
 	return report, tx.Commit()
 }
 
-func logUnlessDismissed(ctx context.Context, q record.Queryer, proposal Proposal, visibility string) (bool, error) {
+type entryOutcome string
+
+const (
+	entryLogged    entryOutcome = "logged"
+	entryKept      entryOutcome = "kept"
+	entryDismissed entryOutcome = "dismissed"
+)
+
+func logUnlessDismissed(ctx context.Context, q record.Queryer, proposal Proposal, visibility string) (entryOutcome, error) {
 	var dismissed int
-	err := q.QueryRowContext(ctx, `SELECT count(*) FROM dismissal WHERE item_id = ?`, proposal.ItemID).Scan(&dismissed)
-	if err != nil || dismissed > 0 {
-		return false, err
+	err := q.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM dismissal WHERE item_id = ?)`, proposal.ItemID).Scan(&dismissed)
+	if err != nil {
+		return "", err
+	}
+	if dismissed == 1 {
+		return entryDismissed, nil
 	}
 	logging, err := take.Log(ctx, q, proposal.ItemID, proposal.Rule, visibility)
-	return logging == take.NewlyLogged, err
+	if err != nil {
+		return "", err
+	}
+	if logging == take.NewlyLogged {
+		return entryLogged, nil
+	}
+	return entryKept, nil
 }
 
 func insert(ctx context.Context, q record.Queryer, source string, proposal Proposal) error {
@@ -122,8 +139,7 @@ func insert(ctx context.Context, q record.Queryer, source string, proposal Propo
 	}
 	_, err := q.ExecContext(ctx,
 		`INSERT INTO proposal (item_id, source, rule, subject, value, strength, changed_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)
-		 ON CONFLICT (item_id, rule, subject, value) DO NOTHING`,
+		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		proposal.ItemID, source, proposal.Rule, proposal.Subject, proposal.Value, proposal.Strength, changedAt)
 	return err
 }

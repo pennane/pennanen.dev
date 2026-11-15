@@ -190,3 +190,19 @@ func TestDatesAreStoredAsMidnight(t *testing.T) {
 		t.Fatal("Normalized")
 	}
 }
+
+func TestADuplicateProposalFailsTheRunAndKeepsThePreviousOnes(t *testing.T) {
+	ctx, d := openLog(t)
+	addItem(t, d, 1)
+	if _, err := rule.Run(ctx, d, proposer("a", statusProposal(1, "ra", "watched", "2026-01-01")), "public"); err != nil {
+		t.Fatal(err)
+	}
+	twice := statusProposal(1, "rb", "want", "2026-01-02")
+	if _, err := rule.Run(ctx, d, proposer("a", twice, twice), "public"); err == nil {
+		t.Fatal("duplicate proposals did not fail the run")
+	}
+	var kept string
+	if err := d.QueryRowContext(ctx, `SELECT rule FROM proposal WHERE source = 'a'`).Scan(&kept); err != nil || kept != "ra" {
+		t.Fatalf("kept = %q, %v", kept, err)
+	}
+}
