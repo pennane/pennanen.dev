@@ -261,3 +261,61 @@ func TestRekeyingRewritesTheLegacyRecordsNamingTheKey(t *testing.T) {
 		t.Errorf("the adopted links followed the freed identity: %v", got)
 	}
 }
+
+func TestAKeyAnotherItemsClaimLinksToStaysHeld(t *testing.T) {
+	ctx := context.Background()
+	s, d := openStoreWithDB(t)
+	artist := knowArtist(t, s, "X", "Slowdive", "shoegaze")
+	album, err := s.CreateItemFromSource(ctx, kind.Album, "Souvlaki", kind.SourceSpotifyAlbum, "V",
+		json.RawMessage(`{"id":"V","name":"Souvlaki","artists":[{"id":"X","name":"Slowdive"}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.AnswerMatch(ctx, artist, kind.SourceSpotifyArtist, "Y", json.RawMessage(`{"id":"Y","name":"Slowdive","genres":["shoegaze"]}`)); err != nil {
+		t.Fatal(err)
+	}
+
+	if owner, err := s.FindByIdentity(ctx, kind.SourceSpotifyArtist, "X"); err != nil || owner != artist {
+		t.Errorf("spotify-artist:X belongs to %d, %v; want %d while the album links to it", owner, err, artist)
+	}
+	if _, kept := claimsStored(t, d)["ap:match/spotify-artist/spotify-artist:X"]; !kept {
+		t.Error("the answer moved off the key that is still held")
+	}
+	if _, related := relationsOf(t, s, album)[store.Relation{FromID: album, Type: kind.LinkBy, ToID: artist}]; !related {
+		t.Errorf("album relations = %v", relationsOf(t, s, album))
+	}
+	for read, v := range bothReads(t, s, album) {
+		if got := v.Verdicts.Values[fieldGenres]; !reflect.DeepEqual(got, []string{"shoegaze"}) {
+			t.Errorf("%s genres = %v", read, got)
+		}
+	}
+}
+
+func TestARekeyThatWouldOverwriteARecordIsRefusedAndRolledBack(t *testing.T) {
+	ctx := context.Background()
+	s, d := openStoreWithDB(t)
+	film, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", kind.SourceTMDB, "603", json.RawMessage(matrix))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.Exec(`INSERT INTO record_claim (source, external_id, data, fetched_at, changed_at) VALUES ('ap', 'match/tmdb/tmdb:604', '{"to":null}', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')`); err != nil {
+		t.Fatal(err)
+	}
+	before := claimsStored(t, d)
+
+	err = s.Identify(ctx, film, store.Identity{Kind: kind.Movie, Source: kind.SourceTMDB, ExternalID: "604", Data: json.RawMessage(reloaded)}, []string{kind.SourceTMDB})
+	if !errors.Is(err, store.ErrConflict) {
+		t.Fatalf("err = %v, want ErrConflict", err)
+	}
+
+	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "603"); err != nil || owner != film {
+		t.Errorf("tmdb:603 belongs to %d, %v; want %d", owner, err, film)
+	}
+	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "604"); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("tmdb:604 belongs to %d, %v", owner, err)
+	}
+	if after := claimsStored(t, d); !reflect.DeepEqual(after, before) {
+		t.Errorf("claims changed: %v, want %v", after, before)
+	}
+}

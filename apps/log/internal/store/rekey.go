@@ -117,7 +117,38 @@ func (s *Store) recordsKeyedBy(ctx context.Context, q queryer, itemID int64, old
 	}
 	all := slices.Concat(keyed, edits, legacy)
 	slices.SortFunc(all, compareIdentities)
-	return slices.Compact(all), heldByItsKeyedRecords, nil
+	all = slices.Compact(all)
+	asserting, err := recordsLinking(ctx, q, old)
+	if err != nil {
+		return nil, "", err
+	}
+	for _, id := range asserting {
+		if !slices.Contains(all, id) {
+			return nil, heldByARecord, nil
+		}
+	}
+	return all, heldByItsKeyedRecords, nil
+}
+
+func recordsLinking(ctx context.Context, q queryer, id record.Identity) ([]record.Identity, error) {
+	rows, err := q.QueryContext(ctx, `
+		SELECT asserted_source, asserted_external_id FROM link WHERE from_source = ? AND from_external_id = ?
+		UNION
+		SELECT asserted_source, asserted_external_id FROM link WHERE to_source = ? AND to_external_id = ?`,
+		id.Source, id.ExternalID, id.Source, id.ExternalID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	records := []record.Identity{}
+	for rows.Next() {
+		var asserting record.Identity
+		if err := rows.Scan(&asserting.Source, &asserting.ExternalID); err != nil {
+			return nil, err
+		}
+		records = append(records, asserting)
+	}
+	return records, rows.Err()
 }
 
 func compareIdentities(a, b record.Identity) int {
