@@ -261,7 +261,7 @@ func TestAHandMadeItemIsAnApItemRecord(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v.Kind != kind.Game || v.Slug != "tetris" || v.Entry == nil || v.Entry.StatusSetBy != record.SourceAP {
+	if v.Kind != kind.Game || v.Slug != "tetris" || v.Entry == nil || v.Entry.LoggedBy != record.SourceAP {
 		t.Errorf("item = %+v", v)
 	}
 

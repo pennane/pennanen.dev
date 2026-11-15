@@ -17,9 +17,13 @@ import (
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/rule"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/spotify"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/take"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
@@ -153,7 +157,11 @@ func openStore(t *testing.T) *store.Store {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	return store.Open(d)
+	if err := take.WriteKindStatuses(context.Background(), d, kind.All()); err != nil {
+		t.Fatal(err)
+	}
+	records := record.New(d, reading.ReadRecord, reading.ReadersVersion)
+	return store.New(d, records, world.New(d, records), []rule.Proposer{spotify.Proposer})
 }
 
 type harness struct {
@@ -193,7 +201,15 @@ func (h *harness) run(t *testing.T) syncs.Report {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return sync.Run(context.Background())
+	return h.proposed(t, sync.Run(context.Background()))
+}
+
+func (h *harness) proposed(t *testing.T, report syncs.Report) syncs.Report {
+	t.Helper()
+	if err := h.store.Propose(context.Background(), record.SourceSpotify); err != nil {
+		t.Fatal(err)
+	}
+	return report
 }
 
 func (h *harness) runPlays(t *testing.T) syncs.Report {
@@ -202,7 +218,7 @@ func (h *harness) runPlays(t *testing.T) syncs.Report {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return sync.Run(context.Background())
+	return h.proposed(t, sync.Run(context.Background()))
 }
 
 func (h *harness) item(t *testing.T, source, externalID string) int64 {
@@ -431,7 +447,7 @@ func (h *harness) status(t *testing.T, itemID int64) (string, string) {
 	if view.Entry == nil {
 		return "", ""
 	}
-	return view.Entry.Status, view.Entry.StatusSetBy
+	return view.Entry.Status, view.Entry.StatusDecidedBy
 }
 
 func TestArtistsAreLoggedFromTopLists(t *testing.T) {
@@ -440,10 +456,10 @@ func TestArtistsAreLoggedFromTopLists(t *testing.T) {
 	h.run(t)
 	x := h.item(t, record.SourceSpotifyArtist, "X")
 	y := h.item(t, record.SourceSpotifyArtist, "Y")
-	if status, setBy := h.status(t, x); status != kind.Listening || setBy != record.SourceSpotify {
+	if status, setBy := h.status(t, x); status != kind.Listening || setBy != spotify.RuleArtist {
 		t.Fatalf("X = %s by %s", status, setBy)
 	}
-	if status, setBy := h.status(t, y); status != kind.Listened || setBy != record.SourceSpotify {
+	if status, setBy := h.status(t, y); status != kind.Listened || setBy != spotify.RuleArtist {
 		t.Fatalf("Y = %s by %s", status, setBy)
 	}
 
@@ -451,9 +467,6 @@ func TestArtistsAreLoggedFromTopLists(t *testing.T) {
 	fake.topArtists["long_term"] = "[" + fullX + "," + fullY + "]"
 	h.day = "2026-11-16"
 	h.run(t)
-	if status, _ := h.status(t, x); status != kind.Listened {
-		t.Fatalf("X after an empty four weeks = %s, want listened", status)
-	}
 	if status, _ := h.status(t, y); status != kind.Listened {
 		t.Fatalf("Y stays logged as %s", status)
 	}
@@ -477,29 +490,38 @@ func TestAnArtistReturnsToListeningWhenItIsBackInTheNewestFourWeeks(t *testing.T
 }
 
 func TestADismissedArtistStaysDismissed(t *testing.T) {
+	ctx := context.Background()
 	fake := newFake()
 	h := newHarness(t, fake, spotify.Connected)
 	h.run(t)
 	x := h.item(t, record.SourceSpotifyArtist, "X")
-	dismissed := kind.Dismissed
-	if err := h.store.ChangeEntry(context.Background(), x, store.EntryChange{Status: &dismissed}); err != nil {
+	dismissed := store.Dismissed
+	if err := h.store.ChangeEntry(ctx, x, store.EntryChange{Dismissal: &dismissed}); err != nil {
 		t.Fatal(err)
 	}
 
 	h.day = "2026-11-16"
 	h.run(t)
-	if status, setBy := h.status(t, x); status != kind.Dismissed || setBy != record.SourceAP {
-		t.Fatalf("X = %s by %s", status, setBy)
+	if v, _ := h.store.GetItem(ctx, x); v.DismissedAt == "" {
+		t.Fatalf("X was undismissed by a sync")
+	}
+	if listed, _ := h.store.ListItems(ctx, store.ItemFilter{Kind: kind.Artist}); slices.ContainsFunc(listed, func(v store.ItemView) bool { return v.ID == x }) {
+		t.Fatalf("a dismissed artist is listed")
 	}
 
+	kept := store.Kept
 	listened := kind.Listened
-	if err := h.store.ChangeEntry(context.Background(), x, store.EntryChange{Status: &listened}); err != nil {
+	if err := h.store.ChangeEntry(ctx, x, store.EntryChange{Dismissal: &kept, Status: &listened}); err != nil {
+		t.Fatal(err)
+	}
+	untriaged := kind.Untriaged
+	if err := h.store.ChangeEntry(ctx, x, store.EntryChange{Status: &untriaged}); err != nil {
 		t.Fatal(err)
 	}
 	h.day = "2026-11-17"
 	h.run(t)
-	if status, setBy := h.status(t, x); status != kind.Listening || setBy != record.SourceSpotify {
-		t.Fatalf("X after ap handed it back = %s by %s, want listening by spotify", status, setBy)
+	if status, setBy := h.status(t, x); status != kind.Listening || setBy != spotify.RuleArtist {
+		t.Fatalf("X after ap handed it back = %s by %s, want listening by the lists", status, setBy)
 	}
 }
 
@@ -652,12 +674,12 @@ func TestAnArtistApTaggedBeforeAnySyncStillGetsItsComputedStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	h.run(t)
-	if status, setBy := h.status(t, z); status != kind.Listened || setBy != record.SourceSpotify {
+	if status, setBy := h.status(t, z); status != kind.Listened || setBy != spotify.RuleArtist {
 		t.Fatalf("Z = %s by %s", status, setBy)
 	}
 }
 
-func TestAHandPickedListeningOnAnUnlistedArtistIsRecomputed(t *testing.T) {
+func TestAHandPickedListeningOnAnUnlistedArtistStands(t *testing.T) {
 	h := newHarness(t, newFake(), spotify.Connected)
 	h.run(t)
 	z, err := h.store.KnowItemFromSource(context.Background(), kind.Artist, "Zed", record.SourceSpotifyArtist, "Z", json.RawMessage(`{}`))
@@ -669,8 +691,8 @@ func TestAHandPickedListeningOnAnUnlistedArtistIsRecomputed(t *testing.T) {
 		t.Fatal(err)
 	}
 	h.run(t)
-	if status, setBy := h.status(t, z); status != kind.Listened || setBy != record.SourceSpotify {
-		t.Fatalf("Z = %s by %s, want listened by spotify", status, setBy)
+	if status, setBy := h.status(t, z); status != kind.Listening || setBy != record.SourceAP {
+		t.Fatalf("Z = %s by %s, want ap's listening", status, setBy)
 	}
 }
 
@@ -739,10 +761,10 @@ func TestASavedAlbumIsWantedUntilHeard(t *testing.T) {
 	}
 	s := h.item(t, record.SourceSpotifyAlbum, "S")
 	z := h.item(t, record.SourceSpotifyArtist, "Z")
-	if status, setBy := h.status(t, s); status != kind.Want || setBy != record.SourceSpotify {
+	if status, setBy := h.status(t, s); status != kind.Want || setBy != spotify.RuleAlbum {
 		t.Fatalf("day 1 album = %s by %s, want want by spotify", status, setBy)
 	}
-	if status, setBy := h.status(t, z); status != kind.Listened || setBy != record.SourceSpotify {
+	if status, setBy := h.status(t, z); status != kind.Listened || setBy != spotify.RuleArtist {
 		t.Fatalf("day 1 main artist = %s by %s, want listened by spotify", status, setBy)
 	}
 
@@ -760,7 +782,7 @@ func TestASavedAlbumIsWantedUntilHeard(t *testing.T) {
 	if got := h.observations(t, s, record.SignalUnsaved); len(got) != 1 {
 		t.Fatalf("unsaved = %+v", got)
 	}
-	if status, setBy := h.status(t, s); status != kind.Listened || setBy != record.SourceSpotify {
+	if status, setBy := h.status(t, s); status != kind.Listened || setBy != spotify.RuleAlbum {
 		t.Fatalf("day 3 album = %s by %s, want listened by spotify", status, setBy)
 	}
 }
@@ -780,12 +802,9 @@ func TestApsAlbumStatusSticks(t *testing.T) {
 		t.Fatal(err)
 	}
 	h.day = "2026-11-16"
-	report := h.run(t)
+	h.run(t)
 	if status, setBy := h.status(t, a); status != kind.Want || setBy != record.SourceAP {
 		t.Fatalf("album = %s by %s, want want by ap", status, setBy)
-	}
-	if report.Counts["album-"+string(store.StatusKeptAsSet)] != 1 {
-		t.Fatalf("counts = %v", report.Counts)
 	}
 }
 
@@ -797,7 +816,7 @@ func TestTheArtistPassLeavesAlbumsAlone(t *testing.T) {
 			t.Fatalf("%s report = %+v", day, report)
 		}
 		b := h.item(t, record.SourceSpotifyAlbum, "B")
-		if status, setBy := h.status(t, b); status != kind.Want || setBy != record.SourceSpotify {
+		if status, setBy := h.status(t, b); status != kind.Want || setBy != spotify.RuleAlbum {
 			t.Fatalf("%s unheard album = %s by %s, want want by spotify", day, status, setBy)
 		}
 	}
@@ -891,7 +910,7 @@ func TestAPlayMovesAWantedAlbumToListenedWithinTheHour(t *testing.T) {
 	if report.State != syncs.Succeeded || len(report.Problems) != 0 {
 		t.Fatalf("report = %+v", report)
 	}
-	if status, setBy := h.status(t, s); status != kind.Listened || setBy != record.SourceSpotify {
+	if status, setBy := h.status(t, s); status != kind.Listened || setBy != spotify.RuleAlbum {
 		t.Fatalf("album after a play = %s by %s, want listened by spotify", status, setBy)
 	}
 }

@@ -4,10 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"path/filepath"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
@@ -16,12 +14,7 @@ import (
 
 func openStoreWithDB(t *testing.T) (*store.Store, *sql.DB) {
 	t.Helper()
-	d, err := db.Open(context.Background(), filepath.Join(t.TempDir(), "log.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { d.Close() })
-	return store.Open(d), d
+	return openStoreProposing(t)
 }
 
 const matrix = `{"id":603,"title":"The Matrix","release_date":"1999-03-30"}`

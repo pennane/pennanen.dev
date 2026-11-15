@@ -20,6 +20,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/platform/revalidate"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/rule"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/igdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/letterboxd"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/spotify"
@@ -27,7 +28,9 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/tmdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/take"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func main() {
@@ -49,12 +52,18 @@ func run() error {
 	defer database.Close()
 	records := record.New(database, reading.ReadRecord, reading.ReadersVersion)
 	derived := world.New(database, records)
-	st := store.New(database, records, derived)
+	st := store.New(database, records, derived, []rule.Proposer{letterboxd.Proposer, spotify.Proposer, steam.Proposer})
+	if err := take.WriteKindStatuses(ctx, database, kind.All()); err != nil {
+		return fmt.Errorf("write kind statuses: %w", err)
+	}
 	reread, err := st.RereadClaims(ctx)
 	if err != nil {
 		return fmt.Errorf("re-read claims: %w", err)
 	}
 	slog.Info("claims re-read at start", "count", reread)
+	if err := st.ProposeAll(ctx); err != nil {
+		return fmt.Errorf("propose at start: %w", err)
+	}
 
 	notifier := &revalidate.Notifier{
 		URL:      os.Getenv("REVALIDATE_URL"),

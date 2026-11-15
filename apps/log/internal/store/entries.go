@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/take"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"slices"
 	"strings"
+	"time"
 )
 
 func (s *Store) ChangeEntry(ctx context.Context, itemID int64, change EntryChange) error {
@@ -88,7 +89,7 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 	if err != nil {
 		return err
 	}
-	if change.Status != nil && !k.HasStatus(*change.Status) {
+	if change.Status != nil && (*change.Status == kind.Dismissed || !k.HasStatus(*change.Status)) {
 		return fmt.Errorf("%w: %s has no status %q", ErrInvalid, k.Name, *change.Status)
 	}
 	for axis, division := range change.Scores {
@@ -102,24 +103,28 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 			return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, axis, *division)
 		}
 	}
-	if err := ensureEntry(ctx, tx, itemID, entrySetter(k)); err != nil {
+	if err := logByAp(ctx, tx, itemID); err != nil {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, `
 		UPDATE entry SET
-			status = coalesce(?, status),
-			status_set_by = CASE WHEN ? IS NULL THEN status_set_by ELSE ? END,
 			visibility = coalesce(?, visibility),
 			blurb = coalesce(?, blurb),
 			prose = coalesce(?, prose),
 			time_spent = CASE WHEN ? IS NULL THEN time_spent ELSE nullif(?, '') END,
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 		WHERE item_id = ?`,
-		change.Status, change.Status, statusSetBy(k, change.Status), change.Visibility, change.Blurb, change.Prose, change.TimeSpent, change.TimeSpent, itemID); err != nil {
+		change.Visibility, change.Blurb, change.Prose, change.TimeSpent, change.TimeSpent, itemID); err != nil {
 		return err
 	}
-	if change.Status != nil && *change.Status == kind.Dismissed {
-		if err := clearScores(ctx, tx, k, itemID); err != nil {
+	at := takenNow()
+	if change.Status != nil {
+		if err := chooseStatus(ctx, tx, itemID, *change.Status, at); err != nil {
+			return err
+		}
+	}
+	if change.Dismissal != nil {
+		if err := changeDismissal(ctx, tx, k, itemID, *change.Dismissal, at); err != nil {
 			return err
 		}
 	}
@@ -129,16 +134,61 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 		}
 	}
 	for _, t := range change.AddTags {
-		if _, err := tx.ExecContext(ctx, `INSERT INTO tag (item_id, tag, added_by) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET added_by = excluded.added_by`, itemID, t, record.SourceAP); err != nil {
+		if err := chooseTag(ctx, tx, itemID, t, take.TagAdded, at); err != nil {
 			return err
 		}
 	}
 	for _, t := range change.RemoveTags {
-		if _, err := tx.ExecContext(ctx, `DELETE FROM tag WHERE item_id = ? AND tag = ?`, itemID, t); err != nil {
+		if err := chooseTag(ctx, tx, itemID, t, take.TagRemoved, at); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+const takeTimeLayout = "2006-01-02T15:04:05Z"
+
+func takenNow() string {
+	return time.Now().UTC().Format(takeTimeLayout)
+}
+
+func chooseStatus(ctx context.Context, tx *sql.Tx, itemID int64, status, at string) error {
+	if status == kind.Untriaged {
+		return take.WithdrawStatusChoice(ctx, tx, itemID)
+	}
+	choices, err := take.StatusChoices(ctx, tx, []int64{itemID})
+	if err != nil {
+		return err
+	}
+	if current, chosen := choices[itemID]; chosen && current.Status == status {
+		return nil
+	}
+	return take.ChooseStatus(ctx, tx, itemID, status, at)
+}
+
+func chooseTag(ctx context.Context, tx *sql.Tx, itemID int64, tag string, presence take.TagPresence, at string) error {
+	var current take.TagPresence
+	err := tx.QueryRowContext(ctx, `SELECT presence FROM tag_choice WHERE item_id = ? AND tag = ?`, itemID, tag).Scan(&current)
+	switch {
+	case err != nil && !isNoRows(err):
+		return err
+	case current == presence:
+		return nil
+	}
+	return take.ChooseTag(ctx, tx, itemID, tag, presence, at)
+}
+
+func changeDismissal(ctx context.Context, tx *sql.Tx, k kind.Kind, itemID int64, change DismissalChange, at string) error {
+	switch change {
+	case Dismissed:
+		if err := take.Dismiss(ctx, tx, itemID, at); err != nil {
+			return err
+		}
+		return clearScores(ctx, tx, k, itemID)
+	case Kept:
+		return take.Undismiss(ctx, tx, itemID)
+	}
+	return fmt.Errorf("%w: a dismissal is %s or %s", ErrInvalid, Dismissed, Kept)
 }
 
 func deref(text *string) string {
@@ -161,18 +211,4 @@ func lookupKind(ctx context.Context, q queryer, itemID int64) (kind.Kind, error)
 		return kind.Kind{}, fmt.Errorf("item %d has unknown kind %q", itemID, name)
 	}
 	return k, nil
-}
-
-func statusSetBy(k kind.Kind, chosen *string) string {
-	if k.StatusComputedBy != "" && chosen != nil && *chosen != kind.Dismissed {
-		return k.StatusComputedBy
-	}
-	return record.SourceAP
-}
-
-func entrySetter(k kind.Kind) string {
-	if k.StatusComputedBy != "" {
-		return k.StatusComputedBy
-	}
-	return record.SourceAP
 }

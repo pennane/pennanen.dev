@@ -3,7 +3,7 @@ package store
 import (
 	"errors"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
-	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/rule"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 	"maps"
 )
@@ -47,19 +47,55 @@ type Item struct {
 }
 
 type Entry struct {
-	Status             string            `json:"status"`
-	StatusSetBy        string            `json:"statusSetBy"`
-	Visibility         Visibility        `json:"visibility"`
-	Blurb              string            `json:"blurb"`
-	Prose              string            `json:"prose"`
-	TimeSpent          TimeSpent         `json:"timeSpent,omitempty"`
-	Scores             map[string]string `json:"scores"`
-	ReadScores         map[string]string `json:"readScores"`
-	Rank               int               `json:"rank,omitempty"`
-	Tags               []string          `json:"tags"`
-	TagsAddedBySources map[string]string `json:"tagsAddedBySources"`
-	UpdatedAt          string            `json:"updatedAt"`
+	Status          string            `json:"status"`
+	StatusDecidedBy string            `json:"statusDecidedBy"`
+	StatusChoice    *StatusChoice     `json:"statusChoice"`
+	StatusProposals []StatusProposal  `json:"statusProposals"`
+	Visibility      Visibility        `json:"visibility"`
+	Blurb           string            `json:"blurb"`
+	Prose           string            `json:"prose"`
+	TimeSpent       TimeSpent         `json:"timeSpent,omitempty"`
+	Scores          map[string]string `json:"scores"`
+	ReadScores      map[string]string `json:"readScores"`
+	Rank            int               `json:"rank,omitempty"`
+	Tags            []string          `json:"tags"`
+	TagsFromRules   map[string]string `json:"tagsFromRules"`
+	LoggedBy        string            `json:"loggedBy"`
+	UpdatedAt       string            `json:"updatedAt"`
 }
+
+type ChoiceStanding string
+
+const (
+	ChoiceDecides  ChoiceStanding = "decides"
+	ChoiceSetAside ChoiceStanding = "set-aside"
+	ChoiceOutvoted ChoiceStanding = "outvoted"
+)
+
+type StatusChoice struct {
+	Status   string         `json:"status"`
+	ChosenAt string         `json:"chosenAt"`
+	Standing ChoiceStanding `json:"standing"`
+}
+
+type StatusProposal struct {
+	Rule      string `json:"rule"`
+	Value     string `json:"value"`
+	ChangedAt string `json:"changedAt,omitempty"`
+}
+
+type Suggestion struct {
+	Rule    string       `json:"rule"`
+	Subject rule.Subject `json:"subject"`
+	Value   string       `json:"value"`
+}
+
+type DismissalChange string
+
+const (
+	Dismissed DismissalChange = "dismissed"
+	Kept      DismissalChange = "kept"
+)
 
 func (e Entry) EveryScore() map[string]string {
 	every := maps.Clone(e.ReadScores)
@@ -75,12 +111,13 @@ type Relation struct {
 
 type ItemView struct {
 	Item
-	Verdicts  verdict.Verdicts `json:"verdicts"`
-	Entry     *Entry           `json:"entry"`
-	Hint      kind.Hint        `json:"hint,omitempty"`
-	Takes     []TakeView       `json:"takes"`
-	Claims    []reading.Claim  `json:"claims,omitempty"`
-	Relations []Relation       `json:"relations,omitempty"`
+	Verdicts    verdict.Verdicts `json:"verdicts"`
+	Entry       *Entry           `json:"entry"`
+	DismissedAt string           `json:"dismissedAt,omitempty"`
+	Suggestions []Suggestion     `json:"suggestions"`
+	Takes       []TakeView       `json:"takes"`
+	Claims      []reading.Claim  `json:"claims,omitempty"`
+	Relations   []Relation       `json:"relations,omitempty"`
 }
 
 type EntryChange struct {
@@ -92,13 +129,14 @@ type EntryChange struct {
 	Scores     map[string]*string `json:"scores"`
 	AddTags    []string           `json:"addTags"`
 	RemoveTags []string           `json:"removeTags"`
+	Dismissal  *DismissalChange   `json:"dismissal"`
 }
 
 type ItemFilter struct {
 	Kind       string
 	Status     string
 	Visibility Visibility
-	Hint       kind.Hint
+	Suggested  string
 	Tag        string
 	Query      string
 	Needs      Need

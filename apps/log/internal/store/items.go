@@ -8,19 +8,22 @@ import (
 	"fmt"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/rule"
+	"github.com/pennane/pennanen.dev/apps/log/internal/take"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"strings"
 )
 
 type Store struct {
-	db      *sql.DB
-	records *record.Store
-	world   *world.World
+	db        *sql.DB
+	records   *record.Store
+	world     *world.World
+	proposers []rule.Proposer
 }
 
-func New(db *sql.DB, records *record.Store, world *world.World) *Store {
-	return &Store{db: db, records: records, world: world}
+func New(db *sql.DB, records *record.Store, world *world.World, proposers []rule.Proposer) *Store {
+	return &Store{db: db, records: records, world: world, proposers: proposers}
 }
 
 type queryer = record.Queryer
@@ -69,7 +72,7 @@ func (s *Store) CreateItem(ctx context.Context, kindName, title string, override
 		if id, err = s.itemOf(ctx, tx, handMade); err != nil {
 			return err
 		}
-		return ensureEntry(ctx, tx, id, record.SourceAP)
+		return logByAp(ctx, tx, id)
 	})
 	return id, err
 }
@@ -81,7 +84,7 @@ func (s *Store) CreateItemFromSource(ctx context.Context, kindName, title, sourc
 		if id, err = s.itemFromSource(ctx, tx, source, externalID, data); err != nil {
 			return err
 		}
-		return ensureEntry(ctx, tx, id, source)
+		return logByAp(ctx, tx, id)
 	})
 	return id, err
 }
@@ -119,8 +122,8 @@ func (s *Store) itemFromSource(ctx context.Context, tx *sql.Tx, source, external
 	return itemID, err
 }
 
-func ensureEntry(ctx context.Context, q queryer, itemID int64, statusSetBy string) error {
-	_, err := q.ExecContext(ctx, `INSERT INTO entry (item_id, visibility, status_set_by) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`, itemID, NewEntryVisibility, statusSetBy)
+func logByAp(ctx context.Context, q queryer, itemID int64) error {
+	_, err := take.Log(ctx, q, itemID, record.SourceAP, string(NewEntryVisibility))
 	return err
 }
 
@@ -153,13 +156,13 @@ func (s *Store) AnswerMatch(ctx context.Context, itemID int64, source, externalI
 	if externalID == "" {
 		return fmt.Errorf("%w: a match needs an external id", ErrInvalid)
 	}
-	return s.inTx(ctx, func(tx *sql.Tx) error {
+	return s.inTxThenPropose(ctx, func(tx *sql.Tx) error {
 		return s.answer(ctx, tx, itemID, identityOf(source, externalID), data, []string{source})
 	})
 }
 
 func (s *Store) AnswerNoMatch(ctx context.Context, itemID int64, source string) error {
-	return s.inTx(ctx, func(tx *sql.Tx) error {
+	return s.inTxThenPropose(ctx, func(tx *sql.Tx) error {
 		key, err := s.keyOf(ctx, tx, itemID)
 		if err != nil {
 			return err
@@ -224,11 +227,11 @@ func (s *Store) answer(ctx context.Context, tx *sql.Tx, itemID int64, id record.
 
 func (s *Store) IdentitiesLackingSources(ctx context.Context, have string, lacking ...string) (map[string]int64, error) {
 	claimedOrAnswered, answeredArgs := claimedOrAnsweredFrom("l", lacking)
-	args := append([]any{have, kind.Dismissed}, answeredArgs...)
+	args := append([]any{have}, answeredArgs...)
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.external_id, c.item_id FROM claim c
-		JOIN entry e ON e.item_id = c.item_id
-		WHERE c.source = ? AND e.status <> ?
+		JOIN shown_entry e ON e.item_id = c.item_id
+		WHERE c.source = ?
 		  AND NOT EXISTS (SELECT 1 FROM claim l WHERE l.item_id = c.item_id AND (`+claimedOrAnswered+`))`,
 		args...)
 	if err != nil {
@@ -292,7 +295,7 @@ func (s *Store) ChangeOverride(ctx context.Context, itemID int64, changes map[st
 			return fmt.Errorf("%w: %v", ErrInvalid, err)
 		}
 	}
-	return s.inTx(ctx, func(tx *sql.Tx) error {
+	return s.inTxThenPropose(ctx, func(tx *sql.Tx) error {
 		id, err := s.overrideOf(ctx, tx, itemID)
 		if err != nil {
 			return err
@@ -339,7 +342,7 @@ func (s *Store) overrideOf(ctx context.Context, q queryer, itemID int64) (record
 }
 
 func (s *Store) DeleteItem(ctx context.Context, itemID int64) error {
-	return s.inTx(ctx, func(tx *sql.Tx) error {
+	return s.inTxThenPropose(ctx, func(tx *sql.Tx) error {
 		if _, err := lookupKind(ctx, tx, itemID); err != nil {
 			return err
 		}

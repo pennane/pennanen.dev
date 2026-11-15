@@ -8,27 +8,32 @@ import (
 	"fmt"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/rule"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 	"slices"
 	"strings"
 )
 
-const loggedItems = "e.item_id IS NOT NULL"
+const shownItems = "i.id IN (SELECT item_id FROM shown_entry)"
 
 func (s *Store) ListItems(ctx context.Context, filter ItemFilter) ([]ItemView, error) {
-	where, args := []string{loggedItems}, []any{}
+	where, args := []string{shownItems}, []any{}
 	if filter.Kind != "" {
 		where, args = append(where, "i.kind = ?"), append(args, filter.Kind)
 	}
 	if filter.Status != "" {
-		where, args = append(where, "e.status = ?"), append(args, filter.Status)
+		where, args = append(where, "st.status = ?"), append(args, filter.Status)
+	}
+	if filter.Suggested != "" {
+		where = append(where, "EXISTS (SELECT 1 FROM proposal p WHERE p.item_id = i.id AND p.rule = ? AND p.strength = ?)")
+		args = append(args, filter.Suggested, rule.Suggesting)
 	}
 	if filter.Visibility != "" {
 		where, args = append(where, "e.visibility = ?"), append(args, filter.Visibility)
 	}
 	if filter.Tag != "" {
-		where = append(where, "EXISTS (SELECT 1 FROM tag t WHERE t.item_id = i.id AND (t.tag = ? OR t.tag LIKE ? ESCAPE '\\'))")
+		where = append(where, "EXISTS (SELECT 1 FROM entry_tag t WHERE t.item_id = i.id AND (t.tag = ? OR t.tag LIKE ? ESCAPE '\\'))")
 		args = append(args, filter.Tag, escapeLike(filter.Tag)+"/%")
 	}
 	if filter.Needs == NeedsMatch {
@@ -37,8 +42,8 @@ func (s *Store) ListItems(ctx context.Context, filter ItemFilter) ([]ItemView, e
 			return nil, fmt.Errorf("%w: needs=match takes a kind that has an identity source", ErrInvalid)
 		}
 		claimedOrAnswered, answeredArgs := claimedOrAnsweredFrom("m", []string{k.IdentitySource})
-		where = append(where, "e.status <> ? AND NOT EXISTS (SELECT 1 FROM claim m WHERE m.item_id = i.id AND ("+claimedOrAnswered+"))")
-		args = append(append(args, kind.Dismissed), answeredArgs...)
+		where = append(where, "NOT EXISTS (SELECT 1 FROM claim m WHERE m.item_id = i.id AND ("+claimedOrAnswered+"))")
+		args = append(args, answeredArgs...)
 	}
 	views, err := s.queryViews(ctx, strings.Join(where, " AND "), args...)
 	if err != nil {
@@ -48,9 +53,6 @@ func (s *Store) ListItems(ctx context.Context, filter ItemFilter) ([]ItemView, e
 }
 
 func matchesDerived(v ItemView, filter ItemFilter) bool {
-	if filter.Hint != kind.NoHint && v.Hint != filter.Hint {
-		return false
-	}
 	if filter.Query != "" && !strings.Contains(strings.ToLower(verdict.Title(v.Verdicts)), strings.ToLower(filter.Query)) {
 		return false
 	}
@@ -67,8 +69,11 @@ func needsScore(v ItemView) bool {
 
 func (s *Store) CountUntriaged(ctx context.Context, kindName string) (int, error) {
 	var count int
-	err := s.db.QueryRowContext(ctx,
-		`SELECT count(*) FROM entry e JOIN item i ON i.id = e.item_id WHERE i.kind = ? AND e.status = ?`,
+	err := s.db.QueryRowContext(ctx, `
+		SELECT count(*) FROM shown_entry e
+		JOIN item i ON i.id = e.item_id
+		JOIN entry_status st ON st.item_id = e.item_id
+		WHERE i.kind = ? AND st.status = ?`,
 		kindName, kind.Untriaged).Scan(&count)
 	return count, err
 }
@@ -117,10 +122,19 @@ func (s *Store) getOne(ctx context.Context, where string, args ...any) (ItemView
 func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]ItemView, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT i.id, i.kind, i.slug, i.created_at,
-		       e.status, e.status_set_by, e.visibility, e.blurb, e.prose, e.time_spent, e.updated_at
-		FROM item i LEFT JOIN entry e ON e.item_id = i.id
+		       st.status, st.decided_by, e.logged_by, e.visibility, e.blurb, e.prose, e.time_spent, e.updated_at,
+		       c.status, c.chosen_at,
+		       CASE WHEN st.decided_by = ? THEN ? WHEN ks.status IS NULL THEN ? ELSE ? END,
+		       d.dismissed_at
+		FROM item i
+		LEFT JOIN entry e ON e.item_id = i.id
+		LEFT JOIN entry_status st ON st.item_id = i.id
+		LEFT JOIN status_choice c ON c.item_id = i.id
+		LEFT JOIN kind_status ks ON ks.kind = i.kind AND ks.status = c.status
+		LEFT JOIN dismissal d ON d.item_id = i.id
 		WHERE `+where+`
-		ORDER BY coalesce(e.updated_at, i.created_at) DESC, i.id DESC`, args...)
+		ORDER BY coalesce(e.updated_at, i.created_at) DESC, i.id DESC`,
+		append([]any{record.SourceAP, ChoiceDecides, ChoiceSetAside, ChoiceOutvoted}, args...)...)
 	if err != nil {
 		return nil, err
 	}
@@ -128,16 +142,29 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	byID := map[int64]*ItemView{}
 	for rows.Next() {
 		var v ItemView
-		var status, setBy, visibility, blurb, prose, timeSpent, updatedAt sql.NullString
-		if err := rows.Scan(&v.ID, &v.Kind, &v.Slug, &v.CreatedAt, &status, &setBy, &visibility, &blurb, &prose, &timeSpent, &updatedAt); err != nil {
+		var status, decidedBy, loggedBy, visibility, blurb, prose, timeSpent, updatedAt sql.NullString
+		var chosen, chosenAt, standing, dismissedAt sql.NullString
+		if err := rows.Scan(&v.ID, &v.Kind, &v.Slug, &v.CreatedAt,
+			&status, &decidedBy, &loggedBy, &visibility, &blurb, &prose, &timeSpent, &updatedAt,
+			&chosen, &chosenAt, &standing, &dismissedAt); err != nil {
 			rows.Close()
 			return nil, err
 		}
+		v.DismissedAt = dismissedAt.String
 		if status.Valid {
 			v.Entry = &Entry{
-				Status: status.String, StatusSetBy: setBy.String, Visibility: Visibility(visibility.String),
-				Blurb: blurb.String, Prose: prose.String, TimeSpent: TimeSpent(timeSpent.String), UpdatedAt: updatedAt.String,
-				Scores: map[string]string{}, ReadScores: map[string]string{}, Tags: []string{}, TagsAddedBySources: map[string]string{},
+				Status: status.String, StatusDecidedBy: decidedBy.String, LoggedBy: loggedBy.String,
+				Visibility: Visibility(visibility.String), Blurb: blurb.String, Prose: prose.String,
+				TimeSpent: TimeSpent(timeSpent.String), UpdatedAt: updatedAt.String,
+				Scores: map[string]string{}, ReadScores: map[string]string{}, Tags: []string{}, TagsFromRules: map[string]string{},
+				StatusProposals: []StatusProposal{},
+			}
+			if chosen.Valid {
+				v.Entry.StatusChoice = &StatusChoice{
+					Status:   chosen.String,
+					ChosenAt: chosenAt.String,
+					Standing: ChoiceStanding(standing.String),
+				}
 			}
 		}
 		views = append(views, v)
@@ -162,6 +189,9 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 		return nil, err
 	}
 	if err := s.attachScoresAndTags(ctx, ids, byID); err != nil {
+		return nil, err
+	}
+	if err := s.attachProposals(ctx, ids, byID); err != nil {
 		return nil, err
 	}
 	if err := s.attachReadScores(ctx, readings, byID); err != nil {
@@ -201,16 +231,7 @@ func (s *Store) attachVerdicts(ctx context.Context, ids []int64, byID map[int64]
 		}
 		return rows.Err()
 	})
-	if err != nil {
-		return err
-	}
-	for _, v := range byID {
-		k, known := kind.Get(v.Kind)
-		if known && v.Entry != nil && v.Entry.Status == kind.Untriaged {
-			v.Hint = k.Hint(v.Verdicts.Values)
-		}
-	}
-	return nil
+	return err
 }
 
 func (s *Store) attachReadScores(ctx context.Context, readings map[int64][]reading.Reading, byID map[int64]*ItemView) error {
@@ -295,21 +316,21 @@ func (s *Store) attachScoresAndTags(ctx context.Context, ids []int64, byID map[i
 			}
 		}
 		rows.Close()
-		rows, err = s.db.QueryContext(ctx, `SELECT item_id, tag, added_by FROM tag WHERE item_id IN (`+in+`) ORDER BY tag`, args...)
+		rows, err = s.db.QueryContext(ctx, `SELECT item_id, tag, decided_by FROM entry_tag WHERE item_id IN (`+in+`) ORDER BY tag`, args...)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var id int64
-			var t, addedBy string
-			if err := rows.Scan(&id, &t, &addedBy); err != nil {
+			var t, decidedBy string
+			if err := rows.Scan(&id, &t, &decidedBy); err != nil {
 				return err
 			}
 			if v := byID[id]; v.Entry != nil {
 				v.Entry.Tags = append(v.Entry.Tags, t)
-				if addedBy != record.SourceAP {
-					v.Entry.TagsAddedBySources[t] = addedBy
+				if decidedBy != record.SourceAP {
+					v.Entry.TagsFromRules[t] = decidedBy
 				}
 			}
 		}

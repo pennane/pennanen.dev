@@ -14,7 +14,7 @@ func (s *Store) AddRelation(ctx context.Context, r Relation) error {
 	if err := editable(r); err != nil {
 		return err
 	}
-	return s.inTx(ctx, func(tx *sql.Tx) error {
+	return s.inTxThenPropose(ctx, func(tx *sql.Tx) error {
 		edit, err := s.linkEditOf(ctx, tx, r, linkAdded)
 		if err != nil {
 			return err
@@ -24,7 +24,7 @@ func (s *Store) AddRelation(ctx context.Context, r Relation) error {
 }
 
 func (s *Store) RemoveRelation(ctx context.Context, r Relation) error {
-	return s.inTx(ctx, func(tx *sql.Tx) error {
+	return s.inTxThenPropose(ctx, func(tx *sql.Tx) error {
 		if err := requireRelation(ctx, tx, r); err != nil {
 			return err
 		}

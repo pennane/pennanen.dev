@@ -34,7 +34,7 @@ func TestApFixesAWrongTMDBMatch(t *testing.T) {
 	t.Cleanup(upstream.Close)
 	client := tmdb.NewClient("t")
 	client.BaseURL = upstream.URL
-	st := store.Open(d)
+	st := openStore(t, d)
 	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, TMDB: client}).Handler())
 	t.Cleanup(srv.Close)
 
@@ -90,7 +90,7 @@ func TestApAddsASeriesFromTMDBAndMovesAFilmThatIsOne(t *testing.T) {
 	t.Cleanup(upstream.Close)
 	client := tmdb.NewClient("t")
 	client.BaseURL = upstream.URL
-	st := store.Open(d)
+	st := openStore(t, d)
 	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, TMDB: client}).Handler())
 	t.Cleanup(srv.Close)
 

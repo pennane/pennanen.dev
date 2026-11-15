@@ -185,7 +185,7 @@ func (s *Server) entryRule(r *http.Request) (entryRule, error) {
 	return func(kindName, status string, visibility store.Visibility) bool {
 		switch visibility {
 		case store.Public:
-			return status != kind.Dismissed
+			return true
 		case store.Auto:
 			settings, known := kinds[kindName]
 			return known && settings.Shows(status)
@@ -201,7 +201,7 @@ func (s *Server) publicRule(r *http.Request) (publicRule, error) {
 		return nil, err
 	}
 	return func(v store.ItemView) bool {
-		return v.Entry != nil && shows(v.Kind, v.Entry.Status, v.Entry.Visibility)
+		return v.Entry != nil && v.DismissedAt == "" && shows(v.Kind, v.Entry.Status, v.Entry.Visibility)
 	}, nil
 }
 

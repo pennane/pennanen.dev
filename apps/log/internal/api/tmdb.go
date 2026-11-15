@@ -137,6 +137,9 @@ func (s *Server) matchTMDB(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		err = notOnTMDB(tmdb.Identify(r.Context(), s.Store, s.TMDB, id, link), link)
 	}
+	if err == nil {
+		err = s.Store.ProposeAll(r.Context())
+	}
 	s.mutatedItem(w, r, id, err)
 }
 

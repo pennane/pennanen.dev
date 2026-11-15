@@ -76,7 +76,7 @@ func TestRanksRunThroughDivisionsInOrder(t *testing.T) {
 		t.Errorf("same division moved it: %v", got)
 	}
 
-	if err := s.ChangeEntry(ctx, g["Meh One"], store.EntryChange{Status: ptr(kind.Dismissed)}); err != nil {
+	if err := s.ChangeEntry(ctx, g["Meh One"], store.EntryChange{Dismissal: ptr(store.Dismissed)}); err != nil {
 		t.Fatal(err)
 	}
 	want = map[int64]int{g["Loved Two"]: 1, g["Loved One"]: 2, g["Liked One"]: 3}

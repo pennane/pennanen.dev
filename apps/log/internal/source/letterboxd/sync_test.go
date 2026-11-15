@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -13,10 +14,14 @@ import (
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/rule"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/letterboxd"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/tmdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/take"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
@@ -56,7 +61,7 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.Open(d)
+	s := openProposing(t, d)
 
 	export, err := letterboxd.ParseExport(exportZip(t, map[string]string{
 		"watched.csv":     "Date,Name,Year,Letterboxd URI\n2026-03-23,Stalker,1979,https://boxd.it/aaa1\n2026-03-23,Heat,1995,https://boxd.it/bbb2\n",
@@ -122,11 +127,12 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	report := imported.Run(ctx)
+	proposed(t, s)
 	if report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 3 || report.Counts[letterboxd.CountWatchesObserved] != 1 || len(report.Problems) != 0 {
 		t.Fatalf("import: %+v", report)
 	}
 	stalker := item(t, s, "aaa1")
-	if stalker.Entry.Status != kind.Watched || stalker.Entry.StatusSetBy != record.SourceLetterboxd {
+	if stalker.Entry.Status != kind.Watched || stalker.Entry.StatusDecidedBy != letterboxd.RuleLetterboxd {
 		t.Errorf("stalker entry: %+v", stalker.Entry)
 	}
 	if len(stalker.Takes) != 1 {
@@ -149,13 +155,14 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	}
 	watchlist = gridItem("aaa1", "stalker", "Stalker (1979)", "")
 	report = nightly.Run(ctx)
+	proposed(t, s)
 	if report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 1 || len(report.Problems) != 0 {
 		t.Fatalf("nightly: %+v", report)
 	}
-	if memento := item(t, s, "ccc3"); memento.Entry.Status != kind.Watched || memento.Takes[0].Values["reaction"] != "liked" {
+	if memento := item(t, s, "ccc3"); memento.Takes[0].Values["reaction"] != "liked" {
 		t.Errorf("watched off the watchlist: %+v %+v", memento.Entry, memento.Takes)
 	}
-	if stalker := item(t, s, "aaa1"); stalker.Entry.Status != kind.Watched || stalker.Entry.TagsAddedBySources[kind.TagAnotherShot] != record.SourceLetterboxd {
+	if stalker := item(t, s, "aaa1"); stalker.Entry.Status != kind.Watched || stalker.Entry.TagsFromRules[kind.TagAnotherShot] != letterboxd.RuleLetterboxd {
 		t.Errorf("a watched film on the watchlist: %+v", stalker.Entry)
 	}
 	decent := item(t, s, "ddd4")
@@ -209,4 +216,21 @@ func item(t *testing.T, s *store.Store, lid string) store.ItemView {
 		t.Fatal(err)
 	}
 	return v
+}
+
+func openProposing(t *testing.T, d *sql.DB) *store.Store {
+	t.Helper()
+	ctx := context.Background()
+	if err := take.WriteKindStatuses(ctx, d, kind.All()); err != nil {
+		t.Fatal(err)
+	}
+	records := record.New(d, reading.ReadRecord, reading.ReadersVersion)
+	return store.New(d, records, world.New(d, records), []rule.Proposer{letterboxd.Proposer})
+}
+
+func proposed(t *testing.T, s *store.Store) {
+	t.Helper()
+	if err := s.Propose(context.Background(), record.SourceLetterboxd); err != nil {
+		t.Fatal(err)
+	}
 }

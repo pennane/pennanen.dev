@@ -199,7 +199,7 @@ func TestRekeyingRewritesTheLegacyRecordsNamingTheKey(t *testing.T) {
 	t.Cleanup(func() { d.Close() })
 	records := record.New(d, reading.ReadRecord, reading.ReadersVersion)
 	w := world.New(d, records)
-	s := store.New(d, records, w)
+	s := store.New(d, records, w, nil)
 	film, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", record.SourceTMDB, "603", json.RawMessage(matrix))
 	if err != nil {
 		t.Fatal(err)

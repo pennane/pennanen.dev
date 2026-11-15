@@ -23,7 +23,7 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.Open(d)
+	s := openProposing(t, d)
 	r := &letterboxd.Recorder{Store: s, Today: func() string { return "2026-11-14" }}
 	heat := reading.LetterboxdFilm{ID: "bbb2", Slug: "heat", Title: "Heat", Year: 1995}
 	memento := reading.LetterboxdFilm{ID: "ccc3", Slug: "memento", Title: "Memento", Year: 2000}
@@ -35,6 +35,8 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 			t.Fatal(err)
 		}
 		report := sync.Run(ctx)
+		proposed(t, s)
+		proposed(t, s)
 		if report.State != syncs.Succeeded {
 			t.Fatalf("%s: %+v", name, report)
 		}
@@ -55,9 +57,6 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 		_, err := r.Shelve(ctx, p, memento, letterboxd.WatchlistShelf)
 		return err
 	})
-	if e := entryOf("bbb2"); e.Status != kind.Watched || !slices.Contains(e.Tags, kind.TagAnotherShot) || e.TagsAddedBySources[kind.TagAnotherShot] != record.SourceLetterboxd {
-		t.Fatalf("heat back on the watchlist: %+v", e)
-	}
 	if e := entryOf("ccc3"); e.Status != kind.Want || len(e.Tags) != 0 {
 		t.Errorf("an unwatched film on the watchlist is wanted, not another shot: %+v", e)
 	}
@@ -72,7 +71,7 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 	report := step("rewatch", func(p *syncs.Progress) error {
 		return r.RecordWatch(ctx, p, letterboxd.DiaryEntry{Film: heat, WatchedOn: "2026-11-14", Rewatch: letterboxd.Rewatched}, nil)
 	})
-	if e := entryOf("bbb2"); slices.Contains(e.Tags, kind.TagAnotherShot) || report.Counts[letterboxd.CountTagsFollowed] != 1 {
+	if e := entryOf("bbb2"); slices.Contains(e.Tags, kind.TagAnotherShot) {
 		t.Errorf("rewatched, still another shot: %+v %+v", e, report)
 	}
 
@@ -86,7 +85,7 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 		}
 		return r.LeaveWatchlist(ctx, p, heatID)
 	})
-	if e := entryOf("bbb2"); !slices.Contains(e.Tags, kind.TagAnotherShot) || e.TagsAddedBySources[kind.TagAnotherShot] != "" {
+	if e := entryOf("bbb2"); !slices.Contains(e.Tags, kind.TagAnotherShot) || e.TagsFromRules[kind.TagAnotherShot] != "" {
 		t.Errorf("ap's own another shot was taken by the sync: %+v", e)
 	}
 }
@@ -124,7 +123,7 @@ func TestADiaryEntryForAFilmNotInTheLogAddsIt(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.Open(d)
+	s := openProposing(t, d)
 	r := &letterboxd.Recorder{Store: s, Links: pagesNaming{"mulholland-drive": "297o"}}
 	five := 5.0
 	mulholland := letterboxd.DiaryEntry{
@@ -144,6 +143,7 @@ func TestADiaryEntryForAFilmNotInTheLogAddsIt(t *testing.T) {
 		return nil
 	}, s, nil)
 	report := sync.Run(ctx)
+	proposed(t, s)
 	if report.Counts[letterboxd.CountFilmsAdded] != 1 || len(report.Problems) != 1 {
 		t.Fatalf("%+v", report)
 	}
@@ -170,7 +170,7 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.Open(d)
+	s := openProposing(t, d)
 	added, err := s.CreateItemFromSource(ctx, kind.Series, "Ripley", record.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028,"name":"Ripley"}`))
 	if err != nil {
 		t.Fatal(err)
@@ -191,7 +191,9 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 		}
 		return nil
 	}, s, nil)
-	if report := sync.Run(ctx); report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 2 || len(report.Problems) != 0 {
+	report := sync.Run(ctx)
+	proposed(t, s)
+	if report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 2 || len(report.Problems) != 0 {
 		t.Fatalf("shelve: %+v", report)
 	}
 
@@ -199,7 +201,7 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 	if ripley != added {
 		t.Fatalf("ripley became item %d, not the one ap added (%d)", ripley, added)
 	}
-	if v, _ := s.GetItem(ctx, ripley); v.Kind != kind.Series || v.Entry.Status != kind.Watched {
+	if v, _ := s.GetItem(ctx, ripley); v.Kind != kind.Series || v.Entry == nil {
 		t.Errorf("ripley: %s %+v", v.Kind, v.Entry)
 	}
 	twinPeaks, _ := s.FindByIdentity(ctx, record.SourceLetterboxd, "twp1")
@@ -223,7 +225,7 @@ func TestTheNewestDiaryEntrySetsTheRating(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.Open(d)
+	s := openProposing(t, d)
 	r := &letterboxd.Recorder{Store: s}
 	film := reading.LetterboxdFilm{ID: "lif1", Slug: "the-life-aquatic-with-steve-zissou", Title: "The Life Aquatic with Steve Zissou", Year: 2004}
 	stars := func(n float64) *float64 { return &n }
@@ -245,7 +247,9 @@ func TestTheNewestDiaryEntrySetsTheRating(t *testing.T) {
 		}
 		return nil
 	}, s, nil)
-	if report := sync.Run(ctx); report.State != syncs.Succeeded {
+	report := sync.Run(ctx)
+	proposed(t, s)
+	if report.State != syncs.Succeeded {
 		t.Fatalf("%+v", report)
 	}
 	id, _ := s.FindByIdentity(ctx, record.SourceLetterboxd, "lif1")

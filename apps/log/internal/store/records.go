@@ -62,7 +62,7 @@ const (
 
 func Open(db *sql.DB) *Store {
 	records := record.New(db, reading.ReadRecord, reading.ReadersVersion)
-	return New(db, records, world.New(db, records))
+	return New(db, records, world.New(db, records), nil)
 }
 
 func identityOf(source, externalID string) record.Identity {
@@ -224,7 +224,7 @@ func applyMove(ctx context.Context, tx *sql.Tx, m world.Move) error {
 func requireStatusIn(ctx context.Context, tx *sql.Tx, to kind.Kind, itemID int64) error {
 	var status string
 	if err := tx.QueryRowContext(ctx, `
-		SELECT coalesce(e.status, ?) FROM item i LEFT JOIN entry e ON e.item_id = i.id WHERE i.id = ?`,
+		SELECT coalesce(c.status, ?) FROM item i LEFT JOIN status_choice c ON c.item_id = i.id WHERE i.id = ?`,
 		kind.Untriaged, itemID).Scan(&status); err != nil {
 		return err
 	}

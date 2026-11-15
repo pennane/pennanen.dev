@@ -33,7 +33,7 @@ func (s *Store) Place(ctx context.Context, itemID int64, division string, index 
 		return fmt.Errorf("%w: %s has no %s division %q", ErrInvalid, k.Name, k.RankedAxis, division)
 	}
 	return s.inTx(ctx, func(tx *sql.Tx) error {
-		if err := ensureEntry(ctx, tx, itemID, entrySetter(k)); err != nil {
+		if err := logByAp(ctx, tx, itemID); err != nil {
 			return err
 		}
 		return moveTo(ctx, tx, k, itemID, division, index)
@@ -225,7 +225,9 @@ func (s *Store) Standings(ctx context.Context, k kind.Kind) ([]Standing, error) 
 		return nil, err
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT e.item_id, e.status, e.visibility FROM entry e JOIN item i ON i.id = e.item_id
+		SELECT e.item_id, st.status, e.visibility FROM shown_entry e
+		JOIN item i ON i.id = e.item_id
+		JOIN entry_status st ON st.item_id = e.item_id
 		WHERE i.kind = ?`, k.Name)
 	if err != nil {
 		return nil, err

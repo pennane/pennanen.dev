@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cmp"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,12 +18,21 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/platform/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/take"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const token = "secret"
 
-func newServer(t *testing.T) *httptest.Server {
+func openStore(t *testing.T, d *sql.DB) *store.Store {
+	t.Helper()
+	if err := take.WriteKindStatuses(context.Background(), d, kind.All()); err != nil {
+		t.Fatal(err)
+	}
+	return store.Open(d)
+}
+
+func newServerWithDB(t *testing.T) (*httptest.Server, *sql.DB) {
 	t.Helper()
 	d, err := db.Open(context.Background(), filepath.Join(t.TempDir(), "log.db"))
 	if err != nil {
@@ -30,8 +40,14 @@ func newServer(t *testing.T) *httptest.Server {
 	}
 	t.Cleanup(func() { d.Close() })
 	pictures := &images.Store{Dir: t.TempDir()}
-	srv := httptest.NewServer((&api.Server{Store: store.Open(d), AdminToken: token, Images: pictures}).Handler())
+	srv := httptest.NewServer((&api.Server{Store: openStore(t, d), AdminToken: token, Images: pictures}).Handler())
 	t.Cleanup(srv.Close)
+	return srv, d
+}
+
+func newServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	srv, _ := newServerWithDB(t)
 	return srv
 }
 
@@ -127,13 +143,17 @@ func TestPublicListCountsProseWordsWithoutTheProse(t *testing.T) {
 
 func itoa(n int64) string { b, _ := json.Marshal(n); return string(b) }
 
-func TestDismissedStaysOffPublicPages(t *testing.T) {
+func TestPublicItemsNeverIncludeDismissed(t *testing.T) {
 	srv := newServer(t)
-	_, body := call(t, srv, "POST", "/admin/items", token, `{"kind":"game","title":"Wallpaper Engine"}`)
-	var created struct{ ID int64 }
-	json.Unmarshal([]byte(body), &created)
-
-	if status, body := call(t, srv, "PATCH", "/admin/items/"+itoa(created.ID)+"/entry", token, `{"status":"dismissed","visibility":"public"}`); status != http.StatusOK {
+	id := createGame(t, srv, "Wallpaper Engine", `{"status":"finished","visibility":"public","scores":{"prestige":"s"}}`)
+	if _, body := call(t, srv, "GET", "/public/items?kind=game", "", ""); !strings.Contains(body, "wallpaper-engine") {
+		t.Fatalf("public before dismissing: %s", body)
+	}
+	if status, body := call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token, `{"status":"dismissed"}`); status != http.StatusUnprocessableEntity {
+		t.Errorf("dismissed as a status: %d %s", status, body)
+	}
+	status, body := call(t, srv, "PATCH", "/admin/items/"+id+"/entry", token, `{"dismissal":"dismissed"}`)
+	if status != http.StatusOK || !strings.Contains(body, `"dismissedAt":"`) {
 		t.Fatalf("dismiss: %d %s", status, body)
 	}
 	if status, _ := call(t, srv, "GET", "/public/items/game/wallpaper-engine", "", ""); status != http.StatusNotFound {
@@ -141,6 +161,48 @@ func TestDismissedStaysOffPublicPages(t *testing.T) {
 	}
 	if _, body := call(t, srv, "GET", "/public/items", "", ""); strings.Contains(body, "wallpaper-engine") {
 		t.Errorf("dismissed item listed: %s", body)
+	}
+	if _, body := call(t, srv, "GET", "/public/presentation", "", ""); strings.Contains(body, `"game":{`) {
+		t.Errorf("a kind with only a dismissed item is presented: %s", body)
+	}
+	if _, body := call(t, srv, "GET", "/admin/items?kind=game", token, ""); strings.Contains(body, "wallpaper-engine") {
+		t.Errorf("dismissed item in the admin list: %s", body)
+	}
+}
+
+func TestAnEntryTellsWhoDecidedIt(t *testing.T) {
+	srv := newServer(t)
+	id := createGame(t, srv, "Hades", `{"status":"finished","addTags":["comfort"]}`)
+	_, body := call(t, srv, "GET", "/admin/items/"+id, token, "")
+	for _, shown := range []string{`"status":"finished"`, `"statusDecidedBy":"ap"`, `"statusChoice":{"status":"finished","chosenAt":"`, `"standing":"decides"`, `"statusProposals":[]`, `"tags":["comfort"]`, `"tagsFromRules":{}`, `"loggedBy":"ap"`, `"suggestions":[]`} {
+		if !strings.Contains(body, shown) {
+			t.Errorf("item misses %s: %s", shown, body)
+		}
+	}
+	for _, gone := range []string{"statusSetBy", "tagsAddedBySources", `"hint"`, "dismissedAt"} {
+		if strings.Contains(body, gone) {
+			t.Errorf("item still says %s: %s", gone, body)
+		}
+	}
+}
+
+func TestItemsFilterBySuggestingRule(t *testing.T) {
+	srv, d := newServerWithDB(t)
+	hinted := createGame(t, srv, "Card Farm", `{"blurb":""}`)
+	createGame(t, srv, "Hades", `{"blurb":""}`)
+	if _, err := d.Exec(`INSERT INTO proposal (item_id, source, rule, subject, value, strength) VALUES (?, 'steam', 'likely-idled', 'tag', 'idled', 'suggesting')`, hinted); err != nil {
+		t.Fatal(err)
+	}
+	_, body := call(t, srv, "GET", "/admin/items?suggested=likely-idled", token, "")
+	var items []struct {
+		Slug        string
+		Suggestions []struct{ Rule, Subject, Value string }
+	}
+	if err := json.Unmarshal([]byte(body), &items); err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 || items[0].Slug != "card-farm" || len(items[0].Suggestions) != 1 || items[0].Suggestions[0].Rule != "likely-idled" {
+		t.Errorf("suggested items: %s", body)
 	}
 }
 
@@ -257,7 +319,7 @@ func TestSettingsDecideWhatShows(t *testing.T) {
 func TestEntriesListOnlyTriagedAndKeepsItSmall(t *testing.T) {
 	srv := newServer(t)
 	createGame(t, srv, "Hades", `{"status":"finished","blurb":"long public text","scores":{"prestige":"s"},"addTags":["comfort"]}`)
-	createGame(t, srv, "Wallpaper Engine", `{"status":"dismissed"}`)
+	createGame(t, srv, "Wallpaper Engine", `{"status":"played","dismissal":"dismissed"}`)
 	call(t, srv, "POST", "/admin/items", token, `{"kind":"game","title":"Untouched"}`)
 
 	status, body := call(t, srv, "GET", "/admin/entries?kind=game", token, "")
@@ -408,7 +470,7 @@ func TestKnownItemsStayOutOfEntriesAndPublic(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	st := store.Open(d)
+	st := openStore(t, d)
 	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, Images: &images.Store{Dir: t.TempDir()}}).Handler())
 	t.Cleanup(srv.Close)
 

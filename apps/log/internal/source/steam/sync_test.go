@@ -11,9 +11,11 @@ import (
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/rule"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/take"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
@@ -24,6 +26,9 @@ func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
+	if err := take.WriteKindStatuses(ctx, d, kind.All()); err != nil {
+		t.Fatal(err)
+	}
 	s := store.Open(d)
 
 	playtime := atomic.Int64{}
@@ -67,8 +72,11 @@ func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
 	if report.State != syncs.Succeeded || report.Counts[steam.CountGamesAdded] != 2 || len(report.Problems) != 0 {
 		t.Fatalf("first sync: %+v", report)
 	}
-	idled, _ := s.ListItems(ctx, store.ItemFilter{Hint: kind.HintLikelyIdled})
-	never, _ := s.ListItems(ctx, store.ItemFilter{Hint: kind.HintLikelyNeverPlayed})
+	if _, err := rule.Run(ctx, d, steam.Proposer, string(store.NewEntryVisibility)); err != nil {
+		t.Fatal(err)
+	}
+	idled, _ := s.ListItems(ctx, store.ItemFilter{Suggested: steam.RuleLikelyIdled})
+	never, _ := s.ListItems(ctx, store.ItemFilter{Suggested: steam.RuleLikelyNeverPlayed})
 	if len(idled) != 1 || len(never) != 1 {
 		t.Fatalf("idled %d never %d", len(idled), len(never))
 	}

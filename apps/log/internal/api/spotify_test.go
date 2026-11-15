@@ -24,7 +24,7 @@ func spotifyServer(t *testing.T, client func(store *store.Store) *spotify.Client
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	st := store.Open(d)
+	st := openStore(t, d)
 	server := &api.Server{Store: st, AdminToken: token}
 	server.Spotify = client(st)
 	srv := httptest.NewServer(server.Handler())

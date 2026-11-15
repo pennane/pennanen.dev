@@ -4,23 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"path/filepath"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func openStore(t *testing.T) *store.Store {
 	t.Helper()
-	d, err := db.Open(context.Background(), filepath.Join(t.TempDir(), "log.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { d.Close() })
-	return store.Open(d)
+	s, _ := openStoreProposing(t)
+	return s
 }
 
 func ptr[T any](v T) *T { return &v }
@@ -57,21 +52,27 @@ func TestOverrideBeatsSourceAndSurvivesResync(t *testing.T) {
 
 func TestIdleHintFromCardsAndNoAchievements(t *testing.T) {
 	ctx := context.Background()
-	s := openStore(t)
+	s, _ := openStoreProposing(t, steam.Proposer)
 	id, _ := s.CreateItemFromSource(ctx, "game", "Card Farm", record.SourceSteam, "1",
 		json.RawMessage(`{"appid":1,"name":"Card Farm","playtime_forever":150}`))
 	s.PutClaim(ctx, id, record.SourceSteamStore, "1", json.RawMessage(`{"name":"Card Farm","categories":[{"description":"Steam Trading Cards"}]}`))
 	s.PutClaim(ctx, id, record.SourceSteamAchievements, "1", json.RawMessage(`{"achievements":[{"achieved":0}]}`))
-	idled, err := s.ListItems(ctx, store.ItemFilter{Hint: kind.HintLikelyIdled})
+	if err := s.Propose(ctx, record.SourceSteam); err != nil {
+		t.Fatal(err)
+	}
+	idled, err := s.ListItems(ctx, store.ItemFilter{Suggested: steam.RuleLikelyIdled})
 	if err != nil || len(idled) != 1 {
 		t.Fatalf("idled = %d, %v", len(idled), err)
 	}
 	if err := s.ChangeEntries(ctx, []int64{id}, store.EntryChange{Status: ptr("never-played")}); err != nil {
 		t.Fatal(err)
 	}
+	if err := s.Propose(ctx, record.SourceSteam); err != nil {
+		t.Fatal(err)
+	}
 	v, _ := s.GetItem(ctx, id)
-	if v.Hint != kind.NoHint {
-		t.Errorf("triaged entry still hinted %q", v.Hint)
+	if len(v.Suggestions) != 0 {
+		t.Errorf("triaged entry still hinted %+v", v.Suggestions)
 	}
 }
 

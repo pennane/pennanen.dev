@@ -31,7 +31,7 @@ func (s *Server) listEntries(w http.ResponseWriter, r *http.Request) {
 }
 
 func isListed(e *store.Entry) bool {
-	return e != nil && e.Status != kind.Untriaged && e.Status != kind.Dismissed
+	return e != nil && e.Status != kind.Untriaged
 }
 
 func toListedEntry(v store.ItemView) listedEntry {
