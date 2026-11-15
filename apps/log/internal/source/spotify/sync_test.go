@@ -2,7 +2,9 @@ package spotify_test
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -152,6 +154,12 @@ func playedAt(times ...string) string {
 
 func openStore(t *testing.T) *store.Store {
 	t.Helper()
+	s, _ := openStoreProposing(t, spotify.Proposer)
+	return s
+}
+
+func openStoreProposing(t *testing.T, proposer rule.Proposer) (*store.Store, *sql.DB) {
+	t.Helper()
 	d, err := db.Open(context.Background(), filepath.Join(t.TempDir(), "log.db"))
 	if err != nil {
 		t.Fatal(err)
@@ -161,20 +169,27 @@ func openStore(t *testing.T) *store.Store {
 		t.Fatal(err)
 	}
 	records := record.New(d, reading.ReadRecord, reading.ReadersVersion)
-	return store.New(d, records, world.New(d, records), []rule.Proposer{spotify.Proposer})
+	return store.New(d, records, world.New(d, records), []rule.Proposer{proposer}), d
 }
 
 type harness struct {
-	store  *store.Store
-	syncer *spotify.Syncer
-	day    string
+	store   *store.Store
+	db      *sql.DB
+	syncer  *spotify.Syncer
+	day     string
+	hourUTC int
 }
 
 func newHarness(t *testing.T, fake *fakeSpotify, connection spotify.Connection) *harness {
 	t.Helper()
+	return newHarnessProposing(t, fake, connection, spotify.Proposer)
+}
+
+func newHarnessProposing(t *testing.T, fake *fakeSpotify, connection spotify.Connection, proposer rule.Proposer) *harness {
+	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(fake.handler))
 	t.Cleanup(server.Close)
-	s := openStore(t)
+	s, d := openStoreProposing(t, proposer)
 	if connection == spotify.Connected {
 		if err := s.PutSecret(context.Background(), spotify.RefreshTokenSecret, "r1"); err != nil {
 			t.Fatal(err)
@@ -184,13 +199,13 @@ func newHarness(t *testing.T, fake *fakeSpotify, connection spotify.Connection) 
 	client.AccountsURL = server.URL
 	client.APIURL = server.URL
 	client.HTTP = server.Client()
-	h := &harness{store: s, syncer: spotify.NewSyncer(s, client), day: "2026-11-15"}
+	h := &harness{store: s, db: d, syncer: spotify.NewSyncer(s, client), day: "2026-11-15", hourUTC: 3}
 	h.syncer.Now = func() time.Time {
 		day, err := time.Parse(time.DateOnly, h.day)
 		if err != nil {
 			t.Fatal(err)
 		}
-		return day.Add(3 * time.Hour)
+		return day.Add(time.Duration(h.hourUTC) * time.Hour)
 	}
 	return h
 }
@@ -1112,5 +1127,53 @@ func TestAnAlbumMetWithoutCreditsButWithATracklistIsStillWritten(t *testing.T) {
 	album := h.item(t, record.SourceSpotifyAlbum, "K")
 	if parts, err := h.store.PartsOf(context.Background(), album); err != nil || !slices.Equal(parts, []int64{h.item(t, record.SourceSpotifyTrack, "spotify:k1")}) {
 		t.Errorf("album parts %v %v", parts, err)
+	}
+}
+
+func TestARerunTheSameDayAfterACrashKeepsTheStreak(t *testing.T) {
+	h := newHarness(t, newFake(), spotify.Connected)
+	h.run(t)
+	x := h.item(t, record.SourceSpotifyArtist, "X")
+	h.day = "2026-11-16"
+	h.run(t)
+	if _, err := h.db.Exec(`DELETE FROM record_observation WHERE signal = ? AND key LIKE '%:2026-11-16'`, record.SignalTopArtistsListed); err != nil {
+		t.Fatal(err)
+	}
+
+	h.hourUTC = 9
+	if report := h.run(t); report.State != syncs.Succeeded || len(report.Problems) != 0 {
+		t.Fatalf("rerun: %+v", report)
+	}
+	v, err := h.store.GetItem(context.Background(), x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []store.StatusProposal{{Rule: spotify.RuleArtist, Value: kind.Listening, ChangedAt: "2026-11-15T03:00:00Z"}}
+	if v.Entry.Status != kind.Listening || !reflect.DeepEqual(v.Entry.StatusProposals, want) {
+		t.Fatalf("X after a rerun the same day = %+v", v.Entry)
+	}
+	var listingsAfterTheDaysArtists int
+	if err := h.db.QueryRow(`SELECT count(*) FROM record_observation WHERE signal = ? AND key LIKE ? AND observed_at > '2026-11-16T03:00:00Z'`, record.SignalTopArtistsListed, record.SignalTopArtistsListed+":short_term:%").Scan(&listingsAfterTheDaysArtists); err != nil || listingsAfterTheDaysArtists != 0 {
+		t.Fatalf("listings without that day's artists = %d, %v", listingsAfterTheDaysArtists, err)
+	}
+}
+
+func TestAFailedProposalMidSyncIsAProblemAndWeighingGoesOn(t *testing.T) {
+	failing := rule.Proposer{Source: record.SourceSpotify, Propose: func(context.Context, record.Queryer) ([]rule.Proposal, error) {
+		return nil, errors.New("a rule broke")
+	}}
+	h := newHarnessProposing(t, newFake(), spotify.Connected, failing)
+	report := h.run(t)
+	if report.State != syncs.Succeeded || !slices.ContainsFunc(report.Problems, func(p string) bool { return strings.Contains(p, "a rule broke") }) {
+		t.Fatalf("report = %+v", report)
+	}
+	x := h.item(t, record.SourceSpotifyArtist, "X")
+	listening := kind.Listening
+	if err := h.store.ChangeEntry(context.Background(), x, store.EntryChange{Status: &listening}); err != nil {
+		t.Fatal(err)
+	}
+	h.run(t)
+	if weight := h.listening(t, x); weight == nil {
+		t.Fatalf("X was not weighed after a failed proposal")
 	}
 }

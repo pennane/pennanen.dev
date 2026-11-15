@@ -109,7 +109,7 @@ func (s *Store) ItemsLastObservedAs(ctx context.Context, source string, signals 
 func (s *Store) HasObservationKeyWithPrefix(ctx context.Context, source, prefix string) (bool, error) {
 	var found bool
 	err := s.db.QueryRowContext(ctx, `
-		SELECT EXISTS (SELECT 1 FROM observation WHERE source = ? AND substr(key, 1, length(?)) = ?)`,
+		SELECT EXISTS (SELECT 1 FROM record_observation WHERE source = ? AND substr(key, 1, length(?)) = ?)`,
 		source, prefix, prefix).Scan(&found)
 	return found, err
 }

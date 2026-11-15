@@ -73,7 +73,6 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 		}
 		p.ChangedData()
 		snap.topArtists(ctx, timeRange, artists)
-		snap.topArtistsListed(ctx, timeRange, len(artists))
 	}
 	for _, timeRange := range TimeRanges {
 		tracks, err := s.Client.TopTracks(ctx, timeRange)
@@ -99,7 +98,7 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 	}
 	snap.recorder.RefreshClaims(ctx, p, s.Client)
 	if err := s.Store.Propose(ctx, record.SourceSpotify); err != nil {
-		return fmt.Errorf("logging what the rules say before weighing: %w", err)
+		p.Problem("logging what the rules say before weighing: %v", err)
 	}
 	if err := computeListening(ctx, s.Store, p); err != nil {
 		return err
@@ -111,7 +110,7 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 }
 
 func (n snapshot) listAlreadyRecorded(ctx context.Context, signal string, timeRange TimeRange) bool {
-	prefix := fmt.Sprintf("%s:%s:%s:", signal, timeRange, n.day)
+	prefix := fmt.Sprintf("%s:%s:%s", signal, timeRange, n.day)
 	recorded, err := n.recorder.Store.HasObservationKeyWithPrefix(ctx, ObservationSource, prefix)
 	if err != nil {
 		n.p.Problem("%s %s: %v", signal, timeRange, err)
@@ -121,7 +120,7 @@ func (n snapshot) listAlreadyRecorded(ctx context.Context, signal string, timeRa
 }
 
 func (n snapshot) topArtists(ctx context.Context, timeRange TimeRange, artists []json.RawMessage) {
-	skip := n.listAlreadyRecorded(ctx, record.SignalTopArtist, timeRange)
+	skip := n.listAlreadyRecorded(ctx, record.SignalTopArtist, timeRange) || n.listAlreadyRecorded(ctx, record.SignalTopArtistsListed, timeRange)
 	for i, raw := range artists {
 		itemID, err := n.recorder.KnowArtist(ctx, n.p, raw, Full)
 		if err != nil {
@@ -141,6 +140,9 @@ func (n snapshot) topArtists(ctx context.Context, timeRange TimeRange, artists [
 		if _, err := n.recorder.Observe(ctx, n.p, itemID, record.SignalTopArtist, key, n.start, CountSnapshots, data); err != nil {
 			n.p.Problem("%s: %v", ref.Name, err)
 		}
+	}
+	if !skip {
+		n.topArtistsListed(ctx, timeRange, len(artists))
 	}
 }
 
