@@ -13,8 +13,8 @@ catch-all kind with unchecked fields was tried and never used.
 - A **kind** is a Go definition: its fields, statuses, identity source, the
   ranking of sources per field, inheritance, unranked order, take sources and
   the rules it uses.
-- Each field has a **field type** (text, number, partial date, list, link,
-  id, picture…), a **reach** (everyone, or only ap) and, for a picture, a
+- Each field has a **field type** (text, int, number, partial date, string
+  list, url, external id, picture), a **reach** (everyone, or only ap) and, for a picture, a
   **shape**.
 - Tables are generic. Admin reads kind definitions from the API and builds
   its forms from them.

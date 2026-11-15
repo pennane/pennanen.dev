@@ -28,5 +28,6 @@ Vercel, which gives up on a rebuild after ten seconds.
 - About 15 MB resident, one static binary, one unit to deploy and watch.
 - A crash at job time skips that night's run; the next one catches up.
 - Single writer, single box. Fine for one user.
-- Backups hold records and takes, because they are all that can't be
-  derived again.
+- Backups hold records, takes and images
+  ([ADR 6](./0006-takes-are-irreplaceable.md)), because they are all that
+  can't be derived again.

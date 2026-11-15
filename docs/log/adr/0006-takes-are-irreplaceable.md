@@ -11,18 +11,26 @@ the guest artists on a soundtrack.
 
 ## Decision
 
-- A **take** is something ap decided, stored with when ap decided it:
-  - the **entry**: visibility, scores, rank, blurb, prose, time spent;
+- A **take** is ap's opinion of a thing, stored with when ap gave it:
+  - the **entry**: visibility, scores, rank, blurb, prose, time spent, and
+    which source logged it, if one did;
   - a **status choice**;
   - **tag choices**, adding or removing a tag;
   - **dismissal**;
-  - **link edits**, adding or suppressing a link ([ADR 9](./0009-links.md));
-  - **match answers**: the item ap picked, or no match;
-  - field overrides.
+  - a **parked entry**, the losing side of a merge until ap answers.
+- ap's corrections to the world (field overrides, match answers, link
+  edits, merge answers) are not takes but records from the source `ap`
+  ([ADR 4](./0004-records-are-lossless.md)). They are just as irreplaceable,
+  and backed up the same way.
+- Images in prose are stored next to the database, named by a hash of their
+  content, and copied to R2 at upload. Prose refers to them as
+  `/log/images/<name>`, so stored text never names a host. The database
+  backup and the image copies together restore everything.
 - An item has at most one entry. An item with an entry is **logged**; one
   without is only **known**. Nothing else tells them apart.
 - **Dismissal** is a take, not a status: "this doesn't belong in my log".
-  Nothing proposes it and nothing overrides it. A dismissed item never
+  Nothing applies it but ap: a hint may suggest it (`likely-not-a-game`),
+  and only ap's yes dismisses. Nothing overrides it. A dismissed item never
   shows publicly and is never proposed for logging again.
 - Logging is one-way. A source that logged an item (Steam owned, a top
   list, a saved album) never unlogs it, and never takes its scores or prose

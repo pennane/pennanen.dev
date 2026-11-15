@@ -14,7 +14,11 @@ lists only show today, and Letterboxd blocks paginated pages.
 - A **claim** is what one source says now about one thing, kept exactly as
   received. It is keyed by **identity**, `(source, external id)`, not by
   item. A re-sync replaces it wholesale; nothing edits it. The store sets
-  its `changed_at` when its reading differs from the one before.
+  its `changed_at` on put-claim, when the new reading differs from the
+  stored one; re-reading at start never moves it.
+- A source writes records in three ways only: put a claim, remove a claim,
+  observe. Removing a claim leaves an observation of what it said, so
+  nothing is lost.
 - An **observation** is what a source said at one moment: _Pendulum in the
   4-week top 5 on 2026-03-14_. Appended, never changed or replaced.
 - A **reading** is what a source's reader takes from a claim. It is stored
@@ -22,7 +26,10 @@ lists only show today, and Letterboxd blocks paginated pages.
   readers version; at start, claims with no reading or an older version
   are read again. Everything above records works from readings, never from
   claim bodies.
-- ap's own input is the source `ap`. An **outside take**, ap's rating or
+- ap's corrections to the world are records from the source `ap`: field
+  overrides, items added by hand, **match answers**, **link edits** and
+  merge answers, each with when ap made it. The world reads them like any
+  other source's records. An **outside take**, ap's rating or
   review on another site, is a claim from that site's take source
   (`letterboxd-take`, `steam-take`), apart from what the site says about
   the thing.

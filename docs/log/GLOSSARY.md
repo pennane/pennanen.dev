@@ -1,8 +1,9 @@
 # things as ap saw them — glossary
 
 The words used for the log, in code and in conversation. If a word here
-disagrees with the code, one of them is wrong. Where a word replaces older
-ones still in code, its entry says which.
+disagrees with the code, one of them is wrong. The words for layers 2–5
+follow ADRs 3–10, and the code is still moving to them; where a word
+replaces older ones still in code, its entry says which.
 
 ## Layers
 
@@ -15,7 +16,8 @@ observation. Layer 1. Sources write nothing else.
 **World** — what the log knows about things: items, their kinds, fields and
 links. Layer 2, derived from records.
 
-**Take** — something ap decided. Layer 3, the only thing ap writes.
+**Take** — ap's opinion of a thing. Layer 3. ap writes takes, and corrects
+the world through `ap` records; nothing else.
 
 **Rule** — a function from records and the world to proposals. Layer 4.
 
@@ -34,14 +36,20 @@ when a derive, reader, rule or projection version changes.
 ## Records
 
 **Source** — somewhere data comes from: Steam, IGDB, TMDB, Letterboxd,
-Spotify, or `ap` by hand.
+Spotify, or `ap` by hand. A source writes records three ways: put a claim,
+remove a claim (which leaves an observation), observe.
+
+**`ap` record** — ap correcting the world: a field override, an item added
+by hand, a match answer, a link edit, a merge answer. Read by the world like
+any source's records, and as irreplaceable as takes.
 
 **Identity** — `(source, external id)`: what a record is about. _`igdb:1942`,
 `tmdb:603`, `isrc:GBUM71029604`._
 
 **Claim** — what one source says now about one identity, exactly as
 received. Never edited; a re-sync replaces it whole. Its `changed_at` is
-when its reading last differed from the one before. _Steam claims 412h._
+set on put-claim when the new reading differs from the stored one;
+re-reading never moves it. _Steam claims 412h._
 
 **Observation** — something a source said at one moment, kept for good:
 _Pendulum in the 4-week top 5 on 2026-03-14_, _watched Heat again on
@@ -68,7 +76,8 @@ identity source, unranked order and rules. Kinds are defined in code; their
 kind: something that fits no kind waits until it gets one.
 
 **Field** — one fact about an item, declared by its kind, with a **field
-type** (text, number, partial date, list, link, id, picture), a **reach**
+type** (text, int, number, partial date, string list, url, external id,
+picture), a **reach**
 (everyone, or **only ap**: Steam playtime) and, for a picture, a shape.
 
 **Verdict** — the value that wins for a field. Sources are ranked per field;
@@ -81,15 +90,16 @@ one step away. _An album with no genres shows its main artist's._
 
 **Match** — linking records from different sources to one item. A sure match
 is derived; an unsure one is a suggesting proposal; ap's answer, a pick or
-**no match**, is a take.
+**no match**, is an `ap` record.
 
 **Move** — an item's kind changing because its derivation changed. _A
 Letterboxd film whose TMDB link says `tv` moves to `series`._ It keeps its
 id and entry and goes to the bottom of its division.
 
 **Merge** — two items found to share an identity becoming one. The one whose
-entry was edited last keeps its id and slug; the other entry is parked and
-proposed for merging in triage.
+entry was edited last keeps its id and slug; the other entry is a **parked
+entry**, proposed for merging in triage. Yes folds it in; no keeps the items
+apart for good. _Replaces refusing the second match._
 
 **Link** — `from, to, type, origin`, plus a position for ordered types. The
 graph of items. _Replaces relation, part and mention._
@@ -126,7 +136,8 @@ choice or a proposal's, whichever word is newest.
 a kind without that status, and set aside until it moves back.
 
 **Dismissal** — "this doesn't belong in my log", like Wallpaper Engine in a
-Steam library. A take, not a status: nothing proposes or overrides it. The
+Steam library. A take, not a status: only ap applies it (a hint may suggest it), and
+nothing overrides it. The
 item is kept so syncs don't bring it back, but never shows. _Replaces the
 `dismissed` status._
 
@@ -137,10 +148,10 @@ proposal's, whichever word is newest.
 - `another-shot` — ap wants to try it again, whatever its status.
 - `idled` — a game ap ran for trading cards, whether or not ap also played it.
 
-**Link edit** — ap adding a link or suppressing one.
+**Link edit** — ap adding a link or suppressing one; an `ap` record.
 
 **Match answer** — ap's pick of the item a record is about, or no match, so
-nobody asks again.
+nobody asks again; an `ap` record.
 
 **Time spent** — ap's word on how long it took: `not-enough`, `a-bit`,
 `just-right`, `a-lot`, `too-much`. A judgment, not a measurement.
@@ -173,8 +184,9 @@ ap's choice ([ADR 7](./adr/0007-proposals-and-the-newest-word.md)).
 **Withdraw** — a source no longer saying something removes its proposal; the
 next word down decides.
 
-**Hint** — a suggesting proposal for a game's status or tag during triage:
-`likely-idled`, `likely-played`, `likely-never-played`, `likely-not-a-game`.
+**Hint** — a suggesting proposal for a game during triage: a status
+(`likely-played`, `likely-never-played`), a tag (`likely-idled`), or
+dismissal (`likely-not-a-game`), which only ap's yes applies.
 
 **Suggestion** — a suggesting proposal to log a known item, such as an album
 by an artist ap has logged.
@@ -210,7 +222,8 @@ never ranked. One read from an outside take suggests a division while ap
 rates. _Replaces outside, crowd and activity axes._
 
 **Listening** — how much ap listens to an artist or album, from 0 to 100,
-worked out nightly by a rule from observations. Public.
+worked out nightly by a rule from observations. Public. _Replaces the
+`spotify-listening` claim._
 
 ## Presentation
 
@@ -280,9 +293,10 @@ in its diary entry, then by the TMDB link on its Letterboxd page (which also
 tells a series from a film), then by title and year when exactly one film
 has both. The rest are tried again each night.
 
-**Letterboxd** — ap's films. Watched → `watched`, watchlist → `want`: applying
-proposals. A watched film arriving on the watchlist proposes `another-shot`,
-withdrawn after a later diary watch or an export without it. Nightly syncs
+**Letterboxd** — ap's films. Watched → `watched`; watchlist → `want` for a
+film not yet watched: applying proposals. A watched film on the watchlist
+stays `watched` and proposes `another-shot` instead, withdrawn after a
+later diary watch or an export without it. Nightly syncs
 see only page one of the watchlist; an uploaded export ZIP settles the rest.
 Ratings, likes and reviews are `letterboxd-take`.
 

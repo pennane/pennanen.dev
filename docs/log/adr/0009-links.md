@@ -17,7 +17,7 @@ were three tables with three sets of code: relations, parts and mentions.
   position can't be missing or stray.
 - The **origin** is a source, `ap` or `prose`. Source links are derived from
   records. **Mentions** are derived from prose. ap's link edits, adding a
-  link or suppressing one, are takes, and resolve by the newest word
+  link or suppressing one, are `ap` records, and resolve by the newest word
   ([ADR 7](./0007-proposals-and-the-newest-word.md)).
 - A **part** is an item linked `part-of` a whole at a position: a track of an
   album, and later a season of a series or an episode of a season. One item can be a

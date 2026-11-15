@@ -25,9 +25,13 @@ The log is five layers:
 1. Records        lossless                      claims, observations, readings
 ```
 
-- Each layer reads only the layers below it.
+- Each layer reads only the layers below it. No exceptions: when ap corrects
+  the world (a field, a match, a link, a merge), that correction is a record
+  from the source `ap`, so the world never reads takes.
 - Sources write only **records** ([ADR 4](./0004-records-are-lossless.md)).
-- **Takes** are the only thing ap writes ([ADR 6](./0006-takes-are-irreplaceable.md)).
+- **Takes** are ap's opinions of things: entries, status and tag choices,
+  dismissal ([ADR 6](./0006-takes-are-irreplaceable.md)). ap writes takes
+  and `ap` records, nothing else.
 - The **world**, **rules** and **presentation** are derived. They are
   stored, not computed when read. Writing a record or a take marks what it
   touches **dirty**; one derivation pass rederives each dirty item and its
@@ -39,7 +43,7 @@ The log is five layers:
   IGDB match on a Steam game, join the set without changing either.
   **Matching** links records across sources: a sure match is derived, an
   unsure one is a suggesting proposal ([ADR 7](./0007-proposals-and-the-newest-word.md)),
-  and ap's answer is a take. An item's **kind** is derived too, so a film
+  and ap's answer is an `ap` record. An item's **kind** is derived too, so a film
   found to be a series **moves**, keeping its id and entry.
 - Two items found to share an identity are one item. The one whose entry
   was edited last keeps its id and slug; the other's entry is parked and

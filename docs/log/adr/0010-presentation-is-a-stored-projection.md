@@ -37,8 +37,8 @@ The public API took shortcuts:
 - **Visibility** is `auto` (shown when the kind shows its status),
   `public` or `private`. A dismissed item never shows.
 - A field's type decides what it can do: dates and numbers filter, sort and
-  show as columns; lists filter and search; text searches; ids and links do
-  nothing. Admin overrides per kind: each field's uses and public name,
+  show as columns; lists filter and search; text searches; external ids and
+  urls do nothing. Admin overrides per kind: each field's uses and public name,
   which axes get a **tier list** or a column, the default view, the
   **overview**'s sort and count, the shown statuses, and tag titles.
 - Pictures are placed by shape: a **tile** is the first tall picture, else
