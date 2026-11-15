@@ -56,12 +56,19 @@ func later(a, b string) string {
 	return a
 }
 
+func diaryDateOrElseShelfDate(take shelvedTake) string {
+	if take.LastWatched != "" {
+		return take.LastWatched
+	}
+	return take.OnWatchedShelfSince
+}
+
 func proposalsFor(take shelvedTake) []rule.Proposal {
 	apply := func(subject rule.Subject, value, at string) rule.Proposal {
 		return rule.Proposal{ItemID: take.itemID, Rule: RuleLetterboxd, Subject: subject, Value: value, Strength: rule.Applying, ChangedAt: at}
 	}
 	logged := apply(rule.SubjectEntry, rule.EntryLogged, "")
-	watchedAt := later(take.LastWatched, take.OnWatchedShelfSince)
+	watchedAt := diaryDateOrElseShelfDate(take)
 	switch {
 	case watchedAt != "" && take.OnWatchlistSince != "":
 		return []rule.Proposal{logged, apply(rule.SubjectStatus, kind.Watched, watchedAt), apply(rule.SubjectTag, kind.TagAnotherShot, take.OnWatchlistSince)}

@@ -3,8 +3,10 @@ package letterboxd_test
 import (
 	"context"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
@@ -149,13 +151,30 @@ func TestLeavingTheWatchlistWithdrawsAnotherShot(t *testing.T) {
 	}
 }
 
+func TestADiaryWatchForAFilmNewToTheLogIsWatchedOnTheDiaryDate(t *testing.T) {
+	sh := openShelves(t, nil)
+	sh.day = "2026-11-16"
+	sh.watch(heatFilm, "2024-03-05")
+
+	e := sh.item(heatFilm).Entry
+	want := []store.StatusProposal{{Rule: letterboxd.RuleLetterboxd, Value: kind.Watched, ChangedAt: "2024-03-05T00:00:00Z"}}
+	if e.Status != kind.Watched || !reflect.DeepEqual(e.StatusProposals, want) {
+		t.Fatalf("heat from the diary: %+v", e)
+	}
+}
+
+func daysBeforeToday(n int) string {
+	return time.Now().UTC().AddDate(0, 0, -n).Format(time.DateOnly)
+}
+
 func TestApsDroppedFilmStaysDroppedWhileLetterboxdRepeatsItself(t *testing.T) {
 	ctx := context.Background()
 	ripleyFilm := reading.LetterboxdFilm{ID: "rip1", Slug: "ripley-2024", Title: "Ripley", Year: 2024}
 	sh := openShelves(t, pagesLinking{"rip1": {Type: reading.SeriesOnTMDB, ID: 94028}})
-	sh.day = "2024-04-01"
+	sh.day = daysBeforeToday(10)
+	watchedOn := daysBeforeToday(9)
 	sh.shelve(ripleyFilm, letterboxd.WatchedShelf)
-	sh.watch(ripleyFilm, "2024-04-05")
+	sh.watch(ripleyFilm, watchedOn)
 	ripley := sh.item(ripleyFilm)
 	if ripley.Kind != kind.Series || ripley.Entry.Status != kind.Watched {
 		t.Fatalf("ripley: %s %+v", ripley.Kind, ripley.Entry)
@@ -165,10 +184,10 @@ func TestApsDroppedFilmStaysDroppedWhileLetterboxdRepeatsItself(t *testing.T) {
 	if err := sh.store.ChangeEntry(ctx, ripley.ID, store.EntryChange{Status: &dropped}); err != nil {
 		t.Fatal(err)
 	}
-	for _, day := range []string{"2024-04-06", "2024-04-07"} {
+	for _, day := range []string{daysBeforeToday(1), daysBeforeToday(0)} {
 		sh.day = day
 		sh.shelve(ripleyFilm, letterboxd.WatchedShelf)
-		sh.watch(ripleyFilm, "2024-04-05")
+		sh.watch(ripleyFilm, watchedOn)
 		if e := sh.item(ripleyFilm).Entry; e.Status != kind.Dropped || e.StatusDecidedBy != record.SourceAP {
 			t.Fatalf("%s: ripley = %s by %s, want dropped by ap", day, e.Status, e.StatusDecidedBy)
 		}

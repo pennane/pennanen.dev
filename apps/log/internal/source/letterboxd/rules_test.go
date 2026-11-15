@@ -31,6 +31,11 @@ func TestLetterboxdWatchedFilm(t *testing.T) {
 	assertProposals(t, got, []rule.Proposal{logged(1), applying(1, rule.SubjectStatus, kind.Watched, "2026-02-01")})
 }
 
+func TestLetterboxdDiaryDateWinsOverALaterShelfDate(t *testing.T) {
+	got := propose([]shelvedTake{{itemID: 1, LastWatched: "2024-03-05", OnWatchedShelfSince: "2026-11-16"}})
+	assertProposals(t, got, []rule.Proposal{logged(1), applying(1, rule.SubjectStatus, kind.Watched, "2024-03-05")})
+}
+
 func TestLetterboxdShelfWithoutDiary(t *testing.T) {
 	got := propose([]shelvedTake{{itemID: 1, OnWatchedShelfSince: "2026-01-01"}})
 	assertProposals(t, got, []rule.Proposal{logged(1), applying(1, rule.SubjectStatus, kind.Watched, "2026-01-01")})
@@ -45,7 +50,7 @@ func TestLetterboxdWatchlistAfterWatchingIsAnotherShot(t *testing.T) {
 	got := propose([]shelvedTake{{itemID: 1, LastWatched: "2025-01-01", OnWatchedShelfSince: "2025-03-01", OnWatchlistSince: "2026-01-01"}})
 	assertProposals(t, got, []rule.Proposal{
 		logged(1),
-		applying(1, rule.SubjectStatus, kind.Watched, "2025-03-01"),
+		applying(1, rule.SubjectStatus, kind.Watched, "2025-01-01"),
 		applying(1, rule.SubjectTag, kind.TagAnotherShot, "2026-01-01"),
 	})
 }
@@ -90,7 +95,7 @@ func TestLetterboxdProposerReadsStoredRecords(t *testing.T) {
 	}
 	assertProposals(t, got, []rule.Proposal{
 		logged(1),
-		applying(1, rule.SubjectStatus, kind.Watched, "2026-01-02"),
+		applying(1, rule.SubjectStatus, kind.Watched, "2025-12-24"),
 		applying(1, rule.SubjectTag, kind.TagAnotherShot, "2026-02-01"),
 		logged(2),
 		applying(2, rule.SubjectStatus, kind.Want, "2025-05-05"),
