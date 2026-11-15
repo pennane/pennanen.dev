@@ -2,40 +2,13 @@ package kind
 
 import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"slices"
 )
 
 const (
 	Game = "game"
 
-	SteamTradingCardsCategory = "Steam Trading Cards"
-
 	TagAnotherShot = "another-shot"
-)
-
-const (
-	HintLikelyIdled       Hint = "likely-idled"
-	HintLikelyPlayed      Hint = "likely-played"
-	HintLikelyNeverPlayed Hint = "likely-never-played"
-	HintLikelyNotAGame    Hint = "likely-not-a-game"
-)
-
-var steamSoftwareGenres = []string{
-	"Utilities",
-	"Design & Illustration",
-	"Animation & Modeling",
-	"Video Production",
-	"Audio Production",
-	"Photo Editing",
-	"Software Training",
-	"Web Publishing",
-	"Game Development",
-	"Accounting",
-}
-
-const (
-	cardDropsUsuallyFinishWithinMinutes = 300
-	clearlyPlayedAfterMinutes           = 120
+	TagIdled       = "idled"
 )
 
 var steamTake = Take{
@@ -74,31 +47,6 @@ func init() {
 			{Name: "achievements_total", Type: Int, SourcesBestFirstAfterAP: []string{record.SourceSteamAchievements}},
 			{Name: "achievements_unlocked", Type: Int, SourcesBestFirstAfterAP: []string{record.SourceSteamAchievements}, About: AboutAP},
 		},
-		Takes:       []Take{steamTake},
-		GuessStatus: guessGameStatus,
+		Takes: []Take{steamTake},
 	})
-}
-
-func guessGameStatus(verdicts map[string]any) Hint {
-	playtime, playtimeKnown := verdicts["playtime_minutes"].(int64)
-	unlocked, _ := verdicts["achievements_unlocked"].(int64)
-	categories, _ := verdicts["steam_categories"].([]string)
-	genres, _ := verdicts["genres"].([]string)
-	dropsCards := slices.Contains(categories, SteamTradingCardsCategory)
-	isSoftware := slices.ContainsFunc(genres, func(g string) bool { return slices.Contains(steamSoftwareGenres, g) })
-	switch {
-	case isSoftware:
-		return HintLikelyNotAGame
-	case !playtimeKnown:
-		return NoHint
-	case playtime == 0:
-		return HintLikelyNeverPlayed
-	case unlocked > 0:
-		return HintLikelyPlayed
-	case dropsCards && playtime < cardDropsUsuallyFinishWithinMinutes:
-		return HintLikelyIdled
-	case playtime >= clearlyPlayedAfterMinutes:
-		return HintLikelyPlayed
-	}
-	return NoHint
 }

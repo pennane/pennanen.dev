@@ -124,8 +124,8 @@ func defaultAxes() Axes {
 }
 
 var defaultTagTitles = TagTitles{
-	"another-shot": "worth another shot",
-	"idled":        "idled",
+	kind.TagAnotherShot: "worth another shot",
+	kind.TagIdled:       "idled",
 }
 
 const (

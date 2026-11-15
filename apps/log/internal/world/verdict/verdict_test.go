@@ -62,9 +62,6 @@ func TestAStoredReadingDecidesLikeTheClaim(t *testing.T) {
 		if !reflect.DeepEqual(rawVerdicts, storedVerdicts) {
 			t.Errorf("%s verdicts differ:\nraw    %#v\nstored %#v", name, rawVerdicts, storedVerdicts)
 		}
-		if !reflect.DeepEqual(k.Hint(rawVerdicts.Values), k.Hint(storedVerdicts.Values)) {
-			t.Errorf("%s hints differ", name)
-		}
 		if !reflect.DeepEqual(verdict.Takes(k, raw), verdict.Takes(k, stored)) {
 			t.Errorf("%s takes differ", name)
 		}

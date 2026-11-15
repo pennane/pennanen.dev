@@ -26,16 +26,15 @@ var listeningField = Field{
 
 func init() {
 	register(Kind{
-		Name:             Artist,
-		DefaultTitle:     "artists",
-		Statuses:         []string{Untriaged, Listening, Listened},
-		StatusesToScore:  []string{Listening, Listened},
-		StatusesShown:    []string{Listening, Listened},
-		DefaultAxes:      []string{Prestige, Quality},
-		RankedAxis:       Prestige,
-		IdentitySource:   record.SourceSpotifyArtist,
-		StatusComputedBy: record.SourceSpotify,
-		UnrankedOrder:    FieldListening,
+		Name:            Artist,
+		DefaultTitle:    "artists",
+		Statuses:        []string{Untriaged, Listening, Listened},
+		StatusesToScore: []string{Listening, Listened},
+		StatusesShown:   []string{Listening, Listened},
+		DefaultAxes:     []string{Prestige, Quality},
+		RankedAxis:      Prestige,
+		IdentitySource:  record.SourceSpotifyArtist,
+		UnrankedOrder:   FieldListening,
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{record.SourceSpotifyArtist}},
 			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{record.SourceSpotifyArtist}},

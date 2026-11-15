@@ -20,7 +20,7 @@ const (
 	RuleLikelyNotAGame    = "likely-not-a-game"
 )
 
-const TagIdled = "idled"
+const steamTradingCardsCategory = "Steam Trading Cards"
 
 const (
 	statusPlayed      = "played"
@@ -80,7 +80,7 @@ func propose(owned []int64, logged []loggedGame) []rule.Proposal {
 }
 
 func hintFor(signs gameSigns) string {
-	dropsCards := slices.Contains(signs.steamCategories, kind.SteamTradingCardsCategory)
+	dropsCards := slices.Contains(signs.steamCategories, steamTradingCardsCategory)
 	isSoftware := slices.ContainsFunc(signs.genres, func(g string) bool { return slices.Contains(steamSoftwareGenres, g) })
 	switch {
 	case isSoftware:
@@ -109,7 +109,7 @@ func hintProposals(itemID int64, hint string) []rule.Proposal {
 	case RuleLikelyNeverPlayed:
 		return []rule.Proposal{suggest(rule.SubjectStatus, statusNeverPlayed)}
 	case RuleLikelyIdled:
-		return []rule.Proposal{suggest(rule.SubjectTag, TagIdled), suggest(rule.SubjectStatus, statusNeverPlayed)}
+		return []rule.Proposal{suggest(rule.SubjectTag, kind.TagIdled), suggest(rule.SubjectStatus, statusNeverPlayed)}
 	case RuleLikelyNotAGame:
 		return []rule.Proposal{suggest(rule.SubjectDismissal, kind.Dismissed)}
 	}

@@ -59,19 +59,17 @@ const (
 )
 
 type Kind struct {
-	Name             string                             `json:"name"`
-	DefaultTitle     string                             `json:"-"`
-	Statuses         []string                           `json:"statuses"`
-	StatusesToScore  []string                           `json:"statusesToScore"`
-	StatusesShown    []string                           `json:"statusesShown"`
-	DefaultAxes      []string                           `json:"-"`
-	RankedAxis       string                             `json:"rankedAxis"`
-	Fields           []Field                            `json:"fields"`
-	IdentitySource   string                             `json:"identitySource,omitempty"`
-	StatusComputedBy string                             `json:"statusComputedBy,omitempty"`
-	UnrankedOrder    string                             `json:"unrankedOrder,omitempty"`
-	Takes            []Take                             `json:"takes"`
-	GuessStatus      func(verdicts map[string]any) Hint `json:"-"`
+	Name            string   `json:"name"`
+	DefaultTitle    string   `json:"-"`
+	Statuses        []string `json:"statuses"`
+	StatusesToScore []string `json:"statusesToScore"`
+	StatusesShown   []string `json:"statusesShown"`
+	DefaultAxes     []string `json:"-"`
+	RankedAxis      string   `json:"rankedAxis"`
+	Fields          []Field  `json:"fields"`
+	IdentitySource  string   `json:"identitySource,omitempty"`
+	UnrankedOrder   string   `json:"unrankedOrder,omitempty"`
+	Takes           []Take   `json:"takes"`
 }
 
 type Take struct {
@@ -89,10 +87,6 @@ func (k Kind) Take(source string) (Take, bool) {
 }
 
 func (t Take) IsPrivate(field string) bool { return slices.Contains(t.PrivateFields, field) }
-
-type Hint string
-
-const NoHint Hint = ""
 
 const (
 	Untriaged  = "untriaged"
@@ -123,13 +117,6 @@ func (k Kind) InheritingRelations() []string {
 func (k Kind) HasStatus(status string) bool { return slices.Contains(k.Statuses, status) }
 func (k Kind) Shows(status string) bool     { return slices.Contains(k.StatusesShown, status) }
 func (k Kind) Scores(status string) bool    { return slices.Contains(k.StatusesToScore, status) }
-
-func (k Kind) Hint(verdicts map[string]any) Hint {
-	if k.GuessStatus == nil {
-		return NoHint
-	}
-	return k.GuessStatus(verdicts)
-}
 
 var partialDate = regexp.MustCompile(`^\d{4}(-\d{2}(-\d{2})?)?$`)
 

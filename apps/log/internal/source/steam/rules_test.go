@@ -36,8 +36,8 @@ func TestHintsSuggest(t *testing.T) {
 		{"never played", gameSigns{playtimeMinutes: minutes(0)}, []rule.Proposal{
 			{ItemID: 1, Rule: RuleLikelyNeverPlayed, Subject: rule.SubjectStatus, Value: statusNeverPlayed, Strength: rule.Suggesting},
 		}},
-		{"idled", gameSigns{playtimeMinutes: minutes(100), steamCategories: []string{kind.SteamTradingCardsCategory}}, []rule.Proposal{
-			{ItemID: 1, Rule: RuleLikelyIdled, Subject: rule.SubjectTag, Value: TagIdled, Strength: rule.Suggesting},
+		{"idled", gameSigns{playtimeMinutes: minutes(100), steamCategories: []string{steamTradingCardsCategory}}, []rule.Proposal{
+			{ItemID: 1, Rule: RuleLikelyIdled, Subject: rule.SubjectTag, Value: kind.TagIdled, Strength: rule.Suggesting},
 			{ItemID: 1, Rule: RuleLikelyIdled, Subject: rule.SubjectStatus, Value: statusNeverPlayed, Strength: rule.Suggesting},
 		}},
 		{"not a game", gameSigns{playtimeMinutes: minutes(500), genres: []string{"Utilities"}}, []rule.Proposal{
@@ -46,7 +46,7 @@ func TestHintsSuggest(t *testing.T) {
 		{"played", gameSigns{playtimeMinutes: minutes(200)}, []rule.Proposal{
 			{ItemID: 1, Rule: RuleLikelyPlayed, Subject: rule.SubjectStatus, Value: statusPlayed, Strength: rule.Suggesting},
 		}},
-		{"played for achievements", gameSigns{playtimeMinutes: minutes(30), achievementsUnlocked: 1, steamCategories: []string{kind.SteamTradingCardsCategory}}, []rule.Proposal{
+		{"played for achievements", gameSigns{playtimeMinutes: minutes(30), achievementsUnlocked: 1, steamCategories: []string{steamTradingCardsCategory}}, []rule.Proposal{
 			{ItemID: 1, Rule: RuleLikelyPlayed, Subject: rule.SubjectStatus, Value: statusPlayed, Strength: rule.Suggesting},
 		}},
 		{"short play says nothing", gameSigns{playtimeMinutes: minutes(60)}, nil},
@@ -119,7 +119,7 @@ func TestSteamProposerReadsStoredRecords(t *testing.T) {
 	}
 	want := []rule.Proposal{
 		entry(1), entry(2), entry(3), entry(4),
-		{ItemID: 1, Rule: RuleLikelyIdled, Subject: rule.SubjectTag, Value: TagIdled, Strength: rule.Suggesting},
+		{ItemID: 1, Rule: RuleLikelyIdled, Subject: rule.SubjectTag, Value: kind.TagIdled, Strength: rule.Suggesting},
 		{ItemID: 1, Rule: RuleLikelyIdled, Subject: rule.SubjectStatus, Value: statusNeverPlayed, Strength: rule.Suggesting},
 	}
 	if !reflect.DeepEqual(got, want) {
