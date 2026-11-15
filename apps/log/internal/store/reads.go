@@ -35,8 +35,9 @@ func (s *Store) ListItems(ctx context.Context, filter ItemFilter) ([]ItemView, e
 		if !known || k.IdentitySource == "" {
 			return nil, fmt.Errorf("%w: needs=match takes a kind that has an identity source", ErrInvalid)
 		}
-		where = append(where, "e.status <> ? AND NOT EXISTS (SELECT 1 FROM claim m WHERE m.item_id = i.id AND m.source = ?)")
-		args = append(args, kind.Dismissed, k.IdentitySource)
+		claimedOrAnswered, answeredArgs := claimedOrAnsweredFrom("m", []string{k.IdentitySource})
+		where = append(where, "e.status <> ? AND NOT EXISTS (SELECT 1 FROM claim m WHERE m.item_id = i.id AND ("+claimedOrAnswered+"))")
+		args = append(append(args, kind.Dismissed), answeredArgs...)
 	}
 	views, err := s.queryViews(ctx, strings.Join(where, " AND "), args...)
 	if err != nil {
@@ -153,11 +154,9 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	if err != nil {
 		return nil, err
 	}
-	related, err := s.relatedVerdicts(ctx, byID)
-	if err != nil {
+	if err := s.attachVerdicts(ctx, ids, byID); err != nil {
 		return nil, err
 	}
-	attachVerdicts(readings, related, byID)
 	if err := s.attachTakes(ctx, readings, byID); err != nil {
 		return nil, err
 	}
@@ -173,17 +172,44 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	return views, nil
 }
 
-func attachVerdicts(readings map[int64][]verdict.Reading, related map[int64]map[string]verdict.Verdicts, byID map[int64]*ItemView) {
-	for id, v := range byID {
-		k, known := kind.Get(v.Kind)
-		if !known {
-			continue
+func (s *Store) attachVerdicts(ctx context.Context, ids []int64, byID map[int64]*ItemView) error {
+	for _, v := range byID {
+		v.Verdicts = verdict.Verdicts{Values: map[string]any{}, SourceOf: map[string]string{}}
+	}
+	err := forChunks(ids, func(chunk []int64) error {
+		rows, err := s.db.QueryContext(ctx, `
+			SELECT item_id, verdicts FROM item_verdict WHERE item_id IN (`+placeholders(len(chunk))+`)`, int64sAsArgs(chunk)...)
+		if err != nil {
+			return err
 		}
-		v.Verdicts = verdict.Inherit(k, verdict.Decide(k, readings[id]), related[id])
-		if v.Entry != nil && v.Entry.Status == kind.Untriaged {
+		defer rows.Close()
+		for rows.Next() {
+			var id int64
+			var stored string
+			if err := rows.Scan(&id, &stored); err != nil {
+				return err
+			}
+			v := byID[id]
+			k, known := kind.Get(v.Kind)
+			if !known {
+				continue
+			}
+			if v.Verdicts, err = verdict.DecodeVerdicts(k, json.RawMessage(stored)); err != nil {
+				return fmt.Errorf("verdicts of item %d: %w", id, err)
+			}
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return err
+	}
+	for _, v := range byID {
+		k, known := kind.Get(v.Kind)
+		if known && v.Entry != nil && v.Entry.Status == kind.Untriaged {
 			v.Hint = k.Hint(v.Verdicts.Values)
 		}
 	}
+	return nil
 }
 
 func (s *Store) attachReadScores(ctx context.Context, readings map[int64][]verdict.Reading, byID map[int64]*ItemView) error {
@@ -229,8 +255,8 @@ func (s *Store) claimsOf(ctx context.Context, ids []int64) ([]itemClaim, error) 
 	var claims []itemClaim
 	err := forChunks(ids, func(chunk []int64) error {
 		rows, err := s.db.QueryContext(ctx, `
-			SELECT item_id, source, coalesce(external_id, ''), data, fetched_at FROM claim
-			WHERE item_id IN (`+placeholders(len(chunk))+`) ORDER BY item_id, source`, int64sAsArgs(chunk)...)
+			SELECT item_id, source, external_id, data, fetched_at FROM claim
+			WHERE item_id IN (`+placeholders(len(chunk))+`) ORDER BY item_id, source, external_id`, int64sAsArgs(chunk)...)
 		if err != nil {
 			return err
 		}

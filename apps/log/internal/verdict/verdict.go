@@ -95,6 +95,25 @@ func Decode(k kind.Kind, source, externalID, fetchedAt string, raw json.RawMessa
 	return Reading{Source: source, ExternalID: externalID, FetchedAt: fetchedAt, Values: normalizeValues(k, source, values)}, nil
 }
 
+func DecodeVerdicts(k kind.Kind, raw json.RawMessage) (Verdicts, error) {
+	decoded := Verdicts{}
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		return Verdicts{}, err
+	}
+	if decoded.Values == nil {
+		decoded.Values = map[string]any{}
+	}
+	if decoded.SourceOf == nil {
+		decoded.SourceOf = map[string]string{}
+	}
+	for _, field := range k.Fields {
+		if value, decided := decoded.Values[field.Name]; decided {
+			decoded.Values[field.Name] = normalize(decoded.SourceOf[field.Name], field.Type, value)
+		}
+	}
+	return decoded, nil
+}
+
 func Decide(k kind.Kind, readings []Reading) Verdicts {
 	valuesBySource := map[string]map[string]any{}
 	for _, r := range readings {

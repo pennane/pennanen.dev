@@ -3,24 +3,107 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
+
+	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 )
 
 func (s *Store) AddRelation(ctx context.Context, r Relation) error {
-	if r.Type == "" || r.FromID == r.ToID {
-		return fmt.Errorf("%w: relation needs a type and two different items", ErrInvalid)
+	if err := editable(r); err != nil {
+		return err
 	}
-	_, err := s.db.ExecContext(ctx, `INSERT INTO relation (from_id, type, to_id) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`, r.FromID, r.Type, r.ToID)
-	return err
+	return s.inTx(ctx, func(tx *sql.Tx) error {
+		edit, err := s.linkEditOf(ctx, tx, r, linkAdded)
+		if err != nil {
+			return err
+		}
+		return s.putLinkEdit(ctx, tx, edit)
+	})
 }
 
 func (s *Store) RemoveRelation(ctx context.Context, r Relation) error {
-	result, err := s.db.ExecContext(ctx, `DELETE FROM relation WHERE from_id = ? AND type = ? AND to_id = ?`, r.FromID, r.Type, r.ToID)
-	if err != nil {
+	return s.inTx(ctx, func(tx *sql.Tx) error {
+		if err := requireRelation(ctx, tx, r); err != nil {
+			return err
+		}
+		edit, err := s.linkEditOf(ctx, tx, r, linkSuppressed)
+		if err != nil {
+			return err
+		}
+		stored := apLink{}
+		presence, err := storedData(ctx, tx, edit.id, &stored)
+		if err != nil {
+			return err
+		}
+		if presence == present && stored.Edit == linkAdded {
+			if _, err := s.records.RemoveClaim(ctx, tx, edit.id); err != nil {
+				return err
+			}
+			if err := s.settle(ctx, tx, edit.id, edit.from); err != nil {
+				return err
+			}
+			err := requireRelation(ctx, tx, r)
+			if errors.Is(err, ErrNotFound) {
+				return nil
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return s.putLinkEdit(ctx, tx, edit)
+	})
+}
+
+func editable(r Relation) error {
+	linkType, known := kind.LinkTypeOf(r.Type)
+	if !known || linkType.Order != kind.Unordered || r.FromID == r.ToID {
+		return fmt.Errorf("%w: a relation needs an unordered link type and two different items", ErrInvalid)
+	}
+	return nil
+}
+
+func requireRelation(ctx context.Context, q queryer, r Relation) error {
+	var found int
+	if err := q.QueryRowContext(ctx, `SELECT count(*) FROM relation WHERE from_id = ? AND type = ? AND to_id = ?`, r.FromID, r.Type, r.ToID).Scan(&found); err != nil {
 		return err
 	}
-	return requireAffected(result)
+	if found == 0 {
+		return fmt.Errorf("%w: no %s relation from %d to %d", ErrNotFound, r.Type, r.FromID, r.ToID)
+	}
+	return nil
+}
+
+type pendingLinkEdit struct {
+	id   record.Identity
+	from record.Identity
+	data apLink
+}
+
+func (s *Store) linkEditOf(ctx context.Context, q queryer, r Relation, edit linkEdit) (pendingLinkEdit, error) {
+	from, err := s.keyOf(ctx, q, r.FromID)
+	if err != nil {
+		return pendingLinkEdit{}, err
+	}
+	to, err := s.keyOf(ctx, q, r.ToID)
+	if err != nil {
+		return pendingLinkEdit{}, err
+	}
+	return pendingLinkEdit{
+		id:   linkEditIdentity(from, r.Type, to),
+		from: from,
+		data: apLink{Edit: edit, From: from.String(), Type: r.Type, To: to.String()},
+	}, nil
+}
+
+func (s *Store) putLinkEdit(ctx context.Context, tx *sql.Tx, edit pendingLinkEdit) error {
+	change, err := s.put(ctx, tx, edit.id, edit.data)
+	if err != nil || change == record.Unchanged {
+		return err
+	}
+	return s.settle(ctx, tx, edit.id)
 }
 
 func (s *Store) RelatedTo(ctx context.Context, fromIDs []int64, relation string) ([]int64, error) {
@@ -33,24 +116,4 @@ func (s *Store) RelatedTo(ctx context.Context, fromIDs []int64, relation string)
 		return err
 	})
 	return slices.Compact(slices.Sorted(slices.Values(related))), err
-}
-
-func (s *Store) ReplaceRelationsFrom(ctx context.Context, fromID int64, types []string, relations []Relation) error {
-	for _, r := range relations {
-		if r.FromID != fromID || !slices.Contains(types, r.Type) || r.FromID == r.ToID {
-			return fmt.Errorf("%w: relation %v is not one of %v from %d", ErrInvalid, r, types, fromID)
-		}
-	}
-	return s.inTx(ctx, func(tx *sql.Tx) error {
-		if _, err := tx.ExecContext(ctx, `DELETE FROM relation WHERE from_id = ? AND type IN (`+placeholders(len(types))+`)`,
-			append([]any{fromID}, stringsAsArgs(types)...)...); err != nil {
-			return err
-		}
-		for _, r := range relations {
-			if _, err := tx.ExecContext(ctx, `INSERT INTO relation (from_id, type, to_id) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`, r.FromID, r.Type, r.ToID); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }

@@ -66,7 +66,7 @@ func newIGDBServer(t *testing.T) (*httptest.Server, *store.Store, *syncs.Sync, *
 	client := igdb.NewClient("id", "secret")
 	client.TokenURL = upstream.URL + "/token"
 	client.APIURL = upstream.URL + "/v4"
-	st := store.New(d)
+	st := store.Open(d)
 	matcher, err := syncs.New(context.Background(), igdb.SyncName, igdb.NewMatcher(st, client).Work, st, nil)
 	if err != nil {
 		t.Fatal(err)

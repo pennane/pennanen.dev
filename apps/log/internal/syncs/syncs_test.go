@@ -18,7 +18,7 @@ func openStore(t *testing.T) *store.Store {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	return store.New(d)
+	return store.Open(d)
 }
 
 func TestReportsSurviveARestartAndFailuresKeepTheLastSuccess(t *testing.T) {

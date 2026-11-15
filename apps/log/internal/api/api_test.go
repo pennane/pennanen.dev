@@ -29,7 +29,7 @@ func newServer(t *testing.T) *httptest.Server {
 	}
 	t.Cleanup(func() { d.Close() })
 	pictures := &images.Store{Dir: t.TempDir()}
-	srv := httptest.NewServer((&api.Server{Store: store.New(d), AdminToken: token, Images: pictures}).Handler())
+	srv := httptest.NewServer((&api.Server{Store: store.Open(d), AdminToken: token, Images: pictures}).Handler())
 	t.Cleanup(srv.Close)
 	return srv
 }
@@ -407,7 +407,7 @@ func TestKnownItemsStayOutOfEntriesAndPublic(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	st := store.New(d)
+	st := store.Open(d)
 	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, Images: &images.Store{Dir: t.TempDir()}}).Handler())
 	t.Cleanup(srv.Close)
 

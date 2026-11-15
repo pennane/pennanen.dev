@@ -22,7 +22,7 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.New(d)
+	s := store.Open(d)
 	r := &letterboxd.Recorder{Store: s, Today: func() string { return "2026-11-14" }}
 	heat := verdict.LetterboxdFilm{ID: "bbb2", Slug: "heat", Title: "Heat", Year: 1995}
 	memento := verdict.LetterboxdFilm{ID: "ccc3", Slug: "memento", Title: "Memento", Year: 2000}
@@ -123,7 +123,7 @@ func TestADiaryEntryForAFilmNotInTheLogAddsIt(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.New(d)
+	s := store.Open(d)
 	r := &letterboxd.Recorder{Store: s, Links: pagesNaming{"mulholland-drive": "297o"}}
 	five := 5.0
 	mulholland := letterboxd.DiaryEntry{
@@ -169,7 +169,7 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.New(d)
+	s := store.Open(d)
 	added, err := s.CreateItemFromSource(ctx, kind.Series, "Ripley", kind.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028,"name":"Ripley"}`))
 	if err != nil {
 		t.Fatal(err)
@@ -222,7 +222,7 @@ func TestTheNewestDiaryEntrySetsTheRating(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.New(d)
+	s := store.Open(d)
 	r := &letterboxd.Recorder{Store: s}
 	film := verdict.LetterboxdFilm{ID: "lif1", Slug: "the-life-aquatic-with-steve-zissou", Title: "The Life Aquatic with Steve Zissou", Year: 2004}
 	stars := func(n float64) *float64 { return &n }

@@ -15,6 +15,7 @@ const (
 	lastBeforeStatusSetBy  = 10
 	lastWithThings         = 12
 	lastWithEveryArtistBy  = 16
+	lastBeforeLayers       = 18
 )
 
 func openAt(t *testing.T, version int) *sql.DB {
@@ -262,7 +263,7 @@ func TestThingsAreGone(t *testing.T) {
 		INSERT INTO setting (key, value) VALUES ('kind:game', '{}'), ('kind:thing', '{}');`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrate(ctx, d); err != nil {
+	if err := migrateUpTo(ctx, d, lastBeforeLayers); err != nil {
 		t.Fatal(err)
 	}
 	for _, left := range []struct{ what, query string }{
@@ -305,7 +306,7 @@ func TestOnlyTheFirstCreditedArtistStaysBy(t *testing.T) {
 			(1, 'by', 2), (1, 'by', 3), (4, 'by', 5), (4, 'by', 6), (7, 'by', 2);`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrate(ctx, d); err != nil {
+	if err := migrateUpTo(ctx, d, lastBeforeLayers); err != nil {
 		t.Fatal(err)
 	}
 	rows, err := d.QueryContext(ctx, `SELECT from_id || ' ' || type || ' ' || to_id FROM relation ORDER BY from_id, to_id`)
@@ -339,7 +340,7 @@ func TestAnAlbumClaimWithoutArtistsKeepsItsRelations(t *testing.T) {
 		INSERT INTO relation (from_id, type, to_id) VALUES (1, 'by', 2), (1, 'by', 3);`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrate(ctx, d); err != nil {
+	if err := migrateUpTo(ctx, d, lastBeforeLayers); err != nil {
 		t.Fatal(err)
 	}
 	var withs int

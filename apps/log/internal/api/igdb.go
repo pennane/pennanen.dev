@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
@@ -107,7 +106,7 @@ func (s *Server) matchIGDB(w http.ResponseWriter, r *http.Request) {
 		_, raw, err = s.fetchIGDBGame(r.Context(), pick.IGDBID)
 	}
 	if err == nil {
-		err = s.Store.PutClaim(r.Context(), id, kind.SourceIGDB, strconv.FormatInt(pick.IGDBID, 10), raw)
+		err = s.Store.AnswerMatch(r.Context(), id, kind.SourceIGDB, strconv.FormatInt(pick.IGDBID, 10), raw)
 	}
 	s.mutatedItem(w, r, id, err)
 }
@@ -119,7 +118,7 @@ func (s *Server) matchIGDBNone(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err := s.Store.GetItem(r.Context(), id)
 	if err == nil {
-		err = s.Store.PutClaim(r.Context(), id, kind.SourceIGDB, "", igdb.NoMatch)
+		err = s.Store.AnswerNoMatch(r.Context(), id, kind.SourceIGDB)
 	}
 	s.mutatedItem(w, r, id, err)
 }

@@ -79,3 +79,40 @@ CREATE TABLE identity_waiting (
 );
 
 CREATE INDEX identity_waiting_waiting ON identity_waiting (waiting_source, waiting_external_id);
+
+DROP TABLE claim_reading;
+
+ALTER TABLE claim RENAME TO legacy_claim;
+ALTER TABLE observation RENAME TO legacy_observation;
+ALTER TABLE relation RENAME TO legacy_relation;
+ALTER TABLE part RENAME TO legacy_part;
+
+CREATE VIEW claim AS
+  SELECT i.item_id, c.source, c.external_id, c.data, c.fetched_at
+  FROM record_claim c
+  JOIN item_identity i ON i.source = c.source AND i.external_id = c.external_id;
+
+CREATE VIEW claim_reading AS
+  SELECT i.item_id, r.source, r.version, c.fetched_at, r.reading
+  FROM record_reading r
+  JOIN record_claim c ON c.source = r.source AND c.external_id = r.external_id
+  JOIN item_identity i ON i.source = r.source AND i.external_id = r.external_id;
+
+CREATE VIEW observation AS
+  SELECT o.id, i.item_id, o.source, o.signal, o.key, o.observed_at, o.data
+  FROM record_observation o
+  JOIN item_identity i ON i.source = o.about_source AND i.external_id = o.about_external_id;
+
+CREATE VIEW relation AS
+  SELECT DISTINCT f.item_id AS from_id, l.type, t.item_id AS to_id
+  FROM link l
+  JOIN item_identity f ON f.source = l.from_source AND f.external_id = l.from_external_id
+  JOIN item_identity t ON t.source = l.to_source AND t.external_id = l.to_external_id
+  WHERE l.position IS NULL AND f.item_id <> t.item_id;
+
+CREATE VIEW part AS
+  SELECT t.item_id AS whole_id, l.position, f.item_id AS part_id
+  FROM link l
+  JOIN item_identity f ON f.source = l.from_source AND f.external_id = l.from_external_id
+  JOIN item_identity t ON t.source = l.to_source AND t.external_id = l.to_external_id
+  WHERE l.type = 'part-of' AND f.item_id <> t.item_id;

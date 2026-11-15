@@ -23,7 +23,7 @@ func TestSyncImportsHintsAndOnlyRefetchesChangedAchievements(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.New(d)
+	s := store.Open(d)
 
 	playtime := atomic.Int64{}
 	playtime.Store(150)

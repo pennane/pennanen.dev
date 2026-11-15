@@ -19,8 +19,6 @@ import (
 
 const SyncName = "tmdb-match"
 
-var NoMatch = json.RawMessage(`{"match":"none"}`)
-
 const (
 	CountChecked   = "checked"
 	CountMatched   = "matched"

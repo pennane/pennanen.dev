@@ -148,7 +148,7 @@ func (s *Server) matchTMDBNone(w http.ResponseWriter, r *http.Request) {
 	v, err := s.Store.GetItem(r.Context(), id)
 	if err == nil {
 		k, _ := kind.Get(v.Kind)
-		err = s.Store.PutClaim(r.Context(), id, k.IdentitySource, "", tmdb.NoMatch)
+		err = s.Store.AnswerNoMatch(r.Context(), id, k.IdentitySource)
 	}
 	s.mutatedItem(w, r, id, err)
 }

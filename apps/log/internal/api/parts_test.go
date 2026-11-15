@@ -15,7 +15,7 @@ func TestAnAlbumPageListsItsTracksInOrder(t *testing.T) {
 	var st *store.Store
 	srv := spotifyServer(t, func(s *store.Store) *spotify.Client { st = s; return nil })
 	ctx := context.Background()
-	album, err := st.CreateItemFromSource(ctx, kind.Album, "Beta", kind.SourceSpotifyAlbum, "B", map[string]any{"id": "B", "name": "Beta"})
+	album, err := st.CreateItemFromSource(ctx, kind.Album, "Beta", kind.SourceSpotifyAlbum, "B", json.RawMessage(`{"id":"B","name":"Beta","tracks":{"items":[{"id":"t1","disc_number":1,"track_number":1},{"id":"t2","disc_number":1,"track_number":2}]}}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,8 +25,8 @@ func TestAnAlbumPageListsItsTracksInOrder(t *testing.T) {
 	}
 	second, _ := st.KnowItemFromSource(ctx, kind.Track, "Second", kind.SourceSpotifyTrack, "I2", map[string]any{"id": "t2", "name": "Second"})
 	first, _ := st.KnowItemFromSource(ctx, kind.Track, "First", kind.SourceSpotifyTrack, "I1", map[string]any{"id": "t1", "name": "First"})
-	if err := st.ReplaceParts(ctx, album, []int64{first, second}); err != nil {
-		t.Fatal(err)
+	if first == 0 || second == 0 {
+		t.Fatalf("tracks %d %d", first, second)
 	}
 	status, body := call(t, srv, "GET", "/public/items/album/beta", "", "")
 	var item struct {

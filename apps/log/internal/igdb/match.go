@@ -2,7 +2,6 @@ package igdb
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"maps"
 	"slices"
@@ -18,8 +17,6 @@ const (
 	CountChecked = "checked"
 	CountMatched = "matched"
 )
-
-var NoMatch = json.RawMessage(`{"match":"none"}`)
 
 type Matcher struct {
 	Store  *store.Store

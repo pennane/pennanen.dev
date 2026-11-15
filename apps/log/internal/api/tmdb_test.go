@@ -33,7 +33,7 @@ func TestApFixesAWrongTMDBMatch(t *testing.T) {
 	t.Cleanup(upstream.Close)
 	client := tmdb.NewClient("t")
 	client.BaseURL = upstream.URL
-	st := store.New(d)
+	st := store.Open(d)
 	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, TMDB: client}).Handler())
 	t.Cleanup(srv.Close)
 
@@ -89,7 +89,7 @@ func TestApAddsASeriesFromTMDBAndMovesAFilmThatIsOne(t *testing.T) {
 	t.Cleanup(upstream.Close)
 	client := tmdb.NewClient("t")
 	client.BaseURL = upstream.URL
-	st := store.New(d)
+	st := store.Open(d)
 	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, TMDB: client}).Handler())
 	t.Cleanup(srv.Close)
 
@@ -113,7 +113,9 @@ func TestApAddsASeriesFromTMDBAndMovesAFilmThatIsOne(t *testing.T) {
 	}
 
 	id, _ := st.CreateItemFromSource(ctx, kind.Movie, "Ripley", kind.SourceLetterboxd, "rip1", json.RawMessage(`{"id":"rip1","title":"Ripley","year":2024}`))
-	st.PutClaim(ctx, id, kind.SourceTMDB, "", tmdb.NoMatch)
+	if err := st.AnswerNoMatch(ctx, id, kind.SourceTMDB); err != nil {
+		t.Fatal(err)
+	}
 	if status, body := call(t, srv, "PUT", "/admin/items/"+itoa(id)+"/tmdb", token, `{"tmdbId":94028,"tmdbType":"tv"}`); status != http.StatusOK {
 		t.Fatalf("pick a series: %d %s", status, body)
 	}

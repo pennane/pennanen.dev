@@ -55,7 +55,7 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer d.Close()
-	s := store.New(d)
+	s := store.Open(d)
 
 	export, err := letterboxd.ParseExport(exportZip(t, map[string]string{
 		"watched.csv":     "Date,Name,Year,Letterboxd URI\n2026-03-23,Stalker,1979,https://boxd.it/aaa1\n2026-03-23,Heat,1995,https://boxd.it/bbb2\n",

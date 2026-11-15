@@ -9,21 +9,22 @@ import (
 	"strings"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 )
 
 type Store struct {
-	db *sql.DB
+	db      *sql.DB
+	records *record.Store
+	world   *world.World
 }
 
-func New(db *sql.DB) *Store { return &Store{db: db} }
-
-type queryer interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+func New(db *sql.DB, records *record.Store, world *world.World) *Store {
+	return &Store{db: db, records: records, world: world}
 }
+
+type queryer = record.Queryer
 
 func (s *Store) inTx(ctx context.Context, work func(tx *sql.Tx) error) error {
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -56,11 +57,17 @@ func (s *Store) CreateItem(ctx context.Context, kindName, title string, override
 	}
 	var id int64
 	err := s.inTx(ctx, func(tx *sql.Tx) error {
-		var err error
-		if id, err = insertItem(ctx, tx, kindName, title); err != nil {
+		handMade, err := handMadeIdentity()
+		if err != nil {
 			return err
 		}
-		if err := putClaim(ctx, tx, id, kind.SourceAP, "", override); err != nil {
+		if _, err := s.put(ctx, tx, handMade, apFields{Kind: kindName, Fields: override}); err != nil {
+			return err
+		}
+		if err := s.settle(ctx, tx, handMade); err != nil {
+			return err
+		}
+		if id, err = s.itemOf(ctx, tx, handMade); err != nil {
 			return err
 		}
 		return ensureEntry(ctx, tx, id, kind.SourceAP)
@@ -72,7 +79,7 @@ func (s *Store) CreateItemFromSource(ctx context.Context, kindName, title, sourc
 	var id int64
 	err := s.inTx(ctx, func(tx *sql.Tx) error {
 		var err error
-		if id, err = insertItemWithClaim(ctx, tx, kindName, title, source, externalID, data); err != nil {
+		if id, err = s.itemFromSource(ctx, tx, source, externalID, data); err != nil {
 			return err
 		}
 		return ensureEntry(ctx, tx, id, source)
@@ -84,34 +91,33 @@ func (s *Store) KnowItemFromSource(ctx context.Context, kindName, title, source,
 	var id int64
 	err := s.inTx(ctx, func(tx *sql.Tx) error {
 		var err error
-		id, err = insertItemWithClaim(ctx, tx, kindName, title, source, externalID, data)
+		id, err = s.itemFromSource(ctx, tx, source, externalID, data)
 		return err
 	})
 	return id, err
 }
 
-func insertItemWithClaim(ctx context.Context, q queryer, kindName, title, source, externalID string, data any) (int64, error) {
-	id, err := insertItem(ctx, q, kindName, title)
-	if err != nil {
+func (s *Store) itemFromSource(ctx context.Context, tx *sql.Tx, source, externalID string, data any) (int64, error) {
+	if externalID == "" {
+		return 0, fmt.Errorf("%w: an item from %s needs an external id", ErrInvalid, source)
+	}
+	id := identityOf(source, externalID)
+	if _, err := s.itemOf(ctx, tx, id); err == nil {
+		return 0, fmt.Errorf("%w: another item already has %s", ErrConflict, id)
+	} else if !errors.Is(err, ErrNotFound) {
 		return 0, err
 	}
-	return id, putClaim(ctx, q, id, source, externalID, data)
-}
-
-func insertItem(ctx context.Context, q queryer, kindName, title string) (int64, error) {
-	slug, err := freeSlug(ctx, q, kindName, Slugify(title))
-	if err != nil {
+	if _, err := s.put(ctx, tx, id, data); err != nil {
 		return 0, err
 	}
-	result, err := q.ExecContext(ctx, `INSERT INTO item (kind, slug) VALUES (?, ?)`, kindName, slug)
-	if err != nil {
+	if err := s.settle(ctx, tx, id); err != nil {
 		return 0, err
 	}
-	return result.LastInsertId()
-}
-
-func freeSlug(ctx context.Context, q queryer, kindName, base string) (string, error) {
-	return world.FreeSlug(ctx, q, kindName, base)
+	itemID, err := s.itemOf(ctx, tx, id)
+	if errors.Is(err, ErrNotFound) {
+		return 0, fmt.Errorf("%w: %s fits no kind", ErrInvalid, id)
+	}
+	return itemID, err
 }
 
 func ensureEntry(ctx context.Context, q queryer, itemID int64, statusSetBy string) error {
@@ -124,52 +130,83 @@ func Slugify(title string) string {
 }
 
 func (s *Store) FindByIdentity(ctx context.Context, source, externalID string) (int64, error) {
-	var id int64
-	err := s.db.QueryRowContext(ctx, `SELECT item_id FROM claim WHERE source = ? AND external_id = ?`, source, externalID).Scan(&id)
-	if errors.Is(err, sql.ErrNoRows) {
-		return 0, ErrNotFound
-	}
-	return id, err
+	return s.itemOf(ctx, s.db, identityOf(source, externalID))
 }
 
 func (s *Store) PutClaim(ctx context.Context, itemID int64, source, externalID string, data any) error {
-	return s.inTx(ctx, func(tx *sql.Tx) error {
-		return putClaim(ctx, tx, itemID, source, externalID, data)
-	})
-}
-
-func putClaim(ctx context.Context, q queryer, itemID int64, source, externalID string, data any) error {
 	raw, err := asJSON(data)
 	if err != nil {
 		return err
 	}
-	_, err = q.ExecContext(ctx, `
-		INSERT INTO claim (item_id, source, external_id, data) VALUES (?, ?, NULLIF(?, ''), ?)
-		ON CONFLICT (item_id, source) DO UPDATE SET
-			external_id = excluded.external_id,
-			data = excluded.data,
-			fetched_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')`,
-		itemID, source, externalID, string(raw))
-	if isIdentityTaken(err) {
-		return fmt.Errorf("%w: another item already has %s %s", ErrConflict, source, externalID)
+	return s.inTx(ctx, func(tx *sql.Tx) error {
+		key, err := s.keyOf(ctx, tx, itemID)
+		if err != nil {
+			return err
+		}
+		if externalID == "" {
+			externalID = key.String()
+		}
+		return s.putClaimOn(ctx, tx, itemID, identityOf(source, externalID), raw)
+	})
+}
+
+func (s *Store) AnswerMatch(ctx context.Context, itemID int64, source, externalID string, data any) error {
+	if externalID == "" {
+		return fmt.Errorf("%w: a match needs an external id", ErrInvalid)
 	}
+	return s.inTx(ctx, func(tx *sql.Tx) error {
+		return s.answer(ctx, tx, itemID, identityOf(source, externalID), data, []string{source})
+	})
+}
+
+func (s *Store) AnswerNoMatch(ctx context.Context, itemID int64, source string) error {
+	return s.inTx(ctx, func(tx *sql.Tx) error {
+		key, err := s.keyOf(ctx, tx, itemID)
+		if err != nil {
+			return err
+		}
+		answer := matchAnswerIdentity(source, key)
+		if _, err := s.put(ctx, tx, answer, apMatchAnswer{}); err != nil {
+			return err
+		}
+		removed, err := s.removeClaimsFrom(ctx, tx, itemID, []string{source}, answer)
+		if err != nil {
+			return err
+		}
+		return s.settle(ctx, tx, append(removed, answer)...)
+	})
+}
+
+func (s *Store) answer(ctx context.Context, tx *sql.Tx, itemID int64, id record.Identity, data any, replacing []string) error {
+	key, err := s.keyOf(ctx, tx, itemID)
 	if err != nil {
 		return err
 	}
-	return putReading(ctx, q, itemID, source, raw)
-}
-
-func isIdentityTaken(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed: claim.source, claim.external_id")
+	if err := s.refuseAnotherItems(ctx, tx, itemID, id); err != nil {
+		return err
+	}
+	if _, err := s.put(ctx, tx, id, data); err != nil {
+		return err
+	}
+	answer := matchAnswerIdentity(id.Source, key)
+	if _, err := s.put(ctx, tx, answer, apMatchAnswer{To: &id.ExternalID}); err != nil {
+		return err
+	}
+	removed, err := s.removeClaimsFrom(ctx, tx, itemID, replacing, id)
+	if err != nil {
+		return err
+	}
+	return s.settle(ctx, tx, append(removed, id, answer)...)
 }
 
 func (s *Store) IdentitiesLackingSources(ctx context.Context, have string, lacking ...string) (map[string]int64, error) {
-	args := append([]any{have, kind.Dismissed}, stringsAsArgs(lacking)...)
+	claimedOrAnswered, answeredArgs := claimedOrAnsweredFrom("l", lacking)
+	args := append([]any{have, kind.Dismissed}, answeredArgs...)
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.external_id, c.item_id FROM claim c
 		JOIN entry e ON e.item_id = c.item_id
-		WHERE c.source = ? AND c.external_id IS NOT NULL AND e.status <> ?
-		  AND NOT EXISTS (SELECT 1 FROM claim l WHERE l.item_id = c.item_id AND l.source IN (`+placeholders(len(lacking))+`))`,
+		WHERE c.source = ? AND e.status <> ?
+		  AND NOT EXISTS (SELECT 1 FROM claim l WHERE l.item_id = c.item_id AND (`+claimedOrAnswered+`))`,
 		args...)
 	if err != nil {
 		return nil, err
@@ -187,12 +224,15 @@ func (s *Store) IdentitiesLackingSources(ctx context.Context, have string, lacki
 	return itemOf, rows.Err()
 }
 
-func stringsAsArgs(xs []string) []any {
-	args := make([]any, len(xs))
-	for i, x := range xs {
-		args[i] = x
+func claimedOrAnsweredFrom(alias string, sources []string) (string, []any) {
+	conditions := make([]string, 0, len(sources))
+	args := []any{}
+	for _, source := range sources {
+		prefix := matchAnswerPrefix(source)
+		conditions = append(conditions, alias+`.source = ? OR (`+alias+`.source = ? AND substr(`+alias+`.external_id, 1, length(?)) = ?)`)
+		args = append(args, source, kind.SourceAP, prefix, prefix)
 	}
-	return args
+	return strings.Join(conditions, " OR "), args
 }
 
 func asJSON(data any) ([]byte, error) {
@@ -207,14 +247,14 @@ func asJSON(data any) ([]byte, error) {
 
 func (s *Store) Claim(ctx context.Context, itemID int64, source string) (verdict.Claim, error) {
 	c := verdict.Claim{Source: source}
-	var externalID sql.NullString
 	var data string
-	err := s.db.QueryRowContext(ctx, `SELECT external_id, data, fetched_at FROM claim WHERE item_id = ? AND source = ?`, itemID, source).
-		Scan(&externalID, &data, &c.FetchedAt)
+	err := s.db.QueryRowContext(ctx, `
+		SELECT external_id, data, fetched_at FROM claim WHERE item_id = ? AND source = ?
+		ORDER BY fetched_at DESC, external_id LIMIT 1`, itemID, source).
+		Scan(&c.ExternalID, &data, &c.FetchedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return c, ErrNotFound
 	}
-	c.ExternalID = externalID.String
 	c.Data = json.RawMessage(data)
 	return c, err
 }
@@ -230,44 +270,85 @@ func (s *Store) ChangeOverride(ctx context.Context, itemID int64, changes map[st
 		}
 	}
 	return s.inTx(ctx, func(tx *sql.Tx) error {
-		override := map[string]any{}
-		var raw string
-		err := tx.QueryRowContext(ctx, `SELECT data FROM claim WHERE item_id = ? AND source = ?`, itemID, kind.SourceAP).Scan(&raw)
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		case err != nil:
+		id, err := s.overrideOf(ctx, tx, itemID)
+		if err != nil {
 			return err
-		default:
-			if err := json.Unmarshal([]byte(raw), &override); err != nil {
-				return err
-			}
+		}
+		override := apFields{}
+		if _, err := storedData(ctx, tx, id, &override); err != nil {
+			return err
+		}
+		if override.Fields == nil {
+			override.Fields = map[string]any{}
 		}
 		for name, value := range changes {
 			if kind.IsRemoval(value) {
-				delete(override, name)
+				delete(override.Fields, name)
 			} else {
-				override[name] = value
+				override.Fields[name] = value
 			}
 		}
-		return putClaim(ctx, tx, itemID, kind.SourceAP, "", override)
+		change, err := s.put(ctx, tx, id, override)
+		if err != nil || change == record.Unchanged {
+			return err
+		}
+		return s.settle(ctx, tx, id)
 	})
 }
 
-func (s *Store) DeleteItem(ctx context.Context, itemID int64) error {
-	result, err := s.db.ExecContext(ctx, `DELETE FROM item WHERE id = ?`, itemID)
-	if err != nil {
-		return err
+func (s *Store) overrideOf(ctx context.Context, q queryer, itemID int64) (record.Identity, error) {
+	handMade := identityOf(kind.SourceAP, "")
+	err := q.QueryRowContext(ctx, `
+		SELECT external_id FROM claim
+		WHERE item_id = ? AND source = ? AND substr(external_id, 1, length(?)) = ?
+		ORDER BY external_id LIMIT 1`, itemID, kind.SourceAP, apItemPrefix, apItemPrefix).Scan(&handMade.ExternalID)
+	if err == nil {
+		return handMade, nil
 	}
-	return requireAffected(result)
+	if !errors.Is(err, sql.ErrNoRows) {
+		return record.Identity{}, err
+	}
+	key, err := s.keyOf(ctx, q, itemID)
+	if err != nil {
+		return record.Identity{}, err
+	}
+	return apIdentity(apFieldsPrefix, key.String()), nil
 }
 
-func requireAffected(result sql.Result) error {
-	n, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrNotFound
-	}
-	return nil
+func (s *Store) DeleteItem(ctx context.Context, itemID int64) error {
+	return s.inTx(ctx, func(tx *sql.Tx) error {
+		if _, err := lookupKind(ctx, tx, itemID); err != nil {
+			return err
+		}
+		claims, err := claimsOn(ctx, tx, itemID)
+		if err != nil {
+			return err
+		}
+		for _, id := range claims {
+			if id.Source != kind.SourceAP {
+				return fmt.Errorf("%w: item %d has a claim from %s; only an item made by hand can be deleted", ErrInvalid, itemID, id.Source)
+			}
+		}
+		inheritors, err := s.itemIDsWith(ctx, tx, `SELECT DISTINCT from_id FROM relation WHERE to_id = ? ORDER BY from_id`, itemID)
+		if err != nil {
+			return err
+		}
+		for _, id := range claims {
+			if _, err := s.records.RemoveClaim(ctx, tx, id); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM item WHERE id = ?`, itemID); err != nil {
+			return err
+		}
+		keys := make([]record.Identity, 0, len(inheritors))
+		for _, inheritor := range inheritors {
+			key, err := s.keyOf(ctx, tx, inheritor)
+			if err != nil {
+				return err
+			}
+			keys = append(keys, key)
+		}
+		return s.settle(ctx, tx, keys...)
+	})
 }

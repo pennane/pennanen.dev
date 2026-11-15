@@ -78,35 +78,30 @@ func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.Ra
 		return 0, err
 	}
 	if len(album.Artists) == 0 {
+		r.keepStoredCredits(album.ID)
 		return itemID, nil
 	}
-	credits := make([]store.Relation, 0, len(album.Artists))
-	for position, credited := range album.Artists {
+	for _, credited := range album.Artists {
 		creditedRaw, err := json.Marshal(credited)
 		if err != nil {
 			return 0, err
 		}
-		artistID, err := r.KnowArtist(ctx, p, creditedRaw, Simplified)
-		if err != nil {
+		if _, err := r.KnowArtist(ctx, p, creditedRaw, Simplified); err != nil {
 			return 0, err
 		}
-		credits = append(credits, store.Relation{FromID: itemID, Type: creditRelation(position, credited.ID), ToID: artistID})
-	}
-	if err := r.Store.ReplaceRelationsFrom(ctx, itemID, creditRelations, credits); err != nil {
-		return 0, err
 	}
 	return itemID, nil
 }
 
-var creditRelations = []string{kind.LinkBy, kind.LinkWith}
-
-const firstCredited = 0
-
-func creditRelation(position int, artistID string) string {
-	if position == firstCredited && artistID != kind.VariousArtists {
-		return kind.LinkBy
+func (r *Recorder) keepStoredCredits(albumID string) {
+	seen, met := r.albums[albumID]
+	if !met {
+		return
 	}
-	return kind.LinkWith
+	var kept reference
+	if json.Unmarshal(seen.raw, &kept) == nil && len(kept.Artists) == 0 {
+		seen.detail = Kept
+	}
 }
 
 func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*metItem, kindName, source, count string, raw json.RawMessage, detail Detail) (int64, error) {

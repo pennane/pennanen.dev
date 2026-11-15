@@ -19,12 +19,15 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/images"
 	"github.com/pennane/pennanen.dev/apps/log/internal/jobs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/letterboxd"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/revalidate"
 	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
 	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/tmdb"
+	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 )
 
 func main() {
@@ -44,7 +47,8 @@ func run() error {
 		return fmt.Errorf("open database: %w", err)
 	}
 	defer database.Close()
-	st := store.New(database)
+	records := record.New(database, verdict.ReadRecord, verdict.ReadersVersion)
+	st := store.New(database, records, world.New(database, records))
 	reread, err := st.RereadClaims(ctx)
 	if err != nil {
 		return fmt.Errorf("re-read claims: %w", err)

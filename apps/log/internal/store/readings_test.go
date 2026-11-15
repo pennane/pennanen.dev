@@ -20,7 +20,7 @@ func openStoreWithDB(t *testing.T) (*store.Store, *sql.DB) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	return store.New(d), d
+	return store.Open(d), d
 }
 
 const matrix = `{"id":603,"title":"The Matrix","release_date":"1999-03-30"}`
@@ -40,7 +40,10 @@ func loggedMovie(t *testing.T, s *store.Store, source, data string) int64 {
 
 func readingVersions(t *testing.T, d *sql.DB, itemID int64) map[string]int {
 	t.Helper()
-	rows, err := d.Query(`SELECT source, version FROM claim_reading WHERE item_id = ?`, itemID)
+	rows, err := d.Query(`
+		SELECT r.source, r.version FROM record_reading r
+		JOIN item_identity i ON i.source = r.source AND i.external_id = r.external_id
+		WHERE i.item_id = ?`, itemID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +72,7 @@ func TestListsDecideFromReadingsAlone(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
 	id := loggedMovie(t, s, kind.SourceTMDB, matrix)
-	if _, err := d.Exec(`UPDATE claim SET data = '{}' WHERE item_id = ?`, id); err != nil {
+	if _, err := d.Exec(`UPDATE record_claim SET data = '{}' WHERE source = ? AND external_id = ?`, kind.SourceTMDB, "603"); err != nil {
 		t.Fatal(err)
 	}
 	views, err := s.ListItems(ctx, store.ItemFilter{})
@@ -95,13 +98,13 @@ func TestRereadFillsMissingAndOldReadings(t *testing.T) {
 	if err := s.PutClaim(ctx, id, kind.SourceLetterboxd, "abc", json.RawMessage(`{"id":"abc","title":"The Matrix","year":1999}`)); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaim(ctx, id, kind.SourceAP, "", json.RawMessage(`{"title":"Matrix"}`)); err != nil {
+	if err := s.ChangeOverride(ctx, id, map[string]any{"title": "Matrix"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Exec(`DELETE FROM claim_reading WHERE item_id = ? AND source = ?`, id, kind.SourceTMDB); err != nil {
+	if _, err := d.Exec(`DELETE FROM record_reading WHERE source = ? AND external_id = ?`, kind.SourceTMDB, "603"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Exec(`UPDATE claim_reading SET version = 0 WHERE item_id = ? AND source = ?`, id, kind.SourceLetterboxd); err != nil {
+	if _, err := d.Exec(`UPDATE record_reading SET version = 0 WHERE source = ? AND external_id = ?`, kind.SourceLetterboxd, "abc"); err != nil {
 		t.Fatal(err)
 	}
 	reread, err := s.RereadClaims(ctx)
@@ -131,7 +134,7 @@ func TestRereadWalksPastBatches(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, err := d.Exec(`DELETE FROM claim_reading`); err != nil {
+	if _, err := d.Exec(`DELETE FROM record_reading`); err != nil {
 		t.Fatal(err)
 	}
 	reread, err := s.RereadClaims(ctx)
@@ -139,7 +142,7 @@ func TestRereadWalksPastBatches(t *testing.T) {
 		t.Fatalf("re-read %d, %v; want 450", reread, err)
 	}
 	var stored int
-	if err := d.QueryRow(`SELECT count(*) FROM claim_reading`).Scan(&stored); err != nil || stored != 450 {
+	if err := d.QueryRow(`SELECT count(*) FROM record_reading`).Scan(&stored); err != nil || stored != 450 {
 		t.Errorf("stored %d readings, %v", stored, err)
 	}
 }
@@ -184,10 +187,10 @@ func TestListedTakesKeepTheirClaimsFetchTime(t *testing.T) {
 	if err := s.PutClaim(ctx, id, kind.SourceLetterboxdTake, "matrix", json.RawMessage(`{"rating":4.5}`)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Exec(`UPDATE claim SET fetched_at = '2020-01-02T03:04:05Z' WHERE item_id = ? AND source = ?`, id, kind.SourceLetterboxdTake); err != nil {
+	if _, err := d.Exec(`UPDATE record_claim SET fetched_at = '2020-01-02T03:04:05Z' WHERE source = ?`, kind.SourceLetterboxdTake); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Exec(`DELETE FROM claim_reading`); err != nil {
+	if _, err := d.Exec(`DELETE FROM record_reading`); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.RereadClaims(ctx); err != nil {

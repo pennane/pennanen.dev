@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 )
 
 type Observation struct {
@@ -27,15 +29,23 @@ func (s *Store) Observe(ctx context.Context, o Observation) (ObserveOutcome, err
 	if o.Source == "" || o.Signal == "" || o.Key == "" || o.ObservedAt == "" || !json.Valid(o.Data) {
 		return "", fmt.Errorf("%w: an observation needs a source, a signal, a key, a time and json data", ErrInvalid)
 	}
-	result, err := s.db.ExecContext(ctx, `
-		INSERT INTO observation (item_id, source, signal, key, observed_at, data) VALUES (?, ?, ?, ?, ?, ?)
-		ON CONFLICT (source, key) DO NOTHING`,
-		o.ItemID, o.Source, o.Signal, o.Key, o.ObservedAt, string(o.Data))
+	key, err := s.keyOf(ctx, s.db, o.ItemID)
 	if err != nil {
 		return "", err
 	}
-	if added, err := result.RowsAffected(); err != nil || added == 0 {
-		return AlreadyKnown, err
+	outcome, err := s.records.Observe(ctx, s.db, record.Observation{
+		About:      key,
+		Source:     o.Source,
+		Signal:     o.Signal,
+		Key:        o.Key,
+		ObservedAt: o.ObservedAt,
+		Data:       o.Data,
+	})
+	if err != nil {
+		return "", err
+	}
+	if outcome == record.AlreadyKnown {
+		return AlreadyKnown, nil
 	}
 	return Observed, nil
 }
@@ -118,7 +128,11 @@ func (s *Store) ItemsInNewestSnapshot(ctx context.Context, source, signal, keyPr
 }
 
 func (s *Store) itemIDs(ctx context.Context, query string, args ...any) ([]int64, error) {
-	rows, err := s.db.QueryContext(ctx, query, args...)
+	return s.itemIDsWith(ctx, s.db, query, args...)
+}
+
+func (s *Store) itemIDsWith(ctx context.Context, q queryer, query string, args ...any) ([]int64, error) {
+	rows, err := q.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

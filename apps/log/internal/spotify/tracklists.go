@@ -71,10 +71,6 @@ func fillTracklists(ctx context.Context, st *store.Store, c *Client, p *syncs.Pr
 			p.Problem("album %d: %d of its %d tracks came back", list.albumID, len(partIDs), len(list.trackIDs))
 			continue
 		}
-		if err := st.ReplaceParts(ctx, list.albumID, partIDs); err != nil {
-			p.Problem("album %d: %v", list.albumID, err)
-			continue
-		}
 		p.Add(CountTracklists, 1)
 		p.ChangedData()
 	}
