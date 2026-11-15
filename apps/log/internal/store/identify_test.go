@@ -93,9 +93,9 @@ func TestAnIdentityAnotherItemHasIsRefused(t *testing.T) {
 	}
 }
 
-func TestASeriesWhoseStatusAFilmCannotHaveIsNotMovedToFilms(t *testing.T) {
+func TestAKindMoveSetsTheChoiceAsideAndMovingBackRestoresIt(t *testing.T) {
 	ctx := context.Background()
-	s, d := openStoreWithDB(t)
+	s := openStore(t)
 	series, err := s.CreateItemFromSource(ctx, kind.Series, "Ripley", record.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028,"name":"Ripley"}`))
 	if err != nil {
 		t.Fatal(err)
@@ -103,24 +103,31 @@ func TestASeriesWhoseStatusAFilmCannotHaveIsNotMovedToFilms(t *testing.T) {
 	if err := s.ChangeEntry(ctx, series, store.EntryChange{Status: ptr(kind.Dropped)}); err != nil {
 		t.Fatal(err)
 	}
-
-	err = s.Identify(ctx, series, store.Identity{Kind: kind.Movie, Source: record.SourceTMDB, ExternalID: "603", Data: json.RawMessage(matrix)},
-		[]string{record.SourceTMDB, record.SourceTMDBSeries})
-	if !errors.Is(err, store.ErrInvalid) {
-		t.Fatalf("err = %v, want ErrInvalid", err)
+	moveTo := func(identity store.Identity) store.ItemView {
+		t.Helper()
+		if err := s.Identify(ctx, series, identity, []string{record.SourceTMDB, record.SourceTMDBSeries}); err != nil {
+			t.Fatalf("moving to %s: %v", identity.Kind, err)
+		}
+		v, err := s.GetItem(ctx, series)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return v
 	}
 
-	v, err := s.GetItem(ctx, series)
-	if err != nil {
-		t.Fatal(err)
+	film := moveTo(store.Identity{Kind: kind.Movie, Source: record.SourceTMDB, ExternalID: "603", Data: json.RawMessage(matrix)})
+	setAside := &store.StatusChoice{Status: kind.Dropped, Standing: store.ChoiceSetAside}
+	if film.Kind != kind.Movie || film.Entry.Status != kind.Untriaged || !sameChoice(film.Entry.StatusChoice, setAside) {
+		t.Fatalf("as a film: %s %+v %+v", film.Kind, film.Entry, film.Entry.StatusChoice)
 	}
-	if v.Kind != kind.Series || v.Entry.Status != kind.Dropped {
-		t.Errorf("item = %s with status %s", v.Kind, v.Entry.Status)
+
+	back := moveTo(store.Identity{Kind: kind.Series, Source: record.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)})
+	decides := &store.StatusChoice{Status: kind.Dropped, Standing: store.ChoiceDecides}
+	if back.Kind != kind.Series || back.Entry.Status != kind.Dropped || back.Entry.StatusDecidedBy != record.SourceAP || !sameChoice(back.Entry.StatusChoice, decides) {
+		t.Fatalf("a series again: %s %+v %+v", back.Kind, back.Entry, back.Entry.StatusChoice)
 	}
-	if _, kept := claimsStored(t, d)["tmdb-tv:94028"]; !kept {
-		t.Error("the tmdb-tv claim was removed")
-	}
-	if owner, err := s.FindByIdentity(ctx, record.SourceTMDBSeries, "94028"); err != nil || owner != series {
-		t.Errorf("tmdb-tv:94028 belongs to %d, %v", owner, err)
-	}
+}
+
+func sameChoice(got, want *store.StatusChoice) bool {
+	return got != nil && got.Status == want.Status && got.Standing == want.Standing
 }

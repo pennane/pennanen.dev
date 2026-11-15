@@ -84,16 +84,16 @@ func run() error {
 	}
 
 	var daily, hourly []jobs.Job
-	newSync := func(name string, work syncs.Work, onChange func()) (*syncs.Sync, error) {
-		sync, err := syncs.New(ctx, name, work, st, onChange)
+	newSync := func(name, source string, work syncs.Work, onChange func()) (*syncs.Sync, error) {
+		sync, err := syncs.New(ctx, name, source, work, st, onChange)
 		if err != nil {
 			return nil, err
 		}
 		server.Syncs = append(server.Syncs, sync)
 		return sync, nil
 	}
-	addSync := func(name string, work syncs.Work) error {
-		sync, err := newSync(name, work, notifier.Changed)
+	addSync := func(name, source string, work syncs.Work) error {
+		sync, err := newSync(name, source, work, notifier.Changed)
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func run() error {
 	}
 
 	if key, id := os.Getenv("STEAM_API_KEY"), os.Getenv("STEAM_ID"); key != "" && id != "" {
-		if err := addSync(steam.SyncName, steam.NewSyncer(st, steam.NewClient(key, id)).Work); err != nil {
+		if err := addSync(steam.SyncName, record.SourceSteam, steam.NewSyncer(st, steam.NewClient(key, id)).Work); err != nil {
 			return err
 		}
 	} else {
@@ -111,7 +111,7 @@ func run() error {
 
 	if id, secret := os.Getenv("IGDB_CLIENT_ID"), os.Getenv("IGDB_CLIENT_SECRET"); id != "" && secret != "" {
 		server.IGDB = igdb.NewClient(id, secret)
-		if err := addSync(igdb.SyncName, igdb.NewMatcher(st, server.IGDB).Work); err != nil {
+		if err := addSync(igdb.SyncName, record.SourceSteam, igdb.NewMatcher(st, server.IGDB).Work); err != nil {
 			return err
 		}
 	} else {
@@ -123,7 +123,7 @@ func run() error {
 		client := letterboxd.NewClient(username)
 		letterboxdPages = client
 		server.Letterboxd = letterboxd.NewSyncer(st, client)
-		if err := addSync(letterboxd.SyncName, server.Letterboxd.Work); err != nil {
+		if err := addSync(letterboxd.SyncName, record.SourceLetterboxd, server.Letterboxd.Work); err != nil {
 			return err
 		}
 	} else {
@@ -132,7 +132,7 @@ func run() error {
 
 	if token := os.Getenv("TMDB_READ_TOKEN"); token != "" {
 		server.TMDB = tmdb.NewClient(token)
-		if err := addSync(tmdb.SyncName, tmdb.NewMatcher(st, server.TMDB, letterboxdPages).Work); err != nil {
+		if err := addSync(tmdb.SyncName, record.SourceLetterboxd, tmdb.NewMatcher(st, server.TMDB, letterboxdPages).Work); err != nil {
 			return err
 		}
 	} else {
@@ -142,10 +142,10 @@ func run() error {
 	if id, secret := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET"); id != "" && secret != "" {
 		server.Spotify = spotify.NewClient(id, secret, st)
 		syncer := spotify.NewSyncer(st, server.Spotify)
-		if err := addSync(spotify.SyncName, syncer.Work); err != nil {
+		if err := addSync(spotify.SyncName, record.SourceSpotify, syncer.Work); err != nil {
 			return err
 		}
-		plays, err := newSync(spotify.PlaysSyncName, syncer.WorkPlays, leaveTheSiteUntilTheDailyRun)
+		plays, err := newSync(spotify.PlaysSyncName, record.SourceSpotify, syncer.WorkPlays, leaveTheSiteUntilTheDailyRun)
 		if err != nil {
 			return err
 		}

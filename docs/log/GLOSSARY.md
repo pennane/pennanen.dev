@@ -19,7 +19,8 @@ links. Layer 2, derived from records.
 **Take** — ap's opinion of a thing. Layer 3. ap writes takes, and corrects
 the world through `ap` records; nothing else.
 
-**Rule** — a function from records and the world to proposals. Layer 4.
+**Rule** — a pure function in a source's module from its stored records to
+proposals, rerun after its sync. Layer 4.
 
 **Presentation** — what public pages show and how. Layer 5, stored as the
 projection.
@@ -129,7 +130,8 @@ rank, blurb, prose, time spent.
 
 **Logged / known** — an item with an entry is logged; one without is only
 known: a sync came across it, but nobody put it in the log. Logging is
-one-way: a source that logged an item never unlogs it.
+one-way: a source that logged an item never unlogs it. An entry records what
+logged it: `ap` or a rule.
 
 **Status** — where ap is with the item, regardless of what ap thought of it.
 Each kind has its own set; most start at `untriaged`. A status is ap's
@@ -187,9 +189,10 @@ ap's choice ([ADR 7](./adr/0007-proposals-and-the-newest-word.md)).
 **Withdraw** — a source no longer saying something removes its proposal; the
 next word down decides.
 
-**Hint** — a suggesting proposal for a game during triage: a status
-(`likely-played`, `likely-never-played`), a tag (`likely-idled`), or
-dismissal (`likely-not-a-game`), which only ap's yes applies.
+**Hint** — a suggesting proposal for a game during triage, which only ap's
+yes applies. Four rules hint: `likely-played` and `likely-never-played` say a
+status, `likely-idled` says the tag `idled` and the status `never-played`, and
+`likely-not-a-game` says dismissal.
 
 **Suggestion** — a suggesting proposal to log a known item, such as an album
 by an artist ap has logged.

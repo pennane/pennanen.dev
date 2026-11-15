@@ -145,3 +145,9 @@ DELETE FROM record_reading
     AND external_id IN (SELECT take_external_id FROM watched_shelf);
 
 DROP TABLE watched_shelf;
+
+ALTER TABLE entry DROP COLUMN status;
+
+ALTER TABLE entry DROP COLUMN status_set_by;
+
+DROP TABLE tag;

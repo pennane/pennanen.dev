@@ -215,23 +215,7 @@ func applyMove(ctx context.Context, tx *sql.Tx, m world.Move) error {
 	if !known {
 		return fmt.Errorf("item %d moved to unknown kind %q", m.ItemID, m.To)
 	}
-	if err := requireStatusIn(ctx, tx, to, m.ItemID); err != nil {
-		return err
-	}
 	return joinRankingAtBottom(ctx, tx, to, m.ItemID)
-}
-
-func requireStatusIn(ctx context.Context, tx *sql.Tx, to kind.Kind, itemID int64) error {
-	var status string
-	if err := tx.QueryRowContext(ctx, `
-		SELECT coalesce(c.status, ?) FROM item i LEFT JOIN status_choice c ON c.item_id = i.id WHERE i.id = ?`,
-		kind.Untriaged, itemID).Scan(&status); err != nil {
-		return err
-	}
-	if !to.HasStatus(status) {
-		return fmt.Errorf("%w: %s has no status %q to move item %d into", ErrInvalid, to.Name, status, itemID)
-	}
-	return nil
 }
 
 func (s *Store) putClaimOn(ctx context.Context, tx *sql.Tx, itemID int64, id record.Identity, raw json.RawMessage) error {

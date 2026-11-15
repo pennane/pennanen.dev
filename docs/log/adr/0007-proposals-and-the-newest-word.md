@@ -63,3 +63,4 @@ unchanged, so ap's choice holds. A newly logged rewatch would move it._
   _your choice: listened · lists say listening_.
 - Hints, suggestions and matches all wait in triage.
 - A new rule is a function; it can't reach takes.
+- A source's rules live with it and run after its sync; the newest word is a view, never stored.

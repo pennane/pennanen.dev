@@ -165,3 +165,16 @@ func TestSpotifyProposerReadsStoredRecords(t *testing.T) {
 		t.Errorf("running the proposals = %v", err)
 	}
 }
+
+func listed(timeRange TimeRange, n int) observation {
+	at := snapshotAt(n)
+	return observation{signal: record.SignalTopArtistsListed, key: fmt.Sprintf("%s:%s:%s", record.SignalTopArtistsListed, timeRange, at[:10]), observedAt: at}
+}
+
+func TestAnEmptyShortTermListingIsASnapshotTheArtistDroppedOutOf(t *testing.T) {
+	observed := append(snapshots(pendulum, 1, 3), listed(ShortTerm, 1), listed(ShortTerm, 2), listed(ShortTerm, 3), listed(ShortTerm, 4), listed(LongTerm, 5))
+	got := propose(observed, nil)
+	assertProposals(t, got, []rule.Proposal{
+		logged(pendulum, RuleArtist), status(pendulum, RuleArtist, kind.Listened, snapshotAt(4)),
+	})
+}

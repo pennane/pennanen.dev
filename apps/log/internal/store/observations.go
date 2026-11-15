@@ -25,14 +25,11 @@ const (
 )
 
 func (s *Store) Observe(ctx context.Context, o Observation) (ObserveOutcome, error) {
-	if o.Source == "" || o.Signal == "" || o.Key == "" || o.ObservedAt == "" || !json.Valid(o.Data) {
-		return "", fmt.Errorf("%w: an observation needs a source, a signal, a key, a time and json data", ErrInvalid)
-	}
 	key, err := s.keyOf(ctx, s.db, o.ItemID)
 	if err != nil {
 		return "", err
 	}
-	outcome, err := s.records.Observe(ctx, s.db, record.Observation{
+	return s.ObserveAbout(ctx, record.Observation{
 		About:      key,
 		Source:     o.Source,
 		Signal:     o.Signal,
@@ -40,6 +37,13 @@ func (s *Store) Observe(ctx context.Context, o Observation) (ObserveOutcome, err
 		ObservedAt: o.ObservedAt,
 		Data:       o.Data,
 	})
+}
+
+func (s *Store) ObserveAbout(ctx context.Context, o record.Observation) (ObserveOutcome, error) {
+	if o.About.Source == "" || o.About.ExternalID == "" || o.Source == "" || o.Signal == "" || o.Key == "" || o.ObservedAt == "" || !json.Valid(o.Data) {
+		return "", fmt.Errorf("%w: an observation needs what it is about, a source, a signal, a key, a time and json data", ErrInvalid)
+	}
+	outcome, err := s.records.Observe(ctx, s.db, o)
 	if err != nil {
 		return "", err
 	}
@@ -108,22 +112,6 @@ func (s *Store) HasObservationKeyWithPrefix(ctx context.Context, source, prefix 
 		SELECT EXISTS (SELECT 1 FROM observation WHERE source = ? AND substr(key, 1, length(?)) = ?)`,
 		source, prefix, prefix).Scan(&found)
 	return found, err
-}
-
-func (s *Store) ItemsObserved(ctx context.Context, source, signal string) ([]int64, error) {
-	return s.itemIDs(ctx, `
-		SELECT DISTINCT item_id FROM observation WHERE source = ? AND signal = ?
-		ORDER BY item_id`, source, signal)
-}
-
-func (s *Store) ItemsInNewestSnapshot(ctx context.Context, source, signal, keyPrefix string) ([]int64, error) {
-	return s.itemIDs(ctx, `
-		SELECT DISTINCT item_id FROM observation
-		WHERE source = ? AND signal = ?
-			AND substr(key, 1, length(?)) = ?
-			AND substr(observed_at, 1, 10) = (
-				SELECT substr(max(observed_at), 1, 10) FROM observation WHERE source = ? AND signal = ?)
-		ORDER BY item_id`, source, signal, keyPrefix, keyPrefix, source, signal)
 }
 
 func (s *Store) itemIDs(ctx context.Context, query string, args ...any) ([]int64, error) {

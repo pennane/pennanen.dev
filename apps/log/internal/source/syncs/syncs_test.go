@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
@@ -11,14 +13,57 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 )
 
-func openStore(t *testing.T) *store.Store {
+type proposingStore struct {
+	*store.Store
+	proposed []string
+	failure  error
+}
+
+func (s *proposingStore) Propose(_ context.Context, source string) error {
+	s.proposed = append(s.proposed, source)
+	return s.failure
+}
+
+func openStore(t *testing.T) *proposingStore {
 	t.Helper()
 	d, err := db.Open(context.Background(), filepath.Join(t.TempDir(), "log.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	return store.Open(d)
+	return &proposingStore{Store: store.Open(d)}
+}
+
+const fakeSource = "fake-source"
+
+func TestASyncProposesWhenItFinishes(t *testing.T) {
+	ctx := context.Background()
+	st := openStore(t)
+	var proposedDuringWork []string
+	s, err := syncs.New(ctx, "fake", fakeSource, func(ctx context.Context, p *syncs.Progress) error {
+		proposedDuringWork = append([]string{}, st.proposed...)
+		p.Add("seen", 1)
+		return nil
+	}, st, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := s.Run(ctx)
+	if len(proposedDuringWork) != 0 || !slices.Equal(st.proposed, []string{fakeSource}) {
+		t.Fatalf("proposed during work %v, after %v", proposedDuringWork, st.proposed)
+	}
+	if report.State != syncs.Succeeded || len(report.Problems) != 0 {
+		t.Fatalf("report: %+v", report)
+	}
+
+	st.failure = errors.New("a rule broke")
+	report = s.Run(ctx)
+	if report.State != syncs.Succeeded || len(report.Problems) != 1 || !strings.Contains(report.Problems[0], "a rule broke") || report.Counts["seen"] != 1 {
+		t.Fatalf("a failed proposal is a problem, not a failed sync: %+v", report)
+	}
+	if s.Last().State != syncs.Succeeded || len(s.Last().Problems) != 1 {
+		t.Fatalf("published: %+v", s.Last())
+	}
 }
 
 func TestReportsSurviveARestartAndFailuresKeepTheLastSuccess(t *testing.T) {
@@ -31,7 +76,7 @@ func TestReportsSurviveARestartAndFailuresKeepTheLastSuccess(t *testing.T) {
 		return outcome
 	}
 
-	first, err := syncs.New(ctx, "fake", work, st, nil)
+	first, err := syncs.New(ctx, "fake", fakeSource, work, st, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +89,7 @@ func TestReportsSurviveARestartAndFailuresKeepTheLastSuccess(t *testing.T) {
 	}
 
 	outcome = errors.New("site changed its markup")
-	restarted, err := syncs.New(ctx, "fake", work, st, nil)
+	restarted, err := syncs.New(ctx, "fake", fakeSource, work, st, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +111,7 @@ func TestASyncCutShortByARestartShowsAsFailed(t *testing.T) {
 	if err := st.SaveSyncReport(ctx, "fake", syncs.Report{Name: "fake", State: syncs.Running, Counts: map[string]int{}, Problems: []string{}}); err != nil {
 		t.Fatal(err)
 	}
-	s, err := syncs.New(ctx, "fake", func(context.Context, *syncs.Progress) error { return nil }, st, nil)
+	s, err := syncs.New(ctx, "fake", fakeSource, func(context.Context, *syncs.Progress) error { return nil }, st, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +126,7 @@ func TestOneRunAtATimeAndChangesAreAnnounced(t *testing.T) {
 	release := make(chan struct{})
 	done := make(chan struct{})
 	announced := 0
-	s, err := syncs.New(ctx, "fake", func(ctx context.Context, p *syncs.Progress) error {
+	s, err := syncs.New(ctx, "fake", fakeSource, func(ctx context.Context, p *syncs.Progress) error {
 		<-release
 		p.ChangedData()
 		return nil

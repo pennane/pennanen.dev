@@ -197,28 +197,20 @@ func newHarness(t *testing.T, fake *fakeSpotify, connection spotify.Connection) 
 
 func (h *harness) run(t *testing.T) syncs.Report {
 	t.Helper()
-	sync, err := syncs.New(context.Background(), spotify.SyncName, h.syncer.Work, h.store, nil)
+	sync, err := syncs.New(context.Background(), spotify.SyncName, record.SourceSpotify, h.syncer.Work, h.store, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return h.proposed(t, sync.Run(context.Background()))
-}
-
-func (h *harness) proposed(t *testing.T, report syncs.Report) syncs.Report {
-	t.Helper()
-	if err := h.store.Propose(context.Background(), record.SourceSpotify); err != nil {
-		t.Fatal(err)
-	}
-	return report
+	return sync.Run(context.Background())
 }
 
 func (h *harness) runPlays(t *testing.T) syncs.Report {
 	t.Helper()
-	sync, err := syncs.New(context.Background(), spotify.PlaysSyncName, h.syncer.WorkPlays, h.store, nil)
+	sync, err := syncs.New(context.Background(), spotify.PlaysSyncName, record.SourceSpotify, h.syncer.WorkPlays, h.store, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return h.proposed(t, sync.Run(context.Background()))
+	return sync.Run(context.Background())
 }
 
 func (h *harness) item(t *testing.T, source, externalID string) int64 {
@@ -468,7 +460,6 @@ func TestArtistsAreLoggedFromTopLists(t *testing.T) {
 	h.day = "2026-11-16"
 	h.run(t)
 	t.Run("X after an empty four weeks is listened", func(t *testing.T) {
-		t.Skip("waits for Task 5: an empty short-term list stores no observation, so the rule never sees the snapshot X dropped out of")
 		if status, _ := h.status(t, x); status != kind.Listened {
 			t.Fatalf("X after an empty four weeks = %s, want listened", status)
 		}
@@ -534,13 +525,119 @@ func TestADismissedArtistStaysDismissed(t *testing.T) {
 func TestARerunTheSameDayRecomputesTheSameStatuses(t *testing.T) {
 	h := newHarness(t, newFake(), spotify.Connected)
 	h.run(t)
-	report := h.run(t)
-	if report.State != syncs.Succeeded || report.Counts["artist-"+string(store.StatusAlreadySo)] != 2 || report.Counts["album-"+string(store.StatusAlreadySo)] != 1 || report.Counts["artist-"+string(store.StatusLogged)] != 0 || report.Counts["artist-"+string(store.StatusFollowed)] != 0 {
+	entries := func() map[string]store.Entry {
+		t.Helper()
+		got := map[string]store.Entry{}
+		for _, id := range []struct{ source, externalID string }{
+			{record.SourceSpotifyArtist, "X"}, {record.SourceSpotifyArtist, "Y"}, {record.SourceSpotifyAlbum, "B"},
+		} {
+			v, err := h.store.GetItem(context.Background(), h.item(t, id.source, id.externalID))
+			if err != nil || v.Entry == nil {
+				t.Fatalf("%s %s: %+v %v", id.source, id.externalID, v.Entry, err)
+			}
+			got[id.externalID] = *v.Entry
+		}
+		return got
+	}
+	before := entries()
+	if report := h.run(t); report.State != syncs.Succeeded {
 		t.Fatalf("report = %+v", report)
+	}
+	after := entries()
+	for id, was := range before {
+		now := after[id]
+		if now.Status != was.Status || now.StatusDecidedBy != was.StatusDecidedBy || !reflect.DeepEqual(now.StatusProposals, was.StatusProposals) {
+			t.Errorf("%s: %+v, then %+v", id, was, now)
+		}
 	}
 	logged, err := h.store.ListItems(context.Background(), store.ItemFilter{Kind: kind.Artist})
 	if err != nil || len(logged) != 2 {
 		t.Fatalf("artists = %d, %v", len(logged), err)
+	}
+}
+
+func TestAnArtistThatLeftTheShortTermListIsListened(t *testing.T) {
+	for _, c := range []struct {
+		name      string
+		shortTerm string
+	}{
+		{"an empty list", "[]"},
+		{"another artist in its place", "[" + fullY + "]"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			fake := newFake()
+			h := newHarness(t, fake, spotify.Connected)
+			h.run(t)
+			x := h.item(t, record.SourceSpotifyArtist, "X")
+			if status, _ := h.status(t, x); status != kind.Listening {
+				t.Fatalf("X on the list = %s", status)
+			}
+
+			fake.topArtists["short_term"] = c.shortTerm
+			h.day = "2026-11-16"
+			h.run(t)
+			v, err := h.store.GetItem(context.Background(), x)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := []store.StatusProposal{{Rule: spotify.RuleArtist, Value: kind.Listened, ChangedAt: "2026-11-16T03:00:00Z"}}
+			if v.Entry.Status != kind.Listened || v.Entry.StatusDecidedBy != spotify.RuleArtist || !reflect.DeepEqual(v.Entry.StatusProposals, want) {
+				t.Fatalf("X off the list = %+v", v.Entry)
+			}
+		})
+	}
+}
+
+func TestApsListenedArtistFollowsTheListsWhenTheyChange(t *testing.T) {
+	ctx := context.Background()
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	x := h.item(t, record.SourceSpotifyArtist, "X")
+	listened := kind.Listened
+	if err := h.store.ChangeEntry(ctx, x, store.EntryChange{Status: &listened}); err != nil {
+		t.Fatal(err)
+	}
+
+	h.day = "2099-01-01"
+	h.run(t)
+	if status, by := h.status(t, x); status != kind.Listened || by != record.SourceAP {
+		t.Fatalf("lists unchanged = %s by %s, want ap's listened", status, by)
+	}
+
+	fake.topArtists["short_term"] = "[]"
+	h.day = "2099-01-02"
+	h.run(t)
+	if status, by := h.status(t, x); status != kind.Listened || by != spotify.RuleArtist {
+		t.Fatalf("off the list = %s by %s, want listened by the lists", status, by)
+	}
+
+	fake.topArtists["short_term"] = "[" + fullX + "]"
+	h.day = "2099-01-03"
+	h.run(t)
+	if status, by := h.status(t, x); status != kind.Listening || by != spotify.RuleArtist {
+		t.Fatalf("back on the list = %s by %s, want listening by the lists", status, by)
+	}
+}
+
+func TestUnsavingAnAlbumDoesNotWithdrawIt(t *testing.T) {
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	b := h.item(t, record.SourceSpotifyAlbum, "B")
+
+	fake.saved = `[]`
+	h.day = "2026-11-16"
+	h.run(t)
+	if got := h.observations(t, b, record.SignalUnsaved); len(got) != 1 {
+		t.Fatalf("unsaved = %+v", got)
+	}
+	v, err := h.store.GetItem(context.Background(), b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.Entry == nil || v.Entry.LoggedBy != spotify.RuleAlbum || v.Entry.Status != kind.Want || v.Entry.StatusDecidedBy != spotify.RuleAlbum {
+		t.Fatalf("unsaved album = %+v", v.Entry)
 	}
 }
 
@@ -601,11 +698,11 @@ func TestTheNightlySyncLeavesPlaysAlone(t *testing.T) {
 func TestThePlaysSyncAndTheNightlySyncCanOverlap(t *testing.T) {
 	fake := newFake()
 	h := newHarness(t, fake, spotify.Connected)
-	nightly, err := syncs.New(context.Background(), spotify.SyncName, h.syncer.Work, h.store, nil)
+	nightly, err := syncs.New(context.Background(), spotify.SyncName, record.SourceSpotify, h.syncer.Work, h.store, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	hourly, err := syncs.New(context.Background(), spotify.PlaysSyncName, h.syncer.WorkPlays, h.store, nil)
+	hourly, err := syncs.New(context.Background(), spotify.PlaysSyncName, record.SourceSpotify, h.syncer.WorkPlays, h.store, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

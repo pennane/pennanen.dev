@@ -49,9 +49,14 @@ func propose(observations []observation, mainArtists []mainArtist) []rule.Propos
 	artists := map[int64]listedTimes{}
 	var snapshots []string
 	shortTermPrefix := fmt.Sprintf("%s:%s:", record.SignalTopArtist, ShortTerm)
+	shortTermListingPrefix := fmt.Sprintf("%s:%s:", record.SignalTopArtistsListed, ShortTerm)
 	for _, o := range observations {
 		at := atSecond(o.observedAt)
 		switch o.signal {
+		case record.SignalTopArtistsListed:
+			if strings.HasPrefix(o.key, shortTermListingPrefix) {
+				snapshots = append(snapshots, at)
+			}
 		case record.SignalSaved:
 			album := albums[o.itemID]
 			album.firstSaved = earlier(album.firstSaved, at)
@@ -166,6 +171,11 @@ func loadAndPropose(ctx context.Context, q record.Queryer) ([]rule.Proposal, err
 	if err != nil {
 		return nil, err
 	}
+	listings, err := topArtistListings(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	observations = append(observations, listings...)
 	links, err := mainArtistsOfSaved(ctx, q)
 	if err != nil {
 		return nil, err
@@ -192,6 +202,27 @@ func spotifyObservations(ctx context.Context, q record.Queryer) ([]observation, 
 		observations = append(observations, o)
 	}
 	return observations, rows.Err()
+}
+
+func topArtistListings(ctx context.Context, q record.Queryer) ([]observation, error) {
+	rows, err := q.QueryContext(ctx, `
+		SELECT signal, key, observed_at FROM record_observation
+		WHERE source = ? AND signal = ?
+		ORDER BY observed_at, id`,
+		ObservationSource, record.SignalTopArtistsListed)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	listings := []observation{}
+	for rows.Next() {
+		var o observation
+		if err := rows.Scan(&o.signal, &o.key, &o.observedAt); err != nil {
+			return nil, err
+		}
+		listings = append(listings, o)
+	}
+	return listings, rows.Err()
 }
 
 func mainArtistsOfSaved(ctx context.Context, q record.Queryer) ([]mainArtist, error) {

@@ -61,9 +61,6 @@ func (s *Syncer) WorkPlays(ctx context.Context, p *syncs.Progress) error {
 	}
 	snap.plays(ctx, plays)
 	snap.recorder.RefreshClaims(ctx, p, s.Client)
-	if err := computeAlbumStatuses(ctx, s.Store, p); err != nil {
-		return err
-	}
 	return ctx.Err()
 }
 
@@ -76,6 +73,7 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 		}
 		p.ChangedData()
 		snap.topArtists(ctx, timeRange, artists)
+		snap.topArtistsListed(ctx, timeRange, len(artists))
 	}
 	for _, timeRange := range TimeRanges {
 		tracks, err := s.Client.TopTracks(ctx, timeRange)
@@ -100,11 +98,8 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 		return err
 	}
 	snap.recorder.RefreshClaims(ctx, p, s.Client)
-	if err := computeAlbumStatuses(ctx, s.Store, p); err != nil {
-		return err
-	}
-	if err := computeArtistStatuses(ctx, s.Store, p); err != nil {
-		return err
+	if err := s.Store.Propose(ctx, record.SourceSpotify); err != nil {
+		return fmt.Errorf("logging what the rules say before weighing: %w", err)
 	}
 	if err := computeListening(ctx, s.Store, p); err != nil {
 		return err
@@ -146,6 +141,25 @@ func (n snapshot) topArtists(ctx context.Context, timeRange TimeRange, artists [
 		if _, err := n.recorder.Observe(ctx, n.p, itemID, record.SignalTopArtist, key, n.start, CountSnapshots, data); err != nil {
 			n.p.Problem("%s: %v", ref.Name, err)
 		}
+	}
+}
+
+func (n snapshot) topArtistsListed(ctx context.Context, timeRange TimeRange, count int) {
+	data, err := json.Marshal(map[string]any{"range": timeRange, "day": n.day, "count": count})
+	if err != nil {
+		n.p.Problem("top artists listed %s: %v", timeRange, err)
+		return
+	}
+	_, err = n.recorder.Store.ObserveAbout(ctx, record.Observation{
+		About:      record.Identity{Source: ObservationSource, ExternalID: fmt.Sprintf("%s:%s", record.SignalTopArtistsListed, timeRange)},
+		Source:     ObservationSource,
+		Signal:     record.SignalTopArtistsListed,
+		Key:        fmt.Sprintf("%s:%s:%s", record.SignalTopArtistsListed, timeRange, n.day),
+		ObservedAt: n.start,
+		Data:       data,
+	})
+	if err != nil {
+		n.p.Problem("top artists listed %s: %v", timeRange, err)
 	}
 }
 

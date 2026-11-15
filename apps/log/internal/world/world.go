@@ -9,7 +9,7 @@ import (
 	"slices"
 )
 
-const DeriveVersion = 1
+const DeriveVersion = 2
 
 var ErrNotFound = errors.New("not found")
 

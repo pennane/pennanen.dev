@@ -15,17 +15,11 @@ import (
 )
 
 const (
-	CountFilmsSeen        = "films-seen"
-	CountFilmsAdded       = "films-added"
-	CountStatusesFollowed = "statuses-followed"
-	CountWatchesObserved  = "watches-observed"
-	CountTagsFollowed     = "tags-followed"
+	CountFilmsSeen       = "films-seen"
+	CountFilmsAdded      = "films-added"
+	CountWatchesObserved = "watches-observed"
+	CountLeftWatchlist   = "left-watchlist"
 )
-
-var statusOn = map[Shelf]string{
-	WatchedShelf:   kind.Watched,
-	WatchlistShelf: kind.Want,
-}
 
 type FilmPages interface {
 	TMDBLinkOf(ctx context.Context, film reading.LetterboxdFilm) (reading.TMDBLink, error)
@@ -54,7 +48,7 @@ func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film reading.L
 	}
 	switch {
 	case errors.Is(err, store.ErrNotFound) && film.ID != "":
-		if itemID, err = r.Store.CreateItemFromSource(ctx, kindOf(film), film.Title, record.SourceLetterboxd, film.ID, film); err != nil {
+		if itemID, err = r.Store.KnowItemFromSource(ctx, kindOf(film), film.Title, record.SourceLetterboxd, film.ID, film); err != nil {
 			return 0, err
 		}
 		p.Add(CountFilmsAdded, 1)
@@ -66,9 +60,9 @@ func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film reading.L
 		}
 	}
 	if shelf == WatchlistShelf {
-		return itemID, r.arriveOnWatchlist(ctx, p, itemID)
+		return itemID, r.arriveOnWatchlist(ctx, itemID)
 	}
-	return itemID, r.follow(ctx, p, itemID, shelf)
+	return itemID, r.arriveOnWatchedShelf(ctx, p, itemID)
 }
 
 func (r *Recorder) identified(ctx context.Context, p *syncs.Progress, film reading.LetterboxdFilm) reading.LetterboxdFilm {
@@ -92,67 +86,52 @@ func kindOf(film reading.LetterboxdFilm) string {
 	return kind.Movie
 }
 
-func (r *Recorder) arriveOnWatchlist(ctx context.Context, p *syncs.Progress, itemID int64) error {
-	move := NoMove
-	if err := r.changeTake(ctx, itemID, func(t *reading.LetterboxdTake) {
+func (r *Recorder) arriveOnWatchlist(ctx context.Context, itemID int64) error {
+	return r.changeTake(ctx, itemID, func(t *reading.LetterboxdTake) {
 		if t.OnWatchlistSince == "" {
 			t.OnWatchlistSince = r.today()
-			move = Arrived
 		}
-	}); err != nil {
-		return err
-	}
-	watched, err := r.isWatched(ctx, itemID)
-	switch {
-	case err != nil:
-		return err
-	case watched == NotWatchedYet:
-		return r.follow(ctx, p, itemID, WatchlistShelf)
-	case move == Arrived:
-		return r.followTag(ctx, p, itemID, store.TagPresent)
-	}
-	return nil
+	})
+}
+
+func (r *Recorder) arriveOnWatchedShelf(ctx context.Context, p *syncs.Progress, itemID int64) error {
+	return r.leaveWatchlistWhen(ctx, p, itemID, func(t *reading.LetterboxdTake) WatchlistMove {
+		if t.OnWatchedShelfSince != "" {
+			return Stays
+		}
+		t.OnWatchedShelfSince = r.today()
+		if t.LastWatched == "" {
+			return Left
+		}
+		return Stays
+	})
 }
 
 func (r *Recorder) LeaveWatchlist(ctx context.Context, p *syncs.Progress, itemID int64) error {
-	if err := r.changeTake(ctx, itemID, func(t *reading.LetterboxdTake) { t.OnWatchlistSince = "" }); err != nil {
-		return err
-	}
-	return r.followTag(ctx, p, itemID, store.TagAbsent)
-}
-
-func (r *Recorder) followTag(ctx context.Context, p *syncs.Progress, itemID int64, presence store.TagPresence) error {
-	outcome, err := r.Store.SetTagFromSource(ctx, itemID, record.SourceLetterboxd, kind.TagAnotherShot, presence)
-	if outcome == store.TagAdded || outcome == store.TagRemoved {
-		p.Add(CountTagsFollowed, 1)
-	}
-	return err
+	return r.leaveWatchlistWhen(ctx, p, itemID, func(*reading.LetterboxdTake) WatchlistMove { return Left })
 }
 
 type WatchlistMove int
 
 const (
-	NoMove WatchlistMove = iota
-	Arrived
+	Stays WatchlistMove = iota
 	Left
 )
 
-type Watched int
-
-const (
-	NotWatchedYet Watched = iota
-	AlreadyWatched
-)
-
-func (r *Recorder) isWatched(ctx context.Context, itemID int64) (Watched, error) {
-	v, err := r.Store.GetItem(ctx, itemID)
-	if err != nil {
-		return NotWatchedYet, err
+func (r *Recorder) leaveWatchlistWhen(ctx context.Context, p *syncs.Progress, itemID int64, move func(t *reading.LetterboxdTake) WatchlistMove) error {
+	left := Stays
+	if err := r.changeTake(ctx, itemID, func(t *reading.LetterboxdTake) {
+		if move(t) == Left && t.OnWatchlistSince != "" {
+			t.OnWatchlistSince = ""
+			left = Left
+		}
+	}); err != nil {
+		return err
 	}
-	if v.Entry != nil && v.Entry.Status == kind.Watched {
-		return AlreadyWatched, nil
+	if left == Left {
+		p.Add(CountLeftWatchlist, 1)
 	}
-	return NotWatchedYet, nil
+	return nil
 }
 
 func (r *Recorder) PutListTake(ctx context.Context, itemID int64, listed ListedFilm) error {
@@ -182,14 +161,10 @@ func (r *Recorder) RecordWatch(ctx context.Context, p *syncs.Progress, entry Dia
 			return err
 		}
 	}
-	if err := r.follow(ctx, p, itemID, WatchedShelf); err != nil {
-		return err
-	}
 	if err := r.observe(ctx, p, itemID, entry); err != nil {
 		return err
 	}
-	move := NoMove
-	if err := r.changeTake(ctx, itemID, func(t *reading.LetterboxdTake) {
+	return r.leaveWatchlistWhen(ctx, p, itemID, func(t *reading.LetterboxdTake) WatchlistMove {
 		if entry.WatchedOn >= t.LastWatched && entry.Rating != nil {
 			t.Rating = entry.Rating
 		}
@@ -199,16 +174,11 @@ func (r *Recorder) RecordWatch(ctx context.Context, p *syncs.Progress, entry Dia
 		if entry.Review != "" {
 			t.Review = entry.Review
 		}
-		if t.OnWatchlistSince != "" && entry.WatchedOn >= t.OnWatchlistSince {
-			move = Left
+		if entry.WatchedOn >= t.OnWatchlistSince {
+			return Left
 		}
-	}); err != nil {
-		return err
-	}
-	if move == Left {
-		return r.LeaveWatchlist(ctx, p, itemID)
-	}
-	return nil
+		return Stays
+	})
 }
 
 type watchObserved struct {
@@ -289,17 +259,6 @@ func (r *Recorder) remember(ctx context.Context, itemID int64, film reading.Lett
 		return nil
 	}
 	return r.Store.PutClaim(ctx, itemID, record.SourceLetterboxd, merged.ID, merged)
-}
-
-func (r *Recorder) follow(ctx context.Context, p *syncs.Progress, itemID int64, shelf Shelf) error {
-	outcome, err := r.Store.SetStatusFromSource(ctx, itemID, record.SourceLetterboxd, statusOn[shelf])
-	if outcome == store.StatusFollowed || outcome == store.StatusLogged {
-		p.Add(CountStatusesFollowed, 1)
-	}
-	if err == nil && shelf == WatchedShelf && outcome == store.StatusFollowed {
-		return r.LeaveWatchlist(ctx, p, itemID)
-	}
-	return err
 }
 
 func (r *Recorder) changeTake(ctx context.Context, itemID int64, change func(t *reading.LetterboxdTake)) error {

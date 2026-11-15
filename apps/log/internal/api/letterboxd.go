@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/letterboxd"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/tmdb"
@@ -37,7 +38,7 @@ func (s *Server) importLetterboxdExport(w http.ResponseWriter, r *http.Request) 
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	run, err := syncs.New(r.Context(), LetterboxdExportSyncName, func(ctx context.Context, p *syncs.Progress) error {
+	run, err := syncs.New(r.Context(), LetterboxdExportSyncName, record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error {
 		return s.Letterboxd.Import(ctx, p, export)
 	}, s.Store, s.changed)
 	if err != nil {

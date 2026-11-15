@@ -30,13 +30,11 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 
 	step := func(name string, work func(p *syncs.Progress) error) syncs.Report {
 		t.Helper()
-		sync, err := syncs.New(ctx, name, func(ctx context.Context, p *syncs.Progress) error { return work(p) }, s, nil)
+		sync, err := syncs.New(ctx, name, record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error { return work(p) }, s, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
 		report := sync.Run(ctx)
-		proposed(t, s)
-		proposed(t, s)
 		if report.State != syncs.Succeeded {
 			t.Fatalf("%s: %+v", name, report)
 		}
@@ -58,7 +56,6 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 		return err
 	})
 	t.Run("heat back on the watchlist is watched with another shot", func(t *testing.T) {
-		t.Skip("waits for Task 5: the recorder does not write onWatchedShelfSince, so a shelved film without a diary date is not watched")
 		if e := entryOf("bbb2"); e.Status != kind.Watched || !slices.Contains(e.Tags, kind.TagAnotherShot) || e.TagsFromRules[kind.TagAnotherShot] != letterboxd.RuleLetterboxd {
 			t.Fatalf("heat back on the watchlist: %+v", e)
 		}
@@ -80,9 +77,8 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 	if e := entryOf("bbb2"); slices.Contains(e.Tags, kind.TagAnotherShot) {
 		t.Errorf("rewatched, still another shot: %+v %+v", e, report)
 	}
-	t.Run("the rewatch counts the tag it followed", func(t *testing.T) {
-		t.Skip("waits for Task 5: the sync counts tags through SetTagFromSource, a shim until the sync reports its rules' work")
-		if report.Counts[letterboxd.CountTagsFollowed] != 1 {
+	t.Run("the rewatch counts the watchlist it left", func(t *testing.T) {
+		if report.Counts[letterboxd.CountLeftWatchlist] != 1 {
 			t.Errorf("tags followed = %+v", report)
 		}
 	})
@@ -146,7 +142,7 @@ func TestADiaryEntryForAFilmNotInTheLogAddsIt(t *testing.T) {
 		Review:    "wow huh",
 	}
 	unnamed := letterboxd.DiaryEntry{Film: reading.LetterboxdFilm{Slug: "nowhere", Title: "Nowhere", Year: 1997}, WatchedOn: "2026-11-14"}
-	sync, _ := syncs.New(ctx, "diary", func(ctx context.Context, p *syncs.Progress) error {
+	sync, _ := syncs.New(ctx, "diary", record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error {
 		for _, entry := range []letterboxd.DiaryEntry{mulholland, unnamed} {
 			if err := r.RecordWatch(ctx, p, entry, map[string]string{}); err != nil {
 				p.Problem("%v", err)
@@ -155,7 +151,6 @@ func TestADiaryEntryForAFilmNotInTheLogAddsIt(t *testing.T) {
 		return nil
 	}, s, nil)
 	report := sync.Run(ctx)
-	proposed(t, s)
 	if report.Counts[letterboxd.CountFilmsAdded] != 1 || len(report.Problems) != 1 {
 		t.Fatalf("%+v", report)
 	}
@@ -191,7 +186,7 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 		"rip1": {Type: reading.SeriesOnTMDB, ID: 94028},
 		"twp1": {Type: reading.SeriesOnTMDB, ID: 1920},
 	}}
-	sync, _ := syncs.New(ctx, "shelve", func(ctx context.Context, p *syncs.Progress) error {
+	sync, _ := syncs.New(ctx, "shelve", record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error {
 		for _, film := range []reading.LetterboxdFilm{
 			{ID: "rip1", Slug: "ripley-2024", Title: "Ripley", Year: 2024},
 			{ID: "twp1", Slug: "twin-peaks", Title: "Twin Peaks", Year: 1990},
@@ -204,7 +199,6 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 		return nil
 	}, s, nil)
 	report := sync.Run(ctx)
-	proposed(t, s)
 	if report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 2 || len(report.Problems) != 0 {
 		t.Fatalf("shelve: %+v", report)
 	}
@@ -217,7 +211,6 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 		t.Errorf("ripley: %s %+v", v.Kind, v.Entry)
 	}
 	t.Run("ripley shelved watched is watched", func(t *testing.T) {
-		t.Skip("waits for Task 5: the recorder does not write onWatchedShelfSince, so a shelved film without a diary date is not watched")
 		if v, _ := s.GetItem(ctx, ripley); v.Entry.Status != kind.Watched {
 			t.Errorf("ripley: %+v", v.Entry)
 		}
@@ -247,7 +240,7 @@ func TestTheNewestDiaryEntrySetsTheRating(t *testing.T) {
 	r := &letterboxd.Recorder{Store: s}
 	film := reading.LetterboxdFilm{ID: "lif1", Slug: "the-life-aquatic-with-steve-zissou", Title: "The Life Aquatic with Steve Zissou", Year: 2004}
 	stars := func(n float64) *float64 { return &n }
-	sync, _ := syncs.New(ctx, "diary", func(ctx context.Context, p *syncs.Progress) error {
+	sync, _ := syncs.New(ctx, "diary", record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error {
 		itemID, err := r.Shelve(ctx, p, film, letterboxd.WatchedShelf)
 		if err != nil {
 			return err
@@ -266,7 +259,6 @@ func TestTheNewestDiaryEntrySetsTheRating(t *testing.T) {
 		return nil
 	}, s, nil)
 	report := sync.Run(ctx)
-	proposed(t, s)
 	if report.State != syncs.Succeeded {
 		t.Fatalf("%+v", report)
 	}

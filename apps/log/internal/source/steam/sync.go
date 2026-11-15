@@ -10,6 +10,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const SyncName = "steam"
@@ -86,7 +87,7 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 	previousPlaytimeKnown := false
 	switch {
 	case errors.Is(err, store.ErrNotFound):
-		if itemID, err = s.Store.CreateItemFromSource(ctx, "game", g.Name, record.SourceSteam, appID, g.Raw); err != nil {
+		if itemID, err = s.Store.KnowItemFromSource(ctx, kind.Game, g.Name, record.SourceSteam, appID, g.Raw); err != nil {
 			return err
 		}
 		p.Add(CountGamesAdded, 1)

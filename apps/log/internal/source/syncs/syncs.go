@@ -36,12 +36,18 @@ type Reports interface {
 	SyncReport(ctx context.Context, name string, into any) (bool, error)
 }
 
+type Store interface {
+	Reports
+	Propose(ctx context.Context, source string) error
+}
+
 type Work func(ctx context.Context, p *Progress) error
 
 type Sync struct {
 	name     string
+	source   string
 	work     Work
-	reports  Reports
+	store    Store
 	onChange func()
 
 	mu   sync.Mutex
@@ -50,16 +56,16 @@ type Sync struct {
 
 const interruptedByRestart = "the service stopped while this ran"
 
-func New(ctx context.Context, name string, work Work, reports Reports, onChange func()) (*Sync, error) {
+func New(ctx context.Context, name, source string, work Work, st Store, onChange func()) (*Sync, error) {
 	last := Report{Name: name, State: NeverRan, Counts: map[string]int{}, Problems: []string{}}
-	if _, err := reports.SyncReport(ctx, name, &last); err != nil {
+	if _, err := st.SyncReport(ctx, name, &last); err != nil {
 		return nil, fmt.Errorf("sync %s: %w", name, err)
 	}
 	if last.State == Running {
 		last.State = Failed
 		last.Problems = append(last.Problems, interruptedByRestart)
 	}
-	return &Sync{name: name, work: work, reports: reports, onChange: onChange, last: last}, nil
+	return &Sync{name: name, source: source, work: work, store: st, onChange: onChange, last: last}, nil
 }
 
 func (s *Sync) Name() string { return s.name }
@@ -121,6 +127,9 @@ func (s *Sync) begin(ctx context.Context) (Report, bool) {
 func (s *Sync) run(ctx context.Context, started Report) {
 	p := &Progress{sync: s, report: started}
 	err := s.work(ctx, p)
+	if proposing := s.store.Propose(context.WithoutCancel(ctx), s.source); proposing != nil {
+		p.Problem("proposing for %s: %v", s.source, proposing)
+	}
 	report := p.snapshot()
 	report.FinishedAt = now()
 	report.State = Succeeded
@@ -145,7 +154,7 @@ func (s *Sync) publish(report Report) {
 }
 
 func (s *Sync) save(ctx context.Context, report Report) {
-	if err := s.reports.SaveSyncReport(ctx, s.name, report); err != nil {
+	if err := s.store.SaveSyncReport(ctx, s.name, report); err != nil {
 		slog.Error("saving sync report failed", "sync", s.name, "err", err)
 	}
 }

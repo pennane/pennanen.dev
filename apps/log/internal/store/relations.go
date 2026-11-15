@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
-	"slices"
 )
 
 func (s *Store) AddRelation(ctx context.Context, r Relation) error {
@@ -103,16 +102,4 @@ func (s *Store) putLinkEdit(ctx context.Context, tx *sql.Tx, edit pendingLinkEdi
 		return err
 	}
 	return s.settle(ctx, tx, edit.id)
-}
-
-func (s *Store) RelatedTo(ctx context.Context, fromIDs []int64, relation string) ([]int64, error) {
-	related := []int64{}
-	err := forChunks(fromIDs, func(chunk []int64) error {
-		ids, err := s.itemIDs(ctx, `
-			SELECT DISTINCT to_id FROM relation WHERE type = ? AND from_id IN (`+placeholders(len(chunk))+`)`,
-			append([]any{relation}, int64sAsArgs(chunk)...)...)
-		related = append(related, ids...)
-		return err
-	})
-	return slices.Compact(slices.Sorted(slices.Values(related))), err
 }

@@ -120,14 +120,13 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	client.PageInterval = 0
 	syncer := letterboxd.NewSyncer(s, client)
 
-	imported, err := syncs.New(ctx, "letterboxd-export", func(ctx context.Context, p *syncs.Progress) error {
+	imported, err := syncs.New(ctx, "letterboxd-export", record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error {
 		return syncer.Import(ctx, p, export)
 	}, s, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	report := imported.Run(ctx)
-	proposed(t, s)
 	if report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 3 || report.Counts[letterboxd.CountWatchesObserved] != 1 || len(report.Problems) != 0 {
 		t.Fatalf("import: %+v", report)
 	}
@@ -142,20 +141,19 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	if take["rating"] != 4.5 || take["reaction"] != "liked" || take["review"] != "slow, then not" || take["last_watched"] != "2026-03-23" {
 		t.Errorf("stalker take: %v", take)
 	}
-	if heat := item(t, s, "bbb2"); len(heat.Takes) != 0 {
-		t.Errorf("an unrated, unliked film got a take: %+v", heat.Takes)
+	if heat := item(t, s, "bbb2"); len(heat.Takes) != 1 || len(heat.Takes[0].Values) != 1 || heat.Takes[0].Values["on_watched_shelf_since"] == nil {
+		t.Errorf("an unrated, unliked film's take says more than when it was shelved: %+v", heat.Takes)
 	}
 	if memento := item(t, s, "ccc3"); memento.Entry.Status != kind.Want {
 		t.Errorf("watchlist: %+v", memento.Entry)
 	}
 
-	nightly, err := syncs.New(ctx, letterboxd.SyncName, syncer.Work, s, nil)
+	nightly, err := syncs.New(ctx, letterboxd.SyncName, record.SourceLetterboxd, syncer.Work, s, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	watchlist = gridItem("aaa1", "stalker", "Stalker (1979)", "")
 	report = nightly.Run(ctx)
-	proposed(t, s)
 	if report.State != syncs.Succeeded || report.Counts[letterboxd.CountFilmsAdded] != 1 || len(report.Problems) != 0 {
 		t.Fatalf("nightly: %+v", report)
 	}
@@ -163,7 +161,6 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 		t.Errorf("watched off the watchlist: %+v %+v", memento.Entry, memento.Takes)
 	}
 	t.Run("memento watched off the watchlist is watched", func(t *testing.T) {
-		t.Skip("waits for Task 5: the recorder does not write onWatchedShelfSince, so a shelved film without a diary date is not watched")
 		if memento := item(t, s, "ccc3"); memento.Entry.Status != kind.Watched {
 			t.Errorf("watched off the watchlist: %+v", memento.Entry)
 		}
@@ -186,7 +183,7 @@ func TestExportThenNightlySyncThenTMDBMatch(t *testing.T) {
 	tmdbClient.BaseURL = fake.URL
 	matcher := tmdb.NewMatcher(s, tmdbClient, client)
 	matcher.RequestInterval = 1
-	matching, err := syncs.New(ctx, tmdb.SyncName, matcher.Work, s, nil)
+	matching, err := syncs.New(ctx, tmdb.SyncName, record.SourceLetterboxd, matcher.Work, s, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,11 +229,4 @@ func openProposing(t *testing.T, d *sql.DB) *store.Store {
 	}
 	records := record.New(d, reading.ReadRecord, reading.ReadersVersion)
 	return store.New(d, records, world.New(d, records), []rule.Proposer{letterboxd.Proposer})
-}
-
-func proposed(t *testing.T, s *store.Store) {
-	t.Helper()
-	if err := s.Propose(context.Background(), record.SourceLetterboxd); err != nil {
-		t.Fatal(err)
-	}
 }

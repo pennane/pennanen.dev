@@ -22,10 +22,11 @@ const (
 )
 
 const (
-	SignalTopArtist = "top-artist"
-	SignalTopTrack  = "top-track"
-	SignalPlay      = "play"
-	SignalSaved     = "saved"
-	SignalUnsaved   = "unsaved"
-	SignalWatched   = "watched"
+	SignalTopArtist        = "top-artist"
+	SignalTopArtistsListed = "top-artists-listed"
+	SignalTopTrack         = "top-track"
+	SignalPlay             = "play"
+	SignalSaved            = "saved"
+	SignalUnsaved          = "unsaved"
+	SignalWatched          = "watched"
 )
