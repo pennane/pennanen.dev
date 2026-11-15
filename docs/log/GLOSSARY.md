@@ -112,7 +112,7 @@ albums. Public pages get each entry's place in it, never the number.
 
 **Listening** — how much ap listens to an artist or album, from 0 to 100: its
 percentile among its kind's logged entries. Worked out nightly from every
-top-list day and play; only ap sees the number.
+top-list day and play. Public: it can filter, sort and show like any number.
 
 **Tag** — a free-form label ap puts on an entry: `favorite`, `comfort`,
 `formative`. Nest with a slash for precision: `favorite/all-time`. Tags are

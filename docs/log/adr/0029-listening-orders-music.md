@@ -17,7 +17,7 @@ sat under crowd axes, which ADR 18 meant for a site's public average.
 - A kind names its **unranked order**: a number field, highest first, used
   after every ranked entry. Games use playtime; artists and albums use
   listening. The public list gets each entry's place in that order, never the
-  value, so private fields stay private (ADR 23).
+  value, so a private field like playtime stays private (ADR 23).
 - **Listening** is a claim from the derived source `spotify-listening`,
   rewritten at the end of every nightly `spotify` sync from all observations:
   - a top-list appearance at rank r of N scores (N − r + 1) / N, times 3 for
@@ -26,6 +26,8 @@ sat under crowd axes, which ADR 18 meant for a site's public average.
   - an artist sums its own appearances, plus every album it is `by`.
   - The stored value is the percentile, 0 to 100, among the kind's logged
     entries, so axis floors keep their meaning as history grows.
+  - Listening is public, unlike playtime: ap wants it shown, filtered and
+    sorted on.
 - A fourth axis sort, **activity**, reads fields about what ap did
   (playtime, achievements unlocked, listening). Crowd keeps only a site's
   averages.

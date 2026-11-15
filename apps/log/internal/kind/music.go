@@ -24,7 +24,6 @@ var listeningField = Field{
 	Name:                    FieldListening,
 	Type:                    Int,
 	SourcesBestFirstAfterAP: []string{SourceSpotifyListening},
-	Reach:                   OnlyAP,
 	About:                   AboutAP,
 }
 
