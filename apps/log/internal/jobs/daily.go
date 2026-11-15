@@ -19,14 +19,29 @@ func RunDaily(ctx context.Context, hour, minute int, jobs []Job) {
 			return
 		case <-time.After(wait):
 		}
-		for _, job := range jobs {
-			started := time.Now()
-			if err := job.Run(ctx); err != nil {
-				slog.Error("daily job failed", "job", job.Name, "err", err)
-				continue
-			}
-			slog.Info("daily job done", "job", job.Name, "took", time.Since(started).Round(time.Second))
+		runAll(ctx, "daily", jobs)
+	}
+}
+
+func RunEvery(ctx context.Context, interval time.Duration, jobs []Job) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(interval):
 		}
+		runAll(ctx, "recurring", jobs)
+	}
+}
+
+func runAll(ctx context.Context, rhythm string, jobs []Job) {
+	for _, job := range jobs {
+		started := time.Now()
+		if err := job.Run(ctx); err != nil {
+			slog.Error(rhythm+" job failed", "job", job.Name, "err", err)
+			continue
+		}
+		slog.Info(rhythm+" job done", "job", job.Name, "took", time.Since(started).Round(time.Second))
 	}
 }
 

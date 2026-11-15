@@ -12,7 +12,10 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 )
 
-const SyncName = "spotify"
+const (
+	SyncName      = "spotify"
+	PlaysSyncName = "spotify-plays"
+)
 
 type Syncer struct {
 	Store  *store.Store
@@ -37,14 +40,30 @@ type track struct {
 	Album json.RawMessage `json:"album"`
 }
 
-func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
+func (s *Syncer) snapshotNow(p *syncs.Progress) snapshot {
 	now := s.Now().UTC()
-	snap := snapshot{
+	return snapshot{
 		recorder: NewRecorder(s.Store),
 		p:        p,
 		start:    now.Format(time.RFC3339),
 		day:      now.Format(time.DateOnly),
 	}
+}
+
+func (s *Syncer) WorkPlays(ctx context.Context, p *syncs.Progress) error {
+	snap := s.snapshotNow(p)
+	plays, err := s.Client.RecentlyPlayed(ctx)
+	if err != nil {
+		return err
+	}
+	p.ChangedData()
+	snap.plays(ctx, plays)
+	snap.recorder.RefreshClaims(ctx, p, s.Client)
+	return ctx.Err()
+}
+
+func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
+	snap := s.snapshotNow(p)
 	for _, timeRange := range TimeRanges {
 		artists, err := s.Client.TopArtists(ctx, timeRange)
 		if err != nil {
@@ -61,12 +80,6 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 		p.ChangedData()
 		snap.topTracks(ctx, timeRange, tracks)
 	}
-	plays, err := s.Client.RecentlyPlayed(ctx)
-	if err != nil {
-		return err
-	}
-	p.ChangedData()
-	snap.plays(ctx, plays)
 	saved, err := s.Client.SavedAlbums(ctx)
 	if err != nil {
 		return err

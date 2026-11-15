@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ type fakeSpotify struct {
 	albumsNull  bool
 	savedTotal  *int
 	artistsGone bool
+	plays       string
 }
 
 func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +42,7 @@ func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(w, `{"items":%s,"next":null}`, items)
 	case "/me/player/recently-played":
-		fmt.Fprint(w, `{"items":[{"played_at":"2026-11-14T20:00:00.000Z","track":{"id":"T","name":"Track","album":{"id":"A","name":"Alpha","artists":[{"id":"X","name":"Xena"}]},"artists":[{"id":"X","name":"Xena"}]}}],"next":null}`)
+		fmt.Fprintf(w, `{"items":%s,"next":null}`, f.plays)
 	case "/me/albums":
 		var listed []json.RawMessage
 		json.Unmarshal([]byte(f.saved), &listed)
@@ -88,7 +90,16 @@ func newFake() *fakeSpotify {
 			"long_term":   "[" + fullX + "," + fullY + "]",
 		},
 		saved: savedAlbum,
+		plays: playedAt("2026-11-14T20:00:00.000Z"),
 	}
+}
+
+func playedAt(times ...string) string {
+	items := []string{}
+	for _, at := range times {
+		items = append(items, fmt.Sprintf(`{"played_at":%q,"track":{"id":"T","name":"Track","album":{"id":"A","name":"Alpha","artists":[{"id":"X","name":"Xena"}]},"artists":[{"id":"X","name":"Xena"}]}}`, at))
+	}
+	return "[" + strings.Join(items, ",") + "]"
 }
 
 func openStore(t *testing.T) *store.Store {
@@ -135,6 +146,15 @@ func newHarness(t *testing.T, fake *fakeSpotify, connection spotify.Connection) 
 func (h *harness) run(t *testing.T) syncs.Report {
 	t.Helper()
 	sync, err := syncs.New(context.Background(), spotify.SyncName, h.syncer.Work, h.store, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return sync.Run(context.Background())
+}
+
+func (h *harness) runPlays(t *testing.T) syncs.Report {
+	t.Helper()
+	sync, err := syncs.New(context.Background(), spotify.PlaysSyncName, h.syncer.WorkPlays, h.store, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,10 +214,6 @@ func TestASyncRecordsTodaysSnapshot(t *testing.T) {
 	if err := json.Unmarshal(topTracks[0].Data, &topTrack); err != nil || topTrack.Rank != 1 || topTrack.Range != "short_term" || topTrack.TrackName != "Track" {
 		t.Fatalf("top-track data = %s, %v", topTracks[0].Data, err)
 	}
-	plays := h.observations(t, a, "play")
-	if len(plays) != 1 || plays[0].ObservedAt != "2026-11-14T20:00:00.000Z" {
-		t.Fatalf("plays = %+v", plays)
-	}
 	saved := h.observations(t, b, "saved")
 	if len(saved) != 1 || saved[0].ObservedAt != "2026-11-10T09:00:00Z" {
 		t.Fatalf("saved = %+v", saved)
@@ -209,7 +225,7 @@ func TestASyncRecordsTodaysSnapshot(t *testing.T) {
 	if err != nil || !strings.Contains(string(claim.Data), `"label":"Label A"`) {
 		t.Fatalf("album claim = %s, %v", claim.Data, err)
 	}
-	if report.Counts[spotify.CountPlays] != 1 || report.Counts[spotify.CountSaves] != 1 || report.Counts[spotify.CountSnapshots] != 4 {
+	if report.Counts[spotify.CountSaves] != 1 || report.Counts[spotify.CountSnapshots] != 4 {
 		t.Fatalf("counts = %v", report.Counts)
 	}
 }
@@ -478,3 +494,71 @@ func TestAnArtistWhoseCatalogueRefreshFailedHasNoPopularityOrFollowers(t *testin
 		t.Fatalf("verdicts = %s, want the simplified name", verdicts)
 	}
 }
+
+func TestPlaysAreRecordedByTheirOwnSync(t *testing.T) {
+	fake := newFake()
+	fake.plays = playedAt("2026-11-14T20:00:00.000Z", "2026-11-14T20:05:00.000Z")
+	h := newHarness(t, fake, spotify.Connected)
+	if report := h.runPlays(t); report.State != syncs.Succeeded || report.Counts[spotify.CountPlays] != 2 {
+		t.Fatalf("report = %+v", report)
+	}
+	a := h.item(t, kind.SourceSpotifyAlbum, "A")
+
+	fake.plays = playedAt("2026-11-14T20:05:00.000Z", "2026-11-14T21:00:00.000Z")
+	report := h.runPlays(t)
+	if report.State != syncs.Succeeded || report.Counts[spotify.CountPlays] != 1 {
+		t.Fatalf("second report = %+v", report)
+	}
+	if got := h.observations(t, a, "play"); len(got) != 3 {
+		t.Fatalf("plays = %+v, want one observation per play", got)
+	}
+}
+
+func TestTheNightlySyncLeavesPlaysAlone(t *testing.T) {
+	h := newHarness(t, newFake(), spotify.Connected)
+	report := h.run(t)
+	if report.Counts[spotify.CountPlays] != 0 {
+		t.Fatalf("counts = %v", report.Counts)
+	}
+	a := h.item(t, kind.SourceSpotifyAlbum, "A")
+	if got := h.observations(t, a, "play"); len(got) != 0 {
+		t.Fatalf("plays = %+v", got)
+	}
+}
+
+func TestThePlaysSyncAndTheNightlySyncCanOverlap(t *testing.T) {
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	nightly, err := syncs.New(context.Background(), spotify.SyncName, h.syncer.Work, h.store, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hourly, err := syncs.New(context.Background(), spotify.PlaysSyncName, h.syncer.WorkPlays, h.store, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reports := make(chan syncs.Report, 2*overlapRounds)
+	var running sync.WaitGroup
+	for _, s := range []*syncs.Sync{nightly, hourly} {
+		running.Add(1)
+		go func() {
+			defer running.Done()
+			for range overlapRounds {
+				reports <- s.Run(context.Background())
+			}
+		}()
+	}
+	running.Wait()
+	close(reports)
+	for report := range reports {
+		if report.State != syncs.Succeeded || len(report.Problems) != 0 {
+			t.Fatalf("report = %+v", report)
+		}
+	}
+	a := h.item(t, kind.SourceSpotifyAlbum, "A")
+	if got := h.observations(t, a, "play"); len(got) != 1 {
+		t.Fatalf("plays = %+v, want the one play once", got)
+	}
+}
+
+const overlapRounds = 5

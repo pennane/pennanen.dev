@@ -108,7 +108,11 @@ func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*
 	}
 	itemID, err := r.Store.FindByIdentity(ctx, source, ref.ID)
 	if errors.Is(err, store.ErrNotFound) {
-		if itemID, err = r.Store.KnowItemFromSource(ctx, kindName, ref.Name, source, ref.ID, raw); err == nil {
+		itemID, err = r.Store.KnowItemFromSource(ctx, kindName, ref.Name, source, ref.ID, raw)
+		switch {
+		case errors.Is(err, store.ErrConflict):
+			itemID, err = r.Store.FindByIdentity(ctx, source, ref.ID)
+		case err == nil:
 			p.Add(count, 1)
 		}
 	}

@@ -69,13 +69,20 @@ func run() error {
 		slog.Warn("LOG_ADMIN_TOKEN is empty; admin endpoints will refuse every request")
 	}
 
-	var daily []jobs.Job
-	addSync := func(name string, work syncs.Work) error {
+	var daily, hourly []jobs.Job
+	newSync := func(name string, work syncs.Work) (*syncs.Sync, error) {
 		sync, err := syncs.New(ctx, name, work, st, notifier.Changed)
+		if err != nil {
+			return nil, err
+		}
+		server.Syncs = append(server.Syncs, sync)
+		return sync, nil
+	}
+	addSync := func(name string, work syncs.Work) error {
+		sync, err := newSync(name, work)
 		if err != nil {
 			return err
 		}
-		server.Syncs = append(server.Syncs, sync)
 		daily = append(daily, sync.Job())
 		return nil
 	}
@@ -120,9 +127,15 @@ func run() error {
 
 	if id, secret := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET"); id != "" && secret != "" {
 		server.Spotify = spotify.NewClient(id, secret, st)
-		if err := addSync(spotify.SyncName, spotify.NewSyncer(st, server.Spotify).Work); err != nil {
+		syncer := spotify.NewSyncer(st, server.Spotify)
+		if err := addSync(spotify.SyncName, syncer.Work); err != nil {
 			return err
 		}
+		plays, err := newSync(spotify.PlaysSyncName, syncer.WorkPlays)
+		if err != nil {
+			return err
+		}
+		hourly = append(hourly, plays.Job())
 	} else {
 		slog.Warn("SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET missing; spotify sync disabled")
 	}
@@ -143,6 +156,7 @@ func run() error {
 	}
 
 	go jobs.RunDaily(ctx, 4, 0, daily)
+	go jobs.RunEvery(ctx, time.Hour, hourly)
 
 	httpServer := &http.Server{
 		Addr:              env("LOG_ADDR", "127.0.0.1:3005"),
