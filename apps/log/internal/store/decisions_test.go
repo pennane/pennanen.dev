@@ -401,3 +401,26 @@ func TestProposeRunsOnlyThatSource(t *testing.T) {
 		t.Errorf("unknown source: %v", err)
 	}
 }
+
+func TestTheDismissalFilterListsOnlyDismissedItems(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	kept := handMadeGame(t, s, "Hades")
+	gone := handMadeGame(t, s, "Wallpaper Engine")
+	dismissed := store.Dismissed
+	if err := s.ChangeEntry(ctx, gone, store.EntryChange{Dismissal: &dismissed}); err != nil {
+		t.Fatal(err)
+	}
+	views, err := s.ListItems(ctx, store.ItemFilter{Kind: kind.Game, Dismissal: store.Dismissed})
+	if err != nil || len(views) != 1 || views[0].ID != gone || views[0].DismissedAt == "" {
+		t.Fatalf("dismissed = %+v, %v", views, err)
+	}
+	shown, err := s.ListItems(ctx, store.ItemFilter{Kind: kind.Game})
+	if err != nil || len(shown) != 1 || shown[0].ID != kept {
+		t.Fatalf("shown = %+v, %v", shown, err)
+	}
+	kept2 := store.Kept
+	if _, err := s.ListItems(ctx, store.ItemFilter{Dismissal: kept2}); !errors.Is(err, store.ErrInvalid) {
+		t.Errorf("kept filter error = %v", err)
+	}
+}

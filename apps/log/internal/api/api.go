@@ -194,6 +194,7 @@ func (s *Server) listItems(w http.ResponseWriter, r *http.Request) {
 		Status:     q.Get("status"),
 		Visibility: store.Visibility(q.Get("visibility")),
 		Suggested:  q.Get("suggested"),
+		Dismissal:  store.DismissalChange(q.Get("dismissal")),
 		Tag:        store.NormalizeTag(q.Get("tag")),
 		Query:      q.Get("q"),
 		Needs:      store.Need(q.Get("needs")),

@@ -137,6 +137,7 @@ type ItemFilter struct {
 	Status     string
 	Visibility Visibility
 	Suggested  string
+	Dismissal  DismissalChange
 	Tag        string
 	Query      string
 	Needs      Need

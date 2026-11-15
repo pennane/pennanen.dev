@@ -17,8 +17,18 @@ import (
 
 const shownItems = "i.id IN (SELECT item_id FROM shown_entry)"
 
+const dismissedItems = "i.id IN (SELECT item_id FROM dismissal)"
+
 func (s *Store) ListItems(ctx context.Context, filter ItemFilter) ([]ItemView, error) {
-	where, args := []string{shownItems}, []any{}
+	which := shownItems
+	switch filter.Dismissal {
+	case "":
+	case Dismissed:
+		which = dismissedItems
+	default:
+		return nil, fmt.Errorf("%w: dismissal filter takes %q", ErrInvalid, Dismissed)
+	}
+	where, args := []string{which}, []any{}
 	if filter.Kind != "" {
 		where, args = append(where, "i.kind = ?"), append(args, filter.Kind)
 	}
