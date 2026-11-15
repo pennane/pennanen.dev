@@ -60,8 +60,8 @@ func init() {
 		UnrankedOrder:   "playtime_minutes",
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceIGDB, SourceSteamStore, SourceSteam}},
-			{Name: "cover", Type: URL, SourcesBestFirstAfterAP: []string{SourceSteamStore, SourceIGDB}},
-			{Name: "poster", Type: URL, SourcesBestFirstAfterAP: []string{SourceIGDB}},
+			{Name: "cover", Type: Picture, Shape: Wide, SourcesBestFirstAfterAP: []string{SourceSteamStore, SourceIGDB}},
+			{Name: "poster", Type: Picture, Shape: Tall, SourcesBestFirstAfterAP: []string{SourceIGDB}},
 			{Name: "released", Type: PartialDate, SourcesBestFirstAfterAP: []string{SourceIGDB, SourceSteamStore}},
 			{Name: "developers", Type: StringList, SourcesBestFirstAfterAP: []string{SourceIGDB, SourceSteamStore}},
 			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceIGDB, SourceSteamStore}},

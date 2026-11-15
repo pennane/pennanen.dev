@@ -93,12 +93,21 @@ func (s *Server) publicKind(w http.ResponseWriter, r *http.Request) {
 }
 
 type Presentation struct {
-	Axes      store.Axes                    `json:"axes"`
-	Kinds     map[string]store.KindSettings `json:"kinds"`
-	Fields    map[string][]kind.PublicField `json:"fields"`
-	TagTitles store.TagTitles               `json:"tagTitles"`
-	Readables []kind.Readable               `json:"readables"`
-	KindOrder store.KindOrder               `json:"kindOrder"`
+	Axes      store.Axes                     `json:"axes"`
+	Kinds     map[string]store.KindSettings  `json:"kinds"`
+	Fields    map[string][]kind.PublicField  `json:"fields"`
+	Pictures  map[string][]kind.PictureField `json:"pictures"`
+	TagTitles store.TagTitles                `json:"tagTitles"`
+	Readables []kind.Readable                `json:"readables"`
+	KindOrder store.KindOrder                `json:"kindOrder"`
+}
+
+func picturesByKind() map[string][]kind.PictureField {
+	pictures := map[string][]kind.PictureField{}
+	for _, k := range kind.All() {
+		pictures[k.Name] = k.Pictures()
+	}
+	return pictures
 }
 
 func publicFieldsByKind() map[string][]kind.PublicField {
@@ -123,7 +132,7 @@ func (s *Server) presentation(r *http.Request) (Presentation, error) {
 		return Presentation{}, err
 	}
 	order, err := s.Store.KindOrder(r.Context())
-	return Presentation{Axes: axes, Kinds: kinds, Fields: publicFieldsByKind(), TagTitles: titles, Readables: kind.Readables(), KindOrder: order}, err
+	return Presentation{Axes: axes, Kinds: kinds, Fields: publicFieldsByKind(), Pictures: picturesByKind(), TagTitles: titles, Readables: kind.Readables(), KindOrder: order}, err
 }
 
 func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {

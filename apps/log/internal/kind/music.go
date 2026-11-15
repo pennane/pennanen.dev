@@ -44,7 +44,7 @@ func init() {
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
-			{Name: "image", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
+			{Name: "image", Type: Picture, Shape: Square, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "popularity", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "followers", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			listeningField,
@@ -72,7 +72,7 @@ func init() {
 			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}, InheritedThrough: RelationBy},
 			{Name: "popularity", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			listeningField,
-			{Name: "cover", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
+			{Name: "cover", Type: Picture, Shape: Square, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "spotify_id", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "link", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 		},

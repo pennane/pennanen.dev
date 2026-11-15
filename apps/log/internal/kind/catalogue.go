@@ -25,15 +25,27 @@ const takeFieldSeparator = "."
 var placedFields = map[string]struct{}{
 	FieldTitle: {},
 	"link":     {},
-	"cover":    {},
-	"poster":   {},
-	"image":    {},
+}
+
+type PictureField struct {
+	Key   string `json:"key"`
+	Shape Shape  `json:"shape"`
+}
+
+func (k Kind) Pictures() []PictureField {
+	pictures := []PictureField{}
+	for _, f := range k.Fields {
+		if f.Type == Picture && f.Reach == Everyone {
+			pictures = append(pictures, PictureField{Key: f.Name, Shape: f.Shape})
+		}
+	}
+	return pictures
 }
 
 func (k Kind) PublicFields() []PublicField {
 	fields := []PublicField{}
 	for _, f := range k.Fields {
-		if _, placed := placedFields[f.Name]; placed || f.Reach == OnlyAP {
+		if _, placed := placedFields[f.Name]; placed || f.Type == Picture || f.Reach == OnlyAP {
 			continue
 		}
 		fields = append(fields, publicField(f.Name, f))

@@ -194,7 +194,10 @@ link or id, or answer no match, which TMDB's claim then records.
 **Quick-add** — adding an item by searching its kind's catalogue (IGDB for
 games, TMDB for films and series), or by title alone when it has nothing.
 
-**Cover / poster** — an item's wide picture and its tall box art.
+**Picture** — a field that is an image, with a **shape**: `tall` (a poster or
+box art), `wide` (a Steam cover, a film's backdrop) or `square` (an album
+cover, an artist). A **tile** is the picture a tier list shows, tall first;
+a **banner** is the one a row or an item page shows, wide first.
 
 ## Doing
 

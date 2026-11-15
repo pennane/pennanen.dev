@@ -51,12 +51,18 @@ func toListedEntry(v store.ItemView) listedEntry {
 	}
 }
 
-var coverFields = []string{"cover", "image"}
+var coverShapesBestFirst = []kind.Shape{kind.Wide, kind.Square}
 
 func coverOf(v store.ItemView) string {
-	for _, field := range coverFields {
-		if url, isString := v.Verdicts.Values[field].(string); isString && url != "" {
-			return url
+	k, known := kind.Get(v.Kind)
+	if !known {
+		return ""
+	}
+	for _, shape := range coverShapesBestFirst {
+		for _, picture := range k.Pictures() {
+			if url, isString := v.Verdicts.Values[picture.Key].(string); picture.Shape == shape && isString && url != "" {
+				return url
+			}
 		}
 	}
 	return ""

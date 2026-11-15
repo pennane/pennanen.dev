@@ -18,6 +18,16 @@ const (
 	PartialDate FieldType = "partial-date"
 	URL         FieldType = "url"
 	StringList  FieldType = "string-list"
+	Picture     FieldType = "picture"
+)
+
+type Shape string
+
+const (
+	NoShape Shape = ""
+	Tall    Shape = "tall"
+	Wide    Shape = "wide"
+	Square  Shape = "square"
 )
 
 type Field struct {
@@ -27,6 +37,7 @@ type Field struct {
 	Reach                   Reach     `json:"reach"`
 	InheritedThrough        string    `json:"inheritedThrough,omitempty"`
 	About                   About     `json:"about,omitempty"`
+	Shape                   Shape     `json:"shape,omitempty"`
 }
 
 type About string
@@ -153,7 +164,7 @@ func (t FieldType) accepts(value any) bool {
 	case PartialDate:
 		s, isString := value.(string)
 		return isString && partialDate.MatchString(s)
-	case URL:
+	case URL, Picture:
 		s, isString := value.(string)
 		return isString && isWebURL(s)
 	case StringList:
