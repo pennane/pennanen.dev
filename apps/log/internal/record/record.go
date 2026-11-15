@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -239,4 +240,48 @@ func (s *Store) Readings(ctx context.Context, q Queryer, ids []Identity) ([]Read
 		readings = append(readings, reading)
 	}
 	return readings, nil
+}
+
+var ErrClaimTaken = errors.New("a claim already has that identity")
+
+func (s *Store) Rename(ctx context.Context, q Queryer, from, to Identity, data json.RawMessage) error {
+	var fetchedAt, changedAt string
+	if err := q.QueryRowContext(ctx,
+		`SELECT fetched_at, changed_at FROM record_claim WHERE source = ? AND external_id = ?`,
+		from.Source, from.ExternalID).Scan(&fetchedAt, &changedAt); err != nil {
+		return err
+	}
+	if to != from {
+		var taken int
+		if err := q.QueryRowContext(ctx,
+			`SELECT count(*) FROM record_claim WHERE source = ? AND external_id = ?`,
+			to.Source, to.ExternalID).Scan(&taken); err != nil {
+			return err
+		}
+		if taken > 0 {
+			return fmt.Errorf("%w: %s", ErrClaimTaken, to)
+		}
+	}
+	if _, err := q.ExecContext(ctx,
+		`DELETE FROM record_claim WHERE source = ? AND external_id = ?`,
+		from.Source, from.ExternalID); err != nil {
+		return err
+	}
+	if _, err := q.ExecContext(ctx,
+		`INSERT INTO record_claim (source, external_id, data, fetched_at, changed_at) VALUES (?, ?, ?, ?, ?)`,
+		to.Source, to.ExternalID, string(data), fetchedAt, changedAt); err != nil {
+		return err
+	}
+	reading, readability := s.read(to.Source, data)
+	if err := s.writeReading(ctx, q, to, reading, readability); err != nil {
+		return err
+	}
+	return s.RenameAbout(ctx, q, from, to)
+}
+
+func (s *Store) RenameAbout(ctx context.Context, q Queryer, from, to Identity) error {
+	_, err := q.ExecContext(ctx,
+		`UPDATE record_observation SET about_source = ?, about_external_id = ? WHERE about_source = ? AND about_external_id = ?`,
+		to.Source, to.ExternalID, from.Source, from.ExternalID)
+	return err
 }
