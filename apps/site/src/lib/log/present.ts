@@ -172,6 +172,9 @@ export type ListedItem = {
   values: Record<string, FieldValue>
 }
 
+export const bannerShapeOf = (items: ListedItem[]) =>
+  items.flatMap((item) => (item.banner ? [item.banner.shape] : []))[0]
+
 const asFieldValue = (value: unknown): FieldValue | undefined => {
   if (typeof value === 'string') return value === '' ? undefined : value
   if (typeof value === 'number') return value

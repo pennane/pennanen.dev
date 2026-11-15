@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { itemPath, statusLabel, type ListedItem } from '../../../../lib/log/present'
+import { bannerShapeOf, itemPath, statusLabel, type ListedItem } from '../../../../lib/log/present'
 import { Scores } from './Scores'
 import { Tags } from './Tags'
 import styles from './log.module.css'
@@ -35,7 +35,7 @@ export const ItemRow = ({ item }: { item: ListedItem }) => (
 )
 
 export const ItemList = ({ items }: { items: ListedItem[] }) => (
-  <ul className={styles.list}>
+  <ul className={styles.list} data-shape={bannerShapeOf(items)}>
     {items.map((item) => (
       <ItemRow key={`${item.kind}/${item.slug}`} item={item} />
     ))}

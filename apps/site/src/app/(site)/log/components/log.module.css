@@ -7,7 +7,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 6rem 1fr;
+  grid-template-columns: var(--thumb-column, 6rem) 1fr;
   gap: 0.75rem;
   align-items: start;
 }
@@ -157,7 +157,10 @@
   border-radius: 0.5rem;
 }
 
-.thumb:is([data-shape='square'], [data-shape='tall']) {
-  width: 46.7%;
+.list:is([data-shape='square'], [data-shape='tall']) {
+  --thumb-column: 2.8rem;
+}
+
+.list:is([data-shape='square'], [data-shape='tall']) .thumb {
   aspect-ratio: 1;
 }

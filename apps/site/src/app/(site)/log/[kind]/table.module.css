@@ -13,7 +13,7 @@
 .row {
   display: grid;
   grid-template-columns:
-    2rem 3.5rem minmax(0, 1fr) var(--axis-columns)
+    2rem var(--thumb-column, 3.5rem) minmax(0, 1fr) var(--axis-columns)
     var(--meta-columns);
   align-items: center;
   gap: 0 0.5rem;
@@ -124,7 +124,7 @@
 
 @media (max-width: 520px) {
   .row {
-    grid-template-columns: 1.75rem 3rem minmax(0, 1fr) var(--axis-columns);
+    grid-template-columns: 1.75rem var(--thumb-column-narrow, 3rem) minmax(0, 1fr) var(--axis-columns);
     row-gap: 0.1rem;
   }
 
@@ -145,7 +145,11 @@
   }
 }
 
-.thumb:is([data-shape='square'], [data-shape='tall']) {
-  width: 46.7%;
+.table:is([data-shape='square'], [data-shape='tall']) {
+  --thumb-column: 1.65rem;
+  --thumb-column-narrow: 1.4rem;
+}
+
+.table:is([data-shape='square'], [data-shape='tall']) .thumb {
   aspect-ratio: 1;
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import {
+  bannerShapeOf,
   formatFieldValue,
   formatPartialDate,
   itemPath,
@@ -103,7 +104,11 @@ export const ItemTable = ({
     (column) => column !== rank && column !== title && !axisKeys.has(column.key)
   )
   return (
-    <div className={styles.table} style={gridFor(axes, metaColumns)}>
+    <div
+      className={styles.table}
+      style={gridFor(axes, metaColumns)}
+      data-shape={bannerShapeOf(items)}
+    >
       <div className={`${styles.row} ${styles.head}`}>
         <Heading column={rank} sort={sort} onSort={onSort} className={styles.rank} />
         <span />
