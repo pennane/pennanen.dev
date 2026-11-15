@@ -420,3 +420,120 @@ func TestAnApLinkEditIsARecordAndSuppressionHides(t *testing.T) {
 		t.Errorf("removing it again: %v", err)
 	}
 }
+
+func TestCorrectingASyncMatchFreesTheWrongIdentity(t *testing.T) {
+	corrections := map[string]func(s *store.Store, item int64) error{
+		"a pick": func(s *store.Store, item int64) error {
+			return s.AnswerMatch(context.Background(), item, kind.SourceIGDB, "10", json.RawMessage(`{"id":10,"name":"Right"}`))
+		},
+		"no match": func(s *store.Store, item int64) error {
+			return s.AnswerNoMatch(context.Background(), item, kind.SourceIGDB)
+		},
+	}
+	for name, correct := range corrections {
+		t.Run(name, func(t *testing.T) {
+			ctx := context.Background()
+			s, d := openStoreWithDB(t)
+			first := steamGame(t, s, "1", "First")
+			if err := s.PutClaim(ctx, first, kind.SourceIGDB, "9", json.RawMessage(`{"id":9,"name":"Wrong"}`)); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := correct(s, first); err != nil {
+				t.Fatal(err)
+			}
+
+			claims := claimsStored(t, d)
+			for _, gone := range []string{"igdb:9", "matched:igdb:9"} {
+				if _, kept := claims[gone]; kept {
+					t.Errorf("%s stayed", gone)
+				}
+			}
+			if owner, err := s.FindByIdentity(ctx, kind.SourceIGDB, "9"); !errors.Is(err, store.ErrNotFound) {
+				t.Errorf("igdb:9 still belongs to %d, %v", owner, err)
+			}
+			second := steamGame(t, s, "2", "Second")
+			if err := s.PutClaim(ctx, second, kind.SourceIGDB, "9", json.RawMessage(`{"id":9,"name":"Wrong"}`)); err != nil {
+				t.Fatalf("the second item can't take igdb:9: %v", err)
+			}
+			if owner, err := s.FindByIdentity(ctx, kind.SourceIGDB, "9"); err != nil || owner != second {
+				t.Errorf("igdb:9 belongs to %d, %v; want %d", owner, err, second)
+			}
+		})
+	}
+}
+
+func TestIdentifyingAFilmFreesItsWrongTMDBMatch(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openStoreWithDB(t)
+	film := func(id, title string) int64 {
+		t.Helper()
+		item, err := s.CreateItemFromSource(ctx, kind.Movie, title, kind.SourceLetterboxd, id, json.RawMessage(`{"id":"`+id+`","title":"`+title+`"}`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return item
+	}
+	ripley := film("rip1", "Ripley")
+	if err := s.PutClaim(ctx, ripley, kind.SourceTMDB, "9", json.RawMessage(`{"id":9,"title":"Wrong"}`)); err != nil {
+		t.Fatal(err)
+	}
+
+	identity := store.Identity{Kind: kind.Series, Source: kind.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)}
+	if err := s.Identify(ctx, ripley, identity, []string{kind.SourceTMDB, kind.SourceTMDBSeries}); err != nil {
+		t.Fatal(err)
+	}
+
+	wrong := film("wrong1", "Wrong")
+	if err := s.PutClaim(ctx, wrong, kind.SourceTMDB, "9", json.RawMessage(`{"id":9,"title":"Wrong"}`)); err != nil {
+		t.Fatalf("another film can't take tmdb:9: %v", err)
+	}
+	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "9"); err != nil || owner != wrong {
+		t.Errorf("tmdb:9 belongs to %d, %v; want %d", owner, err, wrong)
+	}
+}
+
+func TestAClaimWhoseDeriveLandsOnAnotherItemIsAConflict(t *testing.T) {
+	ctx := context.Background()
+	s, d := openStoreWithDB(t)
+	first := steamGame(t, s, "1", "First")
+	steamGame(t, s, "2", "Second")
+	before := claimsStored(t, d)
+
+	err := s.PutClaim(ctx, first, kind.SourceSteamStore, "2", json.RawMessage(`{"name":"Second"}`))
+	if !errors.Is(err, store.ErrConflict) {
+		t.Fatalf("err = %v, want a conflict", err)
+	}
+	if after := claimsStored(t, d); !maps.Equal(before, after) {
+		t.Errorf("claims %v became %v", before, after)
+	}
+}
+
+func TestDeletingAHandMadeItemRemovesTheLinkEditsNamingIt(t *testing.T) {
+	ctx := context.Background()
+	s, d := openStoreWithDB(t)
+	ann, err := s.CreateItem(ctx, kind.Artist, "Ann", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	album, err := s.CreateItem(ctx, kind.Album, "Alpha", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.AddRelation(ctx, store.Relation{FromID: album, Type: kind.LinkBy, ToID: ann}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.DeleteItem(ctx, ann); err != nil {
+		t.Fatal(err)
+	}
+
+	for identity := range claimsStored(t, d) {
+		if regexp.MustCompile(`^ap:link/`).MatchString(identity) {
+			t.Errorf("%s stayed", identity)
+		}
+	}
+	if got := relationsOf(t, s, album); len(got) != 0 {
+		t.Errorf("relations = %v, want none", got)
+	}
+}

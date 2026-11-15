@@ -82,6 +82,10 @@ func handMadeIdentity() (record.Identity, error) {
 	return apIdentity(apItemPrefix, hex.EncodeToString(random)), nil
 }
 
+func matchedIdentity(id record.Identity) record.Identity {
+	return identityOf(kind.SourceMatched, id.String())
+}
+
 func matchAnswerIdentity(source string, key record.Identity) record.Identity {
 	return apIdentity(apMatchPrefix, source, key.String())
 }
@@ -123,15 +127,62 @@ func (s *Store) placementOf(ctx context.Context, q queryer, itemID int64, id rec
 	return onAnotherItem, nil
 }
 
-func (s *Store) refuseAnotherItems(ctx context.Context, q queryer, itemID int64, id record.Identity) error {
+type landing string
+
+const (
+	alreadyOnTheItem   landing = "already-on-the-item"
+	derivedOntoTheItem landing = "derived-onto-the-item"
+	needsAMatch        landing = "needs-a-match"
+	landsOnAnotherItem landing = "on-another-item"
+)
+
+func (s *Store) landingOf(ctx context.Context, q queryer, itemID int64, id record.Identity, raw json.RawMessage) (landing, error) {
 	place, err := s.placementOf(ctx, q, itemID, id)
-	if err != nil {
+	switch {
+	case err != nil:
+		return "", err
+	case place == onTheItem:
+		return alreadyOnTheItem, nil
+	case place == onAnotherItem:
+		return landsOnAnotherItem, conflictOver(id)
+	}
+	reached := needsAMatch
+	for _, about := range aboutOf(id, raw) {
+		place, err := s.placementOf(ctx, q, itemID, about)
+		switch {
+		case err != nil:
+			return "", err
+		case place == onAnotherItem:
+			return landsOnAnotherItem, conflictOver(about)
+		case place == onTheItem:
+			reached = derivedOntoTheItem
+		}
+	}
+	return reached, nil
+}
+
+func conflictOver(id record.Identity) error {
+	return fmt.Errorf("%w: another item already has %s", ErrConflict, id)
+}
+
+func aboutOf(id record.Identity, raw json.RawMessage) []record.Identity {
+	reading, readability := verdict.ReadRecord(id.Source, raw)
+	if readability == record.Unreadable {
+		return nil
+	}
+	var values map[string]any
+	if err := json.Unmarshal(reading, &values); err != nil {
+		return nil
+	}
+	return verdict.Derive(id, values).About
+}
+
+func (s *Store) requireLanded(ctx context.Context, q queryer, itemID int64, id record.Identity) error {
+	place, err := s.placementOf(ctx, q, itemID, id)
+	if err != nil || place == onTheItem {
 		return err
 	}
-	if place == onAnotherItem {
-		return fmt.Errorf("%w: another item already has %s", ErrConflict, id)
-	}
-	return nil
+	return fmt.Errorf("%w: %s settled away from item %d", ErrConflict, id, itemID)
 }
 
 func (s *Store) put(ctx context.Context, q queryer, id record.Identity, data any) (record.Change, error) {
@@ -169,29 +220,21 @@ func applyMove(ctx context.Context, tx *sql.Tx, m world.Move) error {
 }
 
 func (s *Store) putClaimOn(ctx context.Context, tx *sql.Tx, itemID int64, id record.Identity, raw json.RawMessage) error {
-	place, err := s.placementOf(ctx, tx, itemID, id)
+	landing, err := s.landingOf(ctx, tx, itemID, id, raw)
 	if err != nil {
 		return err
-	}
-	if place == onAnotherItem {
-		return fmt.Errorf("%w: another item already has %s", ErrConflict, id)
 	}
 	change, err := s.records.PutClaim(ctx, tx, id, raw)
 	if err != nil {
 		return err
 	}
-	if place == onTheItem {
+	dirty := []record.Identity{id}
+	switch landing {
+	case alreadyOnTheItem:
 		if change == record.Unchanged {
 			return nil
 		}
-		return s.settle(ctx, tx, id)
-	}
-	reached, err := s.placementByDerive(ctx, tx, itemID, id)
-	if err != nil {
-		return err
-	}
-	dirty := []record.Identity{id}
-	if reached != onTheItem {
+	case needsAMatch:
 		matched, err := s.putMatched(ctx, tx, itemID, id)
 		if err != nil {
 			return err
@@ -201,28 +244,7 @@ func (s *Store) putClaimOn(ctx context.Context, tx *sql.Tx, itemID int64, id rec
 	if err := s.settle(ctx, tx, dirty...); err != nil {
 		return err
 	}
-	if place, err = s.placementOf(ctx, tx, itemID, id); err != nil || place == onTheItem {
-		return err
-	}
-	matched, err := s.putMatched(ctx, tx, itemID, id)
-	if err != nil {
-		return err
-	}
-	return s.settle(ctx, tx, matched)
-}
-
-func (s *Store) placementByDerive(ctx context.Context, q queryer, itemID int64, id record.Identity) (placement, error) {
-	readings, err := s.records.Readings(ctx, q, []record.Identity{id})
-	if err != nil || len(readings) == 0 {
-		return nowhere, err
-	}
-	for _, about := range verdict.Derive(id, readings[0].Values).About {
-		place, err := s.placementOf(ctx, q, itemID, about)
-		if err != nil || place == onTheItem {
-			return place, err
-		}
-	}
-	return nowhere, nil
+	return s.requireLanded(ctx, tx, itemID, id)
 }
 
 func (s *Store) putMatched(ctx context.Context, q queryer, itemID int64, id record.Identity) (record.Identity, error) {
@@ -230,7 +252,7 @@ func (s *Store) putMatched(ctx context.Context, q queryer, itemID int64, id reco
 	if err != nil {
 		return record.Identity{}, err
 	}
-	matched := identityOf(kind.SourceMatched, id.String())
+	matched := matchedIdentity(id)
 	_, err = s.put(ctx, q, matched, matchedRecord{About: []string{key.String(), id.String()}})
 	return matched, err
 }
@@ -252,22 +274,32 @@ func claimsOn(ctx context.Context, q queryer, itemID int64) ([]record.Identity, 
 	return ids, rows.Err()
 }
 
-func (s *Store) removeClaimsFrom(ctx context.Context, q queryer, itemID int64, sources []string, keep record.Identity) ([]record.Identity, error) {
+func claimsFrom(ctx context.Context, q queryer, itemID int64, sources []string, keep record.Identity) ([]record.Identity, error) {
 	ids, err := claimsOn(ctx, q, itemID)
 	if err != nil {
 		return nil, err
 	}
+	return slices.DeleteFunc(ids, func(id record.Identity) bool {
+		return id == keep || !slices.Contains(sources, id.Source)
+	}), nil
+}
+
+func (s *Store) takeOffTheItem(ctx context.Context, q queryer, ids []record.Identity) error {
 	removed := []record.Identity{}
 	for _, id := range ids {
-		if id == keep || !slices.Contains(sources, id.Source) {
-			continue
+		for _, claim := range []record.Identity{id, matchedIdentity(id)} {
+			if _, err := s.records.RemoveClaim(ctx, q, claim); err != nil {
+				return err
+			}
+			removed = append(removed, claim)
 		}
-		if _, err := s.records.RemoveClaim(ctx, q, id); err != nil {
-			return nil, err
-		}
-		removed = append(removed, id)
 	}
-	return removed, nil
+	for _, id := range removed {
+		if _, err := s.world.Release(ctx, q, id); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type presence string

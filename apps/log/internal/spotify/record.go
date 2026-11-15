@@ -78,7 +78,7 @@ func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.Ra
 		return 0, err
 	}
 	if len(album.Artists) == 0 {
-		r.keepStoredCredits(album.ID)
+		r.keepStoredClaimIfItHasCredits(ctx, itemID, album.ID)
 		return itemID, nil
 	}
 	for _, credited := range album.Artists {
@@ -93,15 +93,30 @@ func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.Ra
 	return itemID, nil
 }
 
-func (r *Recorder) keepStoredCredits(albumID string) {
+func (r *Recorder) keepStoredClaimIfItHasCredits(ctx context.Context, itemID int64, albumID string) {
 	seen, met := r.albums[albumID]
 	if !met {
 		return
 	}
-	var kept reference
-	if json.Unmarshal(seen.raw, &kept) == nil && len(kept.Artists) == 0 {
+	var arriving albumCredits
+	if json.Unmarshal(seen.raw, &arriving) != nil || len(arriving.Artists) > 0 {
+		return
+	}
+	stored, err := r.Store.Claim(ctx, itemID, kind.SourceSpotifyAlbum)
+	if err != nil {
+		return
+	}
+	var kept albumCredits
+	if json.Unmarshal(stored.Data, &kept) == nil && len(kept.Artists) > 0 && len(arriving.Tracks.Items) <= len(kept.Tracks.Items) {
 		seen.detail = Kept
 	}
+}
+
+type albumCredits struct {
+	Artists []json.RawMessage `json:"artists"`
+	Tracks  struct {
+		Items []json.RawMessage `json:"items"`
+	} `json:"tracks"`
 }
 
 func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*metItem, kindName, source, count string, raw json.RawMessage, detail Detail) (int64, error) {

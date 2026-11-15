@@ -111,8 +111,9 @@ CREATE VIEW relation AS
   WHERE l.position IS NULL AND f.item_id <> t.item_id;
 
 CREATE VIEW part AS
-  SELECT t.item_id AS whole_id, l.position, f.item_id AS part_id
+  SELECT t.item_id AS whole_id, min(l.position) AS position, f.item_id AS part_id
   FROM link l
   JOIN item_identity f ON f.source = l.from_source AND f.external_id = l.from_external_id
   JOIN item_identity t ON t.source = l.to_source AND t.external_id = l.to_external_id
-  WHERE l.type = 'part-of' AND f.item_id <> t.item_id;
+  WHERE l.type = 'part-of' AND f.item_id <> t.item_id
+  GROUP BY t.item_id, f.item_id;

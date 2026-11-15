@@ -169,34 +169,52 @@ func (s *Store) AnswerNoMatch(ctx context.Context, itemID int64, source string) 
 		if _, err := s.put(ctx, tx, answer, apMatchAnswer{}); err != nil {
 			return err
 		}
-		removed, err := s.removeClaimsFrom(ctx, tx, itemID, []string{source}, answer)
+		replaced, err := claimsFrom(ctx, tx, itemID, []string{source}, answer)
 		if err != nil {
 			return err
 		}
-		return s.settle(ctx, tx, append(removed, answer)...)
+		if err := s.takeOffTheItem(ctx, tx, replaced); err != nil {
+			return err
+		}
+		return s.settle(ctx, tx, answer, key)
 	})
 }
 
 func (s *Store) answer(ctx context.Context, tx *sql.Tx, itemID int64, id record.Identity, data any, replacing []string) error {
+	raw, err := asJSON(data)
+	if err != nil {
+		return err
+	}
 	key, err := s.keyOf(ctx, tx, itemID)
 	if err != nil {
 		return err
 	}
-	if err := s.refuseAnotherItems(ctx, tx, itemID, id); err != nil {
+	if _, err := s.landingOf(ctx, tx, itemID, id, raw); err != nil {
 		return err
 	}
-	if _, err := s.put(ctx, tx, id, data); err != nil {
+	if _, err := s.records.PutClaim(ctx, tx, id, raw); err != nil {
 		return err
 	}
 	answer := matchAnswerIdentity(id.Source, key)
 	if _, err := s.put(ctx, tx, answer, apMatchAnswer{To: &id.ExternalID}); err != nil {
 		return err
 	}
-	removed, err := s.removeClaimsFrom(ctx, tx, itemID, replacing, id)
+	replaced, err := claimsFrom(ctx, tx, itemID, replacing, id)
 	if err != nil {
 		return err
 	}
-	return s.settle(ctx, tx, append(removed, id, answer)...)
+	for _, source := range replacing {
+		if source != id.Source {
+			replaced = append(replaced, matchAnswerIdentity(source, key))
+		}
+	}
+	if err := s.takeOffTheItem(ctx, tx, replaced); err != nil {
+		return err
+	}
+	if err := s.settle(ctx, tx, id, answer, key); err != nil {
+		return err
+	}
+	return s.requireLanded(ctx, tx, itemID, id)
 }
 
 func (s *Store) IdentitiesLackingSources(ctx context.Context, have string, lacking ...string) (map[string]int64, error) {
@@ -333,7 +351,15 @@ func (s *Store) DeleteItem(ctx context.Context, itemID int64) error {
 		if err != nil {
 			return err
 		}
-		for _, id := range claims {
+		key, err := s.keyOf(ctx, tx, itemID)
+		if err != nil {
+			return err
+		}
+		edits, err := linkEditsNaming(ctx, tx, key)
+		if err != nil {
+			return err
+		}
+		for _, id := range append(claims, edits...) {
 			if _, err := s.records.RemoveClaim(ctx, tx, id); err != nil {
 				return err
 			}
@@ -349,6 +375,28 @@ func (s *Store) DeleteItem(ctx context.Context, itemID int64) error {
 			}
 			keys = append(keys, key)
 		}
-		return s.settle(ctx, tx, keys...)
+		return s.settle(ctx, tx, append(keys, edits...)...)
 	})
+}
+
+func linkEditsNaming(ctx context.Context, q queryer, key record.Identity) ([]record.Identity, error) {
+	rows, err := q.QueryContext(ctx, `
+		SELECT external_id FROM record_claim
+		WHERE source = ? AND substr(external_id, 1, length(?)) = ?
+		  AND (json_extract(data, '$.from') = ? OR json_extract(data, '$.to') = ?)
+		ORDER BY external_id`,
+		kind.SourceAP, apLinkPrefix, apLinkPrefix, key.String(), key.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	edits := []record.Identity{}
+	for rows.Next() {
+		edit := identityOf(kind.SourceAP, "")
+		if err := rows.Scan(&edit.ExternalID); err != nil {
+			return nil, err
+		}
+		edits = append(edits, edit)
+	}
+	return edits, rows.Err()
 }

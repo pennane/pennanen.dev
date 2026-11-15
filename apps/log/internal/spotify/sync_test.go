@@ -32,6 +32,7 @@ type fakeSpotify struct {
 	shortTermTracks  string
 	catalogueFetches atomic.Int64
 	isrcs            map[string]string
+	albumTracks      map[string]string
 	trackFetches     atomic.Int64
 }
 
@@ -65,7 +66,7 @@ func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
 		}
 		items := []string{}
 		for _, id := range strings.Split(r.URL.Query().Get("ids"), ",") {
-			items = append(items, fmt.Sprintf(`{"id":%q,"name":"Album %s","label":"Label %s","popularity":3,"artists":[{"id":"X","name":"Xena"}]}`, id, id, id))
+			items = append(items, f.album(id))
 		}
 		fmt.Fprintf(w, `{"albums":[%s]}`, strings.Join(items, ","))
 	case "/tracks":
@@ -96,6 +97,28 @@ const (
 	fullY      = `{"id":"Y","name":"Yara","genres":["b"],"popularity":8}`
 	savedAlbum = `[{"added_at":"2026-11-10T09:00:00Z","album":{"id":"B","name":"Beta","label":"Lb","artists":[{"id":"Y","name":"Yara"}]}}]`
 )
+
+func (f *fakeSpotify) album(id string) string {
+	album := map[string]any{}
+	var saved []struct {
+		Album map[string]any `json:"album"`
+	}
+	if json.Unmarshal([]byte(f.saved), &saved) == nil {
+		for _, s := range saved {
+			if s.Album["id"] == id {
+				album = s.Album
+			}
+		}
+	}
+	if len(album) == 0 {
+		json.Unmarshal([]byte(fmt.Sprintf(`{"id":%q,"name":"Album %s","label":"Label %s","popularity":3,"artists":[{"id":"X","name":"Xena"}]}`, id, id, id)), &album)
+	}
+	if listed, known := f.albumTracks[id]; known {
+		album["tracks"] = json.RawMessage(listed)
+	}
+	encoded, _ := json.Marshal(album)
+	return string(encoded)
+}
 
 func newFake() *fakeSpotify {
 	return &fakeSpotify{
@@ -934,5 +957,37 @@ func TestASavedAlbumListsItsTracksAsRecordingsInOrder(t *testing.T) {
 	h.run(t)
 	if fake.trackFetches.Load() != fetches {
 		t.Errorf("tracklists in step fetched tracks again")
+	}
+}
+
+func TestAnAlbumMetWithoutItsTracksGetsItsTracklistOnceFetchedInFull(t *testing.T) {
+	fake := newFake()
+	fake.saved = `[{"added_at":"2026-11-10T09:00:00Z","album":{"id":"A","name":"Alpha","artists":[{"id":"X","name":"Xena"}]}}]`
+	fake.albumTracks = map[string]string{"A": `{"total":2,"items":[{"id":"a2","disc_number":1,"track_number":2},{"id":"a1","disc_number":1,"track_number":1}]}`}
+	h := newHarness(t, fake, spotify.Connected)
+	report := h.run(t)
+	if report.State != syncs.Succeeded || report.Counts[spotify.CountTracklists] != 1 {
+		t.Fatalf("report %+v", report)
+	}
+	ctx := context.Background()
+	album := h.item(t, kind.SourceSpotifyAlbum, "A")
+	first := h.item(t, kind.SourceSpotifyTrack, "spotify:a1")
+	second := h.item(t, kind.SourceSpotifyTrack, "spotify:a2")
+	if parts, err := h.store.PartsOf(ctx, album); err != nil || !slices.Equal(parts, []int64{first, second}) {
+		t.Errorf("album parts %v %v, want %v", parts, err, []int64{first, second})
+	}
+}
+
+func TestAnAlbumMetWithoutCreditsButWithATracklistIsStillWritten(t *testing.T) {
+	fake := newFake()
+	fake.saved = savedWithCredits("CA")
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	fake.saved = `[{"added_at":"2026-11-10T09:00:00Z","album":{"id":"K","name":"Kappa","tracks":{"total":1,"items":[{"id":"k1","disc_number":1,"track_number":1}]}}}]`
+	h.day = "2026-11-16"
+	h.run(t)
+	album := h.item(t, kind.SourceSpotifyAlbum, "K")
+	if parts, err := h.store.PartsOf(context.Background(), album); err != nil || !slices.Equal(parts, []int64{h.item(t, kind.SourceSpotifyTrack, "spotify:k1")}) {
+		t.Errorf("album parts %v %v", parts, err)
 	}
 }

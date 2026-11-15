@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"slices"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
@@ -39,6 +40,9 @@ func RecordingKey(t verdict.SpotifyTrack) string {
 }
 
 func fillTracklists(ctx context.Context, st *store.Store, c *Client, p *syncs.Progress) error {
+	if err := fetchAlbumsWithoutTracklists(ctx, st, c, p); err != nil {
+		return err
+	}
 	toFill, err := tracklistsOutOfStep(ctx, st, p)
 	if err != nil || len(toFill) == 0 {
 		return err
@@ -51,28 +55,81 @@ func fillTracklists(ctx context.Context, st *store.Store, c *Client, p *syncs.Pr
 	if err != nil {
 		p.Problem("%s: %v", kind.SourceSpotifyTrack, err)
 	}
-	trackItems := map[string]int64{}
 	for _, raw := range fetched {
-		spotifyID, itemID, err := knowTrack(ctx, st, p, raw)
-		if err != nil {
+		if spotifyID, _, err := knowTrack(ctx, st, p, raw); err != nil {
 			p.Problem("track %s: %v", spotifyID, err)
-			continue
 		}
-		trackItems[spotifyID] = itemID
 	}
 	for _, list := range toFill {
-		partIDs := make([]int64, 0, len(list.trackIDs))
-		for _, trackID := range list.trackIDs {
-			if itemID, known := trackItems[trackID]; known {
-				partIDs = append(partIDs, itemID)
-			}
+		unknown, err := unknownTracks(ctx, st, list.trackIDs)
+		if err != nil {
+			return err
 		}
-		if len(partIDs) != len(list.trackIDs) {
-			p.Problem("album %d: %d of its %d tracks came back", list.albumID, len(partIDs), len(list.trackIDs))
+		if len(unknown) > 0 {
+			p.Problem("album %d: %d of its %d tracks came back", list.albumID, len(list.trackIDs)-len(unknown), len(list.trackIDs))
 			continue
 		}
 		p.Add(CountTracklists, 1)
 		p.ChangedData()
+	}
+	return ctx.Err()
+}
+
+func unknownTracks(ctx context.Context, st *store.Store, trackIDs []string) ([]string, error) {
+	unknown := []string{}
+	for _, trackID := range trackIDs {
+		_, err := st.FindByIdentity(ctx, kind.SourceSpotifyTrackID, trackID)
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			unknown = append(unknown, trackID)
+		case err != nil:
+			return nil, err
+		}
+	}
+	return unknown, nil
+}
+
+func fetchAlbumsWithoutTracklists(ctx context.Context, st *store.Store, c *Client, p *syncs.Progress) error {
+	albums, err := st.LoggedItemsNotDismissed(ctx, kind.Album)
+	if err != nil {
+		return err
+	}
+	itemOf := map[string]int64{}
+	for _, albumID := range albums {
+		claim, err := st.Claim(ctx, albumID, kind.SourceSpotifyAlbum)
+		if errors.Is(err, store.ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		var album albumTracklist
+		if json.Unmarshal(claim.Data, &album) == nil && album.Tracks.Total == 0 && len(album.Tracks.Items) == 0 {
+			itemOf[claim.ExternalID] = albumID
+		}
+	}
+	if len(itemOf) == 0 {
+		return nil
+	}
+	fetched, err := c.Albums(ctx, slices.Sorted(maps.Keys(itemOf)))
+	if err != nil {
+		p.Problem("%s: %v", kind.SourceSpotifyAlbum, err)
+	}
+	for _, raw := range fetched {
+		var album struct {
+			ID string `json:"id"`
+			albumTracklist
+		}
+		if json.Unmarshal(raw, &album) != nil || len(album.Tracks.Items) == 0 {
+			continue
+		}
+		albumID, asked := itemOf[album.ID]
+		if !asked {
+			continue
+		}
+		if err := st.PutClaim(ctx, albumID, kind.SourceSpotifyAlbum, album.ID, raw); err != nil {
+			p.Problem("%s %s: %v", kind.SourceSpotifyAlbum, album.ID, err)
+		}
 	}
 	return ctx.Err()
 }
@@ -101,11 +158,11 @@ func tracklistsOutOfStep(ctx context.Context, st *store.Store, p *syncs.Progress
 			p.Problem("%s lists %d of its %d tracks", album.Name, len(trackIDs), album.Tracks.Total)
 			continue
 		}
-		parts, err := st.PartsOf(ctx, albumID)
+		unknown, err := unknownTracks(ctx, st, trackIDs)
 		if err != nil {
 			return nil, err
 		}
-		if len(parts) != len(trackIDs) {
+		if len(unknown) > 0 {
 			toFill = append(toFill, tracklistToFill{albumID: albumID, trackIDs: trackIDs})
 		}
 	}
