@@ -107,3 +107,13 @@ func TestSpotifyPopularityIsMissingWhenAbsent(t *testing.T) {
 		t.Errorf("album without popularity has it in %v", album)
 	}
 }
+
+func TestTracksAreMissingWhenAbsent(t *testing.T) {
+	album, err := Read(kind.SourceSpotifyAlbum, json.RawMessage(`{"id":"b","name":"Simplified"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, present := album["tracks"]; present {
+		t.Errorf("album without total_tracks has tracks in %v", album)
+	}
+}

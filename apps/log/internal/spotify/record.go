@@ -77,7 +77,7 @@ func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.Ra
 	if err := json.Unmarshal(raw, &album); err != nil {
 		return 0, err
 	}
-	for _, credited := range album.Artists {
+	for position, credited := range album.Artists {
 		creditedRaw, err := json.Marshal(credited)
 		if err != nil {
 			return 0, err
@@ -86,11 +86,21 @@ func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.Ra
 		if err != nil {
 			return 0, err
 		}
-		if err := r.Store.AddRelation(ctx, store.Relation{FromID: itemID, Type: kind.RelationBy, ToID: artistID}); err != nil {
+		relation := store.Relation{FromID: itemID, Type: creditRelation(position, credited.ID), ToID: artistID}
+		if err := r.Store.AddRelation(ctx, relation); err != nil {
 			return 0, err
 		}
 	}
 	return itemID, nil
+}
+
+const firstCredited = 0
+
+func creditRelation(position int, artistID string) string {
+	if position == firstCredited && artistID != kind.VariousArtists {
+		return kind.RelationBy
+	}
+	return kind.RelationWith
 }
 
 func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*metItem, kindName, source, count string, raw json.RawMessage, detail Detail) (int64, error) {

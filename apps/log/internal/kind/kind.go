@@ -25,7 +25,12 @@ type Field struct {
 	Type                    FieldType `json:"type"`
 	SourcesBestFirstAfterAP []string  `json:"sourcesBestFirstAfterAp"`
 	Reach                   Reach     `json:"reach"`
+	InheritedThrough        string    `json:"inheritedThrough,omitempty"`
 }
+
+const inheritedSourcePrefix = "inherited:"
+
+func InheritedSource(relation string) string { return inheritedSourcePrefix + relation }
 
 type Reach string
 
@@ -84,6 +89,16 @@ func (k Kind) Field(name string) (Field, bool) {
 		return Field{}, false
 	}
 	return k.Fields[i], true
+}
+
+func (k Kind) InheritingRelations() []string {
+	relations := []string{}
+	for _, f := range k.Fields {
+		if f.InheritedThrough != "" && !slices.Contains(relations, f.InheritedThrough) {
+			relations = append(relations, f.InheritedThrough)
+		}
+	}
+	return relations
 }
 
 func (k Kind) HasStatus(status string) bool { return slices.Contains(k.Statuses, status) }

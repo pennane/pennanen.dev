@@ -142,6 +142,12 @@ export type ListedEntry = {
 
 export type FieldValue = { value: string | undefined; source: string | undefined }
 
+export type Relation = { fromId: number; type: string; toId: number }
+
+export const INHERITED_SOURCE_PREFIX = 'inherited:'
+
+export type InheritedValue = { field: string; value: string; from: string }
+
 export type ItemView = {
   id: number
   kind: string
@@ -151,6 +157,7 @@ export type ItemView = {
   entry: Entry | null
   hint?: Hint
   takes: TakeView[]
+  relations?: Relation[]
 }
 
 export type UploadTicket = { ticket: string; url: string }

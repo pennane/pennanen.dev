@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"sync"
@@ -631,5 +632,55 @@ func TestAHandPickedListeningOnAnUnlistedArtistIsRecomputed(t *testing.T) {
 	h.run(t)
 	if status, setBy := h.status(t, z); status != kind.Listened || setBy != kind.SourceSpotify {
 		t.Fatalf("Z = %s by %s, want listened by spotify", status, setBy)
+	}
+}
+
+func (h *harness) relations(t *testing.T, albumID int64) map[store.Relation]struct{} {
+	t.Helper()
+	view, err := h.store.GetItem(context.Background(), albumID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	from := map[store.Relation]struct{}{}
+	for _, r := range view.Relations {
+		if r.FromID == albumID {
+			from[r] = struct{}{}
+		}
+	}
+	return from
+}
+
+const (
+	collabAlbum      = `{"added_at":"2026-11-10T09:00:00Z","album":{"id":"C","name":"Collab","artists":[{"id":"P","name":"Pia"},{"id":"Q","name":"Quin"}]}}`
+	compilationAlbum = `{"added_at":"2026-11-10T09:00:00Z","album":{"id":"V","name":"Hits","artists":[{"id":"` + kind.VariousArtists + `","name":"Various Artists"},{"id":"R","name":"Rei"}]}}`
+)
+
+func TestKnowAlbumRelatesTheMainArtistOnly(t *testing.T) {
+	fake := newFake()
+	fake.saved = "[" + collabAlbum + "," + compilationAlbum + "]"
+	h := newHarness(t, fake, spotify.Connected)
+	if report := h.run(t); len(report.Problems) != 0 {
+		t.Fatalf("report = %+v", report)
+	}
+	collab := h.item(t, kind.SourceSpotifyAlbum, "C")
+	p := h.item(t, kind.SourceSpotifyArtist, "P")
+	q := h.item(t, kind.SourceSpotifyArtist, "Q")
+	want := map[store.Relation]struct{}{
+		{FromID: collab, Type: kind.RelationBy, ToID: p}:   {},
+		{FromID: collab, Type: kind.RelationWith, ToID: q}: {},
+	}
+	if got := h.relations(t, collab); !reflect.DeepEqual(got, want) {
+		t.Fatalf("collab relations = %v, want %v", got, want)
+	}
+
+	compilation := h.item(t, kind.SourceSpotifyAlbum, "V")
+	various := h.item(t, kind.SourceSpotifyArtist, kind.VariousArtists)
+	r := h.item(t, kind.SourceSpotifyArtist, "R")
+	want = map[store.Relation]struct{}{
+		{FromID: compilation, Type: kind.RelationWith, ToID: various}: {},
+		{FromID: compilation, Type: kind.RelationWith, ToID: r}:       {},
+	}
+	if got := h.relations(t, compilation); !reflect.DeepEqual(got, want) {
+		t.Fatalf("compilation relations = %v, want %v", got, want)
 	}
 }

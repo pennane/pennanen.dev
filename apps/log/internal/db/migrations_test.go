@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -13,6 +14,7 @@ const (
 	lastMomentsVersion     = 8
 	lastBeforeStatusSetBy  = 10
 	lastWithThings         = 12
+	lastWithEveryArtistBy  = 16
 )
 
 func openAt(t *testing.T, version int) *sql.DB {
@@ -281,5 +283,46 @@ func TestThingsAreGone(t *testing.T) {
 	d.QueryRowContext(ctx, `SELECT count(*) FROM item WHERE kind = 'game'`).Scan(&games)
 	if games != 1 {
 		t.Errorf("games = %d", games)
+	}
+}
+
+func TestOnlyTheFirstCreditedArtistStaysBy(t *testing.T) {
+	ctx := context.Background()
+	d := openAt(t, lastWithEveryArtistBy)
+	if _, err := d.ExecContext(ctx, `
+		INSERT INTO item (id, kind, slug) VALUES
+			(1, 'album', 'collab'), (2, 'artist', 'a'), (3, 'artist', 'b'),
+			(4, 'album', 'hits'), (5, 'artist', 'various-artists'), (6, 'artist', 'c'),
+			(7, 'album', 'unclaimed');
+		INSERT INTO claim (item_id, source, external_id, data) VALUES
+			(1, 'spotify-album', 'AB', '{"id":"AB","artists":[{"id":"A"},{"id":"B"}]}'),
+			(2, 'spotify-artist', 'A', '{"id":"A"}'),
+			(3, 'spotify-artist', 'B', '{"id":"B"}'),
+			(4, 'spotify-album', 'H', '{"id":"H","artists":[{"id":"0LyfQWJT6nXafLPZqxe9Of"},{"id":"C"}]}'),
+			(5, 'spotify-artist', '0LyfQWJT6nXafLPZqxe9Of', '{"id":"0LyfQWJT6nXafLPZqxe9Of"}'),
+			(6, 'spotify-artist', 'C', '{"id":"C"}');
+		INSERT INTO relation (from_id, type, to_id) VALUES
+			(1, 'by', 2), (1, 'by', 3), (4, 'by', 5), (4, 'by', 6), (7, 'by', 2);`); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+	rows, err := d.QueryContext(ctx, `SELECT from_id || ' ' || type || ' ' || to_id FROM relation ORDER BY from_id, to_id`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	var got []string
+	for rows.Next() {
+		var r string
+		if err := rows.Scan(&r); err != nil {
+			t.Fatal(err)
+		}
+		got = append(got, r)
+	}
+	want := []string{"1 by 2", "1 with 3", "4 with 5", "4 with 6", "7 by 2"}
+	if strings.Join(got, ", ") != strings.Join(want, ", ") {
+		t.Errorf("relations = %v, want %v", got, want)
 	}
 }

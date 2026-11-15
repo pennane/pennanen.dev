@@ -153,7 +153,11 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	if err != nil {
 		return nil, err
 	}
-	attachVerdicts(readings, byID)
+	related, err := s.relatedVerdicts(ctx, byID)
+	if err != nil {
+		return nil, err
+	}
+	attachVerdicts(readings, related, byID)
 	if err := s.attachTakes(ctx, readings, byID); err != nil {
 		return nil, err
 	}
@@ -169,13 +173,13 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	return views, nil
 }
 
-func attachVerdicts(readings map[int64][]verdict.Reading, byID map[int64]*ItemView) {
+func attachVerdicts(readings map[int64][]verdict.Reading, related map[int64]map[string]verdict.Verdicts, byID map[int64]*ItemView) {
 	for id, v := range byID {
 		k, known := kind.Get(v.Kind)
 		if !known {
 			continue
 		}
-		v.Verdicts = verdict.Decide(k, readings[id])
+		v.Verdicts = verdict.Inherit(k, verdict.Decide(k, readings[id]), related[id])
 		if v.Entry != nil && v.Entry.Status == kind.Untriaged {
 			v.Hint = k.Hint(v.Verdicts.Values)
 		}

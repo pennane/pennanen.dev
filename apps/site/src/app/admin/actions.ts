@@ -8,6 +8,7 @@ import type {
   Axis,
   EntryChange,
   FieldValue,
+  InheritedValue,
   ItemLink,
   ItemView,
   KindSettings,
@@ -15,7 +16,7 @@ import type {
   TMDBLink,
   TMDBType
 } from '../../lib/log/types'
-import { TMDB_ID, TMDB_TYPE_OF_SOURCE } from '../../lib/log/types'
+import { INHERITED_SOURCE_PREFIX, TMDB_ID, TMDB_TYPE_OF_SOURCE } from '../../lib/log/types'
 import type { EntrySubject } from './entries/Editor'
 
 const LAST_PLAYED = 'last_played'
@@ -35,7 +36,41 @@ const tmdbLinkOf = (item: ItemView): TMDBLink | undefined => {
   return typeof tmdbId === 'number' && tmdbType ? { tmdbType, tmdbId } : undefined
 }
 
-const subjectOf = (item: ItemView): EntrySubject => {
+const inheritedRelationOf = (source: string) =>
+  source.startsWith(INHERITED_SOURCE_PREFIX)
+    ? source.slice(INHERITED_SOURCE_PREFIX.length)
+    : undefined
+
+const nearestRelated = (item: ItemView, relation: string) =>
+  (item.relations ?? [])
+    .filter((r) => r.fromId === item.id && r.type === relation)
+    .map((r) => r.toId)
+    .sort((a, b) => a - b)[0]
+
+const shownValue = (value: unknown) => (Array.isArray(value) ? value.join(', ') : String(value))
+
+const relatedTitle = async (itemId: number | undefined, relation: string) => {
+  if (itemId === undefined) return `its ${relation}`
+  const related = await logAdmin.item(itemId)
+  return textField(related.verdicts.values, 'title') ?? related.slug
+}
+
+const inheritedOf = (item: ItemView): Promise<InheritedValue[]> =>
+  Promise.all(
+    Object.entries(item.verdicts.sourceOf).flatMap(([field, source]) => {
+      const relation = inheritedRelationOf(source)
+      if (!relation) return []
+      return [
+        relatedTitle(nearestRelated(item, relation), relation).then((from) => ({
+          field,
+          value: shownValue(item.verdicts.values[field]),
+          from
+        }))
+      ]
+    })
+  )
+
+const subjectOf = async (item: ItemView): Promise<EntrySubject> => {
   if (!item.entry) throw new Error(`item ${item.id} has no entry`)
   return {
     itemId: item.id,
@@ -46,7 +81,8 @@ const subjectOf = (item: ItemView): EntrySubject => {
     lastPlayed: lastPlayedOf(item),
     takes: item.takes,
     kind: item.kind,
-    tmdb: tmdbLinkOf(item)
+    tmdb: tmdbLinkOf(item),
+    inherited: await inheritedOf(item)
   }
 }
 

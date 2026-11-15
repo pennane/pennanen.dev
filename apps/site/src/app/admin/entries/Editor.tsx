@@ -17,6 +17,7 @@ import type {
   Entry,
   EntryChange,
   FieldValue,
+  InheritedValue,
   Kind,
   Visibility
 } from '../../../lib/log/types'
@@ -90,10 +91,11 @@ export type EntrySubject = {
   takes: TakeView[]
   kind: string
   tmdb: TMDBLink | undefined
+  inherited: InheritedValue[]
 }
 
 export const Editor = ({
-  subject: { itemId, title, cover, publicPath, entry, lastPlayed, takes, tmdb },
+  subject: { itemId, title, cover, publicPath, entry, lastPlayed, takes, tmdb, inherited },
   kind,
   knownTags,
   ranked,
@@ -239,6 +241,16 @@ export const Editor = ({
       </Section>
 
       {takes.length > 0 && <Takes itemId={itemId} kind={kind} initial={takes} />}
+
+      {inherited.length > 0 && (
+        <Section label="inherited">
+          {inherited.map(({ field, value, from }) => (
+            <p key={field} className={styles.note}>
+              {field}: {value}, inherited from {from}
+            </p>
+          ))}
+        </Section>
+      )}
 
       {kind.fields.some((field) => field.name === TMDB_ID) && (
         <TMDBMatch

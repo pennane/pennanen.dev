@@ -43,7 +43,7 @@ func Read(source string, raw json.RawMessage) (map[string]any, error) {
 	return read(raw)
 }
 
-const ReadersVersion = 2
+const ReadersVersion = 3
 
 type Reading struct {
 	Source     string
@@ -110,6 +110,26 @@ func Decide(k kind.Kind, readings []Reading) Verdicts {
 		}
 	}
 	return decided
+}
+
+func Inherit(k kind.Kind, own Verdicts, relatedThrough map[string]Verdicts) Verdicts {
+	for _, field := range k.Fields {
+		if field.InheritedThrough == "" {
+			continue
+		}
+		if _, decided := own.Values[field.Name]; decided {
+			continue
+		}
+		related, present := relatedThrough[field.InheritedThrough]
+		if !present {
+			continue
+		}
+		if value, given := related.Values[field.Name]; given {
+			own.Values[field.Name] = value
+			own.SourceOf[field.Name] = kind.InheritedSource(field.InheritedThrough)
+		}
+	}
+	return own
 }
 
 type Take struct {

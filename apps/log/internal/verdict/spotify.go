@@ -28,7 +28,7 @@ type SpotifyAlbum struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
 	AlbumType   string   `json:"album_type"`
-	TotalTracks int64    `json:"total_tracks"`
+	TotalTracks *int64   `json:"total_tracks"`
 	ReleaseDate string   `json:"release_date"`
 	Label       string   `json:"label"`
 	Genres      []string `json:"genres"`
@@ -71,7 +71,6 @@ func readSpotifyAlbum(raw json.RawMessage) (map[string]any, error) {
 		"artists":    credited,
 		"released":   a.ReleaseDate,
 		"album_type": a.AlbumType,
-		"tracks":     a.TotalTracks,
 		"label":      a.Label,
 		"genres":     a.Genres,
 		"cover":      largestImage(a.Images),
@@ -79,6 +78,7 @@ func readSpotifyAlbum(raw json.RawMessage) (map[string]any, error) {
 		"link":       a.ExternalURLs.Spotify,
 	})
 	putWhenGiven(values, "popularity", a.Popularity)
+	putWhenGiven(values, "tracks", a.TotalTracks)
 	return values, nil
 }
 
