@@ -3,10 +3,12 @@ package kind
 const (
 	Artist = "artist"
 	Album  = "album"
+	Track  = "track"
 
 	SourceSpotify       = "spotify"
 	SourceSpotifyArtist = "spotify-artist"
 	SourceSpotifyAlbum  = "spotify-album"
+	SourceSpotifyTrack  = "spotify-track"
 
 	SourceSpotifyListening = "spotify-listening"
 	FieldListening         = "listening"
@@ -73,6 +75,25 @@ func init() {
 			{Name: "cover", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "spotify_id", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "link", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
+		},
+	})
+	register(Kind{
+		Name:            Track,
+		DefaultTitle:    "tracks",
+		Statuses:        []string{Untriaged, Listened},
+		StatusesToScore: []string{Listened},
+		StatusesShown:   []string{Listened},
+		DefaultAxes:     []string{Prestige, Quality},
+		RankedAxis:      Prestige,
+		IdentitySource:  SourceSpotifyTrack,
+		Fields: []Field{
+			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyTrack}},
+			{Name: "artists", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyTrack}},
+			{Name: "duration", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyTrack}},
+			{Name: "popularity", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyTrack}},
+			{Name: "isrc", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyTrack}},
+			{Name: "spotify_id", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyTrack}},
+			{Name: "link", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyTrack}},
 		},
 	})
 }

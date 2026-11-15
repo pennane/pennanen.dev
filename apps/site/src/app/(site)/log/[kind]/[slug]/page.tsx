@@ -19,7 +19,7 @@ import {
   titleOf,
   toListed
 } from '../../../../../lib/log/present'
-import { logPublic, type PublicItem } from '../../../../../lib/log/public-api'
+import { logPublic, type PublicItem, type PublicParts } from '../../../../../lib/log/public-api'
 import { baseUrl } from '../../../../sitemap'
 import { Prose } from '../../components/Prose'
 import { ScoreParts } from '../../components/Scores'
@@ -103,6 +103,38 @@ const OutsideTakes = ({ item }: { item: PublicItem }) => {
   )
 }
 
+const SECONDS_PER_MINUTE = 60
+
+const lengthOf = (fields: Record<string, unknown>) => {
+  const seconds = fields.duration
+  if (typeof seconds !== 'number') return undefined
+  const minutes = Math.floor(seconds / SECONDS_PER_MINUTE)
+  return `${minutes}:${String(seconds % SECONDS_PER_MINUTE).padStart(2, '0')}`
+}
+
+const Parts = ({ parts }: { parts: PublicParts }) => (
+  <section>
+    <Stack gap={Gap.large} alignItems="stretch">
+      <header>
+        <WrapInBox>
+          <h3>{parts.title}</h3>
+        </WrapInBox>
+      </header>
+      <ol className={styles.parts}>
+        {parts.items.map((part, i) => (
+          <li key={i}>
+            <span>{textField(part.fields, 'title')}</span>
+            <MetaLine>
+              <ScoreParts kind={part.kind} scores={part.scores} />
+              {lengthOf(part.fields) && <span>{lengthOf(part.fields)}</span>}
+            </MetaLine>
+          </li>
+        ))}
+      </ol>
+    </Stack>
+  </section>
+)
+
 const Visions = ({ prose }: { prose: string }) => (
   <section>
     <Stack gap={Gap.large} alignItems="stretch">
@@ -171,6 +203,7 @@ export default async function ItemPage({ params }: { params: Params }) {
           ))}
         </dl>
       )}
+      {item.parts && <Parts parts={item.parts} />}
       <OutsideTakes item={item} />
       {item.prose.trim() && <Visions prose={item.prose} />}
       <Neighbours place={place} spot="bottom" />

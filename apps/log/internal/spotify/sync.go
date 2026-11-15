@@ -109,6 +109,9 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 	if err := computeListening(ctx, s.Store, p); err != nil {
 		return err
 	}
+	if err := fillTracklists(ctx, s.Store, s.Client, p); err != nil {
+		return err
+	}
 	return ctx.Err()
 }
 

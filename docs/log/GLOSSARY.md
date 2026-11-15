@@ -19,7 +19,9 @@ A `wine` is what every year of it shares; a `vintage` is one bottling of a
 wine, of a single year or **non-vintage** (blended across years, like most
 Champagne). Every bottle ap drinks is a vintage, so all bottles rank
 together; a wine itself is only ever logged as `want`.
-A `series` is a TV series as a whole; seasons and episodes aren't items.
+A `series` is a TV series as a whole; its seasons are `season` items and
+their episodes `episode` items. A `track` is a recording, the same item on
+every release it appears on, told apart by its recording code (ISRC).
 Letterboxd calls series films too, so a film found to be a series **moves**
 to `series`, keeping its entry and going to the bottom of its division.
 
@@ -28,6 +30,12 @@ to `series`, keeping its entry and going to the bottom of its division.
 and the bottle is in Margaux.
 An album is `by` its **main artist**, the first one credited, and `with` every
 other credited artist. Spotify's "Various Artists" is never a main artist.
+
+**Part / whole** — an item that is one piece of another, at a position the
+whole decides: a track of an album, a season of a series, an episode of a
+season. One recording can be a part of an album and a single, at a
+different position in each. A part is an item like any other: known until
+ap logs it, and rated against its own kind.
 
 ## Takes
 

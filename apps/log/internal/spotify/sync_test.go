@@ -31,6 +31,8 @@ type fakeSpotify struct {
 	plays            string
 	shortTermTracks  string
 	catalogueFetches atomic.Int64
+	isrcs            map[string]string
+	trackFetches     atomic.Int64
 }
 
 func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +68,13 @@ func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
 			items = append(items, fmt.Sprintf(`{"id":%q,"name":"Album %s","label":"Label %s","popularity":3,"artists":[{"id":"X","name":"Xena"}]}`, id, id, id))
 		}
 		fmt.Fprintf(w, `{"albums":[%s]}`, strings.Join(items, ","))
+	case "/tracks":
+		f.trackFetches.Add(1)
+		items := []string{}
+		for _, id := range strings.Split(r.URL.Query().Get("ids"), ",") {
+			items = append(items, fmt.Sprintf(`{"id":%q,"name":"Song %s","duration_ms":200400,"external_ids":{"isrc":%q}}`, id, id, f.isrcs[id]))
+		}
+		fmt.Fprintf(w, `{"tracks":[%s]}`, strings.Join(items, ","))
 	case "/artists":
 		f.catalogueFetches.Add(1)
 		if f.artistsGone {
@@ -892,5 +901,38 @@ func TestAWeightIsAPercentileThatHoldsAcrossDays(t *testing.T) {
 	h.run(t)
 	if x := h.listening(t, h.item(t, kind.SourceSpotifyArtist, "X")); x != int64(100) {
 		t.Fatalf("listening X on day two = %v, want 100", x)
+	}
+}
+
+func TestASavedAlbumListsItsTracksAsRecordingsInOrder(t *testing.T) {
+	fake := newFake()
+	fake.saved = `[
+		{"added_at":"2026-11-10T09:00:00Z","album":{"id":"B","name":"Beta","popularity":1,"artists":[{"id":"Y","name":"Yara"}],
+			"tracks":{"total":2,"items":[{"id":"b2","disc_number":1,"track_number":2},{"id":"b1","disc_number":1,"track_number":1}]}}},
+		{"added_at":"2026-11-10T09:00:00Z","album":{"id":"S","name":"Single","popularity":1,"artists":[{"id":"Y","name":"Yara"}],
+			"tracks":{"total":1,"items":[{"id":"s1","disc_number":1,"track_number":1}]}}}]`
+	fake.isrcs = map[string]string{"b1": "ISRC1", "s1": "ISRC1"}
+	h := newHarness(t, fake, spotify.Connected)
+	if report := h.run(t); report.State != syncs.Succeeded {
+		t.Fatalf("report %+v", report)
+	}
+	ctx := context.Background()
+	recording := h.item(t, kind.SourceSpotifyTrack, "ISRC1")
+	withoutISRC := h.item(t, kind.SourceSpotifyTrack, "spotify:b2")
+	if parts, err := h.store.PartsOf(ctx, h.item(t, kind.SourceSpotifyAlbum, "B")); err != nil || !slices.Equal(parts, []int64{recording, withoutISRC}) {
+		t.Errorf("album parts %v %v", parts, err)
+	}
+	if parts, err := h.store.PartsOf(ctx, h.item(t, kind.SourceSpotifyAlbum, "S")); err != nil || !slices.Equal(parts, []int64{recording}) {
+		t.Errorf("single parts %v %v", parts, err)
+	}
+	track, err := h.store.GetItem(ctx, withoutISRC)
+	if err != nil || track.Verdicts.Values["duration"] != int64(200) || track.Entry != nil {
+		t.Errorf("track %+v %v", track, err)
+	}
+	fetches := fake.trackFetches.Load()
+	h.day = "2026-11-16"
+	h.run(t)
+	if fake.trackFetches.Load() != fetches {
+		t.Errorf("tracklists in step fetched tracks again")
 	}
 }

@@ -15,6 +15,23 @@ const rankSchema = z
   .nullish()
   .transform((rank) => rank ?? undefined)
 
+const partsSchema = z
+  .object({
+    title: z.string(),
+    items: z.array(
+      z.object({
+        kind: z.string(),
+        fields: z
+          .record(z.unknown())
+          .nullish()
+          .transform((fields) => fields ?? {}),
+        scores: scoresSchema
+      })
+    )
+  })
+  .nullish()
+  .transform((parts) => parts ?? undefined)
+
 const publicItemSchema = z.object({
   kind: z.string(),
   slug: z.string(),
@@ -50,12 +67,15 @@ const publicItemSchema = z.object({
   takes: z
     .array(z.object({ source: z.string(), values: z.record(z.unknown()), fetchedAt: z.string() }))
     .nullish()
-    .transform((takes) => takes ?? [])
+    .transform((takes) => takes ?? []),
+  parts: partsSchema
 })
 
 const publicKindSchema = z.object({ name: z.string(), untriaged: z.number() })
 
 export type PublicItem = z.infer<typeof publicItemSchema>
+
+export type PublicParts = NonNullable<PublicItem['parts']>
 
 const NOT_FOUND = 404
 

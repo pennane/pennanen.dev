@@ -27,6 +27,18 @@ type PublicItem struct {
 	Prose      string            `json:"prose,omitempty"`
 	ProseWords int               `json:"proseWords"`
 	Takes      []verdict.Take    `json:"takes"`
+	Parts      *PublicParts      `json:"parts,omitempty"`
+}
+
+type PublicParts struct {
+	Title string       `json:"title"`
+	Items []PublicPart `json:"items"`
+}
+
+type PublicPart struct {
+	Kind   string            `json:"kind"`
+	Fields map[string]any    `json:"fields"`
+	Scores map[string]string `json:"scores,omitempty"`
 }
 
 type PublicRank struct {
@@ -235,7 +247,44 @@ func (s *Server) publicItem(w http.ResponseWriter, r *http.Request) {
 	rank, ranked := ranks[view.ID]
 	item := withRank(publicItem(view), rank, ranked)
 	item.Prose = view.Entry.Prose
+	if item.Parts, err = s.publicParts(r, view.ID, isPublic); err != nil {
+		respond(w, 0, nil, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, item)
+}
+
+func (s *Server) publicParts(r *http.Request, wholeID int64, isPublic publicRule) (*PublicParts, error) {
+	partIDs, err := s.Store.PartsOf(r.Context(), wholeID)
+	if err != nil || len(partIDs) == 0 {
+		return nil, err
+	}
+	views, err := s.Store.GetItems(r.Context(), partIDs)
+	if err != nil {
+		return nil, err
+	}
+	byID := map[int64]store.ItemView{}
+	for _, v := range views {
+		byID[v.ID] = v
+	}
+	parts := make([]PublicPart, 0, len(partIDs))
+	for _, id := range partIDs {
+		v := byID[id]
+		part := PublicPart{Kind: v.Kind, Fields: withoutPrivateFields(v.Kind, v.Verdicts.Values)}
+		if v.Entry != nil && isPublic(v) {
+			part.Scores = v.Entry.EveryScore()
+		}
+		parts = append(parts, part)
+	}
+	partKind, known := kind.Get(parts[0].Kind)
+	if !known {
+		return nil, nil
+	}
+	settings, err := s.Store.KindSettings(r.Context(), partKind)
+	if err != nil {
+		return nil, err
+	}
+	return &PublicParts{Title: settings.Title, Items: parts}, nil
 }
 
 func publicItem(v store.ItemView) PublicItem {

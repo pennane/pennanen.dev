@@ -67,3 +67,20 @@
   color: var(--foreground-secondary);
   letter-spacing: 0.05em;
 }
+
+.parts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.parts li > * {
+  display: inline;
+}
+
+.parts li > * + * {
+  margin-left: 0.5rem;
+  color: var(--foreground-secondary);
+}

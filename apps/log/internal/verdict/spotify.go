@@ -115,3 +115,42 @@ func readSpotifyListening(raw json.RawMessage) (map[string]any, error) {
 	putWhenGiven(values, kind.FieldListening, l.Listening)
 	return values, nil
 }
+
+type SpotifyTrack struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	DurationMS  *int64 `json:"duration_ms"`
+	Popularity  *int64 `json:"popularity"`
+	ExternalIDs struct {
+		ISRC string `json:"isrc"`
+	} `json:"external_ids"`
+	Artists []struct {
+		Name string `json:"name"`
+	} `json:"artists"`
+	ExternalURLs SpotifyExternalURLs `json:"external_urls"`
+}
+
+const millisecondsPerSecond = 1000
+
+func readSpotifyTrack(raw json.RawMessage) (map[string]any, error) {
+	var t SpotifyTrack
+	if err := json.Unmarshal(raw, &t); err != nil {
+		return nil, err
+	}
+	credited := make([]string, 0, len(t.Artists))
+	for _, artist := range t.Artists {
+		credited = append(credited, artist.Name)
+	}
+	values := withoutEmpty(map[string]any{
+		"title":      t.Name,
+		"artists":    credited,
+		"isrc":       t.ExternalIDs.ISRC,
+		"spotify_id": t.ID,
+		"link":       t.ExternalURLs.Spotify,
+	})
+	if t.DurationMS != nil {
+		values["duration"] = (*t.DurationMS + millisecondsPerSecond/2) / millisecondsPerSecond
+	}
+	putWhenGiven(values, "popularity", t.Popularity)
+	return values, nil
+}

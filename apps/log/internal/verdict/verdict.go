@@ -33,6 +33,7 @@ var claimReaders = map[string]readClaim{
 	kind.SourceTMDBSeries:        readTMDBSeries,
 	kind.SourceSpotifyArtist:     readSpotifyArtist,
 	kind.SourceSpotifyAlbum:      readSpotifyAlbum,
+	kind.SourceSpotifyTrack:      readSpotifyTrack,
 	kind.SourceSpotifyListening:  readSpotifyListening,
 }
 

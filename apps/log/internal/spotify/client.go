@@ -29,6 +29,7 @@ const (
 	pageSize       = 50
 	artistsPerCall = 50
 	albumsPerCall  = 20
+	tracksPerCall  = 50
 	maxAttempts    = 5
 	maxRetryWait   = 60 * time.Second
 )
@@ -153,6 +154,10 @@ func (c *Client) Artists(ctx context.Context, ids []string) ([]json.RawMessage, 
 
 func (c *Client) Albums(ctx context.Context, ids []string) ([]json.RawMessage, error) {
 	return c.batches(ctx, "albums", ids, albumsPerCall)
+}
+
+func (c *Client) Tracks(ctx context.Context, ids []string) ([]json.RawMessage, error) {
+	return c.batches(ctx, "tracks", ids, tracksPerCall)
 }
 
 func (c *Client) batches(ctx context.Context, what string, ids []string, perCall int) ([]json.RawMessage, error) {
