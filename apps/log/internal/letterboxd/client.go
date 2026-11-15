@@ -97,9 +97,30 @@ func (c *Client) getURL(ctx context.Context, address string) ([]byte, error) {
 }
 
 var (
-	tmdbLinkOnPage = regexp.MustCompile(`themoviedb\.org/(movie|tv)/(\d+)`)
-	ErrNoTMDBLink  = errors.New("the film's letterboxd page links to no tmdb entry")
+	tmdbLinkOnPage  = regexp.MustCompile(`themoviedb\.org/(movie|tv)/(\d+)`)
+	ErrNoTMDBLink   = errors.New("the film's letterboxd page links to no tmdb entry")
+	shortLinkOnPage = regexp.MustCompile(`id="url-field-film-\d+"[^>]*value="https://boxd\.it/([A-Za-z0-9]+)"`)
+	ErrNoShortLink  = errors.New("the film's letterboxd page shows no short link")
 )
+
+func (c *Client) IDOf(ctx context.Context, film verdict.LetterboxdFilm) (string, error) {
+	if err := c.waitForPageTurn(ctx); err != nil {
+		return "", err
+	}
+	page, err := c.getURL(ctx, film.Link())
+	if err != nil {
+		return "", fmt.Errorf("film page: %w", err)
+	}
+	return idIn(string(page))
+}
+
+func idIn(page string) (string, error) {
+	id := firstGroup(shortLinkOnPage, page)
+	if id == "" {
+		return "", ErrNoShortLink
+	}
+	return id, nil
+}
 
 func (c *Client) TMDBLinkOf(ctx context.Context, film verdict.LetterboxdFilm) (verdict.TMDBLink, error) {
 	address := c.ShortLinkBase + "/" + film.ID

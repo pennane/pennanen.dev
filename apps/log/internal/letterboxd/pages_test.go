@@ -19,3 +19,13 @@ func TestAFilmPageTellsWhetherItIsAMovieOrASeriesOnTMDB(t *testing.T) {
 		t.Errorf("no link: %v", err)
 	}
 }
+
+func TestAFilmPageNamesTheFilmByItsShortLink(t *testing.T) {
+	id, err := idIn(`<a href="https://boxd.it/abc1">a review</a><input id="url-field-film-51171" type="text" value="https://boxd.it/297o" readonly spellcheck="false">`)
+	if err != nil || id != "297o" {
+		t.Errorf("short link: %q %v", id, err)
+	}
+	if _, err := idIn(`<p>nothing</p>`); err != ErrNoShortLink {
+		t.Errorf("no short link: %v", err)
+	}
+}

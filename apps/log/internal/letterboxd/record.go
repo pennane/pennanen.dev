@@ -28,13 +28,14 @@ var statusOn = map[Shelf]string{
 	WatchlistShelf: kind.Want,
 }
 
-type TMDBLinks interface {
+type FilmPages interface {
 	TMDBLinkOf(ctx context.Context, film verdict.LetterboxdFilm) (verdict.TMDBLink, error)
+	IDOf(ctx context.Context, film verdict.LetterboxdFilm) (string, error)
 }
 
 type Recorder struct {
 	Store *store.Store
-	Links TMDBLinks
+	Links FilmPages
 	Today func() string
 }
 
@@ -168,7 +169,11 @@ func (r *Recorder) RecordWatch(ctx context.Context, p *syncs.Progress, entry Dia
 	}
 	itemID, err := r.itemOf(ctx, entry.Film)
 	if errors.Is(err, store.ErrNotFound) {
-		return fmt.Errorf("watched %s (%d) on %s, but the film isn't in the log yet", entry.Film.Title, entry.Film.Year, entry.WatchedOn)
+		entry.Film, err = r.named(ctx, entry.Film)
+		if err != nil {
+			return fmt.Errorf("watched %s (%d) on %s, but the film isn't in the log yet and its page can't name it: %w", entry.Film.Title, entry.Film.Year, entry.WatchedOn, err)
+		}
+		itemID, err = r.Shelve(ctx, p, entry.Film, WatchedShelf)
 	}
 	if err != nil {
 		return err
@@ -231,6 +236,18 @@ func (r *Recorder) observe(ctx context.Context, p *syncs.Progress, itemID int64,
 		p.Add(CountWatchesObserved, 1)
 	}
 	return err
+}
+
+func (r *Recorder) named(ctx context.Context, film verdict.LetterboxdFilm) (verdict.LetterboxdFilm, error) {
+	if film.ID != "" {
+		return film, nil
+	}
+	if r.Links == nil {
+		return film, ErrNoShortLink
+	}
+	id, err := r.Links.IDOf(ctx, film)
+	film.ID = id
+	return film, err
 }
 
 func (r *Recorder) itemOf(ctx context.Context, film verdict.LetterboxdFilm) (int64, error) {

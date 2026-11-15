@@ -99,6 +99,69 @@ func (p pagesLinking) TMDBLinkOf(_ context.Context, film verdict.LetterboxdFilm)
 	return verdict.TMDBLink{}, letterboxd.ErrNoTMDBLink
 }
 
+func (p pagesLinking) IDOf(_ context.Context, _ verdict.LetterboxdFilm) (string, error) {
+	return "", letterboxd.ErrNoShortLink
+}
+
+type pagesNaming map[string]string
+
+func (p pagesNaming) TMDBLinkOf(_ context.Context, _ verdict.LetterboxdFilm) (verdict.TMDBLink, error) {
+	return verdict.TMDBLink{}, letterboxd.ErrNoTMDBLink
+}
+
+func (p pagesNaming) IDOf(_ context.Context, film verdict.LetterboxdFilm) (string, error) {
+	if id, named := p[film.Slug]; named {
+		return id, nil
+	}
+	return "", letterboxd.ErrNoShortLink
+}
+
+func TestADiaryEntryForAFilmNotInTheLogAddsIt(t *testing.T) {
+	ctx := context.Background()
+	d, err := db.Open(ctx, filepath.Join(t.TempDir(), "log.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer d.Close()
+	s := store.New(d)
+	r := &letterboxd.Recorder{Store: s, Links: pagesNaming{"mulholland-drive": "297o"}}
+	five := 5.0
+	mulholland := letterboxd.DiaryEntry{
+		Film:      verdict.LetterboxdFilm{Slug: "mulholland-drive", Title: "Mulholland Drive", Year: 2001, TMDBID: 1018},
+		WatchedOn: "2026-11-14",
+		Rating:    &five,
+		Reaction:  verdict.Liked,
+		Review:    "wow huh",
+	}
+	unnamed := letterboxd.DiaryEntry{Film: verdict.LetterboxdFilm{Slug: "nowhere", Title: "Nowhere", Year: 1997}, WatchedOn: "2026-11-14"}
+	sync, _ := syncs.New(ctx, "diary", func(ctx context.Context, p *syncs.Progress) error {
+		for _, entry := range []letterboxd.DiaryEntry{mulholland, unnamed} {
+			if err := r.RecordWatch(ctx, p, entry, map[string]string{}); err != nil {
+				p.Problem("%v", err)
+			}
+		}
+		return nil
+	}, s, nil)
+	report := sync.Run(ctx)
+	if report.Counts[letterboxd.CountFilmsAdded] != 1 || len(report.Problems) != 1 {
+		t.Fatalf("%+v", report)
+	}
+	id, err := s.FindByIdentity(ctx, kind.SourceLetterboxd, "297o")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, _ := s.GetItem(ctx, id)
+	if v.Kind != kind.Movie || v.Entry.Status != kind.Watched {
+		t.Errorf("mulholland drive: %s %+v", v.Kind, v.Entry)
+	}
+	if take := v.Takes[0].Values; take["rating"] != 5.0 || take["last_watched"] != "2026-11-14" || take["review"] != "wow huh" {
+		t.Errorf("take: %v", take)
+	}
+	if again, err := s.FindByIdentity(ctx, kind.SourceTMDB, "1018"); err == nil && again != id {
+		t.Errorf("tmdb 1018 is item %d, not %d", again, id)
+	}
+}
+
 func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 	ctx := context.Background()
 	d, err := db.Open(ctx, filepath.Join(t.TempDir(), "log.db"))
