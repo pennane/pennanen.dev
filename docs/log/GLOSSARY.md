@@ -26,6 +26,8 @@ to `series`, keeping its entry and going to the bottom of its division.
 **Relation** — a named link between two items. _Margaux 2015 is a
 `vintage-of` Château Margaux, which is `part-of` Margaux._ Follow the links
 and the bottle is in Margaux.
+An album is `by` its **main artist**, the first one credited, and `with` every
+other credited artist. Spotify's "Various Artists" is never a main artist.
 
 ## Takes
 
@@ -54,9 +56,14 @@ Artists have one: the source `spotify` sets it on every sync. Only
 `dismissed` sticks; any other status ap picks goes back to the source, which
 sets it again on the next sync.
 
+A saved Spotify album is logged `want` until one of its tracks shows up in a
+top list or a play, then `listened`. That isn't a computed status: once ap
+picks one, it sticks, and unsaving the album changes nothing.
+
 **Listening / listened** — an artist's computed statuses. `listening` means
 being in the 4-week top list of the newest day any top-artist list was
-recorded; `listened` is everything else that was ever in a top list.
+recorded; `listened` is everything else that was ever in a top list, and the
+main artist of every saved album.
 
 **Dismissed** — the status for something that doesn't belong in the log at all,
 like Wallpaper Engine in a Steam library. The item is kept so sync won't bring

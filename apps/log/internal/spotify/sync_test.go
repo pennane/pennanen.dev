@@ -29,6 +29,7 @@ type fakeSpotify struct {
 	savedTotal       *int
 	artistsGone      bool
 	plays            string
+	shortTermTracks  string
 	catalogueFetches atomic.Int64
 }
 
@@ -41,7 +42,7 @@ func (f *fakeSpotify) handler(w http.ResponseWriter, r *http.Request) {
 	case "/me/top/tracks":
 		items := `[]`
 		if r.URL.Query().Get("time_range") == "short_term" {
-			items = `[{"id":"T","name":"Track","album":{"id":"A","name":"Alpha","artists":[{"id":"X","name":"Xena"}]},"artists":[{"id":"X","name":"Xena"}]}]`
+			items = f.shortTermTracks
 		}
 		fmt.Fprintf(w, `{"items":%s,"next":null}`, items)
 	case "/me/player/recently-played":
@@ -94,9 +95,14 @@ func newFake() *fakeSpotify {
 			"medium_term": "[]",
 			"long_term":   "[" + fullX + "," + fullY + "]",
 		},
-		saved: savedAlbum,
-		plays: playedAt("2026-11-14T20:00:00.000Z"),
+		saved:           savedAlbum,
+		plays:           playedAt("2026-11-14T20:00:00.000Z"),
+		shortTermTracks: topTrackFrom(`{"id":"A","name":"Alpha","artists":[{"id":"X","name":"Xena"}]}`),
 	}
+}
+
+func topTrackFrom(album string) string {
+	return fmt.Sprintf(`[{"id":"T","name":"Track","album":%s,"artists":[{"id":"X","name":"Xena"}]}]`, album)
 }
 
 func playedAt(times ...string) string {
@@ -196,11 +202,11 @@ func TestASyncRecordsTodaysSnapshot(t *testing.T) {
 	a := h.item(t, kind.SourceSpotifyAlbum, "A")
 	b := h.item(t, kind.SourceSpotifyAlbum, "B")
 
-	for _, id := range []int64{a, b} {
-		view, err := h.store.GetItem(ctx, id)
-		if err != nil || view.Entry != nil {
-			t.Fatalf("item %d entry = %v, err = %v", id, view.Entry, err)
-		}
+	if view, err := h.store.GetItem(ctx, a); err != nil || view.Entry != nil {
+		t.Fatalf("unsaved album entry = %v, err = %v", view.Entry, err)
+	}
+	if status, _ := h.status(t, b); status != kind.Want {
+		t.Fatalf("saved album = %q, want want", status)
 	}
 	if got := len(h.observations(t, x, "top-artist")) + len(h.observations(t, y, "top-artist")); got != 3 {
 		t.Fatalf("top-artist observations = %d", got)
@@ -468,7 +474,7 @@ func TestARerunTheSameDayRecomputesTheSameStatuses(t *testing.T) {
 	h := newHarness(t, newFake(), spotify.Connected)
 	h.run(t)
 	report := h.run(t)
-	if report.State != syncs.Succeeded || report.Counts[string(store.StatusAlreadySo)] != 2 || report.Counts[string(store.StatusLogged)] != 0 || report.Counts[string(store.StatusFollowed)] != 0 {
+	if report.State != syncs.Succeeded || report.Counts["artist-"+string(store.StatusAlreadySo)] != 2 || report.Counts["album-"+string(store.StatusAlreadySo)] != 1 || report.Counts["artist-"+string(store.StatusLogged)] != 0 || report.Counts["artist-"+string(store.StatusFollowed)] != 0 {
 		t.Fatalf("report = %+v", report)
 	}
 	logged, err := h.store.ListItems(context.Background(), store.ItemFilter{Kind: kind.Artist})
@@ -682,5 +688,109 @@ func TestKnowAlbumRelatesTheMainArtistOnly(t *testing.T) {
 	}
 	if got := h.relations(t, compilation); !reflect.DeepEqual(got, want) {
 		t.Fatalf("compilation relations = %v, want %v", got, want)
+	}
+}
+
+const (
+	zedAlbum      = `{"id":"S","name":"Sigma","label":"Ls","artists":[{"id":"Z","name":"Zed"}]}`
+	savedZedAlbum = `[{"added_at":"2026-11-10T09:00:00Z","album":` + zedAlbum + `}]`
+	alphaAlbum    = `{"id":"A","name":"Alpha","label":"La","artists":[{"id":"X","name":"Xena"}]}`
+)
+
+func TestASavedAlbumIsWantedUntilHeard(t *testing.T) {
+	fake := newFake()
+	fake.saved = savedZedAlbum
+	h := newHarness(t, fake, spotify.Connected)
+	if report := h.run(t); len(report.Problems) != 0 {
+		t.Fatalf("report = %+v", report)
+	}
+	s := h.item(t, kind.SourceSpotifyAlbum, "S")
+	z := h.item(t, kind.SourceSpotifyArtist, "Z")
+	if status, setBy := h.status(t, s); status != kind.Want || setBy != kind.SourceSpotify {
+		t.Fatalf("day 1 album = %s by %s, want want by spotify", status, setBy)
+	}
+	if status, setBy := h.status(t, z); status != kind.Listened || setBy != kind.SourceSpotify {
+		t.Fatalf("day 1 main artist = %s by %s, want listened by spotify", status, setBy)
+	}
+
+	fake.shortTermTracks = topTrackFrom(zedAlbum)
+	h.day = "2026-11-16"
+	h.run(t)
+	if status, _ := h.status(t, s); status != kind.Listened {
+		t.Fatalf("day 2 album = %s, want listened", status)
+	}
+
+	fake.saved = `[]`
+	fake.shortTermTracks = `[]`
+	h.day = "2026-11-17"
+	h.run(t)
+	if got := h.observations(t, s, spotify.SignalUnsaved); len(got) != 1 {
+		t.Fatalf("unsaved = %+v", got)
+	}
+	if status, setBy := h.status(t, s); status != kind.Listened || setBy != kind.SourceSpotify {
+		t.Fatalf("day 3 album = %s by %s, want listened by spotify", status, setBy)
+	}
+}
+
+func TestApsAlbumStatusSticks(t *testing.T) {
+	fake := newFake()
+	fake.saved = `[{"added_at":"2026-11-10T09:00:00Z","album":` + alphaAlbum + `}]`
+	h := newHarness(t, fake, spotify.Connected)
+	h.runPlays(t)
+	h.run(t)
+	a := h.item(t, kind.SourceSpotifyAlbum, "A")
+	if status, _ := h.status(t, a); status != kind.Listened {
+		t.Fatalf("heard album = %s, want listened", status)
+	}
+	want := kind.Want
+	if err := h.store.ChangeEntry(context.Background(), a, store.EntryChange{Status: &want}); err != nil {
+		t.Fatal(err)
+	}
+	h.day = "2026-11-16"
+	report := h.run(t)
+	if status, setBy := h.status(t, a); status != kind.Want || setBy != kind.SourceAP {
+		t.Fatalf("album = %s by %s, want want by ap", status, setBy)
+	}
+	if report.Counts["album-"+string(store.StatusKeptAsSet)] != 1 {
+		t.Fatalf("counts = %v", report.Counts)
+	}
+}
+
+func TestTheArtistPassLeavesAlbumsAlone(t *testing.T) {
+	h := newHarness(t, newFake(), spotify.Connected)
+	for _, day := range []string{"2026-11-15", "2026-11-16"} {
+		h.day = day
+		if report := h.run(t); report.State != syncs.Succeeded || len(report.Problems) != 0 {
+			t.Fatalf("%s report = %+v", day, report)
+		}
+		b := h.item(t, kind.SourceSpotifyAlbum, "B")
+		if status, setBy := h.status(t, b); status != kind.Want || setBy != kind.SourceSpotify {
+			t.Fatalf("%s unheard album = %s by %s, want want by spotify", day, status, setBy)
+		}
+	}
+}
+
+func TestACollabLogsOnlyItsMainArtist(t *testing.T) {
+	fake := newFake()
+	fake.saved = "[" + collabAlbum + "," + compilationAlbum + "]"
+	h := newHarness(t, fake, spotify.Connected)
+	if report := h.run(t); len(report.Problems) != 0 {
+		t.Fatalf("report = %+v", report)
+	}
+	if status, _ := h.status(t, h.item(t, kind.SourceSpotifyArtist, "P")); status != kind.Listened {
+		t.Fatalf("main artist = %q, want listened", status)
+	}
+	for _, onlyKnown := range []string{"Q", "R", kind.VariousArtists} {
+		if status, _ := h.status(t, h.item(t, kind.SourceSpotifyArtist, onlyKnown)); status != "" {
+			t.Fatalf("%s = %q, want only known", onlyKnown, status)
+		}
+	}
+	compilation := h.item(t, kind.SourceSpotifyAlbum, "V")
+	view, err := h.store.GetItem(context.Background(), compilation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if genres, present := view.Verdicts.Values["genres"]; present {
+		t.Fatalf("compilation genres = %v, want none", genres)
 	}
 }
