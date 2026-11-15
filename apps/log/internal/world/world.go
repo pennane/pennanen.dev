@@ -57,6 +57,7 @@ type settling struct {
 	touched  map[int64]struct{}
 	related  map[int64]struct{}
 	owns     map[int64]decision
+	pulled   []record.Identity
 	suppress []verdict.AssertedLink
 	loaded   suppressionsLoad
 	report   Report

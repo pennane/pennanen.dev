@@ -36,26 +36,38 @@ func (w *World) RebuildIfStale(ctx context.Context) (Report, error) {
 	return w.Rebuild(ctx)
 }
 
+type settleBatch func(ctx context.Context, claims string, after record.Identity) ([]record.Identity, Report, error)
+
 func (w *World) Rebuild(ctx context.Context) (Report, error) {
+	return w.rebuild(ctx, w.db, w.settleBatchInItsOwnTransaction)
+}
+
+func (w *World) RebuildWithin(ctx context.Context, q record.Queryer) (Report, error) {
+	return w.rebuild(ctx, q, func(ctx context.Context, claims string, after record.Identity) ([]record.Identity, Report, error) {
+		return w.settleBatchWith(ctx, q, claims, after)
+	})
+}
+
+func (w *World) rebuild(ctx context.Context, q record.Queryer, settle settleBatch) (Report, error) {
 	report := Report{}
 	for _, claims := range []string{everyClaim, everyUnresolvedClaim} {
-		settled, err := w.settleInBatches(ctx, claims)
+		settled, err := settleInBatches(ctx, claims, settle)
 		if err != nil {
 			return report, err
 		}
 		report = report.and(settled)
 	}
-	_, err := w.db.ExecContext(ctx,
+	_, err := q.ExecContext(ctx,
 		`INSERT INTO setting (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
 		worldVersionSetting, strconv.Itoa(DeriveVersion))
 	return report, err
 }
 
-func (w *World) settleInBatches(ctx context.Context, claims string) (Report, error) {
+func settleInBatches(ctx context.Context, claims string, settle settleBatch) (Report, error) {
 	report := Report{}
 	var after record.Identity
 	for {
-		batch, settled, err := w.settleBatch(ctx, claims, after)
+		batch, settled, err := settle(ctx, claims, after)
 		if err != nil {
 			return report, err
 		}
@@ -67,21 +79,29 @@ func (w *World) settleInBatches(ctx context.Context, claims string) (Report, err
 	}
 }
 
-func (w *World) settleBatch(ctx context.Context, claims string, after record.Identity) ([]record.Identity, Report, error) {
+func (w *World) settleBatchInItsOwnTransaction(ctx context.Context, claims string, after record.Identity) ([]record.Identity, Report, error) {
 	tx, err := w.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, Report{}, err
 	}
 	defer tx.Rollback()
-	batch, err := identitiesFrom(ctx, tx, claims, after)
-	if err != nil {
-		return nil, Report{}, err
-	}
-	settled, err := w.Settle(ctx, tx, batch)
+	batch, settled, err := w.settleBatchWith(ctx, tx, claims, after)
 	if err != nil {
 		return nil, Report{}, err
 	}
 	return batch, settled, tx.Commit()
+}
+
+func (w *World) settleBatchWith(ctx context.Context, q record.Queryer, claims string, after record.Identity) ([]record.Identity, Report, error) {
+	batch, err := identitiesFrom(ctx, q, claims, after)
+	if err != nil {
+		return nil, Report{}, err
+	}
+	settled, err := w.Settle(ctx, q, batch)
+	if err != nil {
+		return nil, Report{}, err
+	}
+	return batch, settled, nil
 }
 
 func identitiesFrom(ctx context.Context, q record.Queryer, claims string, after record.Identity) ([]record.Identity, error) {

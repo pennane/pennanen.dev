@@ -24,6 +24,16 @@ const (
 )
 
 func (s *settling) group(dirty []record.Identity) error {
+	for pending := dirty; len(pending) > 0; {
+		if err := s.groupOnce(pending); err != nil {
+			return err
+		}
+		pending, s.pulled = uniqueSorted(s.pulled), nil
+	}
+	return nil
+}
+
+func (s *settling) groupOnce(dirty []record.Identity) error {
 	parent := map[record.Identity]record.Identity{}
 	var root func(record.Identity) record.Identity
 	root = func(id record.Identity) record.Identity {
@@ -117,7 +127,7 @@ func (s *settling) create(g []record.Identity) error {
 	}
 	kindName := kindOf(readings, noKind)
 	if kindName == noKind {
-		return nil
+		return s.wait(g)
 	}
 	k, _ := kind.Get(kindName)
 	own, err := decideOwn(k, readings)
@@ -193,9 +203,58 @@ func (s *settling) keyFirst(g []record.Identity, k kind.Kind) ([]record.Identity
 }
 
 func (s *settling) resolve(itemID int64, id record.Identity) error {
-	_, err := s.q.ExecContext(s.ctx,
+	if _, err := s.q.ExecContext(s.ctx,
 		`INSERT INTO item_identity (item_id, source, external_id) VALUES (?, ?, ?)`,
-		itemID, id.Source, id.ExternalID)
+		itemID, id.Source, id.ExternalID); err != nil {
+		return err
+	}
+	return s.pullWaitingOn(id)
+}
+
+func (s *settling) wait(g []record.Identity) error {
+	for _, waiting := range g {
+		derived, err := s.derivationOf(waiting)
+		if err != nil {
+			return err
+		}
+		for _, about := range derived.About {
+			if about == waiting {
+				continue
+			}
+			if _, err := s.q.ExecContext(s.ctx, `
+				INSERT INTO identity_waiting (about_source, about_external_id, waiting_source, waiting_external_id)
+				VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING`,
+				about.Source, about.ExternalID, waiting.Source, waiting.ExternalID); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (s *settling) pullWaitingOn(resolved record.Identity) error {
+	rows, err := s.q.QueryContext(s.ctx,
+		`SELECT waiting_source, waiting_external_id FROM identity_waiting WHERE about_source = ? AND about_external_id = ?`,
+		resolved.Source, resolved.ExternalID)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var waiting record.Identity
+		if err := rows.Scan(&waiting.Source, &waiting.ExternalID); err != nil {
+			rows.Close()
+			return err
+		}
+		s.pulled = append(s.pulled, waiting)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	_, err = s.q.ExecContext(s.ctx, `
+		DELETE FROM identity_waiting
+		WHERE (about_source = ? AND about_external_id = ?) OR (waiting_source = ? AND waiting_external_id = ?)`,
+		resolved.Source, resolved.ExternalID, resolved.Source, resolved.ExternalID)
 	return err
 }
 

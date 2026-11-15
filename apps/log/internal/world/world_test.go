@@ -157,7 +157,9 @@ func (f *fixture) snapshot() string {
 	return f.dump(`SELECT id, kind, slug FROM item ORDER BY id`) +
 		f.dump(`SELECT id, item_id, source, external_id FROM item_identity ORDER BY id`) +
 		f.dump(`SELECT item_id, own, verdicts FROM item_verdict ORDER BY item_id`) +
-		f.dump(`SELECT * FROM link ORDER BY asserted_source, asserted_external_id, from_source, from_external_id, type, to_source, to_external_id`)
+		f.dump(`SELECT * FROM link ORDER BY asserted_source, asserted_external_id, from_source, from_external_id, type, to_source, to_external_id`) +
+		f.dump(`SELECT * FROM item_overlap ORDER BY source, external_id, other_item_id`) +
+		f.dump(`SELECT * FROM identity_waiting ORDER BY about_source, about_external_id, waiting_source, waiting_external_id`)
 }
 
 const (
@@ -491,5 +493,72 @@ func TestASuppressedLinkIsDroppedAndNoLongerInherits(t *testing.T) {
 	}
 	if f.count("item") != 2 {
 		t.Fatalf("items = %d", f.count("item"))
+	}
+}
+
+func TestARecordWaitingOnItsTrackJoinsWhenTheTrackArrives(t *testing.T) {
+	f := newFixture(t)
+	listening := f.put("spotify-listening:spotify-track:ISRC1", `{"listening":5}`)
+	f.settle(listening)
+	if f.count("item") != 0 {
+		t.Fatalf("items = %d", f.count("item"))
+	}
+
+	track := f.put("spotify-track:ISRC1", trackOne)
+	f.settle(track)
+
+	if f.itemOf(listening) != f.itemOf(track) {
+		t.Fatalf("listening on %d, track on %d", f.itemOf(listening), f.itemOf(track))
+	}
+	if f.count("identity_waiting") != 0 {
+		t.Fatalf("still waiting: %d", f.count("identity_waiting"))
+	}
+}
+
+func TestATakeWaitingOnItsFilmJoinsWhenTheFilmArrives(t *testing.T) {
+	f := newFixture(t)
+	take := f.put("letterboxd-take:letterboxd:abc", `{"rating":4}`)
+	f.settle(take)
+
+	film := f.put("letterboxd:abc", `{"id":"abc","title":"Heat"}`)
+	f.settle(film)
+
+	if f.itemOf(take) != f.itemOf(film) {
+		t.Fatalf("take on %d, film on %d", f.itemOf(take), f.itemOf(film))
+	}
+	if f.count("item") != 1 || f.count("identity_waiting") != 0 {
+		t.Fatalf("items = %d, waiting = %d", f.count("item"), f.count("identity_waiting"))
+	}
+}
+
+func TestRebuildWithinACallersTransactionGivesTheSameItems(t *testing.T) {
+	f := newFixture(t)
+	settleALittleOfEverything(f)
+	before := f.snapshot()
+	if _, err := f.db.ExecContext(f.ctx, `DELETE FROM item_verdict; DELETE FROM link`); err != nil {
+		t.Fatal(err)
+	}
+
+	tx, err := f.db.BeginTx(f.ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.world.RebuildWithin(f.ctx, tx); err != nil {
+		tx.Rollback()
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+
+	if after := f.snapshot(); after != before {
+		t.Fatalf("before:\n%s\nafter:\n%s", before, after)
+	}
+	var version string
+	if err := f.db.QueryRowContext(f.ctx, `SELECT value FROM setting WHERE key = 'world-version'`).Scan(&version); err != nil {
+		t.Fatal(err)
+	}
+	if version != strconv.Itoa(world.DeriveVersion) {
+		t.Fatalf("world-version = %s", version)
 	}
 }

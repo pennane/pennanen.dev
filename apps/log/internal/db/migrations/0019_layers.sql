@@ -69,3 +69,13 @@ CREATE TABLE item_overlap (
   other_item_id INTEGER NOT NULL REFERENCES item (id) ON DELETE CASCADE,
   PRIMARY KEY (source, external_id, other_item_id)
 );
+
+CREATE TABLE identity_waiting (
+  about_source        TEXT NOT NULL,
+  about_external_id   TEXT NOT NULL,
+  waiting_source      TEXT NOT NULL,
+  waiting_external_id TEXT NOT NULL,
+  PRIMARY KEY (about_source, about_external_id, waiting_source, waiting_external_id)
+);
+
+CREATE INDEX identity_waiting_waiting ON identity_waiting (waiting_source, waiting_external_id);
