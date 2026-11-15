@@ -77,3 +77,33 @@ func TestReadSpotifyAlbum(t *testing.T) {
 		t.Errorf("album = %v, want %v", got, want)
 	}
 }
+
+func TestSpotifyPopularityIsMissingWhenAbsent(t *testing.T) {
+	absent, err := Read(kind.SourceSpotifyArtist, json.RawMessage(`{"id":"a","name":"Simplified"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"popularity", "followers"} {
+		if _, present := absent[key]; present {
+			t.Errorf("artist without %s has it in %v", key, absent)
+		}
+	}
+
+	zero, err := Read(kind.SourceSpotifyArtist, json.RawMessage(`{"id":"a","name":"Quiet","popularity":0,"followers":{"total":0}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"popularity", "followers"} {
+		if zero[key] != int64(0) {
+			t.Errorf("artist with spotify's 0 has %s = %v, want int64(0)", key, zero[key])
+		}
+	}
+
+	album, err := Read(kind.SourceSpotifyAlbum, json.RawMessage(`{"id":"b","name":"Simplified"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, present := album["popularity"]; present {
+		t.Errorf("album without popularity has it in %v", album)
+	}
+}

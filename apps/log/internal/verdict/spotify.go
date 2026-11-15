@@ -16,9 +16,9 @@ type SpotifyArtist struct {
 	ID         string   `json:"id"`
 	Name       string   `json:"name"`
 	Genres     []string `json:"genres"`
-	Popularity int64    `json:"popularity"`
+	Popularity *int64   `json:"popularity"`
 	Followers  struct {
-		Total int64 `json:"total"`
+		Total *int64 `json:"total"`
 	} `json:"followers"`
 	Images       []SpotifyImage      `json:"images"`
 	ExternalURLs SpotifyExternalURLs `json:"external_urls"`
@@ -32,7 +32,7 @@ type SpotifyAlbum struct {
 	ReleaseDate string   `json:"release_date"`
 	Label       string   `json:"label"`
 	Genres      []string `json:"genres"`
-	Popularity  int64    `json:"popularity"`
+	Popularity  *int64   `json:"popularity"`
 	Artists     []struct {
 		Name string `json:"name"`
 	} `json:"artists"`
@@ -45,15 +45,16 @@ func readSpotifyArtist(raw json.RawMessage) (map[string]any, error) {
 	if err := json.Unmarshal(raw, &a); err != nil {
 		return nil, err
 	}
-	return withoutEmpty(map[string]any{
+	values := withoutEmpty(map[string]any{
 		"title":      a.Name,
 		"genres":     a.Genres,
 		"image":      largestImage(a.Images),
-		"popularity": a.Popularity,
-		"followers":  a.Followers.Total,
 		"spotify_id": a.ID,
 		"link":       a.ExternalURLs.Spotify,
-	}), nil
+	})
+	putWhenGiven(values, "popularity", a.Popularity)
+	putWhenGiven(values, "followers", a.Followers.Total)
+	return values, nil
 }
 
 func readSpotifyAlbum(raw json.RawMessage) (map[string]any, error) {
@@ -65,7 +66,7 @@ func readSpotifyAlbum(raw json.RawMessage) (map[string]any, error) {
 	for _, artist := range a.Artists {
 		credited = append(credited, artist.Name)
 	}
-	return withoutEmpty(map[string]any{
+	values := withoutEmpty(map[string]any{
 		"title":      a.Name,
 		"artists":    credited,
 		"released":   a.ReleaseDate,
@@ -73,11 +74,18 @@ func readSpotifyAlbum(raw json.RawMessage) (map[string]any, error) {
 		"tracks":     a.TotalTracks,
 		"label":      a.Label,
 		"genres":     a.Genres,
-		"popularity": a.Popularity,
 		"cover":      largestImage(a.Images),
 		"spotify_id": a.ID,
 		"link":       a.ExternalURLs.Spotify,
-	}), nil
+	})
+	putWhenGiven(values, "popularity", a.Popularity)
+	return values, nil
+}
+
+func putWhenGiven(values map[string]any, name string, given *int64) {
+	if given != nil {
+		values[name] = *given
+	}
 }
 
 func largestImage(images []SpotifyImage) string {
