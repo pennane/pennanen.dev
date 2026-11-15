@@ -105,11 +105,11 @@ func TestAMatchAnswerIsAboutBothItems(t *testing.T) {
 }
 
 func TestALinkEditAddsOrSuppressesALink(t *testing.T) {
-	added := verdict.Derive(identity(t, "ap:link/a:1/with/b:2"), readingOf(t, "ap", "link/a:1/with/b:2", `{"edit":"added"}`))
+	added := verdict.Derive(identity(t, "ap:link/a:1/with/b:2"), readingOf(t, "ap", "link/a:1/with/b:2", `{"edit":"added","from":"a:1","type":"with","to":"b:2"}`))
 	if !slices.Equal(added.Links, []verdict.AssertedLink{link(t, "a:1", "with", "b:2", 0)}) || len(added.Suppressed) != 0 {
 		t.Fatalf("added = %+v", added)
 	}
-	suppressed := verdict.Derive(identity(t, "ap:link/a:1/with/b:2"), readingOf(t, "ap", "link/a:1/with/b:2", `{"edit":"suppressed"}`))
+	suppressed := verdict.Derive(identity(t, "ap:link/a:1/with/b:2"), readingOf(t, "ap", "link/a:1/with/b:2", `{"edit":"suppressed","from":"a:1","type":"with","to":"b:2"}`))
 	if !slices.Equal(suppressed.Suppressed, []verdict.AssertedLink{link(t, "a:1", "with", "b:2", 0)}) || len(suppressed.Links) != 0 {
 		t.Fatalf("suppressed = %+v", suppressed)
 	}
@@ -122,14 +122,25 @@ func TestALegacyRecordCarriesItsLinksWithPositions(t *testing.T) {
 			map[string]any{"from": "spotify-track-id:t", "type": "part-of", "to": "spotify-album:b", "position": float64(4)},
 			map[string]any{"from": "spotify-album:b", "type": "by", "to": "spotify-artist:a"},
 			map[string]any{"from": "spotify-album:b", "type": "nope", "to": "spotify-artist:a"},
+			map[string]any{"from": "spotify-track-id:u", "type": "part-of", "to": "spotify-album:b"},
 		},
 	}
 	got := verdict.Derive(identity(t, "legacy:item/9"), reading)
 	want := []verdict.AssertedLink{
 		link(t, "spotify-track-id:t", "part-of", "spotify-album:b", 4),
 		link(t, "spotify-album:b", "by", "spotify-artist:a", 0),
+		link(t, "spotify-album:b", "nope", "spotify-artist:a", 0),
+		link(t, "spotify-track-id:u", "part-of", "spotify-album:b", 0),
 	}
 	if !slices.Equal(got.Links, want) {
+		t.Fatalf("links = %+v", got.Links)
+	}
+}
+
+func TestALinkEditNamesItsLinkInItsData(t *testing.T) {
+	data := `{"edit":"added","from":"ap:item/3","type":"with","to":"b:2"}`
+	got := verdict.Derive(identity(t, "ap:link/ap:item/3/with/b:2"), readingOf(t, "ap", "link/ap:item/3/with/b:2", data))
+	if !slices.Equal(got.Links, []verdict.AssertedLink{link(t, "ap:item/3", "with", "b:2", 0)}) {
 		t.Fatalf("links = %+v", got.Links)
 	}
 }

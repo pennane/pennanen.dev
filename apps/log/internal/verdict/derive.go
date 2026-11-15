@@ -118,7 +118,7 @@ func deriveAp(id record.Identity, reading map[string]any) Derivation {
 	case strings.HasPrefix(id.ExternalID, apMatchPrefix):
 		return deriveApMatch(strings.TrimPrefix(id.ExternalID, apMatchPrefix), reading)
 	case strings.HasPrefix(id.ExternalID, apLinkPrefix):
-		return deriveApLink(strings.TrimPrefix(id.ExternalID, apLinkPrefix), reading)
+		return deriveApLink(reading)
 	}
 	return Derivation{}
 }
@@ -135,13 +135,8 @@ func deriveApMatch(rest string, reading map[string]any) Derivation {
 	return Derivation{About: matched}
 }
 
-func deriveApLink(rest string, reading map[string]any) Derivation {
-	from, afterFrom, foundFrom := strings.Cut(rest, "/")
-	linkType, to, foundType := strings.Cut(afterFrom, "/")
-	if !foundFrom || !foundType {
-		return Derivation{}
-	}
-	links := linksOf([]any{map[string]any{"from": from, "type": linkType, "to": to}})
+func deriveApLink(reading map[string]any) Derivation {
+	links := linksOf([]any{reading})
 	switch stringOf(reading["edit"]) {
 	case apEditAdded:
 		return Derivation{Links: links}
@@ -164,20 +159,12 @@ func linksOf(value any) []AssertedLink {
 	for _, l := range given {
 		from, fromErr := record.ParseIdentity(l.From)
 		to, toErr := record.ParseIdentity(l.To)
-		linkType, known := kind.LinkTypeOf(l.Type)
-		if fromErr != nil || toErr != nil || !known {
+		if fromErr != nil || toErr != nil {
 			continue
 		}
-		links = append(links, AssertedLink{From: from, Type: linkType.Name, To: to, Position: positionFor(linkType, l.Position)})
+		links = append(links, AssertedLink{From: from, Type: l.Type, To: to, Position: l.Position})
 	}
 	return links
-}
-
-func positionFor(linkType kind.LinkType, given int) int {
-	if linkType.Order == kind.Unordered {
-		return 0
-	}
-	return max(given, firstPosition)
 }
 
 func parseAll(identities ...string) []record.Identity {
