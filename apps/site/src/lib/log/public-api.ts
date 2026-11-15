@@ -79,11 +79,11 @@ export type PublicParts = NonNullable<PublicItem['parts']>
 
 const NOT_FOUND = 404
 
-const STALE_AFTER_SECONDS = 300
+const UNTIL_THE_LOG_SAYS_IT_CHANGED = false
 
 const fetchPublic = (path: string) =>
   fetch(requiredEnv('LOG_API_URL') + path, {
-    next: { tags: [LOG_CACHE_TAG], revalidate: STALE_AFTER_SECONDS }
+    next: { tags: [LOG_CACHE_TAG], revalidate: UNTIL_THE_LOG_SAYS_IT_CHANGED }
   })
 
 const failure = (response: Response) =>

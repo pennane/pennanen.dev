@@ -82,8 +82,8 @@ func run() error {
 	}
 
 	var daily, hourly []jobs.Job
-	newSync := func(name string, work syncs.Work) (*syncs.Sync, error) {
-		sync, err := syncs.New(ctx, name, work, st, notifier.Changed)
+	newSync := func(name string, work syncs.Work, onChange func()) (*syncs.Sync, error) {
+		sync, err := syncs.New(ctx, name, work, st, onChange)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +91,7 @@ func run() error {
 		return sync, nil
 	}
 	addSync := func(name string, work syncs.Work) error {
-		sync, err := newSync(name, work)
+		sync, err := newSync(name, work, notifier.Changed)
 		if err != nil {
 			return err
 		}
@@ -143,7 +143,7 @@ func run() error {
 		if err := addSync(spotify.SyncName, syncer.Work); err != nil {
 			return err
 		}
-		plays, err := newSync(spotify.PlaysSyncName, syncer.WorkPlays)
+		plays, err := newSync(spotify.PlaysSyncName, syncer.WorkPlays, leaveTheSiteUntilTheDailyRun)
 		if err != nil {
 			return err
 		}
@@ -167,6 +167,11 @@ func run() error {
 		slog.Warn("R2 settings missing; backups disabled")
 	}
 
+	daily = append(daily, jobs.Job{Name: "site-refresh", Run: func(context.Context) error {
+		notifier.Changed()
+		return nil
+	}})
+
 	go jobs.RunDaily(ctx, 4, 0, daily)
 	go jobs.RunEvery(ctx, time.Hour, hourly)
 
@@ -187,6 +192,8 @@ func run() error {
 	}
 	return nil
 }
+
+func leaveTheSiteUntilTheDailyRun() {}
 
 func r2FromEnv() (backup.R2, bool) {
 	r := backup.R2{
