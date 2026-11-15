@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 const igdbKind = "game"
@@ -48,15 +48,15 @@ func (s *Server) searchIGDB(w http.ResponseWriter, r *http.Request) {
 	}
 	results := make([]IGDBResult, 0, len(games))
 	for _, raw := range games {
-		var g verdict.IGDBGame
+		var g reading.IGDBGame
 		if json.Unmarshal(raw, &g) != nil || !g.Matched() {
 			continue
 		}
 		result := IGDBResult{IGDBID: g.ID, Name: g.Name, Year: g.Year(), Platforms: g.PlatformNames()}
 		if g.Cover != nil {
-			result.Poster = verdict.IGDBPosterURL(*g.Cover)
+			result.Poster = reading.IGDBPosterURL(*g.Cover)
 		}
-		if itemID, err := s.Store.FindByIdentity(r.Context(), kind.SourceIGDB, strconv.FormatInt(g.ID, 10)); err == nil {
+		if itemID, err := s.Store.FindByIdentity(r.Context(), record.SourceIGDB, strconv.FormatInt(g.ID, 10)); err == nil {
 			result.ItemID = itemID
 		}
 		results = append(results, result)
@@ -74,7 +74,7 @@ func (s *Server) addFromIGDB(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	externalID := strconv.FormatInt(pick.IGDBID, 10)
-	if existing, err := s.Store.FindByIdentity(r.Context(), kind.SourceIGDB, externalID); err == nil {
+	if existing, err := s.Store.FindByIdentity(r.Context(), record.SourceIGDB, externalID); err == nil {
 		view, err := s.Store.GetItem(r.Context(), existing)
 		respond(w, http.StatusOK, view, err)
 		return
@@ -84,7 +84,7 @@ func (s *Server) addFromIGDB(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
-	id, err := s.Store.CreateItemFromSource(r.Context(), igdbKind, game.Name, kind.SourceIGDB, externalID, raw)
+	id, err := s.Store.CreateItemFromSource(r.Context(), igdbKind, game.Name, record.SourceIGDB, externalID, raw)
 	if err != nil {
 		respond(w, 0, nil, err)
 		return
@@ -106,7 +106,7 @@ func (s *Server) matchIGDB(w http.ResponseWriter, r *http.Request) {
 		_, raw, err = s.fetchIGDBGame(r.Context(), pick.IGDBID)
 	}
 	if err == nil {
-		err = s.Store.AnswerMatch(r.Context(), id, kind.SourceIGDB, strconv.FormatInt(pick.IGDBID, 10), raw)
+		err = s.Store.AnswerMatch(r.Context(), id, record.SourceIGDB, strconv.FormatInt(pick.IGDBID, 10), raw)
 	}
 	s.mutatedItem(w, r, id, err)
 }
@@ -118,20 +118,20 @@ func (s *Server) matchIGDBNone(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err := s.Store.GetItem(r.Context(), id)
 	if err == nil {
-		err = s.Store.AnswerNoMatch(r.Context(), id, kind.SourceIGDB)
+		err = s.Store.AnswerNoMatch(r.Context(), id, record.SourceIGDB)
 	}
 	s.mutatedItem(w, r, id, err)
 }
 
-func (s *Server) fetchIGDBGame(ctx context.Context, igdbID int64) (verdict.IGDBGame, json.RawMessage, error) {
+func (s *Server) fetchIGDBGame(ctx context.Context, igdbID int64) (reading.IGDBGame, json.RawMessage, error) {
 	games, err := s.IGDB.Games(ctx, []int64{igdbID})
 	if err != nil {
-		return verdict.IGDBGame{}, nil, err
+		return reading.IGDBGame{}, nil, err
 	}
 	raw, found := games[igdbID]
 	if !found {
-		return verdict.IGDBGame{}, nil, fmt.Errorf("%w: igdb has no game %d", store.ErrNotFound, igdbID)
+		return reading.IGDBGame{}, nil, fmt.Errorf("%w: igdb has no game %d", store.ErrNotFound, igdbID)
 	}
-	var game verdict.IGDBGame
+	var game reading.IGDBGame
 	return game, raw, json.Unmarshal(raw, &game)
 }

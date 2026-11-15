@@ -6,12 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"strings"
 )
 
 type Store struct {
@@ -70,7 +69,7 @@ func (s *Store) CreateItem(ctx context.Context, kindName, title string, override
 		if id, err = s.itemOf(ctx, tx, handMade); err != nil {
 			return err
 		}
-		return ensureEntry(ctx, tx, id, kind.SourceAP)
+		return ensureEntry(ctx, tx, id, record.SourceAP)
 	})
 	return id, err
 }
@@ -254,7 +253,7 @@ func claimedOrAnsweredFrom(alias string, sources []string) (string, []any) {
 	for _, source := range sources {
 		prefix := matchAnswerPrefix(source)
 		conditions = append(conditions, alias+`.source = ? OR (`+alias+`.source = ? AND substr(`+alias+`.external_id, 1, length(?)) = ?)`)
-		args = append(args, source, kind.SourceAP, prefix, prefix)
+		args = append(args, source, record.SourceAP, prefix, prefix)
 	}
 	return strings.Join(conditions, " OR "), args
 }
@@ -269,8 +268,8 @@ func asJSON(data any) ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (s *Store) Claim(ctx context.Context, itemID int64, source string) (verdict.Claim, error) {
-	c := verdict.Claim{Source: source}
+func (s *Store) Claim(ctx context.Context, itemID int64, source string) (reading.Claim, error) {
+	c := reading.Claim{Source: source}
 	var data string
 	err := s.db.QueryRowContext(ctx, `
 		SELECT external_id, data, fetched_at FROM claim WHERE item_id = ? AND source = ?
@@ -321,11 +320,11 @@ func (s *Store) ChangeOverride(ctx context.Context, itemID int64, changes map[st
 }
 
 func (s *Store) overrideOf(ctx context.Context, q queryer, itemID int64) (record.Identity, error) {
-	handMade := identityOf(kind.SourceAP, "")
+	handMade := identityOf(record.SourceAP, "")
 	err := q.QueryRowContext(ctx, `
 		SELECT external_id FROM claim
 		WHERE item_id = ? AND source = ? AND substr(external_id, 1, length(?)) = ?
-		ORDER BY external_id LIMIT 1`, itemID, kind.SourceAP, apItemPrefix, apItemPrefix).Scan(&handMade.ExternalID)
+		ORDER BY external_id LIMIT 1`, itemID, record.SourceAP, apItemPrefix, apItemPrefix).Scan(&handMade.ExternalID)
 	if err == nil {
 		return handMade, nil
 	}
@@ -349,7 +348,7 @@ func (s *Store) DeleteItem(ctx context.Context, itemID int64) error {
 			return err
 		}
 		for _, id := range claims {
-			if id.Source != kind.SourceAP {
+			if id.Source != record.SourceAP {
 				return fmt.Errorf("%w: item %d has a claim from %s; only an item made by hand can be deleted", ErrInvalid, itemID, id.Source)
 			}
 		}
@@ -391,14 +390,14 @@ func linkEditsNaming(ctx context.Context, q queryer, key record.Identity) ([]rec
 		WHERE source = ? AND substr(external_id, 1, length(?)) = ?
 		  AND (json_extract(data, '$.from') = ? OR json_extract(data, '$.to') = ?)
 		ORDER BY external_id`,
-		kind.SourceAP, apLinkPrefix, apLinkPrefix, key.String(), key.String())
+		record.SourceAP, apLinkPrefix, apLinkPrefix, key.String(), key.String())
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	edits := []record.Identity{}
 	for rows.Next() {
-		edit := identityOf(kind.SourceAP, "")
+		edit := identityOf(record.SourceAP, "")
 		if err := rows.Scan(&edit.ExternalID); err != nil {
 			return nil, err
 		}

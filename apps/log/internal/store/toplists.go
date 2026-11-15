@@ -1,6 +1,8 @@
 package store
 
-import "context"
+import (
+	"context"
+)
 
 type ListPoints map[int64]map[string]float64
 

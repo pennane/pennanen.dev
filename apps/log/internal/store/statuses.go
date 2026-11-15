@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 type StatusOutcome string
@@ -18,7 +18,7 @@ const (
 )
 
 func (s *Store) SetStatusFromSource(ctx context.Context, itemID int64, source, status string) (StatusOutcome, error) {
-	if source == kind.SourceAP {
+	if source == record.SourceAP {
 		return "", fmt.Errorf("%w: ap sets statuses by changing the entry", ErrInvalid)
 	}
 	var outcome StatusOutcome
@@ -56,7 +56,7 @@ func (s *Store) SetStatusFromSource(ctx context.Context, itemID int64, source, s
 }
 
 func sourceMayChange(source, current, setBy string) bool {
-	return setBy == source || (setBy != kind.SourceAP && current == kind.Untriaged)
+	return setBy == source || (setBy != record.SourceAP && current == kind.Untriaged)
 }
 
 func (s *Store) ItemsWithStatusSetBy(ctx context.Context, source, kindName string) ([]int64, error) {

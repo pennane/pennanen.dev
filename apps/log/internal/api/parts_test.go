@@ -6,16 +6,17 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/spotify"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func TestAnAlbumPageListsItsTracksInOrder(t *testing.T) {
 	var st *store.Store
 	srv := spotifyServer(t, func(s *store.Store) *spotify.Client { st = s; return nil })
 	ctx := context.Background()
-	album, err := st.CreateItemFromSource(ctx, kind.Album, "Beta", kind.SourceSpotifyAlbum, "B", json.RawMessage(`{"id":"B","name":"Beta","tracks":{"items":[{"id":"t1","disc_number":1,"track_number":1},{"id":"t2","disc_number":1,"track_number":2}]}}`))
+	album, err := st.CreateItemFromSource(ctx, kind.Album, "Beta", record.SourceSpotifyAlbum, "B", json.RawMessage(`{"id":"B","name":"Beta","tracks":{"items":[{"id":"t1","disc_number":1,"track_number":1},{"id":"t2","disc_number":1,"track_number":2}]}}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,8 +24,8 @@ func TestAnAlbumPageListsItsTracksInOrder(t *testing.T) {
 	if err := st.ChangeEntry(ctx, album, store.EntryChange{Status: &listened}); err != nil {
 		t.Fatal(err)
 	}
-	second, _ := st.KnowItemFromSource(ctx, kind.Track, "Second", kind.SourceSpotifyTrack, "I2", map[string]any{"id": "t2", "name": "Second"})
-	first, _ := st.KnowItemFromSource(ctx, kind.Track, "First", kind.SourceSpotifyTrack, "I1", map[string]any{"id": "t1", "name": "First"})
+	second, _ := st.KnowItemFromSource(ctx, kind.Track, "Second", record.SourceSpotifyTrack, "I2", map[string]any{"id": "t2", "name": "Second"})
+	first, _ := st.KnowItemFromSource(ctx, kind.Track, "First", record.SourceSpotifyTrack, "I1", map[string]any{"id": "t1", "name": "First"})
 	if first == 0 || second == 0 {
 		t.Fatalf("tracks %d %d", first, second)
 	}

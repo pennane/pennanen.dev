@@ -4,8 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 type Identity struct {

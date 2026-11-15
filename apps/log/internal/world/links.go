@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"slices"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"slices"
 )
 
 const (
@@ -39,7 +37,7 @@ func (s *settling) storeLinks(dirty []record.Identity) error {
 func (s *settling) assertersAround(dirty []record.Identity) ([]record.Identity, error) {
 	asserters := slices.Clone(dirty)
 	for _, id := range dirty {
-		if id.Source != kind.SourceAP {
+		if id.Source != record.SourceAP {
 			continue
 		}
 		derived, err := s.derivationOf(id)
@@ -124,7 +122,7 @@ func positionColumn(position int) any {
 	return position
 }
 
-func (s *settling) admitted(asserter record.Identity, links []verdict.AssertedLink) (map[linkKey]int, error) {
+func (s *settling) admitted(asserter record.Identity, links []AssertedLink) (map[linkKey]int, error) {
 	admitted := map[linkKey]int{}
 	for _, l := range links {
 		if err := fitsItsType(asserter, l); err != nil {
@@ -145,7 +143,7 @@ func (s *settling) admitted(asserter record.Identity, links []verdict.AssertedLi
 	return admitted, nil
 }
 
-func fitsItsType(asserter record.Identity, l verdict.AssertedLink) error {
+func fitsItsType(asserter record.Identity, l AssertedLink) error {
 	linkType, known := kind.LinkTypeOf(l.Type)
 	switch {
 	case !known:
@@ -158,7 +156,7 @@ func fitsItsType(asserter record.Identity, l verdict.AssertedLink) error {
 	return nil
 }
 
-func (s *settling) isSuppressed(l verdict.AssertedLink) (bool, error) {
+func (s *settling) isSuppressed(l AssertedLink) (bool, error) {
 	if err := s.loadSuppressions(); err != nil {
 		return false, err
 	}
@@ -207,13 +205,13 @@ func (s *settling) loadSuppressions() error {
 		return nil
 	}
 	rows, err := s.q.QueryContext(s.ctx,
-		`SELECT external_id, reading FROM record_reading WHERE source = ? ORDER BY external_id`, kind.SourceAP)
+		`SELECT external_id, reading FROM record_reading WHERE source = ? ORDER BY external_id`, record.SourceAP)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		id := record.Identity{Source: kind.SourceAP}
+		id := record.Identity{Source: record.SourceAP}
 		var raw string
 		if err := rows.Scan(&id.ExternalID, &raw); err != nil {
 			return err
@@ -222,7 +220,7 @@ func (s *settling) loadSuppressions() error {
 		if err := json.Unmarshal([]byte(raw), &values); err != nil {
 			return fmt.Errorf("reading of %s: %w", id, err)
 		}
-		s.suppress = append(s.suppress, verdict.Derive(id, values).Suppressed...)
+		s.suppress = append(s.suppress, Derive(id, values).Suppressed...)
 	}
 	if err := rows.Err(); err != nil {
 		return err

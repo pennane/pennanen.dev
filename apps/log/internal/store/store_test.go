@@ -7,9 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func openStore(t *testing.T) *store.Store {
@@ -27,7 +28,7 @@ func ptr[T any](v T) *T { return &v }
 func TestOverrideBeatsSourceAndSurvivesResync(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	id, err := s.CreateItemFromSource(ctx, "game", "Hades", kind.SourceSteam, "1145360",
+	id, err := s.CreateItemFromSource(ctx, "game", "Hades", record.SourceSteam, "1145360",
 		json.RawMessage(`{"appid":1145360,"name":"Hades","playtime_forever":3000}`))
 	if err != nil {
 		t.Fatal(err)
@@ -35,7 +36,7 @@ func TestOverrideBeatsSourceAndSurvivesResync(t *testing.T) {
 	if err := s.ChangeOverride(ctx, id, map[string]any{"title": "HADES"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaim(ctx, id, kind.SourceSteam, "1145360",
+	if err := s.PutClaim(ctx, id, record.SourceSteam, "1145360",
 		json.RawMessage(`{"appid":1145360,"name":"Hades","playtime_forever":3100}`)); err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +44,7 @@ func TestOverrideBeatsSourceAndSurvivesResync(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v.Verdicts.Values["title"] != "HADES" || v.Verdicts.SourceOf["title"] != kind.SourceAP {
+	if v.Verdicts.Values["title"] != "HADES" || v.Verdicts.SourceOf["title"] != record.SourceAP {
 		t.Errorf("title verdict = %v from %v", v.Verdicts.Values["title"], v.Verdicts.SourceOf["title"])
 	}
 	if v.Verdicts.Values["playtime_minutes"] != int64(3100) {
@@ -57,10 +58,10 @@ func TestOverrideBeatsSourceAndSurvivesResync(t *testing.T) {
 func TestIdleHintFromCardsAndNoAchievements(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	id, _ := s.CreateItemFromSource(ctx, "game", "Card Farm", kind.SourceSteam, "1",
+	id, _ := s.CreateItemFromSource(ctx, "game", "Card Farm", record.SourceSteam, "1",
 		json.RawMessage(`{"appid":1,"name":"Card Farm","playtime_forever":150}`))
-	s.PutClaim(ctx, id, kind.SourceSteamStore, "1", json.RawMessage(`{"name":"Card Farm","categories":[{"description":"Steam Trading Cards"}]}`))
-	s.PutClaim(ctx, id, kind.SourceSteamAchievements, "1", json.RawMessage(`{"achievements":[{"achieved":0}]}`))
+	s.PutClaim(ctx, id, record.SourceSteamStore, "1", json.RawMessage(`{"name":"Card Farm","categories":[{"description":"Steam Trading Cards"}]}`))
+	s.PutClaim(ctx, id, record.SourceSteamAchievements, "1", json.RawMessage(`{"achievements":[{"achieved":0}]}`))
 	idled, err := s.ListItems(ctx, store.ItemFilter{Hint: kind.HintLikelyIdled})
 	if err != nil || len(idled) != 1 {
 		t.Fatalf("idled = %d, %v", len(idled), err)
@@ -163,7 +164,7 @@ func TestAKnownItemHasNoEntry(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
 	data := json.RawMessage(`{"id":949,"title":"Heat"}`)
-	id, err := s.KnowItemFromSource(ctx, kind.Movie, "Heat", kind.SourceTMDB, "949", data)
+	id, err := s.KnowItemFromSource(ctx, kind.Movie, "Heat", record.SourceTMDB, "949", data)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +175,7 @@ func TestAKnownItemHasNoEntry(t *testing.T) {
 	if v.Entry != nil {
 		t.Errorf("known item has entry %+v", v.Entry)
 	}
-	found, err := s.FindByIdentity(ctx, kind.SourceTMDB, "949")
+	found, err := s.FindByIdentity(ctx, record.SourceTMDB, "949")
 	if err != nil || found != id {
 		t.Errorf("FindByIdentity = %d, %v; want %d", found, err, id)
 	}
@@ -183,7 +184,7 @@ func TestAKnownItemHasNoEntry(t *testing.T) {
 func TestAKnownItemIsNotListed(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	if _, err := s.KnowItemFromSource(ctx, kind.Movie, "Heat", kind.SourceTMDB, "949", json.RawMessage(`{}`)); err != nil {
+	if _, err := s.KnowItemFromSource(ctx, kind.Movie, "Heat", record.SourceTMDB, "949", json.RawMessage(`{}`)); err != nil {
 		t.Fatal(err)
 	}
 	logged, err := s.CreateItem(ctx, kind.Movie, "Ronin", nil)

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/images"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/images"
 )
 
 const uploadTicketLife = 10 * time.Minute

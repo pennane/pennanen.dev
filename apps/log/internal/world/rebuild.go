@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strconv"
-
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"strconv"
 )
 
 const (

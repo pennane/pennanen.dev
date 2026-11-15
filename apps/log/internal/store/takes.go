@@ -3,10 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 	"slices"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 type TakeView struct {
@@ -54,7 +54,7 @@ func (s *Store) SetTakeFieldVisibility(ctx context.Context, itemID int64, source
 
 type shownField struct{ source, field string }
 
-func (s *Store) attachTakes(ctx context.Context, readings map[int64][]verdict.Reading, byID map[int64]*ItemView) error {
+func (s *Store) attachTakes(ctx context.Context, readings map[int64][]reading.Reading, byID map[int64]*ItemView) error {
 	shown, err := s.shownTakeFields(ctx, byID)
 	if err != nil {
 		return err

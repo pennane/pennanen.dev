@@ -10,8 +10,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 type storedClaim struct {
@@ -57,7 +58,7 @@ func steamGame(t *testing.T, s *store.Store, appID, name string) int64 {
 	if err != nil {
 		t.Fatal(err)
 	}
-	id, err := s.CreateItemFromSource(context.Background(), kind.Game, name, kind.SourceSteam, appID, json.RawMessage(raw))
+	id, err := s.CreateItemFromSource(context.Background(), kind.Game, name, record.SourceSteam, appID, json.RawMessage(raw))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +69,7 @@ func TestAResyncWithTheSameClaimDerivesNothing(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
 	data := json.RawMessage(`{"appid":1145360,"name":"Hades","playtime_forever":3000}`)
-	id, err := s.CreateItemFromSource(ctx, kind.Game, "Hades", kind.SourceSteam, "1145360", data)
+	id, err := s.CreateItemFromSource(ctx, kind.Game, "Hades", record.SourceSteam, "1145360", data)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +79,7 @@ func TestAResyncWithTheSameClaimDerivesNothing(t *testing.T) {
 	}
 	before := claimsStored(t, d)
 
-	if err := s.PutClaim(ctx, id, kind.SourceSteam, "1145360", data); err != nil {
+	if err := s.PutClaim(ctx, id, record.SourceSteam, "1145360", data); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,19 +100,19 @@ func TestAClaimAnotherItemOwnsIsAConflictAndWritesNothing(t *testing.T) {
 	s, d := openStoreWithDB(t)
 	first := steamGame(t, s, "1", "First")
 	second := steamGame(t, s, "2", "Second")
-	if err := s.PutClaim(ctx, first, kind.SourceIGDB, "1", json.RawMessage(`{"id":1,"name":"First"}`)); err != nil {
+	if err := s.PutClaim(ctx, first, record.SourceIGDB, "1", json.RawMessage(`{"id":1,"name":"First"}`)); err != nil {
 		t.Fatal(err)
 	}
 	before := claimsStored(t, d)
 
-	err := s.PutClaim(ctx, second, kind.SourceIGDB, "1", json.RawMessage(`{"id":1,"name":"Changed"}`))
+	err := s.PutClaim(ctx, second, record.SourceIGDB, "1", json.RawMessage(`{"id":1,"name":"Changed"}`))
 	if !errors.Is(err, store.ErrConflict) {
 		t.Fatalf("err = %v, want a conflict", err)
 	}
 	if after := claimsStored(t, d); !maps.Equal(before, after) {
 		t.Errorf("claims %v became %v", before, after)
 	}
-	if owner, err := s.FindByIdentity(ctx, kind.SourceIGDB, "1"); err != nil || owner != first {
+	if owner, err := s.FindByIdentity(ctx, record.SourceIGDB, "1"); err != nil || owner != first {
 		t.Errorf("igdb:1 belongs to %d, %v; want %d", owner, err, first)
 	}
 }
@@ -121,7 +122,7 @@ func TestASyncMatchIsAMatchedRecord(t *testing.T) {
 	s, d := openStoreWithDB(t)
 	id := steamGame(t, s, "220", "Half-Life 2")
 
-	if err := s.PutClaim(ctx, id, kind.SourceIGDB, "7", json.RawMessage(`{"id":7,"name":"Half-Life 2: Episode"}`)); err != nil {
+	if err := s.PutClaim(ctx, id, record.SourceIGDB, "7", json.RawMessage(`{"id":7,"name":"Half-Life 2: Episode"}`)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,14 +133,14 @@ func TestASyncMatchIsAMatchedRecord(t *testing.T) {
 	if want := map[string]any{"about": []any{"steam:220", "igdb:7"}}; !reflect.DeepEqual(matched, want) {
 		t.Errorf("matched = %v, want %v", matched, want)
 	}
-	if owner, err := s.FindByIdentity(ctx, kind.SourceIGDB, "7"); err != nil || owner != id {
+	if owner, err := s.FindByIdentity(ctx, record.SourceIGDB, "7"); err != nil || owner != id {
 		t.Errorf("igdb:7 belongs to %d, %v; want %d", owner, err, id)
 	}
 	v, err := s.GetItem(ctx, id)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v.Verdicts.Values["title"] != "Half-Life 2: Episode" || v.Verdicts.SourceOf["title"] != kind.SourceIGDB {
+	if v.Verdicts.Values["title"] != "Half-Life 2: Episode" || v.Verdicts.SourceOf["title"] != record.SourceIGDB {
 		t.Errorf("verdicts = %v", v.Verdicts)
 	}
 }
@@ -149,7 +150,7 @@ func TestApsPickIsAnApMatchAnswer(t *testing.T) {
 	s, d := openStoreWithDB(t)
 	id := steamGame(t, s, "220", "Half-Life 2")
 
-	if err := s.AnswerMatch(ctx, id, kind.SourceIGDB, "7", json.RawMessage(`{"id":7,"name":"Half-Life 2"}`)); err != nil {
+	if err := s.AnswerMatch(ctx, id, record.SourceIGDB, "7", json.RawMessage(`{"id":7,"name":"Half-Life 2"}`)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -159,11 +160,11 @@ func TestApsPickIsAnApMatchAnswer(t *testing.T) {
 	if _, claimed := claimsStored(t, d)["igdb:7"]; !claimed {
 		t.Error("no claim igdb:7")
 	}
-	if owner, err := s.FindByIdentity(ctx, kind.SourceIGDB, "7"); err != nil || owner != id {
+	if owner, err := s.FindByIdentity(ctx, record.SourceIGDB, "7"); err != nil || owner != id {
 		t.Errorf("igdb:7 belongs to %d, %v; want %d", owner, err, id)
 	}
 	other := steamGame(t, s, "221", "Other")
-	if err := s.AnswerMatch(ctx, other, kind.SourceIGDB, "7", json.RawMessage(`{"id":7}`)); !errors.Is(err, store.ErrConflict) {
+	if err := s.AnswerMatch(ctx, other, record.SourceIGDB, "7", json.RawMessage(`{"id":7}`)); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("picking igdb:7 for a second item: %v", err)
 	}
 }
@@ -174,7 +175,7 @@ func TestNoMatchKeepsAnItemOutOfTheMatchQueue(t *testing.T) {
 	answered := steamGame(t, s, "1", "Answered")
 	waiting := steamGame(t, s, "2", "Waiting")
 
-	if err := s.AnswerNoMatch(ctx, answered, kind.SourceIGDB); err != nil {
+	if err := s.AnswerNoMatch(ctx, answered, record.SourceIGDB); err != nil {
 		t.Fatal(err)
 	}
 
@@ -188,7 +189,7 @@ func TestNoMatchKeepsAnItemOutOfTheMatchQueue(t *testing.T) {
 	if len(queue) != 1 || queue[0].ID != waiting {
 		t.Errorf("match queue = %+v, want only %d", queue, waiting)
 	}
-	lacking, err := s.IdentitiesLackingSources(ctx, kind.SourceSteam, kind.SourceIGDB)
+	lacking, err := s.IdentitiesLackingSources(ctx, record.SourceSteam, record.SourceIGDB)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,7 +218,7 @@ func TestAnOverrideIsAnApFieldsRecord(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v.Verdicts.Values["title"] != "HADES" || v.Verdicts.SourceOf["title"] != kind.SourceAP {
+	if v.Verdicts.Values["title"] != "HADES" || v.Verdicts.SourceOf["title"] != record.SourceAP {
 		t.Errorf("verdicts = %v", v.Verdicts)
 	}
 	if _, released := v.Verdicts.Values["released"]; released {
@@ -260,7 +261,7 @@ func TestAHandMadeItemIsAnApItemRecord(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v.Kind != kind.Game || v.Slug != "tetris" || v.Entry == nil || v.Entry.StatusSetBy != kind.SourceAP {
+	if v.Kind != kind.Game || v.Slug != "tetris" || v.Entry == nil || v.Entry.StatusSetBy != record.SourceAP {
 		t.Errorf("item = %+v", v)
 	}
 
@@ -317,7 +318,7 @@ func TestIdentifyingAFilmAsASeriesMovesItAndItsRank(t *testing.T) {
 	s, d := openStoreWithDB(t)
 	watched := func(externalID, title string) int64 {
 		t.Helper()
-		id, err := s.CreateItemFromSource(ctx, kind.Movie, title, kind.SourceTMDB, externalID, json.RawMessage(`{"id":`+externalID+`,"title":"`+title+`"}`))
+		id, err := s.CreateItemFromSource(ctx, kind.Movie, title, record.SourceTMDB, externalID, json.RawMessage(`{"id":`+externalID+`,"title":"`+title+`"}`))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -330,8 +331,8 @@ func TestIdentifyingAFilmAsASeriesMovesItAndItsRank(t *testing.T) {
 	ripley := watched("603", "Ripley")
 	last := watched("2", "Last Film")
 
-	identity := store.Identity{Kind: kind.Series, Source: kind.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)}
-	if err := s.Identify(ctx, ripley, identity, []string{kind.SourceTMDB, kind.SourceTMDBSeries}); err != nil {
+	identity := store.Identity{Kind: kind.Series, Source: record.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)}
+	if err := s.Identify(ctx, ripley, identity, []string{record.SourceTMDB, record.SourceTMDBSeries}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -354,10 +355,10 @@ func TestIdentifyingAFilmAsASeriesMovesItAndItsRank(t *testing.T) {
 	if answer := claimData(t, d, "ap:match/tmdb-tv/tmdb-tv:94028"); !reflect.DeepEqual(answer, map[string]any{"to": "94028"}) {
 		t.Errorf("answer = %v", answer)
 	}
-	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "603"); !errors.Is(err, store.ErrNotFound) {
+	if owner, err := s.FindByIdentity(ctx, record.SourceTMDB, "603"); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("tmdb:603 still belongs to %d, %v", owner, err)
 	}
-	removed, err := s.Observations(ctx, ripley, kind.SourceTMDB, "claim-removed")
+	removed, err := s.Observations(ctx, ripley, record.SourceTMDB, "claim-removed")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -384,7 +385,7 @@ func TestAnApLinkEditIsARecordAndSuppressionHides(t *testing.T) {
 	s, d := openStoreWithDB(t)
 	ann := knowArtist(t, s, "A", "Ann")
 	ben := knowArtist(t, s, "B", "Ben")
-	album, err := s.CreateItemFromSource(ctx, kind.Album, "Alpha", kind.SourceSpotifyAlbum, "AL",
+	album, err := s.CreateItemFromSource(ctx, kind.Album, "Alpha", record.SourceSpotifyAlbum, "AL",
 		json.RawMessage(`{"id":"AL","name":"Alpha","artists":[{"id":"A","name":"Ann"}]}`))
 	if err != nil {
 		t.Fatal(err)
@@ -427,10 +428,10 @@ func TestAnApLinkEditIsARecordAndSuppressionHides(t *testing.T) {
 func TestCorrectingASyncMatchFreesTheWrongIdentity(t *testing.T) {
 	corrections := map[string]func(s *store.Store, item int64) error{
 		"a pick": func(s *store.Store, item int64) error {
-			return s.AnswerMatch(context.Background(), item, kind.SourceIGDB, "10", json.RawMessage(`{"id":10,"name":"Right"}`))
+			return s.AnswerMatch(context.Background(), item, record.SourceIGDB, "10", json.RawMessage(`{"id":10,"name":"Right"}`))
 		},
 		"no match": func(s *store.Store, item int64) error {
-			return s.AnswerNoMatch(context.Background(), item, kind.SourceIGDB)
+			return s.AnswerNoMatch(context.Background(), item, record.SourceIGDB)
 		},
 	}
 	for name, correct := range corrections {
@@ -438,7 +439,7 @@ func TestCorrectingASyncMatchFreesTheWrongIdentity(t *testing.T) {
 			ctx := context.Background()
 			s, d := openStoreWithDB(t)
 			first := steamGame(t, s, "1", "First")
-			if err := s.PutClaim(ctx, first, kind.SourceIGDB, "9", json.RawMessage(`{"id":9,"name":"Wrong"}`)); err != nil {
+			if err := s.PutClaim(ctx, first, record.SourceIGDB, "9", json.RawMessage(`{"id":9,"name":"Wrong"}`)); err != nil {
 				t.Fatal(err)
 			}
 
@@ -452,14 +453,14 @@ func TestCorrectingASyncMatchFreesTheWrongIdentity(t *testing.T) {
 					t.Errorf("%s stayed", gone)
 				}
 			}
-			if owner, err := s.FindByIdentity(ctx, kind.SourceIGDB, "9"); !errors.Is(err, store.ErrNotFound) {
+			if owner, err := s.FindByIdentity(ctx, record.SourceIGDB, "9"); !errors.Is(err, store.ErrNotFound) {
 				t.Errorf("igdb:9 still belongs to %d, %v", owner, err)
 			}
 			second := steamGame(t, s, "2", "Second")
-			if err := s.PutClaim(ctx, second, kind.SourceIGDB, "9", json.RawMessage(`{"id":9,"name":"Wrong"}`)); err != nil {
+			if err := s.PutClaim(ctx, second, record.SourceIGDB, "9", json.RawMessage(`{"id":9,"name":"Wrong"}`)); err != nil {
 				t.Fatalf("the second item can't take igdb:9: %v", err)
 			}
-			if owner, err := s.FindByIdentity(ctx, kind.SourceIGDB, "9"); err != nil || owner != second {
+			if owner, err := s.FindByIdentity(ctx, record.SourceIGDB, "9"); err != nil || owner != second {
 				t.Errorf("igdb:9 belongs to %d, %v; want %d", owner, err, second)
 			}
 		})
@@ -471,27 +472,27 @@ func TestIdentifyingAFilmFreesItsWrongTMDBMatch(t *testing.T) {
 	s, _ := openStoreWithDB(t)
 	film := func(id, title string) int64 {
 		t.Helper()
-		item, err := s.CreateItemFromSource(ctx, kind.Movie, title, kind.SourceLetterboxd, id, json.RawMessage(`{"id":"`+id+`","title":"`+title+`"}`))
+		item, err := s.CreateItemFromSource(ctx, kind.Movie, title, record.SourceLetterboxd, id, json.RawMessage(`{"id":"`+id+`","title":"`+title+`"}`))
 		if err != nil {
 			t.Fatal(err)
 		}
 		return item
 	}
 	ripley := film("rip1", "Ripley")
-	if err := s.PutClaim(ctx, ripley, kind.SourceTMDB, "9", json.RawMessage(`{"id":9,"title":"Wrong"}`)); err != nil {
+	if err := s.PutClaim(ctx, ripley, record.SourceTMDB, "9", json.RawMessage(`{"id":9,"title":"Wrong"}`)); err != nil {
 		t.Fatal(err)
 	}
 
-	identity := store.Identity{Kind: kind.Series, Source: kind.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)}
-	if err := s.Identify(ctx, ripley, identity, []string{kind.SourceTMDB, kind.SourceTMDBSeries}); err != nil {
+	identity := store.Identity{Kind: kind.Series, Source: record.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)}
+	if err := s.Identify(ctx, ripley, identity, []string{record.SourceTMDB, record.SourceTMDBSeries}); err != nil {
 		t.Fatal(err)
 	}
 
 	wrong := film("wrong1", "Wrong")
-	if err := s.PutClaim(ctx, wrong, kind.SourceTMDB, "9", json.RawMessage(`{"id":9,"title":"Wrong"}`)); err != nil {
+	if err := s.PutClaim(ctx, wrong, record.SourceTMDB, "9", json.RawMessage(`{"id":9,"title":"Wrong"}`)); err != nil {
 		t.Fatalf("another film can't take tmdb:9: %v", err)
 	}
-	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "9"); err != nil || owner != wrong {
+	if owner, err := s.FindByIdentity(ctx, record.SourceTMDB, "9"); err != nil || owner != wrong {
 		t.Errorf("tmdb:9 belongs to %d, %v; want %d", owner, err, wrong)
 	}
 }
@@ -503,7 +504,7 @@ func TestAClaimWhoseDeriveLandsOnAnotherItemIsAConflict(t *testing.T) {
 	steamGame(t, s, "2", "Second")
 	before := claimsStored(t, d)
 
-	err := s.PutClaim(ctx, first, kind.SourceSteamStore, "2", json.RawMessage(`{"name":"Second"}`))
+	err := s.PutClaim(ctx, first, record.SourceSteamStore, "2", json.RawMessage(`{"name":"Second"}`))
 	if !errors.Is(err, store.ErrConflict) {
 		t.Fatalf("err = %v, want a conflict", err)
 	}

@@ -9,13 +9,12 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 const (
@@ -295,7 +294,7 @@ func kindOfIdentitySource(r record.Reading) string {
 }
 
 func derivedKind(r record.Reading) string {
-	return verdict.Derive(r.Identity, r.Values).Kind
+	return Derive(r.Identity, r.Values).Kind
 }
 
 func latestKind(readings []record.Reading, kindFrom func(record.Reading) string) string {

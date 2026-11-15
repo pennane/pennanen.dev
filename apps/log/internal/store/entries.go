@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"slices"
 	"strings"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 )
 
 func (s *Store) ChangeEntry(ctx context.Context, itemID int64, change EntryChange) error {
@@ -129,7 +129,7 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 		}
 	}
 	for _, t := range change.AddTags {
-		if _, err := tx.ExecContext(ctx, `INSERT INTO tag (item_id, tag, added_by) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET added_by = excluded.added_by`, itemID, t, kind.SourceAP); err != nil {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO tag (item_id, tag, added_by) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET added_by = excluded.added_by`, itemID, t, record.SourceAP); err != nil {
 			return err
 		}
 	}
@@ -167,12 +167,12 @@ func statusSetBy(k kind.Kind, chosen *string) string {
 	if k.StatusComputedBy != "" && chosen != nil && *chosen != kind.Dismissed {
 		return k.StatusComputedBy
 	}
-	return kind.SourceAP
+	return record.SourceAP
 }
 
 func entrySetter(k kind.Kind) string {
 	if k.StatusComputedBy != "" {
 		return k.StatusComputedBy
 	}
-	return kind.SourceAP
+	return record.SourceAP
 }

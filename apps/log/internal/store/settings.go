@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"maps"
 	"slices"
 	"strings"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 )
 
 type Division struct {
@@ -214,7 +214,7 @@ func validReading(axis Axis) error {
 	if _, readSort := readFromBySort[r.Sort]; !readSort {
 		return fmt.Errorf("%w: %s is read from a source, so it is %s, %s or %s", ErrInvalid, axis.Key, OutsideAxis, CrowdAxis, ActivityAxis)
 	}
-	if r.Source == "" || r.Source == kind.SourceAP || r.Field == "" {
+	if r.Source == "" || r.Source == record.SourceAP || r.Field == "" {
 		return fmt.Errorf("%w: %s needs a source other than ap and a field to read", ErrInvalid, axis.Key)
 	}
 	if !kind.IsReadable(r.Source, r.Field, readFromBySort[r.Sort]) {

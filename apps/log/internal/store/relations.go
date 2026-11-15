@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"slices"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"slices"
 )
 
 func (s *Store) AddRelation(ctx context.Context, r Relation) error {

@@ -6,13 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 	"slices"
 	"strings"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
-	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 )
 
 type keyChoice func(ctx context.Context, q queryer, itemID int64, candidates []record.Identity) (record.Identity, error)
@@ -77,7 +74,7 @@ func (s *Store) rekeyOffAReplacedKey(ctx context.Context, tx *sql.Tx, itemID int
 }
 
 func isTheLogsOwn(id record.Identity) bool {
-	return id.Source == kind.SourceAP || id.Source == kind.SourceMatched || id.Source == kind.SourceLegacy
+	return id.Source == record.SourceAP || id.Source == record.SourceMatched || id.Source == record.SourceLegacy
 }
 
 func (s *Store) recordsKeyedBy(ctx context.Context, q queryer, itemID int64, old record.Identity) ([]record.Identity, keyHold, error) {
@@ -99,10 +96,10 @@ func (s *Store) recordsKeyedBy(ctx context.Context, q queryer, itemID int64, old
 		return nil, "", err
 	}
 	for _, r := range readings {
-		if !slices.Contains(verdict.Derive(r.Identity, r.Values).About, old) {
+		if !slices.Contains(world.Derive(r.Identity, r.Values).About, old) {
 			continue
 		}
-		if r.Source != kind.SourceMatched && r.Source != kind.SourceLegacy {
+		if r.Source != record.SourceMatched && r.Source != record.SourceLegacy {
 			return nil, heldByARecord, nil
 		}
 		keyed = append(keyed, r.Identity)
@@ -161,14 +158,14 @@ func legacyRecordsLinking(ctx context.Context, q queryer, id record.Identity) ([
 		WHERE asserted_source = ?
 		  AND ((from_source = ? AND from_external_id = ?) OR (to_source = ? AND to_external_id = ?))
 		ORDER BY asserted_external_id`,
-		kind.SourceLegacy, id.Source, id.ExternalID, id.Source, id.ExternalID)
+		record.SourceLegacy, id.Source, id.ExternalID, id.Source, id.ExternalID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	records := []record.Identity{}
 	for rows.Next() {
-		legacy := identityOf(kind.SourceLegacy, "")
+		legacy := identityOf(record.SourceLegacy, "")
 		if err := rows.Scan(&legacy.ExternalID); err != nil {
 			return nil, err
 		}
@@ -181,7 +178,7 @@ func isKeyedBy(id, old record.Identity) bool {
 	switch {
 	case id.ExternalID == old.String():
 		return true
-	case id.Source != kind.SourceAP:
+	case id.Source != record.SourceAP:
 		return false
 	case id.ExternalID == apFieldsPrefix+old.String():
 		return true
@@ -242,11 +239,11 @@ func (s *Store) rekeyRecord(ctx context.Context, tx *sql.Tx, id, old, key record
 }
 
 func isLinkEdit(id record.Identity) bool {
-	return id.Source == kind.SourceAP && strings.HasPrefix(id.ExternalID, apLinkPrefix)
+	return id.Source == record.SourceAP && strings.HasPrefix(id.ExternalID, apLinkPrefix)
 }
 
 func namesIdentitiesInItsData(id record.Identity) bool {
-	return id.Source == kind.SourceMatched || id.Source == kind.SourceLegacy || isLinkEdit(id)
+	return id.Source == record.SourceMatched || id.Source == record.SourceLegacy || isLinkEdit(id)
 }
 
 func renamedInData(data json.RawMessage, old, key record.Identity) (json.RawMessage, error) {

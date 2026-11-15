@@ -7,8 +7,9 @@ import (
 	"maps"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func ranksIn(t *testing.T, s *store.Store, kindName string) map[int64]int {
@@ -47,8 +48,8 @@ func TestAFilmFoundToBeASeriesMovesWithItsEntry(t *testing.T) {
 	ranked := watched(kind.Series, "Ranked Series", "a")
 	namesake := watched(kind.Series, "Ripley", "s")
 
-	err := s.Identify(ctx, ripley, store.Identity{Kind: kind.Series, Source: kind.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)},
-		[]string{kind.SourceTMDB, kind.SourceTMDBSeries})
+	err := s.Identify(ctx, ripley, store.Identity{Kind: kind.Series, Source: record.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)},
+		[]string{record.SourceTMDB, record.SourceTMDBSeries})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +70,7 @@ func TestAFilmFoundToBeASeriesMovesWithItsEntry(t *testing.T) {
 	if got, want := ranksIn(t, s, kind.Series), map[int64]int{namesake: 1, ranked: 2, ripley: 3}; !maps.Equal(got, want) {
 		t.Errorf("series = %v, want %v", got, want)
 	}
-	if found, err := s.FindByIdentity(ctx, kind.SourceTMDBSeries, "94028"); err != nil || found != ripley {
+	if found, err := s.FindByIdentity(ctx, record.SourceTMDBSeries, "94028"); err != nil || found != ripley {
 		t.Errorf("identity: %d %v", found, err)
 	}
 }
@@ -77,10 +78,10 @@ func TestAFilmFoundToBeASeriesMovesWithItsEntry(t *testing.T) {
 func TestAnIdentityAnotherItemHasIsRefused(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	added, _ := s.CreateItemFromSource(ctx, kind.Series, "Ripley", kind.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028}`))
+	added, _ := s.CreateItemFromSource(ctx, kind.Series, "Ripley", record.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028}`))
 	film, _ := s.CreateItem(ctx, kind.Movie, "Ripley", nil)
 
-	err := s.Identify(ctx, film, store.Identity{Kind: kind.Series, Source: kind.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028}`)}, nil)
+	err := s.Identify(ctx, film, store.Identity{Kind: kind.Series, Source: record.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028}`)}, nil)
 	if !errors.Is(err, store.ErrConflict) {
 		t.Fatalf("err = %v", err)
 	}
@@ -95,7 +96,7 @@ func TestAnIdentityAnotherItemHasIsRefused(t *testing.T) {
 func TestASeriesWhoseStatusAFilmCannotHaveIsNotMovedToFilms(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	series, err := s.CreateItemFromSource(ctx, kind.Series, "Ripley", kind.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028,"name":"Ripley"}`))
+	series, err := s.CreateItemFromSource(ctx, kind.Series, "Ripley", record.SourceTMDBSeries, "94028", json.RawMessage(`{"id":94028,"name":"Ripley"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,8 +104,8 @@ func TestASeriesWhoseStatusAFilmCannotHaveIsNotMovedToFilms(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = s.Identify(ctx, series, store.Identity{Kind: kind.Movie, Source: kind.SourceTMDB, ExternalID: "603", Data: json.RawMessage(matrix)},
-		[]string{kind.SourceTMDB, kind.SourceTMDBSeries})
+	err = s.Identify(ctx, series, store.Identity{Kind: kind.Movie, Source: record.SourceTMDB, ExternalID: "603", Data: json.RawMessage(matrix)},
+		[]string{record.SourceTMDB, record.SourceTMDBSeries})
 	if !errors.Is(err, store.ErrInvalid) {
 		t.Fatalf("err = %v, want ErrInvalid", err)
 	}
@@ -119,7 +120,7 @@ func TestASeriesWhoseStatusAFilmCannotHaveIsNotMovedToFilms(t *testing.T) {
 	if _, kept := claimsStored(t, d)["tmdb-tv:94028"]; !kept {
 		t.Error("the tmdb-tv claim was removed")
 	}
-	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDBSeries, "94028"); err != nil || owner != series {
+	if owner, err := s.FindByIdentity(ctx, record.SourceTMDBSeries, "94028"); err != nil || owner != series {
 		t.Errorf("tmdb-tv:94028 belongs to %d, %v", owner, err)
 	}
 }

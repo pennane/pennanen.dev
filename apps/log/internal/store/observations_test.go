@@ -6,18 +6,19 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func TestItemsLastObservedAs(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	a, err := s.KnowItemFromSource(ctx, kind.Album, "A", kind.SourceSpotifyAlbum, "a", map[string]string{})
+	a, err := s.KnowItemFromSource(ctx, kind.Album, "A", record.SourceSpotifyAlbum, "a", map[string]string{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := s.KnowItemFromSource(ctx, kind.Album, "B", kind.SourceSpotifyAlbum, "b", map[string]string{})
+	b, err := s.KnowItemFromSource(ctx, kind.Album, "B", record.SourceSpotifyAlbum, "b", map[string]string{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,11 +44,11 @@ func TestItemsLastObservedAs(t *testing.T) {
 func TestNewestSnapshotIsByDay(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	older, err := s.KnowItemFromSource(ctx, kind.Artist, "Older", kind.SourceSpotifyArtist, "older", map[string]string{})
+	older, err := s.KnowItemFromSource(ctx, kind.Artist, "Older", record.SourceSpotifyArtist, "older", map[string]string{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	newer, err := s.KnowItemFromSource(ctx, kind.Artist, "Newer", kind.SourceSpotifyArtist, "newer", map[string]string{})
+	newer, err := s.KnowItemFromSource(ctx, kind.Artist, "Newer", record.SourceSpotifyArtist, "newer", map[string]string{})
 	if err != nil {
 		t.Fatal(err)
 	}

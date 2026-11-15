@@ -8,13 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"slices"
 	"strings"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
-	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 )
 
 const (
@@ -62,7 +61,7 @@ const (
 )
 
 func Open(db *sql.DB) *Store {
-	records := record.New(db, verdict.ReadRecord, verdict.ReadersVersion)
+	records := record.New(db, reading.ReadRecord, reading.ReadersVersion)
 	return New(db, records, world.New(db, records))
 }
 
@@ -71,7 +70,7 @@ func identityOf(source, externalID string) record.Identity {
 }
 
 func apIdentity(prefix string, parts ...string) record.Identity {
-	return identityOf(kind.SourceAP, prefix+strings.Join(parts, "/"))
+	return identityOf(record.SourceAP, prefix+strings.Join(parts, "/"))
 }
 
 func handMadeIdentity() (record.Identity, error) {
@@ -83,7 +82,7 @@ func handMadeIdentity() (record.Identity, error) {
 }
 
 func matchedIdentity(id record.Identity) record.Identity {
-	return identityOf(kind.SourceMatched, id.String())
+	return identityOf(record.SourceMatched, id.String())
 }
 
 func matchAnswerIdentity(source string, key record.Identity) record.Identity {
@@ -166,7 +165,7 @@ func conflictOver(id record.Identity) error {
 }
 
 func aboutOf(id record.Identity, raw json.RawMessage) []record.Identity {
-	reading, readability := verdict.ReadRecord(id.Source, raw)
+	reading, readability := reading.ReadRecord(id.Source, raw)
 	if readability == record.Unreadable {
 		return nil
 	}
@@ -174,7 +173,7 @@ func aboutOf(id record.Identity, raw json.RawMessage) []record.Identity {
 	if err := json.Unmarshal(reading, &values); err != nil {
 		return nil
 	}
-	return verdict.Derive(id, values).About
+	return world.Derive(id, values).About
 }
 
 func (s *Store) requireLanded(ctx context.Context, q queryer, itemID int64, id record.Identity) error {

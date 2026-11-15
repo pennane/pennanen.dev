@@ -2,8 +2,7 @@ package store
 
 import (
 	"context"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func (s *Store) PartsOf(ctx context.Context, wholeID int64) ([]int64, error) {

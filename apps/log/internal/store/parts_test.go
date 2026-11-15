@@ -8,8 +8,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const twoTrackAlbum = `{"id":"%s","name":"Beta","artists":[{"id":"Y","name":"Yara"}],
@@ -19,18 +20,18 @@ func TestALinkTwoRecordsAssertIsOnePartAndOneRelation(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
 	yara := knowArtist(t, s, "Y", "Yara")
-	album, err := s.CreateItemFromSource(ctx, kind.Album, "Beta", kind.SourceSpotifyAlbum, "B", json.RawMessage(albumWithID("B")))
+	album, err := s.CreateItemFromSource(ctx, kind.Album, "Beta", record.SourceSpotifyAlbum, "B", json.RawMessage(albumWithID("B")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaim(ctx, album, kind.SourceSpotifyAlbum, "B2", json.RawMessage(albumWithID("B2"))); err != nil {
+	if err := s.PutClaim(ctx, album, record.SourceSpotifyAlbum, "B2", json.RawMessage(albumWithID("B2"))); err != nil {
 		t.Fatal(err)
 	}
-	first, err := s.KnowItemFromSource(ctx, kind.Track, "First", kind.SourceSpotifyTrack, "I1", json.RawMessage(`{"id":"t1","name":"First"}`))
+	first, err := s.KnowItemFromSource(ctx, kind.Track, "First", record.SourceSpotifyTrack, "I1", json.RawMessage(`{"id":"t1","name":"First"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := s.KnowItemFromSource(ctx, kind.Track, "Second", kind.SourceSpotifyTrack, "I2", json.RawMessage(`{"id":"t2","name":"Second"}`))
+	second, err := s.KnowItemFromSource(ctx, kind.Track, "Second", record.SourceSpotifyTrack, "I2", json.RawMessage(`{"id":"t2","name":"Second"}`))
 	if err != nil {
 		t.Fatal(err)
 	}

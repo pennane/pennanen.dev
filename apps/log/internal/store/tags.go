@@ -3,8 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 )
 
 type TagPresence int
@@ -23,7 +22,7 @@ const (
 )
 
 func (s *Store) SetTagFromSource(ctx context.Context, itemID int64, source, tag string, presence TagPresence) (TagOutcome, error) {
-	if source == kind.SourceAP {
+	if source == record.SourceAP {
 		return "", fmt.Errorf("%w: ap tags by changing the entry", ErrInvalid)
 	}
 	tag = NormalizeTag(tag)

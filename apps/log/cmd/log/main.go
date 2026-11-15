@@ -12,22 +12,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/adopt"
 	"github.com/pennane/pennanen.dev/apps/log/internal/api"
-	"github.com/pennane/pennanen.dev/apps/log/internal/backup"
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
-	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
-	"github.com/pennane/pennanen.dev/apps/log/internal/images"
-	"github.com/pennane/pennanen.dev/apps/log/internal/jobs"
-	"github.com/pennane/pennanen.dev/apps/log/internal/letterboxd"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/backup"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/images"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/jobs"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/revalidate"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/revalidate"
-	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
-	"github.com/pennane/pennanen.dev/apps/log/internal/steam"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/igdb"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/letterboxd"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/spotify"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/steam"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/tmdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
-	"github.com/pennane/pennanen.dev/apps/log/internal/tmdb"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world"
 )
 
@@ -48,14 +47,8 @@ func run() error {
 		return fmt.Errorf("open database: %w", err)
 	}
 	defer database.Close()
-	records := record.New(database, verdict.ReadRecord, verdict.ReadersVersion)
+	records := record.New(database, reading.ReadRecord, reading.ReadersVersion)
 	derived := world.New(database, records)
-	adoption, err := adopt.Run(ctx, database, records, derived)
-	if err != nil {
-		return fmt.Errorf("adopt legacy data: %w", err)
-	}
-	slog.Info("legacy data adoption", "outcome", adoption.Outcome, "items", adoption.Items, "claims", adoption.Claims,
-		"observations", adoption.Observations, "links", adoption.Links, "overlaps", adoption.Overlaps)
 	st := store.New(database, records, derived)
 	reread, err := st.RereadClaims(ctx)
 	if err != nil {

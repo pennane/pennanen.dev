@@ -3,10 +3,8 @@ package world
 import (
 	"context"
 	"errors"
-	"slices"
-
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
+	"slices"
 )
 
 type Release string
@@ -61,7 +59,7 @@ func (w *World) heldByARecordOn(ctx context.Context, q record.Queryer, itemID in
 		return "", err
 	}
 	for _, r := range readings {
-		if slices.Contains(verdict.Derive(r.Identity, r.Values).About, id) {
+		if slices.Contains(Derive(r.Identity, r.Values).About, id) {
 			return StillHeld, nil
 		}
 	}

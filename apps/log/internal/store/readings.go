@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 	"log/slog"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 func (s *Store) RereadClaims(ctx context.Context) (int, error) {
@@ -25,12 +25,12 @@ func (s *Store) RereadClaims(ctx context.Context) (int, error) {
 	return reread, nil
 }
 
-func (s *Store) readingsByItem(ctx context.Context, byID map[int64]*ItemView) (map[int64][]verdict.Reading, error) {
+func (s *Store) readingsByItem(ctx context.Context, byID map[int64]*ItemView) (map[int64][]reading.Reading, error) {
 	ids := make([]int64, 0, len(byID))
 	for id := range byID {
 		ids = append(ids, id)
 	}
-	byItem := map[int64][]verdict.Reading{}
+	byItem := map[int64][]reading.Reading{}
 	err := forChunks(ids, func(chunk []int64) error {
 		rows, err := s.db.QueryContext(ctx, `
 			SELECT i.item_id, r.source, r.external_id, c.fetched_at, r.reading

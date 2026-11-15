@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"strings"
 )
 
 type Observation struct {

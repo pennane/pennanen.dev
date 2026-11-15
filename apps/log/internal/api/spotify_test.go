@@ -12,8 +12,8 @@ import (
 	"testing"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/api"
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
-	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/spotify"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 )
 

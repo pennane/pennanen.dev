@@ -13,11 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 )
 
 type fixture struct {
@@ -36,7 +37,7 @@ func newFixture(t *testing.T) *fixture {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	records := record.New(d, verdict.ReadRecord, verdict.ReadersVersion)
+	records := record.New(d, reading.ReadRecord, reading.ReadersVersion)
 	return &fixture{
 		t:       t,
 		ctx:     context.Background(),
@@ -285,10 +286,10 @@ func TestTheOverrideWinsThenSourcesInRank(t *testing.T) {
 	f.settle(steam, override)
 
 	got := f.decided(f.itemOf(steam)).verdicts
-	if got.Values["playtime_minutes"] != float64(20) || got.SourceOf["playtime_minutes"] != kind.SourceAP {
+	if got.Values["playtime_minutes"] != float64(20) || got.SourceOf["playtime_minutes"] != record.SourceAP {
 		t.Fatalf("playtime = %v from %s", got.Values["playtime_minutes"], got.SourceOf["playtime_minutes"])
 	}
-	if got.Values["title"] != "Half-Life 2" || got.SourceOf["title"] != kind.SourceSteam {
+	if got.Values["title"] != "Half-Life 2" || got.SourceOf["title"] != record.SourceSteam {
 		t.Fatalf("title = %v from %s", got.Values["title"], got.SourceOf["title"])
 	}
 }
@@ -305,7 +306,7 @@ func TestTwoApRecordsOnOneItemBothCount(t *testing.T) {
 		t.Fatalf("no match on %d, want %d", f.itemOf(noMatch), itemID)
 	}
 	got := f.decided(itemID).verdicts
-	if got.Values["title"] != "Mine" || got.SourceOf["title"] != kind.SourceAP {
+	if got.Values["title"] != "Mine" || got.SourceOf["title"] != record.SourceAP {
 		t.Fatalf("title = %v from %s", got.Values["title"], got.SourceOf["title"])
 	}
 }

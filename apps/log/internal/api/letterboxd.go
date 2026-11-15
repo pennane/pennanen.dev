@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/letterboxd"
-	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
-	"github.com/pennane/pennanen.dev/apps/log/internal/tmdb"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/letterboxd"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/tmdb"
 )
 
 const (

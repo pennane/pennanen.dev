@@ -8,12 +8,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const reloaded = `{"id":604,"title":"The Matrix Reloaded","release_date":"2003-05-15"}`
@@ -21,25 +21,25 @@ const reloaded = `{"id":604,"title":"The Matrix Reloaded","release_date":"2003-0
 func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 	corrections := map[string]func(s *store.Store, item int64) error{
 		"identify": func(s *store.Store, item int64) error {
-			return s.Identify(context.Background(), item, store.Identity{Kind: kind.Movie, Source: kind.SourceTMDB, ExternalID: "604", Data: json.RawMessage(reloaded)},
-				[]string{kind.SourceTMDB, kind.SourceTMDBSeries})
+			return s.Identify(context.Background(), item, store.Identity{Kind: kind.Movie, Source: record.SourceTMDB, ExternalID: "604", Data: json.RawMessage(reloaded)},
+				[]string{record.SourceTMDB, record.SourceTMDBSeries})
 		},
 		"a pick": func(s *store.Store, item int64) error {
-			return s.AnswerMatch(context.Background(), item, kind.SourceTMDB, "604", json.RawMessage(reloaded))
+			return s.AnswerMatch(context.Background(), item, record.SourceTMDB, "604", json.RawMessage(reloaded))
 		},
 	}
 	for name, correct := range corrections {
 		t.Run(name, func(t *testing.T) {
 			ctx := context.Background()
 			s, d := openStoreWithDB(t)
-			corrected, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", kind.SourceTMDB, "603", json.RawMessage(matrix))
+			corrected, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", record.SourceTMDB, "603", json.RawMessage(matrix))
 			if err != nil {
 				t.Fatal(err)
 			}
 			if err := s.ChangeOverride(ctx, corrected, map[string]any{"title": "Reloaded, by ap"}); err != nil {
 				t.Fatal(err)
 			}
-			if err := s.PutClaim(ctx, corrected, kind.SourceLetterboxdTake, "", json.RawMessage(`{"review":"twice as long"}`)); err != nil {
+			if err := s.PutClaim(ctx, corrected, record.SourceLetterboxdTake, "", json.RawMessage(`{"review":"twice as long"}`)); err != nil {
 				t.Fatal(err)
 			}
 			other, err := s.CreateItem(ctx, kind.Movie, "Animatrix", nil)
@@ -50,7 +50,7 @@ func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 			if err := s.AddRelation(ctx, with); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := s.Observe(ctx, store.Observation{ItemID: corrected, Source: kind.SourceLetterboxd, Signal: "watched", Key: "watched-once", ObservedAt: "2026-11-01", Data: json.RawMessage(`{}`)}); err != nil {
+			if _, err := s.Observe(ctx, store.Observation{ItemID: corrected, Source: record.SourceLetterboxd, Signal: "watched", Key: "watched-once", ObservedAt: "2026-11-01", Data: json.RawMessage(`{}`)}); err != nil {
 				t.Fatal(err)
 			}
 
@@ -58,10 +58,10 @@ func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "603"); !errors.Is(err, store.ErrNotFound) {
+			if owner, err := s.FindByIdentity(ctx, record.SourceTMDB, "603"); !errors.Is(err, store.ErrNotFound) {
 				t.Errorf("tmdb:603 still belongs to %d, %v", owner, err)
 			}
-			if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "604"); err != nil || owner != corrected {
+			if owner, err := s.FindByIdentity(ctx, record.SourceTMDB, "604"); err != nil || owner != corrected {
 				t.Errorf("tmdb:604 belongs to %d, %v; want %d", owner, err, corrected)
 			}
 			claims := claimsStored(t, d)
@@ -86,25 +86,25 @@ func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 				t.Errorf("ap's link edit was lost: %v", relationsOf(t, s, corrected))
 			}
 
-			if watched, err := s.Observations(ctx, corrected, kind.SourceLetterboxd, "watched"); err != nil || len(watched) != 1 {
+			if watched, err := s.Observations(ctx, corrected, record.SourceLetterboxd, "watched"); err != nil || len(watched) != 1 {
 				t.Errorf("observations on the corrected item = %v, %v", watched, err)
 			}
 
-			real, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", kind.SourceTMDB, "603", json.RawMessage(matrix))
+			real, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", record.SourceTMDB, "603", json.RawMessage(matrix))
 			if err != nil {
 				t.Fatalf("the real tmdb:603 can't be added: %v", err)
 			}
 			if real == corrected {
 				t.Fatal("the real tmdb:603 landed on the corrected item")
 			}
-			found, err := s.FindByIdentity(ctx, kind.SourceTMDB, "603")
+			found, err := s.FindByIdentity(ctx, record.SourceTMDB, "603")
 			if err != nil || found != real {
 				t.Fatalf("tmdb:603 belongs to %d, %v; want %d", found, err, real)
 			}
-			if err := s.PutClaim(ctx, found, kind.SourceLetterboxd, "2bg8", json.RawMessage(`{"id":"2bg8","title":"The Matrix","tmdbId":603}`)); err != nil {
+			if err := s.PutClaim(ctx, found, record.SourceLetterboxd, "2bg8", json.RawMessage(`{"id":"2bg8","title":"The Matrix","tmdbId":603}`)); err != nil {
 				t.Fatal(err)
 			}
-			if owner, err := s.FindByIdentity(ctx, kind.SourceLetterboxd, "2bg8"); err != nil || owner != real {
+			if owner, err := s.FindByIdentity(ctx, record.SourceLetterboxd, "2bg8"); err != nil || owner != real {
 				t.Errorf("the letterboxd film belongs to %d, %v; want %d", owner, err, real)
 			}
 			fresh, err := s.GetItem(ctx, real)
@@ -117,7 +117,7 @@ func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 			if got := relationsOf(t, s, real); len(got) != 0 {
 				t.Errorf("ap's link edit followed the freed identity: %v", got)
 			}
-			if watched, err := s.Observations(ctx, real, kind.SourceLetterboxd, "watched"); err != nil || len(watched) != 0 {
+			if watched, err := s.Observations(ctx, real, record.SourceLetterboxd, "watched"); err != nil || len(watched) != 0 {
 				t.Errorf("observations followed the freed identity: %v, %v", watched, err)
 			}
 		})
@@ -127,22 +127,22 @@ func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 func TestNoMatchOnTheKeyRekeysOntoTheNextIdentity(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	game, err := s.CreateItemFromSource(ctx, kind.Game, "Wrong", kind.SourceIGDB, "7", json.RawMessage(`{"id":7,"name":"Wrong"}`))
+	game, err := s.CreateItemFromSource(ctx, kind.Game, "Wrong", record.SourceIGDB, "7", json.RawMessage(`{"id":7,"name":"Wrong"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaim(ctx, game, kind.SourceSteam, "220", json.RawMessage(`{"appid":220,"name":"Half-Life 2"}`)); err != nil {
+	if err := s.PutClaim(ctx, game, record.SourceSteam, "220", json.RawMessage(`{"appid":220,"name":"Half-Life 2"}`)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.ChangeOverride(ctx, game, map[string]any{"title": "HL2"}); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := s.AnswerNoMatch(ctx, game, kind.SourceIGDB); err != nil {
+	if err := s.AnswerNoMatch(ctx, game, record.SourceIGDB); err != nil {
 		t.Fatal(err)
 	}
 
-	if owner, err := s.FindByIdentity(ctx, kind.SourceIGDB, "7"); !errors.Is(err, store.ErrNotFound) {
+	if owner, err := s.FindByIdentity(ctx, record.SourceIGDB, "7"); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("igdb:7 still belongs to %d, %v", owner, err)
 	}
 	claims := claimsStored(t, d)
@@ -161,7 +161,7 @@ func TestNoMatchOnTheKeyRekeysOntoTheNextIdentity(t *testing.T) {
 	if v.Verdicts.Values["title"] != "HL2" {
 		t.Errorf("verdicts = %v", v.Verdicts.Values)
 	}
-	other, err := s.CreateItemFromSource(ctx, kind.Game, "Wrong", kind.SourceIGDB, "7", json.RawMessage(`{"id":7,"name":"Wrong"}`))
+	other, err := s.CreateItemFromSource(ctx, kind.Game, "Wrong", record.SourceIGDB, "7", json.RawMessage(`{"id":7,"name":"Wrong"}`))
 	if err != nil || other == game {
 		t.Errorf("igdb:7 can't be added on its own: %d, %v", other, err)
 	}
@@ -170,19 +170,19 @@ func TestNoMatchOnTheKeyRekeysOntoTheNextIdentity(t *testing.T) {
 func TestACorrectedKeyAnotherSourceStillNamesStaysHeld(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	film, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", kind.SourceTMDB, "603", json.RawMessage(matrix))
+	film, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", record.SourceTMDB, "603", json.RawMessage(matrix))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaim(ctx, film, kind.SourceLetterboxd, "2bg8", json.RawMessage(`{"id":"2bg8","title":"The Matrix","tmdbId":603}`)); err != nil {
+	if err := s.PutClaim(ctx, film, record.SourceLetterboxd, "2bg8", json.RawMessage(`{"id":"2bg8","title":"The Matrix","tmdbId":603}`)); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := s.AnswerMatch(ctx, film, kind.SourceTMDB, "604", json.RawMessage(reloaded)); err != nil {
+	if err := s.AnswerMatch(ctx, film, record.SourceTMDB, "604", json.RawMessage(reloaded)); err != nil {
 		t.Fatal(err)
 	}
 
-	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "603"); err != nil || owner != film {
+	if owner, err := s.FindByIdentity(ctx, record.SourceTMDB, "603"); err != nil || owner != film {
 		t.Errorf("tmdb:603 belongs to %d, %v; want %d while letterboxd names it", owner, err, film)
 	}
 	if _, kept := claimsStored(t, d)["ap:match/tmdb/tmdb:603"]; !kept {
@@ -197,10 +197,10 @@ func TestRekeyingRewritesTheLegacyRecordsNamingTheKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { d.Close() })
-	records := record.New(d, verdict.ReadRecord, verdict.ReadersVersion)
+	records := record.New(d, reading.ReadRecord, reading.ReadersVersion)
 	w := world.New(d, records)
 	s := store.New(d, records, w)
-	film, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", kind.SourceTMDB, "603", json.RawMessage(matrix))
+	film, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", record.SourceTMDB, "603", json.RawMessage(matrix))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,8 +213,8 @@ func TestRekeyingRewritesTheLegacyRecordsNamingTheKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	adopted := map[record.Identity]string{
-		{Source: kind.SourceLegacy, ExternalID: "item/1"}: `{"about":["tmdb:603"],"links":[{"from":"tmdb:603","type":"with","to":"` + otherKey.String() + `"}]}`,
-		{Source: kind.SourceLegacy, ExternalID: "item/2"}: `{"about":["` + otherKey.String() + `"],"links":[{"from":"` + otherKey.String() + `","type":"by","to":"tmdb:603"}]}`,
+		{Source: record.SourceLegacy, ExternalID: "item/1"}: `{"about":["tmdb:603"],"links":[{"from":"tmdb:603","type":"with","to":"` + otherKey.String() + `"}]}`,
+		{Source: record.SourceLegacy, ExternalID: "item/2"}: `{"about":["` + otherKey.String() + `"],"links":[{"from":"` + otherKey.String() + `","type":"by","to":"tmdb:603"}]}`,
 	}
 	tx, err := d.BeginTx(ctx, nil)
 	if err != nil {
@@ -234,7 +234,7 @@ func TestRekeyingRewritesTheLegacyRecordsNamingTheKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := s.Identify(ctx, film, store.Identity{Kind: kind.Movie, Source: kind.SourceTMDB, ExternalID: "604", Data: json.RawMessage(reloaded)}, []string{kind.SourceTMDB}); err != nil {
+	if err := s.Identify(ctx, film, store.Identity{Kind: kind.Movie, Source: record.SourceTMDB, ExternalID: "604", Data: json.RawMessage(reloaded)}, []string{record.SourceTMDB}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -247,13 +247,13 @@ func TestRekeyingRewritesTheLegacyRecordsNamingTheKey(t *testing.T) {
 			t.Errorf("%s = %v, want %v", id, got, data)
 		}
 	}
-	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "603"); !errors.Is(err, store.ErrNotFound) {
+	if owner, err := s.FindByIdentity(ctx, record.SourceTMDB, "603"); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("tmdb:603 still belongs to %d, %v", owner, err)
 	}
 	if _, related := relationsOf(t, s, film)[store.Relation{FromID: film, Type: kind.LinkWith, ToID: other}]; !related {
 		t.Errorf("film relations = %v", relationsOf(t, s, film))
 	}
-	real, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", kind.SourceTMDB, "603", json.RawMessage(matrix))
+	real, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", record.SourceTMDB, "603", json.RawMessage(matrix))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,17 +266,17 @@ func TestAKeyAnotherItemsClaimLinksToStaysHeld(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
 	artist := knowArtist(t, s, "X", "Slowdive", "shoegaze")
-	album, err := s.CreateItemFromSource(ctx, kind.Album, "Souvlaki", kind.SourceSpotifyAlbum, "V",
+	album, err := s.CreateItemFromSource(ctx, kind.Album, "Souvlaki", record.SourceSpotifyAlbum, "V",
 		json.RawMessage(`{"id":"V","name":"Souvlaki","artists":[{"id":"X","name":"Slowdive"}]}`))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := s.AnswerMatch(ctx, artist, kind.SourceSpotifyArtist, "Y", json.RawMessage(`{"id":"Y","name":"Slowdive","genres":["shoegaze"]}`)); err != nil {
+	if err := s.AnswerMatch(ctx, artist, record.SourceSpotifyArtist, "Y", json.RawMessage(`{"id":"Y","name":"Slowdive","genres":["shoegaze"]}`)); err != nil {
 		t.Fatal(err)
 	}
 
-	if owner, err := s.FindByIdentity(ctx, kind.SourceSpotifyArtist, "X"); err != nil || owner != artist {
+	if owner, err := s.FindByIdentity(ctx, record.SourceSpotifyArtist, "X"); err != nil || owner != artist {
 		t.Errorf("spotify-artist:X belongs to %d, %v; want %d while the album links to it", owner, err, artist)
 	}
 	if _, kept := claimsStored(t, d)["ap:match/spotify-artist/spotify-artist:X"]; !kept {
@@ -295,7 +295,7 @@ func TestAKeyAnotherItemsClaimLinksToStaysHeld(t *testing.T) {
 func TestARekeyThatWouldOverwriteARecordIsRefusedAndRolledBack(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	film, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", kind.SourceTMDB, "603", json.RawMessage(matrix))
+	film, err := s.CreateItemFromSource(ctx, kind.Movie, "The Matrix", record.SourceTMDB, "603", json.RawMessage(matrix))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,15 +304,15 @@ func TestARekeyThatWouldOverwriteARecordIsRefusedAndRolledBack(t *testing.T) {
 	}
 	before := claimsStored(t, d)
 
-	err = s.Identify(ctx, film, store.Identity{Kind: kind.Movie, Source: kind.SourceTMDB, ExternalID: "604", Data: json.RawMessage(reloaded)}, []string{kind.SourceTMDB})
+	err = s.Identify(ctx, film, store.Identity{Kind: kind.Movie, Source: record.SourceTMDB, ExternalID: "604", Data: json.RawMessage(reloaded)}, []string{record.SourceTMDB})
 	if !errors.Is(err, store.ErrConflict) {
 		t.Fatalf("err = %v, want ErrConflict", err)
 	}
 
-	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "603"); err != nil || owner != film {
+	if owner, err := s.FindByIdentity(ctx, record.SourceTMDB, "603"); err != nil || owner != film {
 		t.Errorf("tmdb:603 belongs to %d, %v; want %d", owner, err, film)
 	}
-	if owner, err := s.FindByIdentity(ctx, kind.SourceTMDB, "604"); !errors.Is(err, store.ErrNotFound) {
+	if owner, err := s.FindByIdentity(ctx, record.SourceTMDB, "604"); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("tmdb:604 belongs to %d, %v", owner, err)
 	}
 	if after := claimsStored(t, d); !reflect.DeepEqual(after, before) {

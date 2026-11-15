@@ -2,10 +2,10 @@ package store
 
 import (
 	"errors"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 	"maps"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 var (
@@ -79,7 +79,7 @@ type ItemView struct {
 	Entry     *Entry           `json:"entry"`
 	Hint      kind.Hint        `json:"hint,omitempty"`
 	Takes     []TakeView       `json:"takes"`
-	Claims    []verdict.Claim  `json:"claims,omitempty"`
+	Claims    []reading.Claim  `json:"claims,omitempty"`
 	Relations []Relation       `json:"relations,omitempty"`
 }
 

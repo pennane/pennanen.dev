@@ -7,8 +7,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func rankedGames(t *testing.T, s *store.Store, titles ...string) map[string]int64 {

@@ -5,10 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"math"
 	"slices"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 )
 
 const AtBottom = math.MaxInt

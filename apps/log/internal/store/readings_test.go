@@ -7,10 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 func openStoreWithDB(t *testing.T) (*store.Store, *sql.DB) {
@@ -62,17 +63,17 @@ func readingVersions(t *testing.T, d *sql.DB, itemID int64) map[string]int {
 
 func TestAClaimIsReadWhenWritten(t *testing.T) {
 	s, d := openStoreWithDB(t)
-	id := loggedMovie(t, s, kind.SourceTMDB, matrix)
-	if got := readingVersions(t, d, id); got[kind.SourceTMDB] != verdict.ReadersVersion {
-		t.Errorf("readings = %v, want tmdb at version %d", got, verdict.ReadersVersion)
+	id := loggedMovie(t, s, record.SourceTMDB, matrix)
+	if got := readingVersions(t, d, id); got[record.SourceTMDB] != reading.ReadersVersion {
+		t.Errorf("readings = %v, want tmdb at version %d", got, reading.ReadersVersion)
 	}
 }
 
 func TestListsDecideFromReadingsAlone(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	id := loggedMovie(t, s, kind.SourceTMDB, matrix)
-	if _, err := d.Exec(`UPDATE record_claim SET data = '{}' WHERE source = ? AND external_id = ?`, kind.SourceTMDB, "603"); err != nil {
+	id := loggedMovie(t, s, record.SourceTMDB, matrix)
+	if _, err := d.Exec(`UPDATE record_claim SET data = '{}' WHERE source = ? AND external_id = ?`, record.SourceTMDB, "603"); err != nil {
 		t.Fatal(err)
 	}
 	views, err := s.ListItems(ctx, store.ItemFilter{})
@@ -94,17 +95,17 @@ func TestListsDecideFromReadingsAlone(t *testing.T) {
 func TestRereadFillsMissingAndOldReadings(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	id := loggedMovie(t, s, kind.SourceTMDB, matrix)
-	if err := s.PutClaim(ctx, id, kind.SourceLetterboxd, "abc", json.RawMessage(`{"id":"abc","title":"The Matrix","year":1999}`)); err != nil {
+	id := loggedMovie(t, s, record.SourceTMDB, matrix)
+	if err := s.PutClaim(ctx, id, record.SourceLetterboxd, "abc", json.RawMessage(`{"id":"abc","title":"The Matrix","year":1999}`)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.ChangeOverride(ctx, id, map[string]any{"title": "Matrix"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Exec(`DELETE FROM record_reading WHERE source = ? AND external_id = ?`, kind.SourceTMDB, "603"); err != nil {
+	if _, err := d.Exec(`DELETE FROM record_reading WHERE source = ? AND external_id = ?`, record.SourceTMDB, "603"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Exec(`UPDATE record_reading SET version = 0 WHERE source = ? AND external_id = ?`, kind.SourceLetterboxd, "abc"); err != nil {
+	if _, err := d.Exec(`UPDATE record_reading SET version = 0 WHERE source = ? AND external_id = ?`, record.SourceLetterboxd, "abc"); err != nil {
 		t.Fatal(err)
 	}
 	reread, err := s.RereadClaims(ctx)
@@ -115,9 +116,9 @@ func TestRereadFillsMissingAndOldReadings(t *testing.T) {
 		t.Errorf("re-read %d claims, want 2", reread)
 	}
 	got := readingVersions(t, d, id)
-	for _, source := range []string{kind.SourceTMDB, kind.SourceLetterboxd, kind.SourceAP} {
-		if got[source] != verdict.ReadersVersion {
-			t.Errorf("%s reading version = %d, want %d", source, got[source], verdict.ReadersVersion)
+	for _, source := range []string{record.SourceTMDB, record.SourceLetterboxd, record.SourceAP} {
+		if got[source] != reading.ReadersVersion {
+			t.Errorf("%s reading version = %d, want %d", source, got[source], reading.ReadersVersion)
 		}
 	}
 	again, err := s.RereadClaims(ctx)
@@ -150,8 +151,8 @@ func TestRereadWalksPastBatches(t *testing.T) {
 func TestAnUnreadableClaimHasNoReading(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	id := loggedMovie(t, s, kind.SourceTMDB, matrix)
-	if err := s.PutClaim(ctx, id, kind.SourceTMDB, "603", json.RawMessage(`[1]`)); err != nil {
+	id := loggedMovie(t, s, record.SourceTMDB, matrix)
+	if err := s.PutClaim(ctx, id, record.SourceTMDB, "603", json.RawMessage(`[1]`)); err != nil {
 		t.Fatal(err)
 	}
 	if got := readingVersions(t, d, id); len(got) != 0 {
@@ -169,13 +170,13 @@ func TestAnUnreadableClaimHasNoReading(t *testing.T) {
 func TestRemovingAClaimRemovesItsReading(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	id := loggedMovie(t, s, kind.SourceTMDB, matrix)
-	identity := store.Identity{Kind: kind.Series, Source: kind.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)}
-	if err := s.Identify(ctx, id, identity, []string{kind.SourceTMDB, kind.SourceTMDBSeries}); err != nil {
+	id := loggedMovie(t, s, record.SourceTMDB, matrix)
+	identity := store.Identity{Kind: kind.Series, Source: record.SourceTMDBSeries, ExternalID: "94028", Data: json.RawMessage(`{"id":94028,"name":"Ripley"}`)}
+	if err := s.Identify(ctx, id, identity, []string{record.SourceTMDB, record.SourceTMDBSeries}); err != nil {
 		t.Fatal(err)
 	}
 	got := readingVersions(t, d, id)
-	if _, stale := got[kind.SourceTMDB]; stale || got[kind.SourceTMDBSeries] != verdict.ReadersVersion {
+	if _, stale := got[record.SourceTMDB]; stale || got[record.SourceTMDBSeries] != reading.ReadersVersion {
 		t.Errorf("readings = %v, want only tmdb-series", got)
 	}
 }
@@ -183,11 +184,11 @@ func TestRemovingAClaimRemovesItsReading(t *testing.T) {
 func TestListedTakesKeepTheirClaimsFetchTime(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
-	id := loggedMovie(t, s, kind.SourceTMDB, matrix)
-	if err := s.PutClaim(ctx, id, kind.SourceLetterboxdTake, "matrix", json.RawMessage(`{"rating":4.5}`)); err != nil {
+	id := loggedMovie(t, s, record.SourceTMDB, matrix)
+	if err := s.PutClaim(ctx, id, record.SourceLetterboxdTake, "matrix", json.RawMessage(`{"rating":4.5}`)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Exec(`UPDATE record_claim SET fetched_at = '2020-01-02T03:04:05Z' WHERE source = ?`, kind.SourceLetterboxdTake); err != nil {
+	if _, err := d.Exec(`UPDATE record_claim SET fetched_at = '2020-01-02T03:04:05Z' WHERE source = ?`, record.SourceLetterboxdTake); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := d.Exec(`DELETE FROM record_reading`); err != nil {

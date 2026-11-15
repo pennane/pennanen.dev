@@ -11,14 +11,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
-	"github.com/pennane/pennanen.dev/apps/log/internal/images"
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/letterboxd"
-	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/images"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/igdb"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/letterboxd"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/spotify"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/tmdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
-	"github.com/pennane/pennanen.dev/apps/log/internal/tmdb"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 type Server struct {

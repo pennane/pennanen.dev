@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 	"slices"
 	"strings"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 const loggedItems = "e.item_id IS NOT NULL"
@@ -212,7 +213,7 @@ func (s *Store) attachVerdicts(ctx context.Context, ids []int64, byID map[int64]
 	return nil
 }
 
-func (s *Store) attachReadScores(ctx context.Context, readings map[int64][]verdict.Reading, byID map[int64]*ItemView) error {
+func (s *Store) attachReadScores(ctx context.Context, readings map[int64][]reading.Reading, byID map[int64]*ItemView) error {
 	axes, err := s.Axes(ctx)
 	if err != nil {
 		return err
@@ -248,7 +249,7 @@ func (s *Store) attachReadScores(ctx context.Context, readings map[int64][]verdi
 
 type itemClaim struct {
 	itemID int64
-	verdict.Claim
+	reading.Claim
 }
 
 func (s *Store) claimsOf(ctx context.Context, ids []int64) ([]itemClaim, error) {
@@ -307,7 +308,7 @@ func (s *Store) attachScoresAndTags(ctx context.Context, ids []int64, byID map[i
 			}
 			if v := byID[id]; v.Entry != nil {
 				v.Entry.Tags = append(v.Entry.Tags, t)
-				if addedBy != kind.SourceAP {
+				if addedBy != record.SourceAP {
 					v.Entry.TagsAddedBySources[t] = addedBy
 				}
 			}

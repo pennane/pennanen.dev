@@ -3,9 +3,8 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 	"slices"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 )
 
 const kindOrderKey = "kind-order"

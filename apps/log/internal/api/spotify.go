@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/spotify"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/spotify"
 )
 
 type spotifyConnection string

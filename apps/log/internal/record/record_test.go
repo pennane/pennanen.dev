@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 )
 

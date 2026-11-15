@@ -13,10 +13,11 @@ import (
 	"testing"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/api"
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
-	"github.com/pennane/pennanen.dev/apps/log/internal/images"
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/images"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const token = "secret"
@@ -411,7 +412,7 @@ func TestKnownItemsStayOutOfEntriesAndPublic(t *testing.T) {
 	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, Images: &images.Store{Dir: t.TempDir()}}).Handler())
 	t.Cleanup(srv.Close)
 
-	if _, err := st.KnowItemFromSource(ctx, kind.Movie, "Heat", kind.SourceTMDB, "949", json.RawMessage(`{"id":949,"title":"Heat"}`)); err != nil {
+	if _, err := st.KnowItemFromSource(ctx, kind.Movie, "Heat", record.SourceTMDB, "949", json.RawMessage(`{"id":949,"title":"Heat"}`)); err != nil {
 		t.Fatal(err)
 	}
 	logged, err := st.CreateItem(ctx, kind.Movie, "Ran", nil)

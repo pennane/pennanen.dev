@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/verdict"
 	"maps"
 	"slices"
 	"strings"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
-	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
 )
 
 type ownOrigin string
@@ -47,7 +47,7 @@ func decideOwn(k kind.Kind, readings []record.Reading) (verdict.Verdicts, error)
 		maps.Copy(merged[r.Source], r.Values)
 		fetchedAt[r.Source] = max(fetchedAt[r.Source], r.FetchedAt)
 	}
-	decoded := make([]verdict.Reading, 0, len(merged))
+	decoded := make([]reading.Reading, 0, len(merged))
 	for _, source := range slices.Sorted(maps.Keys(merged)) {
 		raw, err := json.Marshal(merged[source])
 		if err != nil {

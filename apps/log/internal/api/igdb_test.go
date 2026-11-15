@@ -11,11 +11,12 @@ import (
 	"testing"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/api"
-	"github.com/pennane/pennanen.dev/apps/log/internal/db"
-	"github.com/pennane/pennanen.dev/apps/log/internal/igdb"
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/igdb"
+	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const (
@@ -118,15 +119,15 @@ func TestQuickAddFromIGDB(t *testing.T) {
 func TestSteamGamesMatchByAppID(t *testing.T) {
 	srv, st, matcher, _ := newIGDBServer(t)
 	ctx := context.Background()
-	hadesID, _ := st.CreateItemFromSource(ctx, "game", "Hades", kind.SourceSteam, "1145360", json.RawMessage(`{"appid":1145360,"name":"Hades™"}`))
-	obscureID, _ := st.CreateItemFromSource(ctx, "game", "Obscure", kind.SourceSteam, "999", json.RawMessage(`{"appid":999,"name":"Obscure"}`))
+	hadesID, _ := st.CreateItemFromSource(ctx, "game", "Hades", record.SourceSteam, "1145360", json.RawMessage(`{"appid":1145360,"name":"Hades™"}`))
+	obscureID, _ := st.CreateItemFromSource(ctx, "game", "Obscure", record.SourceSteam, "999", json.RawMessage(`{"appid":999,"name":"Obscure"}`))
 
 	report := matcher.Run(ctx)
 	if report.State != syncs.Succeeded || report.Counts[igdb.CountChecked] != 2 || report.Counts[igdb.CountMatched] != 1 {
 		t.Fatalf("report: %+v", report)
 	}
 	v, _ := st.GetItem(ctx, hadesID)
-	if v.Verdicts.Values["title"] != "Hades" || v.Verdicts.SourceOf["title"] != kind.SourceIGDB {
+	if v.Verdicts.Values["title"] != "Hades" || v.Verdicts.SourceOf["title"] != record.SourceIGDB {
 		t.Errorf("hades verdicts: %v", v.Verdicts)
 	}
 

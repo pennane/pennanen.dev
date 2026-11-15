@@ -7,8 +7,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const playtimeAxis = "playtime"
@@ -20,7 +21,7 @@ func tiers() []store.Division {
 func playtimeReading(sort store.AxisSort) *store.Reading {
 	return &store.Reading{
 		Sort:   sort,
-		Source: kind.SourceSteam,
+		Source: record.SourceSteam,
 		Field:  "playtime_minutes",
 		Floors: []float64{1000, 500, 1},
 	}
@@ -52,8 +53,8 @@ func TestAnActivityAxisIsReadFromClaimsAndNeverSetByHand(t *testing.T) {
 	s := openStore(t)
 	withAxis(t, s, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: tiers(), Reading: playtimeReading(store.ActivityAxis)})
 
-	long, _ := s.CreateItemFromSource(ctx, "game", "Long", kind.SourceSteam, "1", json.RawMessage(`{"appid":1,"playtime_forever":600}`))
-	never, _ := s.CreateItemFromSource(ctx, "game", "Never", kind.SourceSteam, "2", json.RawMessage(`{"appid":2,"playtime_forever":0}`))
+	long, _ := s.CreateItemFromSource(ctx, "game", "Long", record.SourceSteam, "1", json.RawMessage(`{"appid":1,"playtime_forever":600}`))
+	never, _ := s.CreateItemFromSource(ctx, "game", "Never", record.SourceSteam, "2", json.RawMessage(`{"appid":2,"playtime_forever":0}`))
 
 	v, err := s.GetItem(ctx, long)
 	if err != nil {
@@ -90,7 +91,7 @@ func TestReadingsMustBeWhole(t *testing.T) {
 		"a source no kind has": append(axes, store.Axis{Key: "stars", Name: "stars", Divisions: tiers(),
 			Reading: &store.Reading{Sort: store.OutsideAxis, Source: "letterboxd", Field: "rating", Floors: []float64{4, 3, 0.5}}}),
 		"a take read as the crowd": append(axes, store.Axis{Key: "stars", Name: "stars", Divisions: tiers(),
-			Reading: &store.Reading{Sort: store.CrowdAxis, Source: kind.SourceLetterboxdTake, Field: "rating", Floors: []float64{4, 3, 0.5}}}),
+			Reading: &store.Reading{Sort: store.CrowdAxis, Source: record.SourceLetterboxdTake, Field: "rating", Floors: []float64{4, 3, 0.5}}}),
 	}
 	for name, candidate := range cases {
 		if _, err := s.SetAxes(ctx, candidate); !errors.Is(err, store.ErrInvalid) {
@@ -130,7 +131,7 @@ func TestAnOutsideAxisReadsApsRatingFromTheTake(t *testing.T) {
 	s := openStore(t)
 	axes, _ := s.Axes(ctx)
 	stars := store.Axis{Key: "stars", Name: "stars", Divisions: tiers(),
-		Reading: &store.Reading{Sort: store.OutsideAxis, Source: kind.SourceLetterboxdTake, Field: "rating", Floors: []float64{4.5, 3, 0.5}}}
+		Reading: &store.Reading{Sort: store.OutsideAxis, Source: record.SourceLetterboxdTake, Field: "rating", Floors: []float64{4.5, 3, 0.5}}}
 	if _, err := s.SetAxes(ctx, append(axes, stars)); err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +142,7 @@ func TestAnOutsideAxisReadsApsRatingFromTheTake(t *testing.T) {
 		t.Fatal(err)
 	}
 	id, _ := s.CreateItem(ctx, "movie", "Stalker", nil)
-	if err := s.PutClaim(ctx, id, kind.SourceLetterboxdTake, "stalker", json.RawMessage(`{"rating":3.5}`)); err != nil {
+	if err := s.PutClaim(ctx, id, record.SourceLetterboxdTake, "stalker", json.RawMessage(`{"rating":3.5}`)); err != nil {
 		t.Fatal(err)
 	}
 	v, err := s.GetItem(ctx, id)

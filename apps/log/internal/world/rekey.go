@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 var ErrHeldElsewhere = errors.New("held by another item")

@@ -6,8 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
+	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const fieldGenres = "genres"
@@ -18,7 +19,7 @@ func knowArtist(t *testing.T, s *store.Store, spotifyID, name string, genres ...
 	if err != nil {
 		t.Fatal(err)
 	}
-	id, err := s.KnowItemFromSource(context.Background(), kind.Artist, name, kind.SourceSpotifyArtist, spotifyID, json.RawMessage(raw))
+	id, err := s.KnowItemFromSource(context.Background(), kind.Artist, name, record.SourceSpotifyArtist, spotifyID, json.RawMessage(raw))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +32,7 @@ func logAlbum(t *testing.T, s *store.Store, spotifyID, name string, genres ...st
 	if err != nil {
 		t.Fatal(err)
 	}
-	id, err := s.CreateItemFromSource(context.Background(), kind.Album, name, kind.SourceSpotifyAlbum, spotifyID, json.RawMessage(raw))
+	id, err := s.CreateItemFromSource(context.Background(), kind.Album, name, record.SourceSpotifyAlbum, spotifyID, json.RawMessage(raw))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +93,7 @@ func TestAnAlbumsOwnGenresWin(t *testing.T) {
 	relate(t, s, album, kind.LinkBy, artist)
 
 	for read, v := range bothReads(t, s, album) {
-		if got := v.Verdicts.Values[fieldGenres]; !reflect.DeepEqual(got, []string{"dream pop"}) || v.Verdicts.SourceOf[fieldGenres] != kind.SourceSpotifyAlbum {
+		if got := v.Verdicts.Values[fieldGenres]; !reflect.DeepEqual(got, []string{"dream pop"}) || v.Verdicts.SourceOf[fieldGenres] != record.SourceSpotifyAlbum {
 			t.Errorf("%s genres = %v from %q", read, got, v.Verdicts.SourceOf[fieldGenres])
 		}
 	}
@@ -101,7 +102,7 @@ func TestAnAlbumsOwnGenresWin(t *testing.T) {
 		t.Fatal(err)
 	}
 	for read, v := range bothReads(t, s, album) {
-		if got := v.Verdicts.Values[fieldGenres]; !reflect.DeepEqual(got, []string{"noise"}) || v.Verdicts.SourceOf[fieldGenres] != kind.SourceAP {
+		if got := v.Verdicts.Values[fieldGenres]; !reflect.DeepEqual(got, []string{"noise"}) || v.Verdicts.SourceOf[fieldGenres] != record.SourceAP {
 			t.Errorf("%s genres after override = %v from %q", read, got, v.Verdicts.SourceOf[fieldGenres])
 		}
 	}

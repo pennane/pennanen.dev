@@ -5,10 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"slices"
-
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
-	"github.com/pennane/pennanen.dev/apps/log/internal/verdict"
+	"slices"
 )
 
 const DeriveVersion = 1
@@ -58,7 +56,7 @@ type settling struct {
 	related  map[int64]struct{}
 	owns     map[int64]decision
 	pulled   []record.Identity
-	suppress []verdict.AssertedLink
+	suppress []AssertedLink
 	loaded   suppressionsLoad
 	report   Report
 }
@@ -122,15 +120,15 @@ func (s *settling) fetch(ids []record.Identity) error {
 	return nil
 }
 
-func (s *settling) derivationOf(id record.Identity) (verdict.Derivation, error) {
+func (s *settling) derivationOf(id record.Identity) (Derivation, error) {
 	if err := s.fetch([]record.Identity{id}); err != nil {
-		return verdict.Derivation{}, err
+		return Derivation{}, err
 	}
 	reading, read := s.readings[id]
 	if !read {
-		return verdict.Derivation{}, nil
+		return Derivation{}, nil
 	}
-	return verdict.Derive(id, reading.Values), nil
+	return Derive(id, reading.Values), nil
 }
 
 func (s *settling) readingsOf(ids []record.Identity) ([]record.Reading, error) {
