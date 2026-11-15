@@ -6,7 +6,7 @@ export type Visibility = 'auto' | 'public' | 'private'
 
 export type Division = { key: string; name: string }
 
-export type AxisSort = 'own' | 'outside' | 'crowd'
+export type AxisSort = 'own' | 'outside' | 'crowd' | 'activity'
 
 export type Reading = {
   sort: Exclude<AxisSort, 'own'>
@@ -26,13 +26,14 @@ export const TMDB_TYPE_OF_SOURCE: Record<string, TMDBType> = { tmdb: 'movie', 't
 export const tmdbPage = ({ tmdbType, tmdbId }: TMDBLink) =>
   `https://www.themoviedb.org/${tmdbType}/${tmdbId}`
 
-export type ReadFrom = 'take' | 'description'
+export type ReadFrom = 'take' | 'description' | 'activity'
 
 export type Readable = { source: string; field: string; from: ReadFrom }
 
 export const READ_FROM_BY_SORT: Record<Reading['sort'], ReadFrom> = {
   outside: 'take',
-  crowd: 'description'
+  crowd: 'description',
+  activity: 'activity'
 }
 
 export type Axis = { key: string; name: string; divisions: Division[]; reading?: Reading }
@@ -104,6 +105,7 @@ export type Kind = {
   takes: { source: string; privateFields: string[] }[]
   identitySource?: string
   statusComputedBy?: string
+  unrankedOrder?: string
 }
 
 export type Take = { source: string; values: Record<string, unknown>; fetchedAt: string }

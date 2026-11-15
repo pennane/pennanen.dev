@@ -408,7 +408,7 @@ export const overviewSort = (
   const found = sorts.find((sort) => sort.key === chosen)
   if (chosen !== AUTO_SORT && found) return found
   const rank = sorts.find((sort) => sort.key === RANK_SORT)!
-  if (items.some((item) => item.rank)) return rank
+  if (items.some((item) => item.rank || item.order)) return rank
   const hasEnough = (sort: Column) =>
     items.filter((item) => sort.valueOf(item) !== undefined).length >= items.length * ENOUGH_VALUES
   const candidates = [

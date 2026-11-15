@@ -142,6 +142,7 @@ export type ListedItem = {
   status: string
   scores: Record<string, string>
   rank: Rank | undefined
+  order: number | undefined
   tags: string[]
   proseWords: number
   values: Record<string, FieldValue>
@@ -169,6 +170,7 @@ export const toListed = (item: PublicItem, fields: PublicField[]): ListedItem =>
   status: item.status,
   scores: item.scores,
   rank: item.rank,
+  order: item.order,
   tags: item.tags,
   proseWords: item.proseWords,
   values: Object.fromEntries(
@@ -210,7 +212,10 @@ export const byTitle = (a: ListedItem, b: ListedItem) => a.title.localeCompare(b
 
 const placeOf = (item: ListedItem) => item.rank?.place ?? Number.MAX_SAFE_INTEGER
 
-export const byRank = (a: ListedItem, b: ListedItem) => placeOf(a) - placeOf(b) || byTitle(a, b)
+const orderOf = (item: ListedItem) => item.order ?? Number.MAX_SAFE_INTEGER
+
+export const byRank = (a: ListedItem, b: ListedItem) =>
+  placeOf(a) - placeOf(b) || orderOf(a) - orderOf(b) || byTitle(a, b)
 
 export type Presence = 'shown' | 'hidden'
 

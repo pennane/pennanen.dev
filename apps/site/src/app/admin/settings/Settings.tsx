@@ -453,7 +453,8 @@ export const KindSettingsForm = ({
 const SORTS: { sort: AxisSort; label: string }[] = [
   { sort: 'own', label: 'own, set by hand' },
   { sort: 'outside', label: 'outside, my rating on a site' },
-  { sort: 'crowd', label: "crowd, a site's average" }
+  { sort: 'crowd', label: "crowd, a site's average" },
+  { sort: 'activity', label: 'activity, what I did' }
 ]
 
 const readableKey = ({ source, field }: { source: string; field: string }) => `${source} ${field}`

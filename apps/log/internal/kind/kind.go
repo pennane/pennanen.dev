@@ -26,7 +26,15 @@ type Field struct {
 	SourcesBestFirstAfterAP []string  `json:"sourcesBestFirstAfterAp"`
 	Reach                   Reach     `json:"reach"`
 	InheritedThrough        string    `json:"inheritedThrough,omitempty"`
+	About                   About     `json:"about,omitempty"`
 }
+
+type About string
+
+const (
+	AboutTheThing About = ""
+	AboutAP       About = "ap"
+)
 
 const inheritedSourcePrefix = "inherited:"
 
@@ -50,6 +58,7 @@ type Kind struct {
 	Fields           []Field                            `json:"fields"`
 	IdentitySource   string                             `json:"identitySource,omitempty"`
 	StatusComputedBy string                             `json:"statusComputedBy,omitempty"`
+	UnrankedOrder    string                             `json:"unrankedOrder,omitempty"`
 	Takes            []Take                             `json:"takes"`
 	GuessStatus      func(verdicts map[string]any) Hint `json:"-"`
 }

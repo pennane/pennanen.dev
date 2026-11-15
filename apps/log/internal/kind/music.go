@@ -8,6 +8,9 @@ const (
 	SourceSpotifyArtist = "spotify-artist"
 	SourceSpotifyAlbum  = "spotify-album"
 
+	SourceSpotifyListening = "spotify-listening"
+	FieldListening         = "listening"
+
 	Listening = "listening"
 	Listened  = "listened"
 
@@ -16,6 +19,14 @@ const (
 
 	VariousArtists = "0LyfQWJT6nXafLPZqxe9Of"
 )
+
+var listeningField = Field{
+	Name:                    FieldListening,
+	Type:                    Int,
+	SourcesBestFirstAfterAP: []string{SourceSpotifyListening},
+	Reach:                   OnlyAP,
+	About:                   AboutAP,
+}
 
 func init() {
 	register(Kind{
@@ -28,12 +39,14 @@ func init() {
 		RankedAxis:       Prestige,
 		IdentitySource:   SourceSpotifyArtist,
 		StatusComputedBy: SourceSpotify,
+		UnrankedOrder:    FieldListening,
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "image", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "popularity", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "followers", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
+			listeningField,
 			{Name: "spotify_id", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "link", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 		},
@@ -47,6 +60,7 @@ func init() {
 		DefaultAxes:     []string{Prestige, Quality},
 		RankedAxis:      Prestige,
 		IdentitySource:  SourceSpotifyAlbum,
+		UnrankedOrder:   FieldListening,
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "artists", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
@@ -56,6 +70,7 @@ func init() {
 			{Name: "label", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}, InheritedThrough: RelationBy},
 			{Name: "popularity", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
+			listeningField,
 			{Name: "cover", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "spotify_id", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "link", Type: URL, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},

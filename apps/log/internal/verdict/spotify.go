@@ -1,6 +1,10 @@
 package verdict
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
+)
 
 type SpotifyImage struct {
 	URL    string `json:"url"`
@@ -96,4 +100,18 @@ func largestImage(images []SpotifyImage) string {
 		}
 	}
 	return largest.URL
+}
+
+type SpotifyListening struct {
+	Listening *int64 `json:"listening"`
+}
+
+func readSpotifyListening(raw json.RawMessage) (map[string]any, error) {
+	var l SpotifyListening
+	if err := json.Unmarshal(raw, &l); err != nil {
+		return nil, err
+	}
+	values := map[string]any{}
+	putWhenGiven(values, kind.FieldListening, l.Listening)
+	return values, nil
 }

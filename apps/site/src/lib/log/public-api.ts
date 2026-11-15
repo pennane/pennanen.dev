@@ -25,6 +25,10 @@ const publicItemSchema = z.object({
   status: z.string(),
   scores: scoresSchema,
   rank: rankSchema,
+  order: z
+    .number()
+    .nullish()
+    .transform((order) => order ?? undefined),
   tags: z
     .array(z.string())
     .nullish()
@@ -75,7 +79,7 @@ const presentationSchema = z.object({
       divisions: z.array(divisionSchema),
       reading: z
         .object({
-          sort: z.enum(['outside', 'crowd']),
+          sort: z.enum(['outside', 'crowd', 'activity']),
           source: z.string(),
           field: z.string(),
           floors: z.array(z.number())

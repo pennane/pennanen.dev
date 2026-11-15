@@ -19,6 +19,7 @@ type PublicItem struct {
 	Status     string            `json:"status"`
 	Scores     map[string]string `json:"scores"`
 	Rank       *PublicRank       `json:"rank,omitempty"`
+	Order      int               `json:"order,omitempty"`
 	Tags       []string          `json:"tags"`
 	Blurb      string            `json:"blurb"`
 	TimeSpent  store.TimeSpent   `json:"timeSpent,omitempty"`
@@ -200,12 +201,14 @@ func (s *Server) publicItems(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
-	items := make([]PublicItem, 0, len(views))
-	for _, v := range views {
-		if isPublic(v) {
-			rank, ranked := ranks[v.ID]
-			items = append(items, withRank(publicItem(v), rank, ranked))
-		}
+	shown := slices.DeleteFunc(views, func(v store.ItemView) bool { return !isPublic(v) })
+	orders := unrankedOrders(shown)
+	items := make([]PublicItem, 0, len(shown))
+	for _, v := range shown {
+		rank, ranked := ranks[v.ID]
+		item := withRank(publicItem(v), rank, ranked)
+		item.Order = orders[v.ID]
+		items = append(items, item)
 	}
 	writeJSON(w, http.StatusOK, items)
 }
@@ -269,4 +272,38 @@ func publicTakes(takes []store.TakeView) []verdict.Take {
 		public = append(public, t.Public())
 	}
 	return public
+}
+
+func unrankedOrders(views []store.ItemView) map[int64]int {
+	orders := map[int64]int{}
+	values := map[int64]float64{}
+	for _, v := range views {
+		k, known := kind.Get(v.Kind)
+		if !known || k.UnrankedOrder == "" {
+			continue
+		}
+		if value, present := asOrderValue(v.Verdicts.Values[k.UnrankedOrder]); present {
+			values[v.ID] = value
+		}
+	}
+	for id, value := range values {
+		ahead := 0
+		for _, other := range values {
+			if other > value {
+				ahead++
+			}
+		}
+		orders[id] = ahead + 1
+	}
+	return orders
+}
+
+func asOrderValue(value any) (float64, bool) {
+	switch n := value.(type) {
+	case int64:
+		return float64(n), true
+	case float64:
+		return n, true
+	}
+	return 0, false
 }

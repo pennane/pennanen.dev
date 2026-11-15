@@ -28,14 +28,16 @@ type Axis struct {
 type AxisSort string
 
 const (
-	OwnAxis     AxisSort = "own"
-	OutsideAxis AxisSort = "outside"
-	CrowdAxis   AxisSort = "crowd"
+	OwnAxis      AxisSort = "own"
+	OutsideAxis  AxisSort = "outside"
+	CrowdAxis    AxisSort = "crowd"
+	ActivityAxis AxisSort = "activity"
 )
 
 var readFromBySort = map[AxisSort]kind.ReadFrom{
-	OutsideAxis: kind.FromTake,
-	CrowdAxis:   kind.FromDescription,
+	OutsideAxis:  kind.FromTake,
+	CrowdAxis:    kind.FromDescription,
+	ActivityAxis: kind.FromActivity,
 }
 
 type Reading struct {
@@ -209,8 +211,8 @@ func validReading(axis Axis) error {
 	r := axis.Reading
 	r.Source = strings.TrimSpace(r.Source)
 	r.Field = strings.TrimSpace(r.Field)
-	if r.Sort != OutsideAxis && r.Sort != CrowdAxis {
-		return fmt.Errorf("%w: %s is read from a source, so it is %s or %s", ErrInvalid, axis.Key, OutsideAxis, CrowdAxis)
+	if _, readSort := readFromBySort[r.Sort]; !readSort {
+		return fmt.Errorf("%w: %s is read from a source, so it is %s, %s or %s", ErrInvalid, axis.Key, OutsideAxis, CrowdAxis, ActivityAxis)
 	}
 	if r.Source == "" || r.Source == kind.SourceAP || r.Field == "" {
 		return fmt.Errorf("%w: %s needs a source other than ap and a field to read", ErrInvalid, axis.Key)

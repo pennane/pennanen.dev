@@ -47,10 +47,10 @@ func withAxis(t *testing.T, s *store.Store, axis store.Axis) {
 	}
 }
 
-func TestACrowdAxisIsReadFromClaimsAndNeverSetByHand(t *testing.T) {
+func TestAnActivityAxisIsReadFromClaimsAndNeverSetByHand(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	withAxis(t, s, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: tiers(), Reading: playtimeReading(store.CrowdAxis)})
+	withAxis(t, s, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: tiers(), Reading: playtimeReading(store.ActivityAxis)})
 
 	long, _ := s.CreateItemFromSource(ctx, "game", "Long", kind.SourceSteam, "1", json.RawMessage(`{"appid":1,"playtime_forever":600}`))
 	never, _ := s.CreateItemFromSource(ctx, "game", "Never", kind.SourceSteam, "2", json.RawMessage(`{"appid":2,"playtime_forever":0}`))
@@ -86,7 +86,7 @@ func TestReadingsMustBeWhole(t *testing.T) {
 		"floors that rise": append(axes, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: tiers(), Reading: backwards}),
 		"own as a sort":    append(axes, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: tiers(), Reading: playtimeReading(store.OwnAxis)}),
 		"a missing floor": append(axes, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: append(tiers(), store.Division{Key: "z", Name: "Z"}),
-			Reading: playtimeReading(store.CrowdAxis)}),
+			Reading: playtimeReading(store.ActivityAxis)}),
 		"a source no kind has": append(axes, store.Axis{Key: "stars", Name: "stars", Divisions: tiers(),
 			Reading: &store.Reading{Sort: store.OutsideAxis, Source: "letterboxd", Field: "rating", Floors: []float64{4, 3, 0.5}}}),
 		"a take read as the crowd": append(axes, store.Axis{Key: "stars", Name: "stars", Divisions: tiers(),
@@ -100,7 +100,7 @@ func TestReadingsMustBeWhole(t *testing.T) {
 
 	readPrestige := append(store.Axes{}, axes...)
 	readPrestige[0].Divisions = tiers()
-	readPrestige[0].Reading = playtimeReading(store.CrowdAxis)
+	readPrestige[0].Reading = playtimeReading(store.ActivityAxis)
 	if _, err := s.SetAxes(ctx, readPrestige); !errors.Is(err, store.ErrInvalid) {
 		t.Errorf("prestige read from a source: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestAnAxisScoredByHandIsNotReadFromASource(t *testing.T) {
 	axes, _ := s.Axes(ctx)
 	for i := range axes {
 		if axes[i].Key == playtimeAxis {
-			axes[i].Reading = playtimeReading(store.CrowdAxis)
+			axes[i].Reading = playtimeReading(store.ActivityAxis)
 		}
 	}
 	if _, err := s.SetAxes(ctx, axes); !errors.Is(err, store.ErrConflict) {
@@ -166,5 +166,17 @@ func TestAnAxisLeftOutOfTheListMustBeOneTheKindUses(t *testing.T) {
 	settings.AxesWithoutColumns = []string{"nothing-here"}
 	if _, err := s.SetKindSettings(ctx, movie, settings); !errors.Is(err, store.ErrInvalid) {
 		t.Errorf("an axis the kind doesn't use: %v", err)
+	}
+}
+
+func TestPlaytimeIsActivityNotCrowd(t *testing.T) {
+	s := openStore(t)
+	axes, err := s.Axes(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	axes = append(axes, store.Axis{Key: playtimeAxis, Name: playtimeAxis, Divisions: tiers(), Reading: playtimeReading(store.CrowdAxis)})
+	if _, err := s.SetAxes(context.Background(), axes); !errors.Is(err, store.ErrInvalid) {
+		t.Fatalf("crowd playtime axis: got %v, want invalid", err)
 	}
 }

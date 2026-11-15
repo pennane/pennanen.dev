@@ -73,14 +73,16 @@ it back, but it never shows on public pages.
 `quality`. Axes are their own thing: made, named and ordered in admin, and
 shared by every kind that uses them. Each kind picks its axes; a kind with no
 axes can't be scored. An axis has a key, set once, and a name, which ap can
-change. Axes come in three sorts. **Own** axes are ap's, and only ap
+change. Axes come in four sorts. **Own** axes are ap's, and only ap
 sets them. An **outside** axis is ap's rating on another site
 (`letterboxd`, `vivino`). A **crowd** axis is a site's public average.
-Outside and crowd axes are read from claims, never set by hand and never
+An **activity** axis is a number about what ap did: playtime, achievements
+unlocked, listening. Outside, crowd and activity axes are read from claims, never set by hand and never
 ranked. Each has a **reading**: the source and field it reads, and a
 **floor** per division, best first, the lowest value that lands there. An
 outside axis reads a number from a take, a crowd axis one from a describing
-source; admin offers only the pairs some kind has. An outside axis suggests a division when ap rates on an own axis; a
+source, an activity axis one from a field about ap; admin offers only the
+pairs some kind has. An outside axis suggests a division when ap rates on an own axis; a
 crowd axis only shows.
 
 **Prestige** — the axis that orders things: how high something stands for
@@ -103,6 +105,14 @@ division.
 top across all divisions. Strict: no two entries share a rank. Only prestige
 has ranks; other axes have divisions alone. Games rank against games, never
 against wine. Public pages never show the number; they order by it.
+
+**Unranked order** — the field a kind orders its unranked entries by, highest
+first, after every ranked one: playtime for games, listening for artists and
+albums. Public pages get each entry's place in it, never the number.
+
+**Listening** — how much ap listens to an artist or album, from 0 to 100: its
+percentile among its kind's logged entries. Worked out nightly from every
+top-list day and play; only ap sees the number.
 
 **Tag** — a free-form label ap puts on an entry: `favorite`, `comfort`,
 `formative`. Nest with a slash for precision: `favorite/all-time`. Tags are

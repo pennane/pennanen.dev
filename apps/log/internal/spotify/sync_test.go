@@ -862,3 +862,35 @@ func TestAPlayMovesAWantedAlbumToListenedWithinTheHour(t *testing.T) {
 		t.Fatalf("album after a play = %s by %s, want listened by spotify", status, setBy)
 	}
 }
+
+func (h *harness) listening(t *testing.T, itemID int64) any {
+	t.Helper()
+	view, err := h.store.GetItem(context.Background(), itemID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return view.Verdicts.Values[kind.FieldListening]
+}
+
+func TestArtistsListenedToMoreWeighMore(t *testing.T) {
+	h := newHarness(t, newFake(), spotify.Connected)
+	if report := h.run(t); len(report.Problems) != 0 {
+		t.Fatalf("report = %+v", report)
+	}
+	x := h.listening(t, h.item(t, kind.SourceSpotifyArtist, "X"))
+	y := h.listening(t, h.item(t, kind.SourceSpotifyArtist, "Y"))
+	if x != int64(100) || y != int64(0) {
+		t.Fatalf("listening X = %v, Y = %v, want 100 and 0", x, y)
+	}
+}
+
+func TestAWeightIsAPercentileThatHoldsAcrossDays(t *testing.T) {
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	h.day = "2026-11-16"
+	h.run(t)
+	if x := h.listening(t, h.item(t, kind.SourceSpotifyArtist, "X")); x != int64(100) {
+		t.Fatalf("listening X on day two = %v, want 100", x)
+	}
+}

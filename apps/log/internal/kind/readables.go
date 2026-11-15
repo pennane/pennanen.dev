@@ -10,6 +10,7 @@ type ReadFrom string
 const (
 	FromTake        ReadFrom = "take"
 	FromDescription ReadFrom = "description"
+	FromActivity    ReadFrom = "activity"
 )
 
 type Readable struct {
@@ -35,7 +36,7 @@ func Readables() []Readable {
 				continue
 			}
 			for _, source := range f.SourcesBestFirstAfterAP {
-				add(Readable{Source: source, Field: f.Name, From: FromDescription})
+				add(Readable{Source: source, Field: f.Name, From: f.About.readFrom()})
 			}
 		}
 		for _, t := range k.Takes {
@@ -54,4 +55,11 @@ func Readables() []Readable {
 
 func IsReadable(source, field string, from ReadFrom) bool {
 	return slices.Contains(Readables(), Readable{Source: source, Field: field, From: from})
+}
+
+func (a About) readFrom() ReadFrom {
+	if a == AboutAP {
+		return FromActivity
+	}
+	return FromDescription
 }
