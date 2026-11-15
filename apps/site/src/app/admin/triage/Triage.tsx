@@ -53,7 +53,7 @@ type Step =
   | { phase: 'score'; status: string }
   | { phase: 'compare'; status: string; search: Search }
 
-type Triaged = { cards: TriageCard[]; addedTags: string[] }
+type Triaged = { card: TriageCard; addedTags: string[] }[]
 
 const UNTRIAGED = 'untriaged'
 
@@ -61,6 +61,11 @@ const TRIAGE_TAGS = [
   { tag: ANOTHER_SHOT, shortcut: 'a', label: 'worth another shot' },
   { tag: IDLED, shortcut: 'i', label: 'idled for cards' }
 ] as const
+
+const triagedAs = (card: TriageCard, tags: string[]) => ({
+  card,
+  addedTags: tags.filter((tag) => !card.tags.includes(tag))
+})
 
 const cardKey = (card: TriageCard) => `${card.shape}:${card.id}`
 
@@ -140,9 +145,13 @@ export const Triage = ({
   )
 
   const settleTriaged = useCallback(
-    (triaged: TriageCard[], addedTags: string[], label: string, save: () => Promise<unknown>) => {
-      setHistory((h) => [...h, { cards: triaged, addedTags }])
-      settle(triaged, label, save)
+    (triaged: Triaged, label: string, save: () => Promise<unknown>) => {
+      setHistory((h) => [...h, triaged])
+      settle(
+        triaged.map((t) => t.card),
+        label,
+        save
+      )
     },
     [settle]
   )
@@ -151,7 +160,7 @@ export const Triage = ({
     (status: string, placement?: Placement) => {
       if (current?.shape !== 'untriaged') return
       if (placement) place(current, placement)
-      settleTriaged([current], tagsToAdd, `${current.title} → ${status}`, async () => {
+      settleTriaged([triagedAs(current, tagsToAdd)], `${current.title} → ${status}`, async () => {
         await changeEntry(current.id, {
           status,
           ...(placement ? { scores: { [PRESTIGE]: placement.division } } : {}),
@@ -208,33 +217,39 @@ export const Triage = ({
     const last = history.at(-1)
     if (!last) return
     setHistory((h) => h.slice(0, -1))
-    setQueue((q) => [...last.cards, ...q])
+    setQueue((q) => [...last.map((t) => t.card), ...q])
     setStep({ phase: 'status' })
-    const ids = last.cards.map((c) => c.id)
-    last.cards.forEach((c) => settledKeys.current.delete(cardKey(c)))
-    ids.forEach(unplace)
-    const removeTags = [...new Set([...TRIAGE_TAGS.map((t) => t.tag), ...last.addedTags])]
-    saves.enqueue(`undo ${last.cards.length}`, () =>
-      changeEntries(ids, {
-        status: UNTRIAGED,
-        dismissal: 'kept',
-        scores: { [PRESTIGE]: null },
-        removeTags
-      })
-    )
+    last.forEach((t) => settledKeys.current.delete(cardKey(t.card)))
+    last.forEach((t) => unplace(t.card.id))
+    const undoing = new Map<string, { removeTags: string[]; ids: number[] }>()
+    for (const { card, addedTags } of last) {
+      const group = undoing.get(addedTags.join()) ?? { removeTags: addedTags, ids: [] }
+      group.ids.push(card.id)
+      undoing.set(addedTags.join(), group)
+    }
+    saves.enqueue(`undo ${last.length}`, async () => {
+      for (const { removeTags, ids } of undoing.values())
+        await changeEntries(ids, {
+          status: UNTRIAGED,
+          dismissal: 'kept',
+          scores: { [PRESTIGE]: null },
+          removeTags
+        })
+    })
   }, [history, saves, unplace])
 
   const bulk = useCallback(
     (rule: string) => {
-      const acceptances = acceptancesOf(queue, rule)
+      const acceptances = acceptancesOf(queue.filter(matches({ by: 'rule', rule })), rule)
       if (acceptances.length === 0) return
       if (bulkArmed !== rule) {
         setBulkArmed(rule)
         return
       }
-      const triaged = acceptances.flatMap((a) => a.cards)
-      const addedTags = acceptances.flatMap((a) => a.change.addTags ?? [])
-      settleTriaged(triaged, addedTags, `${triaged.length} → ${rule}`, async () => {
+      const triaged = acceptances.flatMap((a) =>
+        a.cards.map((card) => triagedAs(card, a.change.addTags ?? []))
+      )
+      settleTriaged(triaged, `${triaged.length} → ${rule}`, async () => {
         for (const { change, cards: accepted } of acceptances)
           await changeEntries(
             accepted.map((c) => c.id),
@@ -280,7 +295,7 @@ export const Triage = ({
   useKeys(keys)
 
   const acceptances = useMemo(
-    () => (filter.by === 'rule' ? acceptancesOf(queue, filter.rule) : []),
+    () => (filter.by === 'rule' ? acceptancesOf(queue.filter(matches(filter)), filter.rule) : []),
     [queue, filter]
   )
   const acceptable = acceptances.flatMap((a) => a.cards)

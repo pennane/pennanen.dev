@@ -20,6 +20,7 @@ const labelOf = (change: EntryChange) =>
 export const acceptancesOf = (cards: TriageCard[], rule: string): Acceptance[] => {
   const byChange = new Map<string, Acceptance>()
   for (const card of cards) {
+    if (card.shape !== 'untriaged') continue
     const change = changeFromSuggestions(card.suggestions.filter((s) => s.rule === rule))
     if (Object.keys(change).length === 0) continue
     const key = JSON.stringify(change)
