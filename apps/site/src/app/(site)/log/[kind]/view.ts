@@ -69,12 +69,19 @@ export type Facet = {
   name: string
   valuesOf: (item: ListedItem) => string[]
   labelOf: (value: string) => string
-  order: (a: string, b: string) => number
+  order: (a: Counted, b: Counted) => number
 }
+
+export type Counted = { value: string; count: number }
 
 const alphabetical = (a: string, b: string) => a.localeCompare(b)
 
 const numerically = (a: string, b: string) => Number(a) - Number(b)
+
+const byValue = (compare: (a: string, b: string) => number) => (a: Counted, b: Counted) =>
+  compare(a.value, b.value)
+
+const mostUsed = (a: Counted, b: Counted) => b.count - a.count || alphabetical(a.value, b.value)
 
 const numberIn = (value: FieldValue | undefined) => (typeof value === 'number' ? value : undefined)
 
@@ -101,7 +108,7 @@ const dateFacet = (field: PublicField, name: string, items: ListedItem[]): Facet
       return [byYear ? String(year) : decadeOf(year)]
     },
     labelOf: (value) => value,
-    order: alphabetical
+    order: byValue(alphabetical)
   }
 }
 
@@ -127,7 +134,7 @@ const numberFacet = (field: PublicField, name: string, items: ListedItem[]): Fac
         return n === undefined ? [] : [String(n)]
       },
       labelOf: (value) => value,
-      order: numerically
+      order: byValue(numerically)
     }
   }
   const bounds = [
@@ -150,7 +157,7 @@ const numberFacet = (field: PublicField, name: string, items: ListedItem[]): Fac
       return n === undefined ? [] : [String(bandOf(n))]
     },
     labelOf: (value) => labelOf(Number(value)),
-    order: numerically
+    order: byValue(numerically)
   }
 }
 
@@ -159,7 +166,7 @@ const valuesFacet = (field: PublicField, name: string): Facet => ({
   name,
   valuesOf: (item) => listIn(item.values[field.key]),
   labelOf: (value) => value,
-  order: alphabetical
+  order: mostUsed
 })
 
 const fieldFacet = (
@@ -208,15 +215,17 @@ export const facetsFor = ({
     name: 'status',
     valuesOf: (item) => [item.status],
     labelOf: statusLabel,
-    order: (a, b) => statuses.indexOf(a) - statuses.indexOf(b) || alphabetical(a, b)
+    order: byValue((a, b) => statuses.indexOf(a) - statuses.indexOf(b) || alphabetical(a, b))
   },
   ...axes.map((axis) => ({
     key: axisKey(axis),
     name: axis.name,
     valuesOf: (item: ListedItem) => (item.scores[axis.key] ? [item.scores[axis.key]] : []),
     labelOf: (value: string) => axis.divisions.find((d) => d.key === value)?.name ?? value,
-    order: (a: string, b: string) =>
-      axis.divisions.findIndex((d) => d.key === a) - axis.divisions.findIndex((d) => d.key === b)
+    order: byValue(
+      (a, b) =>
+        axis.divisions.findIndex((d) => d.key === a) - axis.divisions.findIndex((d) => d.key === b)
+    )
   })),
   ...fields.flatMap((field) => fieldFacet(field, settings, items)),
   {
@@ -228,7 +237,8 @@ export const facetsFor = ({
     ],
     labelOf: (value) =>
       value === HAS_VISIONS ? 'has visions' : (tagTitle(value) ?? tagLabel(value)),
-    order: (a, b) => Number(b === HAS_VISIONS) - Number(a === HAS_VISIONS) || alphabetical(a, b)
+    order: (a, b) =>
+      Number(b.value === HAS_VISIONS) - Number(a.value === HAS_VISIONS) || mostUsed(a, b)
   }
 ]
 
@@ -237,9 +247,7 @@ export const valuesIn = (facet: Facet, items: ListedItem[]) => {
   for (const item of items) {
     for (const value of facet.valuesOf(item)) counts.set(value, (counts.get(value) ?? 0) + 1)
   }
-  return [...counts]
-    .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => facet.order(a.value, b.value))
+  return [...counts].map(([value, count]) => ({ value, count })).sort(facet.order)
 }
 
 export const splitsItems = (facet: Facet, items: ListedItem[]) => {
