@@ -19,6 +19,8 @@ const (
 	SubjectEntry     Subject = "entry"
 )
 
+const EntryLogged = "logged"
+
 type Strength string
 
 const (
