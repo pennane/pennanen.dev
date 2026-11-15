@@ -60,6 +60,9 @@ when.
 and tagged with the readers version. Everything above records reads
 readings, not claims.
 
+**`spotify-track-id`** — an identity with no claim of its own: a Spotify
+track id, named by an album's tracklist so its tracks link to it.
+
 **Outside take** — ap's take recorded on another site, kept as claims from
 its own source (`letterboxd-take`, `steam-take`), apart from what the site
 says about the thing. Shown alongside the entry, never merged into it.
@@ -315,6 +318,14 @@ plays, saves and unsaves are observations.
 - Tracklists are fetched for logged albums only, in batches of 50 when out
   of step.
 - The refresh token is a stored secret.
+
+**`matched`** — a record a sync writes when it finds that a record of
+another source is about an item already known: `matched:<identity>`, about
+both.
+
+**`legacy`** — one record per item, `legacy:item/<id>`, written once when
+today's data was adopted: the identities and links the old tables held that
+no derive explains.
 
 ## Doing
 

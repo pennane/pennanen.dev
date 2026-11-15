@@ -26,7 +26,7 @@ func openAt(t *testing.T, version int) *sql.DB {
 	}
 	d.SetMaxOpenConns(singleWriter)
 	t.Cleanup(func() { d.Close() })
-	if err := migrateUpTo(context.Background(), d, version); err != nil {
+	if err := MigrateUpTo(context.Background(), d, version); err != nil {
 		t.Fatal(err)
 	}
 	return d
@@ -52,7 +52,7 @@ func TestNumberScoresBecomeDivisionsAndRanks(t *testing.T) {
 		INSERT INTO ranking (id, slug, name) VALUES (1, 'best', 'best');`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrateUpTo(ctx, d, lastPerKindAxesVersion); err != nil {
+	if err := MigrateUpTo(ctx, d, lastPerKindAxesVersion); err != nil {
 		t.Fatal(err)
 	}
 
@@ -117,7 +117,7 @@ func TestDivisionsBecomeTiersOnSharedAxes(t *testing.T) {
 			('kind:thing', '{"statusesShown":["seen"],"axisLabels":{"quality":"quality"}}');`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrateUpTo(ctx, d, lastWithThings); err != nil {
+	if err := MigrateUpTo(ctx, d, lastWithThings); err != nil {
 		t.Fatal(err)
 	}
 
@@ -238,7 +238,7 @@ func TestUntriagedEntriesStartSetByTheSourceThatMadeThem(t *testing.T) {
 			(4, 'igdb', '8', '{}', '2024-03-01T00:00:00Z');`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrateUpTo(ctx, d, lastWithThings); err != nil {
+	if err := MigrateUpTo(ctx, d, lastWithThings); err != nil {
 		t.Fatal(err)
 	}
 	want := map[string]string{"hades": "ap", "celeste": "steam", "walk": "ap", "fez": "igdb"}
@@ -263,7 +263,7 @@ func TestThingsAreGone(t *testing.T) {
 		INSERT INTO setting (key, value) VALUES ('kind:game', '{}'), ('kind:thing', '{}');`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrateUpTo(ctx, d, lastBeforeLayers); err != nil {
+	if err := MigrateUpTo(ctx, d, lastBeforeLayers); err != nil {
 		t.Fatal(err)
 	}
 	for _, left := range []struct{ what, query string }{
@@ -306,7 +306,7 @@ func TestOnlyTheFirstCreditedArtistStaysBy(t *testing.T) {
 			(1, 'by', 2), (1, 'by', 3), (4, 'by', 5), (4, 'by', 6), (7, 'by', 2);`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrateUpTo(ctx, d, lastBeforeLayers); err != nil {
+	if err := MigrateUpTo(ctx, d, lastBeforeLayers); err != nil {
 		t.Fatal(err)
 	}
 	rows, err := d.QueryContext(ctx, `SELECT from_id || ' ' || type || ' ' || to_id FROM relation ORDER BY from_id, to_id`)
@@ -340,7 +340,7 @@ func TestAnAlbumClaimWithoutArtistsKeepsItsRelations(t *testing.T) {
 		INSERT INTO relation (from_id, type, to_id) VALUES (1, 'by', 2), (1, 'by', 3);`); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrateUpTo(ctx, d, lastBeforeLayers); err != nil {
+	if err := MigrateUpTo(ctx, d, lastBeforeLayers); err != nil {
 		t.Fatal(err)
 	}
 	var withs int

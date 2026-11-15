@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pennane/pennanen.dev/apps/log/internal/adopt"
 	"github.com/pennane/pennanen.dev/apps/log/internal/api"
 	"github.com/pennane/pennanen.dev/apps/log/internal/backup"
 	"github.com/pennane/pennanen.dev/apps/log/internal/db"
@@ -48,7 +49,14 @@ func run() error {
 	}
 	defer database.Close()
 	records := record.New(database, verdict.ReadRecord, verdict.ReadersVersion)
-	st := store.New(database, records, world.New(database, records))
+	derived := world.New(database, records)
+	adoption, err := adopt.Run(ctx, database, records, derived)
+	if err != nil {
+		return fmt.Errorf("adopt legacy data: %w", err)
+	}
+	slog.Info("legacy data adoption", "outcome", adoption.Outcome, "items", adoption.Items, "claims", adoption.Claims,
+		"observations", adoption.Observations, "links", adoption.Links, "overlaps", adoption.Overlaps)
+	st := store.New(database, records, derived)
 	reread, err := st.RereadClaims(ctx)
 	if err != nil {
 		return fmt.Errorf("re-read claims: %w", err)

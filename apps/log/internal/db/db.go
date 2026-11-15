@@ -36,10 +36,10 @@ func Open(ctx context.Context, path string) (*sql.DB, error) {
 const everyMigration = math.MaxInt
 
 func migrate(ctx context.Context, d *sql.DB) error {
-	return migrateUpTo(ctx, d, everyMigration)
+	return MigrateUpTo(ctx, d, everyMigration)
 }
 
-func migrateUpTo(ctx context.Context, d *sql.DB, lastVersion int) error {
+func MigrateUpTo(ctx context.Context, d *sql.DB, lastVersion int) error {
 	var appliedVersion int
 	if err := d.QueryRowContext(ctx, "PRAGMA user_version").Scan(&appliedVersion); err != nil {
 		return err
