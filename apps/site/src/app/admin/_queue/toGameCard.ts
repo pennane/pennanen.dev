@@ -1,5 +1,5 @@
 import type { ItemView } from '../../../lib/log/types'
-import type { GameCard } from './card'
+import { hintOf, type GameCard } from './card'
 
 const numberField = (item: ItemView, name: string) => {
   const value = item.verdicts.values[name]
@@ -27,7 +27,7 @@ export const toGameCard = (item: ItemView): GameCard => {
       : [],
     status: item.entry?.status ?? 'untriaged',
     tags: item.entry?.tags ?? [],
-    hint: item.hint
+    hint: hintOf(item.suggestions)
   }
 }
 

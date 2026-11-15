@@ -14,14 +14,23 @@ import {
 import type {
   Axis,
   Division,
+  DismissalChange,
   Entry,
   EntryChange,
   FieldValue,
   InheritedValue,
   Kind,
+  StatusChoice,
   Visibility
 } from '../../../lib/log/types'
-import { SET_BY_AP, sortOf, TMDB_ID, TMDB_TYPE_OF_SOURCE, tmdbPage } from '../../../lib/log/types'
+import {
+  DECIDED_BY_NOBODY,
+  SET_BY_AP,
+  sortOf,
+  TMDB_ID,
+  TMDB_TYPE_OF_SOURCE,
+  tmdbPage
+} from '../../../lib/log/types'
 import type { TMDBLink, TMDBType } from '../../../lib/log/types'
 import type { TakeFieldVisibility, TakeView } from '../../../lib/log/types'
 import { SaveStatus, useKeys } from '../_queue/card'
@@ -57,7 +66,6 @@ const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
   { value: 'private', label: 'never shown' }
 ]
 const UNTRIAGED = 'untriaged'
-const DISMISSED = 'dismissed'
 const UNSAID = ''
 const NO_SCORE = '–'
 
@@ -87,6 +95,7 @@ export type EntrySubject = {
   cover: string | undefined
   publicPath: string
   entry: Entry
+  dismissedAt: string | undefined
   lastPlayed: FieldValue
   takes: TakeView[]
   kind: string
@@ -95,7 +104,18 @@ export type EntrySubject = {
 }
 
 export const Editor = ({
-  subject: { itemId, title, cover, publicPath, entry, lastPlayed, takes, tmdb, inherited },
+  subject: {
+    itemId,
+    title,
+    cover,
+    publicPath,
+    entry,
+    dismissedAt,
+    lastPlayed,
+    takes,
+    tmdb,
+    inherited
+  },
   kind,
   knownTags,
   ranked,
@@ -114,7 +134,11 @@ export const Editor = ({
   onRematched: (subject: EntrySubject) => void
 }) => {
   const [status, setStatus] = useState(entry.status)
-  const [statusSetBy, setStatusSetBy] = useState(entry.statusSetBy)
+  const [statusDecidedBy, setStatusDecidedBy] = useState(entry.statusDecidedBy)
+  const [statusChoice, setStatusChoice] = useState(entry.statusChoice)
+  const [dismissal, setDismissal] = useState<DismissalChange>(
+    dismissedAt === undefined ? 'kept' : 'dismissed'
+  )
   const [visibility, setVisibility] = useState(entry.visibility)
   const [tags, setTags] = useState(entry.tags)
   const [timeSpent, setTimeSpent] = useState<TimeSpent | typeof UNSAID>(entry.timeSpent ?? UNSAID)
@@ -215,17 +239,37 @@ export const Editor = ({
           chosen={status}
           onChoose={(next) => {
             setStatus(next)
-            setStatusSetBy(setByAfterChoosing(kind, next))
+            setStatusDecidedBy(SET_BY_AP)
+            setStatusChoice({
+              status: next,
+              chosenAt: new Date().toISOString(),
+              standing: 'decides'
+            })
             save(`status → ${next}`, { status: next })
           }}
         />
-        {kind.statusComputedBy && (
-          <p className={styles.note}>
-            status follows {kind.statusComputedBy}; only dismissing sticks
-          </p>
-        )}
-        {statusSetBy !== SET_BY_AP && !kind.statusComputedBy && (
-          <p className={styles.note}>set by {statusSetBy}, follows it until you choose one</p>
+        <StatusNote
+          kindName={kind.name}
+          status={status}
+          decidedBy={statusDecidedBy}
+          choice={statusChoice}
+        />
+      </Section>
+
+      <Section label="dismissal">
+        <button
+          type="button"
+          className={styles.add}
+          onClick={() => {
+            const next = OTHER_DISMISSAL[dismissal]
+            setDismissal(next)
+            save(next, { dismissal: next })
+          }}
+        >
+          {DISMISSAL_ACTIONS[dismissal]}
+        </button>
+        {dismissal === 'dismissed' && (
+          <p className={styles.note}>dismissed, so it is not in your log and never shown</p>
         )}
       </Section>
 
@@ -338,7 +382,7 @@ export const Editor = ({
       <Section label="tags">
         <Tags
           tags={tags}
-          addedBySources={entry.tagsAddedBySources ?? {}}
+          fromRules={entry.tagsFromRules}
           suggestions={knownTags.filter((t) => !tags.includes(t))}
           onAdd={(tag) => {
             setTags((t) => (t.includes(tag) ? t : [...t, tag]))
@@ -369,8 +413,46 @@ export const Editor = ({
 
 const LAST_PLAYED_FIELD = 'last_played'
 
-const setByAfterChoosing = (kind: Kind, status: string) =>
-  kind.statusComputedBy && status !== DISMISSED ? kind.statusComputedBy : SET_BY_AP
+const OTHER_DISMISSAL: Record<DismissalChange, DismissalChange> = {
+  dismissed: 'kept',
+  kept: 'dismissed'
+}
+
+const DISMISSAL_ACTIONS: Record<DismissalChange, string> = {
+  dismissed: 'keep in my log',
+  kept: 'dismiss from my log'
+}
+
+const StatusNote = ({
+  kindName,
+  status,
+  decidedBy,
+  choice
+}: {
+  kindName: string
+  status: string
+  decidedBy: string
+  choice: StatusChoice | null
+}) => {
+  if (choice?.standing === 'outvoted') {
+    return (
+      <p className={styles.note}>
+        your choice: {statusLabel(choice.status)} · {decidedBy} says {statusLabel(status)}
+      </p>
+    )
+  }
+  if (choice?.standing === 'set-aside') {
+    return (
+      <p className={styles.note}>
+        your choice {statusLabel(choice.status)} waits: {kindName} has no such status
+      </p>
+    )
+  }
+  if (decidedBy !== SET_BY_AP && decidedBy !== DECIDED_BY_NOBODY) {
+    return <p className={styles.note}>set by {decidedBy}</p>
+  }
+  return null
+}
 
 const PARTIAL_DATE = /^\d{4}(-\d{2}(-\d{2})?)?$/
 
@@ -746,13 +828,13 @@ const TAG_SUGGESTIONS = 'tag-suggestions'
 
 const Tags = ({
   tags,
-  addedBySources,
+  fromRules,
   suggestions,
   onAdd,
   onRemove
 }: {
   tags: string[]
-  addedBySources: Record<string, string>
+  fromRules: Record<string, string>
   suggestions: string[]
   onAdd: (tag: string) => void
   onRemove: (tag: string) => void
@@ -772,11 +854,11 @@ const Tags = ({
           type="button"
           className={styles.chip}
           aria-label={`remove ${tag}`}
-          title={addedBySources[tag] && `added by ${addedBySources[tag]}`}
+          title={fromRules[tag] && `added by ${fromRules[tag]}`}
           onClick={() => onRemove(tag)}
         >
           {tagLabel(tag)}
-          {addedBySources[tag] && ` · ${addedBySources[tag]}`} ×
+          {fromRules[tag] && ` · ${fromRules[tag]}`} ×
         </button>
       ))}
       <input

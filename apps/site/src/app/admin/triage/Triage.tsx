@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PRESTIGE } from '../../../lib/log/present'
 import { STEAM_SYNC } from '../../../lib/log/syncs'
-import type { EntryChange, Hint, Kind, SyncReport } from '../../../lib/log/types'
+import type { EntryChange, Kind, SyncReport } from '../../../lib/log/types'
 import { useSync } from '../_sync/useSync'
 import {
   ANOTHER_SHOT,
@@ -12,6 +12,7 @@ import {
   prestigeName,
   formatPlaytime,
   HINT_LABELS,
+  type Hint,
   IDLED,
   QueueHeader,
   SaveStatus,
@@ -48,7 +49,7 @@ const BULK_FOR_HINT: Partial<Record<Hint, { label: string; change: EntryChange }
     change: { status: NEVER_PLAYED, addTags: [IDLED] }
   },
   'likely-never-played': { label: NEVER_PLAYED, change: { status: NEVER_PLAYED } },
-  'likely-not-a-game': { label: 'dismissed', change: { status: 'dismissed' } }
+  'likely-not-a-game': { label: 'dismissed', change: { dismissal: 'dismissed' } }
 }
 
 const matches = (filter: Filter) => (card: GameCard) =>

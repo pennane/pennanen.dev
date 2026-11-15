@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 const DEFAULT_KIND = 'game'
 const NOT_YET_TRIAGED = 'untriaged'
-const NEVER_PUBLIC = 'dismissed'
+const DISMISSED = 'dismissed'
 const VISIBILITIES: Visibility[] = ['auto', 'public', 'private']
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
@@ -28,7 +28,10 @@ export default async function EntriesPage({ searchParams }: { searchParams: Sear
   const kinds = await logAdmin.kinds()
   const kindName = single(params.kind) ?? DEFAULT_KIND
   const kind = kinds.find((k) => k.name === kindName) ?? kinds[0]
-  const entries = (await logAdmin.entries(kind.name)).sort((a, b) => a.title.localeCompare(b.title))
+  const dismissal = single(params.dismissal) === DISMISSED ? DISMISSED : undefined
+  const entries = (await logAdmin.entries(kind.name, dismissal)).sort((a, b) =>
+    a.title.localeCompare(b.title)
+  )
   const visibility = single(params.visibility)
 
   return (
@@ -39,17 +42,24 @@ export default async function EntriesPage({ searchParams }: { searchParams: Sear
             key={k.name}
             href={`/admin/entries?kind=${k.name}`}
             className={styles.filter}
-            aria-current={k.name === kind.name ? 'true' : undefined}
+            aria-current={k.name === kind.name && !dismissal ? 'true' : undefined}
           >
             {k.name}
           </Link>
         ))}
+        <Link
+          href={`/admin/entries?kind=${kind.name}&dismissal=${DISMISSED}`}
+          className={styles.filter}
+          aria-current={dismissal ? 'true' : undefined}
+        >
+          {DISMISSED}
+        </Link>
       </nav>
       <Entries
-        key={kind.name}
+        key={`${kind.name}/${dismissal ?? 'shown'}`}
         entries={entries}
         kind={kind}
-        statuses={kind.statuses.filter((s) => s !== NOT_YET_TRIAGED && s !== NEVER_PUBLIC)}
+        statuses={kind.statuses.filter((s) => s !== NOT_YET_TRIAGED)}
         initial={{
           status: single(params.status),
           visibility: VISIBILITIES.find((v) => v === visibility),

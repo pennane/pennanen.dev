@@ -29,8 +29,6 @@ type Panel =
 
 const CLOSED: Panel = { state: 'closed' }
 
-const DISMISSED = 'dismissed'
-
 type Filter = {
   status: string | undefined
   visibility: Visibility | undefined
@@ -138,8 +136,9 @@ export const Entries = ({
   const allTags = useMemo(() => tagsByUse(entries).map(([tag]) => tag), [entries])
 
   const patchEntry = (id: number, change: EntryChange) => {
-    setEntries((all) => all.map((e) => (e.id === id ? applyChange(e, change) : e)))
-    if (change.status === DISMISSED || change.scores?.[kind.rankedAxis] === null) unplace(id)
+    if (change.dismissal) setEntries((all) => all.filter((e) => e.id !== id))
+    else setEntries((all) => all.map((e) => (e.id === id ? applyChange(e, change) : e)))
+    if (change.dismissal === 'dismissed' || change.scores?.[kind.rankedAxis] === null) unplace(id)
   }
 
   const placeEntry = (rival: Rival, placement: Placement) => {

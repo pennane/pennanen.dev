@@ -1,7 +1,5 @@
 import type { TimeSpent } from './present'
 
-export type Hint = 'likely-idled' | 'likely-played' | 'likely-never-played' | 'likely-not-a-game'
-
 export type Visibility = 'auto' | 'public' | 'private'
 
 export type Division = { key: string; name: string }
@@ -113,7 +111,6 @@ export type Kind = {
   fields: { name: string; type: string }[]
   takes: { source: string; privateFields: string[] }[]
   identitySource?: string
-  statusComputedBy?: string
   unrankedOrder?: string
 }
 
@@ -125,9 +122,21 @@ export type TakeFieldVisibility = 'shown' | 'hidden'
 
 export const SET_BY_AP = 'ap'
 
+export const DECIDED_BY_NOBODY = 'nobody'
+
+export type ChoiceStanding = 'decides' | 'outvoted' | 'set-aside'
+
+export type StatusChoice = { status: string; chosenAt: string; standing: ChoiceStanding }
+
+export type StatusProposal = { rule: string; value: string; changedAt?: string }
+
+export type Suggestion = { rule: string; subject: string; value: string }
+
 export type Entry = {
   status: string
-  statusSetBy: string
+  statusDecidedBy: string
+  statusChoice: StatusChoice | null
+  statusProposals: StatusProposal[]
   visibility: Visibility
   blurb: string
   prose: string
@@ -136,7 +145,8 @@ export type Entry = {
   readScores: Record<string, string>
   rank?: number
   tags: string[]
-  tagsAddedBySources?: Record<string, string>
+  tagsFromRules: Record<string, string>
+  loggedBy: string
   updatedAt: string
 }
 
@@ -166,7 +176,8 @@ export type ItemView = {
   createdAt: string
   verdicts: { values: Record<string, unknown>; sourceOf: Record<string, string> }
   entry: Entry | null
-  hint?: Hint
+  dismissedAt?: string
+  suggestions: Suggestion[]
   takes: TakeView[]
   relations?: Relation[]
 }
@@ -174,6 +185,8 @@ export type ItemView = {
 export type UploadTicket = { ticket: string; url: string }
 
 export type ItemLink = { title: string; href: string }
+
+export type DismissalChange = 'dismissed' | 'kept'
 
 export type EntryChange = {
   status?: string
@@ -184,6 +197,7 @@ export type EntryChange = {
   scores?: Record<string, string | null>
   addTags?: string[]
   removeTags?: string[]
+  dismissal?: DismissalChange
 }
 
 export type IGDBResult = {

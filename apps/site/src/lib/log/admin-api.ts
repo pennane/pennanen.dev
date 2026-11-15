@@ -61,7 +61,10 @@ export const logAdmin = {
     call<string[]>('/admin/settings/kind-order', send('PUT', order)),
   items: (filter: Record<string, string>) =>
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
-  entries: (kind: string) => call<ListedEntry[]>(`/admin/entries?${new URLSearchParams({ kind })}`),
+  entries: (kind: string, dismissal?: 'dismissed') =>
+    call<ListedEntry[]>(
+      `/admin/entries?${new URLSearchParams({ kind, ...(dismissal ? { dismissal } : {}) })}`
+    ),
   place: (itemId: number, division: string, index: number) =>
     call<void>(`/admin/items/${itemId}/place`, send('PUT', { division, index })),
   createItem: (kind: string, title: string) =>

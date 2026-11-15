@@ -4,9 +4,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { divisionName, findAxis, PRESTIGE } from '../../../lib/log/present'
-import type { Hint, Kind } from '../../../lib/log/types'
+import type { Kind, Suggestion } from '../../../lib/log/types'
 import styles from './queue.module.css'
 import type { SaveQueueState } from './useSaveQueue'
+
+export type Hint = keyof typeof HINT_LABELS
 
 export type GameCard = {
   id: number
@@ -30,12 +32,15 @@ export const prestigeDivisions = (kind: Kind) => findAxis(kind.axes, PRESTIGE)?.
 export const prestigeName = (kind: Kind, division: string) =>
   divisionName(findAxis(kind.axes, PRESTIGE), division)
 
-export const HINT_LABELS: Record<Hint, string> = {
+export const HINT_LABELS = {
   'likely-played': 'looks played',
   'likely-idled': 'looks idled',
   'likely-never-played': 'never launched',
   'likely-not-a-game': 'not a game'
-}
+} as const
+
+export const hintOf = (suggestions: Suggestion[]): Hint | undefined =>
+  suggestions.map((s) => s.rule).find((rule): rule is Hint => Object.hasOwn(HINT_LABELS, rule))
 
 export const formatPlaytime = (minutes: number) => {
   if (minutes < 60) return `${minutes} min`

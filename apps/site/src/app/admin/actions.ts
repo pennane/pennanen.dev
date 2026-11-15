@@ -78,6 +78,7 @@ const subjectOf = async (item: ItemView): Promise<EntrySubject> => {
     cover: textField(item.verdicts.values, 'cover') ?? textField(item.verdicts.values, 'image'),
     publicPath: `/log/${item.kind}/${item.slug}`,
     entry: item.entry,
+    dismissedAt: item.dismissedAt,
     lastPlayed: lastPlayedOf(item),
     takes: item.takes,
     kind: item.kind,

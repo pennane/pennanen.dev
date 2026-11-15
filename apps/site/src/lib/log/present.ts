@@ -246,13 +246,11 @@ export const byRank = (a: ListedItem, b: ListedItem) =>
 
 export type Presence = 'shown' | 'hidden'
 
-const NEVER_SHOWN = 'dismissed'
-
 export const presenceOf = (
   entry: { status: string; visibility: 'auto' | 'public' | 'private' },
   statusesShown: string[]
 ): Presence => {
-  if (entry.status === NEVER_SHOWN || entry.visibility === 'private') return 'hidden'
+  if (entry.visibility === 'private') return 'hidden'
   if (entry.visibility === 'public') return 'shown'
   return statusesShown.includes(entry.status) ? 'shown' : 'hidden'
 }

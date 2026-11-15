@@ -7,7 +7,7 @@ import { SourcesForm } from './Sources'
 
 export const dynamic = 'force-dynamic'
 
-const NEVER_SHOWABLE = ['untriaged', 'dismissed']
+const NEVER_SHOWABLE = ['untriaged']
 
 export default async function SettingsPage({
   searchParams
