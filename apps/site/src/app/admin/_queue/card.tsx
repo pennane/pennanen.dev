@@ -4,11 +4,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { divisionName, findAxis, PRESTIGE } from '../../../lib/log/present'
-import type { Kind, Suggestion } from '../../../lib/log/types'
+import type { Kind } from '../../../lib/log/types'
 import styles from './queue.module.css'
 import type { SaveQueueState } from './useSaveQueue'
-
-export type Hint = keyof typeof HINT_LABELS
 
 export type GameCard = {
   id: number
@@ -20,7 +18,6 @@ export type GameCard = {
   steamCategories: string[]
   status: string
   tags: string[]
-  hint?: Hint
 }
 
 export const ANOTHER_SHOT = 'another-shot'
@@ -39,8 +36,8 @@ export const HINT_LABELS = {
   'likely-not-a-game': 'not a game'
 } as const
 
-export const hintOf = (suggestions: Suggestion[]): Hint | undefined =>
-  suggestions.map((s) => s.rule).find((rule): rule is Hint => Object.hasOwn(HINT_LABELS, rule))
+export const ruleLabel = (rule: string) =>
+  Object.hasOwn(HINT_LABELS, rule) ? HINT_LABELS[rule as keyof typeof HINT_LABELS] : rule
 
 export const formatPlaytime = (minutes: number) => {
   if (minutes < 60) return `${minutes} min`
@@ -68,7 +65,6 @@ const QUEUES = [
   { href: '/admin/triage', label: 'triage' },
   { href: '/admin/rate', label: 'rate' },
   { href: '/admin/add', label: 'add' },
-  { href: '/admin/match', label: 'match' },
   { href: '/admin/entries', label: 'entries' },
   { href: '/admin/order', label: 'order' },
   { href: '/admin/settings', label: 'settings' }

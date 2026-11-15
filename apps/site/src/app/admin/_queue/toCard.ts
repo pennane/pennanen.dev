@@ -1,5 +1,5 @@
-import type { ItemView } from '../../../lib/log/types'
-import { hintOf, type GameCard } from './card'
+import type { ItemView, Kind, Suggestion } from '../../../lib/log/types'
+import type { GameCard } from './card'
 
 const numberField = (item: ItemView, name: string) => {
   const value = item.verdicts.values[name]
@@ -26,10 +26,24 @@ export const toGameCard = (item: ItemView): GameCard => {
       ? categories.filter((c): c is string => typeof c === 'string')
       : [],
     status: item.entry?.status ?? 'untriaged',
-    tags: item.entry?.tags ?? [],
-    hint: hintOf(item.suggestions)
+    tags: item.entry?.tags ?? []
   }
 }
 
 export const byPlaytime = (a: GameCard, b: GameCard) =>
   (b.playtimeMinutes ?? 0) - (a.playtimeMinutes ?? 0)
+
+export type TriageShape = 'untriaged' | 'match'
+
+type CardBase = GameCard & { order: number; suggestions: Suggestion[] }
+
+export type TriageCard = ({ shape: 'untriaged' } & CardBase) | ({ shape: 'match' } & CardBase)
+
+export const toCard = (kind: Kind, shape: TriageShape, item: ItemView): TriageCard => ({
+  shape,
+  ...toGameCard(item),
+  order: (kind.unrankedOrder && numberField(item, kind.unrankedOrder)) || 0,
+  suggestions: item.suggestions
+})
+
+export const byOrder = (a: TriageCard, b: TriageCard) => b.order - a.order

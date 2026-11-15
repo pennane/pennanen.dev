@@ -1,7 +1,7 @@
 import { requireAdmin } from '../../../lib/admin/require-admin'
 import { logAdmin } from '../../../lib/log/admin-api'
 import { toRanked } from '../_queue/placing'
-import { byPlaytime, toGameCard } from '../_queue/toGameCard'
+import { byPlaytime, toGameCard } from '../_queue/toCard'
 import { Rate } from './Rate'
 
 export const dynamic = 'force-dynamic'

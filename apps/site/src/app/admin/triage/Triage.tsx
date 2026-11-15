@@ -1,9 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PRESTIGE } from '../../../lib/log/present'
-import { STEAM_SYNC } from '../../../lib/log/syncs'
-import type { EntryChange, Kind, SyncReport } from '../../../lib/log/types'
+import { IGDB_MATCH, STEAM_SYNC } from '../../../lib/log/syncs'
+import type { Kind, SyncReport } from '../../../lib/log/types'
 import { useSync } from '../_sync/useSync'
 import {
   ANOTHER_SHOT,
@@ -11,76 +12,109 @@ import {
   prestigeDivisions,
   prestigeName,
   formatPlaytime,
-  HINT_LABELS,
-  type Hint,
   IDLED,
   QueueHeader,
+  ruleLabel,
   SaveStatus,
   TagToggle,
-  useKeys,
-  type GameCard
+  useKeys
 } from '../_queue/card'
 import styles from '../_queue/queue.module.css'
-import { changeEntries, changeEntry, placeEntry } from '../actions'
+import { acceptancesOf } from '../_queue/accept'
+import { catalogueOf, type Catalogue } from '../_queue/catalogue'
+import { IGDBSearch } from '../_queue/IGDBSearch'
+import { TMDBSearch } from '../_queue/TMDBSearch'
+import type { TriageCard } from '../_queue/toCard'
+import {
+  changeEntries,
+  changeEntry,
+  matchIGDB,
+  matchIGDBNone,
+  matchTMDB,
+  matchTMDBNone,
+  placeEntry
+} from '../actions'
 import { Compare, compareKeys, useRanked, type Comparing } from '../_queue/Compare'
 import type { Placement, Ranked, Search } from '../_queue/placing'
 import { useSaveQueue } from '../_queue/useSaveQueue'
 
-type Filter = 'everything' | Hint | 'no-hint'
+export type KindQueue = { kind: string; untriaged: number; needingMatch: number }
+
+type Filter =
+  | { by: 'everything' }
+  | { by: 'no-suggestion' }
+  | { by: 'needs-match' }
+  | { by: 'rule'; rule: string }
+
+const EVERYTHING: Filter = { by: 'everything' }
 
 type Step =
   | { phase: 'status' }
   | { phase: 'score'; status: string }
   | { phase: 'compare'; status: string; search: Search }
 
-type Triaged = { cards: GameCard[] }
+type Triaged = { cards: TriageCard[]; addedTags: string[] }
 
 const UNTRIAGED = 'untriaged'
-const NEVER_PLAYED = 'never-played'
 
 const TRIAGE_TAGS = [
   { tag: ANOTHER_SHOT, shortcut: 'a', label: 'worth another shot' },
   { tag: IDLED, shortcut: 'i', label: 'idled for cards' }
 ] as const
 
-const BULK_FOR_HINT: Partial<Record<Hint, { label: string; change: EntryChange }>> = {
-  'likely-idled': {
-    label: 'never-played + idled',
-    change: { status: NEVER_PLAYED, addTags: [IDLED] }
-  },
-  'likely-never-played': { label: NEVER_PLAYED, change: { status: NEVER_PLAYED } },
-  'likely-not-a-game': { label: 'dismissed', change: { dismissal: 'dismissed' } }
+const cardKey = (card: TriageCard) => `${card.shape}:${card.id}`
+
+const filterKey = (filter: Filter) => (filter.by === 'rule' ? `rule:${filter.rule}` : filter.by)
+
+const matches = (filter: Filter) => (card: TriageCard) => {
+  switch (filter.by) {
+    case 'everything':
+      return true
+    case 'needs-match':
+      return card.shape === 'match'
+    case 'no-suggestion':
+      return card.shape === 'untriaged' && card.suggestions.length === 0
+    case 'rule':
+      return card.shape === 'untriaged' && card.suggestions.some((s) => s.rule === filter.rule)
+  }
 }
 
-const matches = (filter: Filter) => (card: GameCard) =>
-  filter === 'everything' || (filter === 'no-hint' ? card.hint === undefined : card.hint === filter)
+const rulesOf = (cards: TriageCard[]) =>
+  [...new Set(cards.flatMap((card) => card.suggestions.map((s) => s.rule)))].sort()
 
 export const Triage = ({
   kind,
+  kindQueues,
   cards,
   ranked: initialRanked,
-  steamSync
+  steamSync,
+  matchSync
 }: {
   kind: Kind
-  cards: GameCard[]
+  kindQueues: KindQueue[]
+  cards: TriageCard[]
   ranked: Ranked
   steamSync?: SyncReport
+  matchSync?: SyncReport
 }) => {
+  const catalogue = catalogueOf(kind)
   const presets = useMemo(() => prestigeDivisions(kind), [kind])
   const { ranked, place, unplace, searchFrom } = useRanked(initialRanked)
   const [queue, setQueue] = useState(cards)
   const [history, setHistory] = useState<Triaged[]>([])
-  const [filter, setFilter] = useState<Filter>('everything')
+  const [filter, setFilter] = useState<Filter>(EVERYTHING)
   const [step, setStep] = useState<Step>({ phase: 'status' })
-  const [bulkArmed, setBulkArmed] = useState<Hint>()
+  const [bulkArmed, setBulkArmed] = useState<string>()
   const [tagsToAdd, setTagsToAdd] = useState<string[]>([])
   const saves = useSaveQueue()
-  const settledIds = useRef(new Set<number>())
+  const settledKeys = useRef(new Set<string>())
 
   useEffect(() => {
     setQueue((current) => {
-      const known = new Set(current.map((c) => c.id))
-      const arrived = cards.filter((c) => !known.has(c.id) && !settledIds.current.has(c.id))
+      const known = new Set(current.map(cardKey))
+      const arrived = cards.filter(
+        (c) => !known.has(cardKey(c)) && !settledKeys.current.has(cardKey(c))
+      )
       return [...current, ...arrived]
     })
   }, [cards])
@@ -89,25 +123,14 @@ export const Triage = ({
   const current = visible[0]
   const statuses = kind.statuses.filter((s) => s !== UNTRIAGED)
 
-  const countByFilter = useMemo(() => {
-    const counts: Record<Filter, number> = {
-      everything: queue.length,
-      'no-hint': 0,
-      'likely-played': 0,
-      'likely-idled': 0,
-      'likely-never-played': 0,
-      'likely-not-a-game': 0
-    }
-    for (const card of queue) counts[card.hint ?? 'no-hint']++
-    return counts
-  }, [queue])
+  const countOf = useCallback((filter: Filter) => queue.filter(matches(filter)).length, [queue])
+  const rules = useMemo(() => rulesOf(queue), [queue])
 
   const settle = useCallback(
-    (triaged: GameCard[], label: string, save: () => Promise<unknown>) => {
-      const ids = new Set(triaged.map((c) => c.id))
-      ids.forEach((id) => settledIds.current.add(id))
-      setQueue((q) => q.filter((c) => !ids.has(c.id)))
-      setHistory((h) => [...h, { cards: triaged }])
+    (settled: TriageCard[], label: string, save: () => Promise<unknown>) => {
+      const keys = new Set(settled.map(cardKey))
+      keys.forEach((key) => settledKeys.current.add(key))
+      setQueue((q) => q.filter((c) => !keys.has(cardKey(c))))
       setStep({ phase: 'status' })
       setBulkArmed(undefined)
       setTagsToAdd([])
@@ -116,11 +139,19 @@ export const Triage = ({
     [saves]
   )
 
+  const settleTriaged = useCallback(
+    (triaged: TriageCard[], addedTags: string[], label: string, save: () => Promise<unknown>) => {
+      setHistory((h) => [...h, { cards: triaged, addedTags }])
+      settle(triaged, label, save)
+    },
+    [settle]
+  )
+
   const commit = useCallback(
     (status: string, placement?: Placement) => {
-      if (!current) return
+      if (current?.shape !== 'untriaged') return
       if (placement) place(current, placement)
-      settle([current], `${current.title} → ${status}`, async () => {
+      settleTriaged([current], tagsToAdd, `${current.title} → ${status}`, async () => {
         await changeEntry(current.id, {
           status,
           ...(placement ? { scores: { [PRESTIGE]: placement.division } } : {}),
@@ -129,12 +160,12 @@ export const Triage = ({
         if (placement) await placeEntry(current.id, placement.division, placement.index)
       })
     },
-    [current, settle, tagsToAdd, place]
+    [current, settleTriaged, tagsToAdd, place]
   )
 
   const score = useCallback(
     (status: string, division: string) => {
-      if (!current) return
+      if (current?.shape !== 'untriaged') return
       const search = searchFrom(division, current.id)
       if (search.high === 0) commit(status, { division, index: 0 })
       else setStep({ phase: 'compare', status, search })
@@ -144,7 +175,7 @@ export const Triage = ({
 
   const comparing = useMemo<Comparing | undefined>(
     () =>
-      current && step.phase === 'compare'
+      current?.shape === 'untriaged' && step.phase === 'compare'
         ? {
             ranked,
             search: step.search,
@@ -168,7 +199,7 @@ export const Triage = ({
 
   const skip = useCallback(() => {
     if (!current) return
-    setQueue((q) => [...q.filter((c) => c.id !== current.id), current])
+    setQueue((q) => [...q.filter((c) => cardKey(c) !== cardKey(current)), current])
     setStep({ phase: 'status' })
     setTagsToAdd([])
   }, [current])
@@ -180,35 +211,44 @@ export const Triage = ({
     setQueue((q) => [...last.cards, ...q])
     setStep({ phase: 'status' })
     const ids = last.cards.map((c) => c.id)
-    ids.forEach((id) => settledIds.current.delete(id))
+    last.cards.forEach((c) => settledKeys.current.delete(cardKey(c)))
     ids.forEach(unplace)
+    const removeTags = [...new Set([...TRIAGE_TAGS.map((t) => t.tag), ...last.addedTags])]
     saves.enqueue(`undo ${last.cards.length}`, () =>
       changeEntries(ids, {
         status: UNTRIAGED,
         dismissal: 'kept',
         scores: { [PRESTIGE]: null },
-        removeTags: TRIAGE_TAGS.map((t) => t.tag)
+        removeTags
       })
     )
   }, [history, saves, unplace])
 
   const bulk = useCallback(
-    (hint: Hint) => {
-      const action = BULK_FOR_HINT[hint]
-      if (!action) return
-      if (bulkArmed !== hint) {
-        setBulkArmed(hint)
+    (rule: string) => {
+      const acceptances = acceptancesOf(queue, rule)
+      if (acceptances.length === 0) return
+      if (bulkArmed !== rule) {
+        setBulkArmed(rule)
         return
       }
-      const triaged = queue.filter((c) => c.hint === hint)
-      settle(triaged, `${triaged.length} → ${action.label}`, () =>
-        changeEntries(
-          triaged.map((c) => c.id),
-          action.change
-        )
-      )
+      const triaged = acceptances.flatMap((a) => a.cards)
+      const addedTags = acceptances.flatMap((a) => a.change.addTags ?? [])
+      settleTriaged(triaged, addedTags, `${triaged.length} → ${rule}`, async () => {
+        for (const { change, cards: accepted } of acceptances)
+          await changeEntries(
+            accepted.map((c) => c.id),
+            change
+          )
+      })
     },
-    [bulkArmed, queue, settle]
+    [bulkArmed, queue, settleTriaged]
+  )
+
+  const matched = useCallback(
+    (card: TriageCard, label: string, save: () => Promise<unknown>) =>
+      settle([card], `${card.title} → ${label}`, save),
+    [settle]
   )
 
   const toggleTag = useCallback(
@@ -222,6 +262,7 @@ export const Triage = ({
       s: skip,
       z: undo
     }
+    if (current?.shape !== 'untriaged') return handlers
     TRIAGE_TAGS.forEach((t) => (handlers[t.shortcut] = () => toggleTag(t.tag)))
     if (comparing) {
       Object.assign(handlers, compareKeys(comparing))
@@ -235,59 +276,78 @@ export const Triage = ({
       handlers.Escape = () => setStep({ phase: 'status' })
     }
     return handlers
-  }, [presets, step, statuses, choose, commit, score, skip, undo, toggleTag, comparing])
+  }, [presets, step, statuses, choose, commit, score, skip, undo, toggleTag, comparing, current])
   useKeys(keys)
 
-  const bulkAction = filter !== 'everything' && filter !== 'no-hint' && BULK_FOR_HINT[filter]
+  const acceptances = useMemo(
+    () => (filter.by === 'rule' ? acceptancesOf(queue, filter.rule) : []),
+    [queue, filter]
+  )
+  const acceptable = acceptances.flatMap((a) => a.cards)
+  const acceptLabel = acceptances.map((a) => a.label).join(', ')
+  const filters: { filter: Filter; label: string }[] = [
+    { filter: EVERYTHING, label: 'all' },
+    ...rules.map((rule) => ({ filter: { by: 'rule', rule } as const, label: ruleLabel(rule) })),
+    { filter: { by: 'no-suggestion' }, label: 'no suggestion' },
+    ...(countOf({ by: 'needs-match' }) > 0
+      ? [{ filter: { by: 'needs-match' } as const, label: 'needs match' }]
+      : [])
+  ]
 
   return (
     <div className={styles.queue}>
       <QueueHeader current="triage" count={queue.length}>
-        <SteamSyncButton initial={steamSync} />
+        {kind.name === 'game' && <SteamSyncButton initial={steamSync} />}
+        {kind.name === 'game' && <MatchSyncButton initial={matchSync} />}
       </QueueHeader>
 
+      {kindQueues.length > 1 && (
+        <nav className={styles.filters}>
+          {kindQueues.map((k) => (
+            <Link
+              key={k.kind}
+              href={`/admin/triage?kind=${k.kind}`}
+              className={styles.filter}
+              aria-current={k.kind === kind.name ? 'true' : undefined}
+            >
+              {k.kind} <span className={styles.count}>{k.untriaged + k.needingMatch}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
+
       <nav className={styles.filters}>
-        {(
-          [
-            'everything',
-            'likely-played',
-            'no-hint',
-            'likely-idled',
-            'likely-never-played',
-            'likely-not-a-game'
-          ] as const
-        ).map((f) => (
+        {filters.map(({ filter: f, label }) => (
           <button
-            key={f}
+            key={filterKey(f)}
             className={styles.filter}
-            aria-pressed={filter === f}
+            aria-pressed={filterKey(filter) === filterKey(f)}
             onClick={() => {
               setFilter(f)
               setBulkArmed(undefined)
             }}
           >
-            {f === 'everything' ? 'all' : f === 'no-hint' ? 'no hint' : HINT_LABELS[f]}{' '}
-            <span className={styles.count}>{countByFilter[f]}</span>
+            {label} <span className={styles.count}>{countOf(f)}</span>
           </button>
         ))}
       </nav>
 
-      {bulkAction && countByFilter[filter] > 0 && (
+      {filter.by === 'rule' && acceptable.length > 0 && (
         <section className={styles.bulkPanel}>
           <button
             className={styles.bulk}
-            data-armed={bulkArmed === filter}
-            onClick={() => bulk(filter as Hint)}
+            data-armed={bulkArmed === filter.rule}
+            onClick={() => bulk(filter.rule)}
           >
-            {bulkArmed === filter
-              ? `Tap again: mark these ${countByFilter[filter]} as ${bulkAction.label}`
-              : `Mark all ${countByFilter[filter]} as ${bulkAction.label}…`}
+            {bulkArmed === filter.rule
+              ? `Tap again: accept ${filter.rule} for these ${acceptable.length} (${acceptLabel})`
+              : `Accept ${filter.rule} for all ${acceptable.length}…`}
           </button>
-          {bulkArmed === filter && (
+          {bulkArmed === filter.rule && (
             <>
               <ul className={styles.bulkList}>
-                {visible.map((card) => (
-                  <li key={card.id}>
+                {acceptable.map((card) => (
+                  <li key={cardKey(card)}>
                     <span>{card.title}</span>
                     {card.playtimeMinutes !== undefined && (
                       <span className={styles.count}>{formatPlaytime(card.playtimeMinutes)}</span>
@@ -303,9 +363,23 @@ export const Triage = ({
         </section>
       )}
 
-      {bulkArmed ? null : current ? (
-        <article className={styles.card} key={current.id}>
-          <CardFace card={current} badge={current.hint && HINT_LABELS[current.hint]} />
+      {bulkArmed ? null : current?.shape === 'match' && catalogue ? (
+        <article className={styles.card} key={cardKey(current)}>
+          <CardFace card={current} badge="needs match" />
+          <div className={styles.matchPanel}>
+            <MatchSearch
+              catalogue={catalogue}
+              card={current}
+              onMatched={(label, save) => matched(current, label, save)}
+            />
+          </div>
+        </article>
+      ) : current?.shape === 'untriaged' ? (
+        <article className={styles.card} key={cardKey(current)}>
+          <CardFace
+            card={current}
+            badge={[...new Set(current.suggestions.map((s) => ruleLabel(s.rule)))].join(' · ')}
+          />
           {step.phase === 'status' ? (
             <div className={styles.choices}>
               {statuses.map((status, i) => (
@@ -367,6 +441,46 @@ export const Triage = ({
   )
 }
 
+const MatchSearch = ({
+  catalogue,
+  card,
+  onMatched
+}: {
+  catalogue: Catalogue
+  card: TriageCard
+  onMatched: (label: string, save: () => Promise<unknown>) => void
+}) => (
+  <>
+    {catalogue.name === 'igdb' ? (
+      <IGDBSearch
+        initialQuery={card.title}
+        onPick={(result) => onMatched(result.name, () => matchIGDB(card.id, result.igdbId))}
+      />
+    ) : (
+      <TMDBSearch
+        tmdbType={catalogue.tmdbType}
+        initialQuery={card.title}
+        onPick={(result) =>
+          onMatched(result.name, () =>
+            matchTMDB(card.id, { tmdbType: result.tmdbType, tmdbId: result.tmdbId })
+          )
+        }
+      />
+    )}
+    <button
+      type="button"
+      className={styles.quiet}
+      onClick={() =>
+        onMatched('no match', () =>
+          catalogue.name === 'igdb' ? matchIGDBNone(card.id) : matchTMDBNone(card.id)
+        )
+      }
+    >
+      {catalogue.name} doesn’t have it: no match
+    </button>
+  </>
+)
+
 const SteamSyncButton = ({ initial }: { initial?: SyncReport }) => {
   const { report, start } = useSync(STEAM_SYNC, initial)
   if (!initial) return null
@@ -392,5 +506,35 @@ const steamSyncLabel = (report: SyncReport | undefined) => {
       return 'steam sync failed, retry'
     default:
       return 'sync steam'
+  }
+}
+
+const MatchSyncButton = ({ initial }: { initial?: SyncReport }) => {
+  const { report, start } = useSync(IGDB_MATCH, initial)
+  if (!initial) return null
+  return (
+    <button
+      className={styles.quiet}
+      disabled={report?.state === 'running'}
+      title={report?.problems.at(-1)}
+      onClick={start}
+    >
+      {matchSyncLabel(report)}
+    </button>
+  )
+}
+
+const matchSyncLabel = (report: SyncReport | undefined) => {
+  const matched = report?.counts.matched ?? 0
+  const checked = report?.counts.checked ?? 0
+  switch (report?.state) {
+    case 'running':
+      return `matching… ${matched} of ${checked}`
+    case 'failed':
+      return 'match failed, retry'
+    case 'succeeded':
+      return `last run matched ${matched} of ${checked} · run again`
+    default:
+      return 'match steam games'
   }
 }

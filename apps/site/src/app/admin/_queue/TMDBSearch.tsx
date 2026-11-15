@@ -18,6 +18,7 @@ export const TMDBSearch = ({
   ...props
 }: {
   tmdbType: TMDBType
+  initialQuery?: string
   autoFocus?: boolean
   onPick: (result: TMDBResult) => void
   nothingFits?: (query: string) => React.ReactNode
