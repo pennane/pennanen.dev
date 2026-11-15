@@ -84,3 +84,67 @@ func TestAnUnknownStatusOrApAsASourceIsRefused(t *testing.T) {
 		t.Error("ap is not a sync")
 	}
 }
+
+func knownArtist(t *testing.T, s *store.Store, externalID string) int64 {
+	t.Helper()
+	id, err := s.KnowItemFromSource(context.Background(), kind.Artist, "Artist "+externalID, kind.SourceSpotifyArtist, externalID, json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
+func TestApHandsAnArtistsStatusBack(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	id := knownArtist(t, s, "x")
+	if got, err := s.SetStatusFromSource(ctx, id, kind.SourceSpotify, kind.Listening); err != nil || got != store.StatusLogged {
+		t.Fatalf("logging = %v, %v", got, err)
+	}
+
+	listened := kind.Listened
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{Status: &listened}); err != nil {
+		t.Fatal(err)
+	}
+	if status, setBy := statusOf(t, s, id); status != kind.Listened || setBy != kind.SourceSpotify {
+		t.Fatalf("after ap picked listened: %s by %s", status, setBy)
+	}
+	if got, _ := s.SetStatusFromSource(ctx, id, kind.SourceSpotify, kind.Listening); got != store.StatusFollowed {
+		t.Fatalf("spotify after hand back = %v, want followed", got)
+	}
+}
+
+func TestADismissedArtistStaysApsToDismiss(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	id := knownArtist(t, s, "x")
+	if _, err := s.SetStatusFromSource(ctx, id, kind.SourceSpotify, kind.Listening); err != nil {
+		t.Fatal(err)
+	}
+	dismissed := kind.Dismissed
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{Status: &dismissed}); err != nil {
+		t.Fatal(err)
+	}
+	if status, setBy := statusOf(t, s, id); status != kind.Dismissed || setBy != kind.SourceAP {
+		t.Fatalf("after dismissing: %s by %s", status, setBy)
+	}
+	if got, _ := s.SetStatusFromSource(ctx, id, kind.SourceSpotify, kind.Listened); got != store.StatusKeptAsSet {
+		t.Fatalf("spotify over a dismissal = %v, want kept-as-set", got)
+	}
+}
+
+func TestComputedStatusesOnlyHandBackForTheirKind(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	id, err := s.CreateItemFromSource(ctx, kind.Movie, "Heat", kind.SourceLetterboxd, "heat", json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	watched := "watched"
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{Status: &watched}); err != nil {
+		t.Fatal(err)
+	}
+	if status, setBy := statusOf(t, s, id); status != "watched" || setBy != kind.SourceAP {
+		t.Fatalf("movie: %s by %s", status, setBy)
+	}
+}

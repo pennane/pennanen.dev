@@ -100,3 +100,36 @@ func (s *Store) HasObservationKeyWithPrefix(ctx context.Context, source, prefix 
 		source, prefix, prefix).Scan(&found)
 	return found, err
 }
+
+func (s *Store) ItemsObserved(ctx context.Context, source, signal string) ([]int64, error) {
+	return s.itemIDs(ctx, `
+		SELECT DISTINCT item_id FROM observation WHERE source = ? AND signal = ?
+		ORDER BY item_id`, source, signal)
+}
+
+func (s *Store) ItemsInNewestSnapshot(ctx context.Context, source, signal, keyPrefix string) ([]int64, error) {
+	return s.itemIDs(ctx, `
+		SELECT DISTINCT item_id FROM observation
+		WHERE source = ? AND signal = ?
+			AND substr(key, 1, length(?)) = ?
+			AND substr(observed_at, 1, 10) = (
+				SELECT substr(max(observed_at), 1, 10) FROM observation WHERE source = ? AND signal = ?)
+		ORDER BY item_id`, source, signal, keyPrefix, keyPrefix, source, signal)
+}
+
+func (s *Store) itemIDs(ctx context.Context, query string, args ...any) ([]int64, error) {
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	itemIDs := []int64{}
+	for rows.Next() {
+		var itemID int64
+		if err := rows.Scan(&itemID); err != nil {
+			return nil, err
+		}
+		itemIDs = append(itemIDs, itemID)
+	}
+	return itemIDs, rows.Err()
+}

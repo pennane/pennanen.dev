@@ -13,7 +13,7 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/syncs"
 )
 
-const ObservationSource = "spotify"
+const ObservationSource = kind.SourceSpotify
 
 const (
 	CountArtists   = "artists"

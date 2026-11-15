@@ -4,6 +4,7 @@ const (
 	Artist = "artist"
 	Album  = "album"
 
+	SourceSpotify       = "spotify"
 	SourceSpotifyArtist = "spotify-artist"
 	SourceSpotifyAlbum  = "spotify-album"
 
@@ -15,14 +16,15 @@ const (
 
 func init() {
 	register(Kind{
-		Name:            Artist,
-		DefaultTitle:    "artists",
-		Statuses:        []string{Listening, Listened},
-		StatusesToScore: []string{Listening, Listened},
-		StatusesShown:   []string{Listening, Listened},
-		DefaultAxes:     []string{Prestige, Quality},
-		RankedAxis:      Prestige,
-		IdentitySource:  SourceSpotifyArtist,
+		Name:             Artist,
+		DefaultTitle:     "artists",
+		Statuses:         []string{Listening, Listened},
+		StatusesToScore:  []string{Listening, Listened},
+		StatusesShown:    []string{Listening, Listened},
+		DefaultAxes:      []string{Prestige, Quality},
+		RankedAxis:       Prestige,
+		IdentitySource:   SourceSpotifyArtist,
+		StatusComputedBy: SourceSpotify,
 		Fields: []Field{
 			{Name: FieldTitle, Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},
 			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyArtist}},

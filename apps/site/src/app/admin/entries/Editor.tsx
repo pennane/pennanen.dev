@@ -56,6 +56,7 @@ const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
   { value: 'private', label: 'never shown' }
 ]
 const UNTRIAGED = 'untriaged'
+const DISMISSED = 'dismissed'
 const UNSAID = ''
 const NO_SCORE = '–'
 
@@ -212,10 +213,15 @@ export const Editor = ({
           chosen={status}
           onChoose={(next) => {
             setStatus(next)
-            setStatusSetBy(SET_BY_AP)
+            setStatusSetBy(setByAfterChoosing(kind, next))
             save(`status → ${next}`, { status: next })
           }}
         />
+        {kind.statusComputedBy && (
+          <p className={styles.note}>
+            status follows {kind.statusComputedBy}; only dismissing sticks
+          </p>
+        )}
         {statusSetBy !== SET_BY_AP && (
           <p className={styles.note}>set by {statusSetBy}, follows it until you choose one</p>
         )}
@@ -350,6 +356,9 @@ export const Editor = ({
 }
 
 const LAST_PLAYED_FIELD = 'last_played'
+
+const setByAfterChoosing = (kind: Kind, status: string) =>
+  kind.statusComputedBy && status !== DISMISSED ? kind.statusComputedBy : SET_BY_AP
 
 const PARTIAL_DATE = /^\d{4}(-\d{2}(-\d{2})?)?$/
 

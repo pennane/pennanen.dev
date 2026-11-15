@@ -35,17 +35,18 @@ const (
 )
 
 type Kind struct {
-	Name            string                             `json:"name"`
-	DefaultTitle    string                             `json:"-"`
-	Statuses        []string                           `json:"statuses"`
-	StatusesToScore []string                           `json:"statusesToScore"`
-	StatusesShown   []string                           `json:"statusesShown"`
-	DefaultAxes     []string                           `json:"-"`
-	RankedAxis      string                             `json:"rankedAxis"`
-	Fields          []Field                            `json:"fields"`
-	IdentitySource  string                             `json:"identitySource,omitempty"`
-	Takes           []Take                             `json:"takes"`
-	GuessStatus     func(verdicts map[string]any) Hint `json:"-"`
+	Name             string                             `json:"name"`
+	DefaultTitle     string                             `json:"-"`
+	Statuses         []string                           `json:"statuses"`
+	StatusesToScore  []string                           `json:"statusesToScore"`
+	StatusesShown    []string                           `json:"statusesShown"`
+	DefaultAxes      []string                           `json:"-"`
+	RankedAxis       string                             `json:"rankedAxis"`
+	Fields           []Field                            `json:"fields"`
+	IdentitySource   string                             `json:"identitySource,omitempty"`
+	StatusComputedBy string                             `json:"statusComputedBy,omitempty"`
+	Takes            []Take                             `json:"takes"`
+	GuessStatus      func(verdicts map[string]any) Hint `json:"-"`
 }
 
 type Take struct {

@@ -103,6 +103,7 @@ export type Kind = {
   fields: { name: string; type: string }[]
   takes: { source: string; privateFields: string[] }[]
   identitySource?: string
+  statusComputedBy?: string
 }
 
 export type Take = { source: string; values: Record<string, unknown>; fetchedAt: string }

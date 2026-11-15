@@ -48,6 +48,15 @@ to-read shelf or wishlist; it isn't shown by default.
 A status is **set by** ap or by a source's sync. A sync changes only a
 status it set itself; once ap sets one, no sync touches it again.
 
+**Computed status** — a status a source works out instead of ap choosing it.
+Artists have one: the source `spotify` sets it on every sync. Only
+`dismissed` sticks; any other status ap picks goes back to the source, which
+sets it again on the next sync.
+
+**Listening / listened** — an artist's computed statuses. `listening` means
+being in the 4-week top list of the newest day any top-artist list was
+recorded; `listened` is everything else that was ever in a top list.
+
 **Dismissed** — the status for something that doesn't belong in the log at all,
 like Wallpaper Engine in a Steam library. The item is kept so sync won't bring
 it back, but it never shows on public pages.

@@ -115,7 +115,7 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 			time_spent = CASE WHEN ? IS NULL THEN time_spent ELSE nullif(?, '') END,
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 		WHERE item_id = ?`,
-		change.Status, change.Status, kind.SourceAP, change.Visibility, change.Blurb, change.Prose, change.TimeSpent, change.TimeSpent, itemID); err != nil {
+		change.Status, change.Status, statusSetBy(k, change.Status), change.Visibility, change.Blurb, change.Prose, change.TimeSpent, change.TimeSpent, itemID); err != nil {
 		return err
 	}
 	if change.Status != nil && *change.Status == kind.Dismissed {
@@ -161,4 +161,11 @@ func lookupKind(ctx context.Context, q queryer, itemID int64) (kind.Kind, error)
 		return kind.Kind{}, fmt.Errorf("item %d has unknown kind %q", itemID, name)
 	}
 	return k, nil
+}
+
+func statusSetBy(k kind.Kind, chosen *string) string {
+	if k.StatusComputedBy != "" && chosen != nil && *chosen != kind.Dismissed {
+		return k.StatusComputedBy
+	}
+	return kind.SourceAP
 }
