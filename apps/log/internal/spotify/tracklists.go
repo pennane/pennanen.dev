@@ -1,7 +1,6 @@
 package spotify
 
 import (
-	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -19,17 +18,11 @@ const (
 	recordingWithoutISRC = "spotify:"
 )
 
-type tracklistEntry struct {
-	ID          string `json:"id"`
-	DiscNumber  int    `json:"disc_number"`
-	TrackNumber int    `json:"track_number"`
-}
-
 type albumTracklist struct {
 	Name   string `json:"name"`
 	Tracks struct {
-		Items []tracklistEntry `json:"items"`
-		Total int              `json:"total"`
+		Items []verdict.TracklistEntry `json:"items"`
+		Total int                      `json:"total"`
 	} `json:"tracks"`
 }
 
@@ -43,20 +36,6 @@ func RecordingKey(t verdict.SpotifyTrack) string {
 		return t.ExternalIDs.ISRC
 	}
 	return recordingWithoutISRC + t.ID
-}
-
-func inTracklistOrder(entries []tracklistEntry) []string {
-	sorted := slices.Clone(entries)
-	slices.SortStableFunc(sorted, func(a, b tracklistEntry) int {
-		return cmp.Or(cmp.Compare(a.DiscNumber, b.DiscNumber), cmp.Compare(a.TrackNumber, b.TrackNumber))
-	})
-	ids := make([]string, 0, len(sorted))
-	for _, entry := range sorted {
-		if entry.ID != "" {
-			ids = append(ids, entry.ID)
-		}
-	}
-	return ids
 }
 
 func fillTracklists(ctx context.Context, st *store.Store, c *Client, p *syncs.Progress) error {
@@ -121,7 +100,7 @@ func tracklistsOutOfStep(ctx context.Context, st *store.Store, p *syncs.Progress
 			p.Problem("album %d: %v", albumID, err)
 			continue
 		}
-		trackIDs := inTracklistOrder(album.Tracks.Items)
+		trackIDs := verdict.InTracklistOrder(album.Tracks.Items)
 		if album.Tracks.Total > len(trackIDs) {
 			p.Problem("%s lists %d of its %d tracks", album.Name, len(trackIDs), album.Tracks.Total)
 			continue

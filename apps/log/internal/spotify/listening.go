@@ -39,7 +39,7 @@ func listeningWeights(ctx context.Context, st *store.Store) (albums, artists map
 	if err != nil {
 		return nil, nil, err
 	}
-	mainArtists, err := st.RelationsOfType(ctx, kind.RelationBy)
+	mainArtists, err := st.RelationsOfType(ctx, kind.LinkBy)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -16,9 +16,6 @@ const (
 	Listening = "listening"
 	Listened  = "listened"
 
-	RelationBy   = "by"
-	RelationWith = "with"
-
 	VariousArtists = "0LyfQWJT6nXafLPZqxe9Of"
 )
 
@@ -69,7 +66,7 @@ func init() {
 			{Name: "album_type", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "tracks", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			{Name: "label", Type: Text, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
-			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}, InheritedThrough: RelationBy},
+			{Name: "genres", Type: StringList, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}, InheritedThrough: LinkBy},
 			{Name: "popularity", Type: Int, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},
 			listeningField,
 			{Name: "cover", Type: Picture, Shape: Square, SourcesBestFirstAfterAP: []string{SourceSpotifyAlbum}},

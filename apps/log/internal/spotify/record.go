@@ -98,15 +98,15 @@ func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.Ra
 	return itemID, nil
 }
 
-var creditRelations = []string{kind.RelationBy, kind.RelationWith}
+var creditRelations = []string{kind.LinkBy, kind.LinkWith}
 
 const firstCredited = 0
 
 func creditRelation(position int, artistID string) string {
 	if position == firstCredited && artistID != kind.VariousArtists {
-		return kind.RelationBy
+		return kind.LinkBy
 	}
-	return kind.RelationWith
+	return kind.LinkWith
 }
 
 func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*metItem, kindName, source, count string, raw json.RawMessage, detail Detail) (int64, error) {

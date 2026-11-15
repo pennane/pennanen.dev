@@ -77,7 +77,7 @@ func computeArtistStatuses(ctx context.Context, st *store.Store, p *syncs.Progre
 	if err != nil {
 		return err
 	}
-	mainArtistsOfSaved, err := st.RelatedTo(ctx, saved, kind.RelationBy)
+	mainArtistsOfSaved, err := st.RelatedTo(ctx, saved, kind.LinkBy)
 	if err != nil {
 		return err
 	}

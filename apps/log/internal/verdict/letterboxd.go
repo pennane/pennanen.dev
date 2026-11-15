@@ -74,6 +74,9 @@ func readLetterboxdFilm(raw json.RawMessage) (map[string]any, error) {
 		return nil, err
 	}
 	values := map[string]any{"title": film.Title, "link": film.Link()}
+	if link, linked := film.TMDB(); linked {
+		values["tmdb_link"] = link.Type.Source() + ":" + link.ExternalID()
+	}
 	if film.Year > 0 {
 		values["released"] = fmt.Sprintf("%04d", film.Year)
 	}

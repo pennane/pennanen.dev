@@ -64,6 +64,7 @@ func TestReadSpotifyAlbum(t *testing.T) {
 	want := map[string]any{
 		"title":      "Homework",
 		"artists":    []string{"Daft Punk"},
+		"artist_ids": []string{"4tZwfgrHOc3mvqYlEYSvVi"},
 		"released":   "1997",
 		"album_type": "album",
 		"tracks":     int64(16),

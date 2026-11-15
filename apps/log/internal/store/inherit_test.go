@@ -73,7 +73,7 @@ func TestAnAlbumInheritsGenresFromItsMainArtist(t *testing.T) {
 	s := openStore(t)
 	artist := knowArtist(t, s, "S", "Slowdive", "shoegaze")
 	album := logAlbum(t, s, "V", "Souvlaki")
-	relate(t, s, album, kind.RelationBy, artist)
+	relate(t, s, album, kind.LinkBy, artist)
 
 	for read, v := range bothReads(t, s, album) {
 		if got := v.Verdicts.Values[fieldGenres]; !reflect.DeepEqual(got, []string{"shoegaze"}) {
@@ -89,7 +89,7 @@ func TestAnAlbumsOwnGenresWin(t *testing.T) {
 	s := openStore(t)
 	artist := knowArtist(t, s, "S", "Slowdive", "shoegaze")
 	album := logAlbum(t, s, "V", "Souvlaki", "dream pop")
-	relate(t, s, album, kind.RelationBy, artist)
+	relate(t, s, album, kind.LinkBy, artist)
 
 	for read, v := range bothReads(t, s, album) {
 		if got := v.Verdicts.Values[fieldGenres]; !reflect.DeepEqual(got, []string{"dream pop"}) || v.Verdicts.SourceOf[fieldGenres] != kind.SourceSpotifyAlbum {
@@ -111,7 +111,7 @@ func TestInheritanceIsOneStep(t *testing.T) {
 	s := openStore(t)
 	credited := knowArtist(t, s, "S", "Slowdive", "shoegaze")
 	album := logAlbum(t, s, "V", "Souvlaki")
-	relate(t, s, album, kind.RelationWith, credited)
+	relate(t, s, album, kind.LinkWith, credited)
 
 	for read, v := range bothReads(t, s, album) {
 		if got, present := v.Verdicts.Values[fieldGenres]; present {
@@ -125,8 +125,8 @@ func TestAnAlbumInheritsFromItsLowestMainArtistAndNothingFromOneWithoutGenres(t 
 	first := knowArtist(t, s, "S", "Slowdive", "shoegaze")
 	second := knowArtist(t, s, "M", "Mojave 3", "slowcore")
 	album := logAlbum(t, s, "V", "Souvlaki")
-	relate(t, s, album, kind.RelationBy, second)
-	relate(t, s, album, kind.RelationBy, first)
+	relate(t, s, album, kind.LinkBy, second)
+	relate(t, s, album, kind.LinkBy, first)
 
 	for read, v := range bothReads(t, s, album) {
 		if got := v.Verdicts.Values[fieldGenres]; !reflect.DeepEqual(got, []string{"shoegaze"}) {
@@ -136,7 +136,7 @@ func TestAnAlbumInheritsFromItsLowestMainArtistAndNothingFromOneWithoutGenres(t 
 
 	bare := knowArtist(t, s, "B", "Bare")
 	quiet := logAlbum(t, s, "Q", "Quiet")
-	relate(t, s, quiet, kind.RelationBy, bare)
+	relate(t, s, quiet, kind.LinkBy, bare)
 	for read, v := range bothReads(t, s, quiet) {
 		if got, present := v.Verdicts.Values[fieldGenres]; present {
 			t.Errorf("%s genres from an artist without any = %v", read, got)

@@ -1,7 +1,9 @@
 package verdict
 
 import (
+	"cmp"
 	"encoding/json"
+	"slices"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/kind"
 )
@@ -38,10 +40,34 @@ type SpotifyAlbum struct {
 	Genres      []string `json:"genres"`
 	Popularity  *int64   `json:"popularity"`
 	Artists     []struct {
+		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"artists"`
+	Tracks struct {
+		Items []TracklistEntry `json:"items"`
+	} `json:"tracks"`
 	Images       []SpotifyImage      `json:"images"`
 	ExternalURLs SpotifyExternalURLs `json:"external_urls"`
+}
+
+type TracklistEntry struct {
+	ID          string `json:"id"`
+	DiscNumber  int    `json:"disc_number"`
+	TrackNumber int    `json:"track_number"`
+}
+
+func InTracklistOrder(entries []TracklistEntry) []string {
+	sorted := slices.Clone(entries)
+	slices.SortStableFunc(sorted, func(a, b TracklistEntry) int {
+		return cmp.Or(cmp.Compare(a.DiscNumber, b.DiscNumber), cmp.Compare(a.TrackNumber, b.TrackNumber))
+	})
+	ids := make([]string, 0, len(sorted))
+	for _, entry := range sorted {
+		if entry.ID != "" {
+			ids = append(ids, entry.ID)
+		}
+	}
+	return ids
 }
 
 func readSpotifyArtist(raw json.RawMessage) (map[string]any, error) {
@@ -67,12 +93,18 @@ func readSpotifyAlbum(raw json.RawMessage) (map[string]any, error) {
 		return nil, err
 	}
 	credited := make([]string, 0, len(a.Artists))
+	creditedIDs := make([]string, 0, len(a.Artists))
 	for _, artist := range a.Artists {
 		credited = append(credited, artist.Name)
+		if artist.ID != "" {
+			creditedIDs = append(creditedIDs, artist.ID)
+		}
 	}
 	values := withoutEmpty(map[string]any{
 		"title":      a.Name,
 		"artists":    credited,
+		"artist_ids": creditedIDs,
+		"track_ids":  InTracklistOrder(a.Tracks.Items),
 		"released":   a.ReleaseDate,
 		"album_type": a.AlbumType,
 		"label":      a.Label,

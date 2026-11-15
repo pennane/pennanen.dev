@@ -3,6 +3,8 @@ package kind
 import "slices"
 
 const (
+	Game = "game"
+
 	SourceSteam             = "steam"
 	SourceSteamStore        = "steam-store"
 	SourceSteamAchievements = "steam-achievements"
@@ -49,7 +51,7 @@ var steamTake = Take{
 
 func init() {
 	register(Kind{
-		Name:            "game",
+		Name:            Game,
 		DefaultTitle:    "games",
 		Statuses:        []string{Untriaged, "never-played", "maybe-played", "playing", "played", "finished", Dropped},
 		StatusesToScore: []string{"playing", "played", "finished", Dropped},

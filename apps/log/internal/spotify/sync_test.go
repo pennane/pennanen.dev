@@ -256,7 +256,7 @@ func assertRelation(t *testing.T, h *harness, albumID, artistID int64) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := store.Relation{FromID: albumID, Type: kind.RelationBy, ToID: artistID}
+	want := store.Relation{FromID: albumID, Type: kind.LinkBy, ToID: artistID}
 	for _, r := range view.Relations {
 		if r == want {
 			return
@@ -681,8 +681,8 @@ func TestKnowAlbumRelatesTheMainArtistOnly(t *testing.T) {
 	p := h.item(t, kind.SourceSpotifyArtist, "P")
 	q := h.item(t, kind.SourceSpotifyArtist, "Q")
 	want := map[store.Relation]struct{}{
-		{FromID: collab, Type: kind.RelationBy, ToID: p}:   {},
-		{FromID: collab, Type: kind.RelationWith, ToID: q}: {},
+		{FromID: collab, Type: kind.LinkBy, ToID: p}:   {},
+		{FromID: collab, Type: kind.LinkWith, ToID: q}: {},
 	}
 	if got := h.relations(t, collab); !reflect.DeepEqual(got, want) {
 		t.Fatalf("collab relations = %v, want %v", got, want)
@@ -692,8 +692,8 @@ func TestKnowAlbumRelatesTheMainArtistOnly(t *testing.T) {
 	various := h.item(t, kind.SourceSpotifyArtist, kind.VariousArtists)
 	r := h.item(t, kind.SourceSpotifyArtist, "R")
 	want = map[store.Relation]struct{}{
-		{FromID: compilation, Type: kind.RelationWith, ToID: various}: {},
-		{FromID: compilation, Type: kind.RelationWith, ToID: r}:       {},
+		{FromID: compilation, Type: kind.LinkWith, ToID: various}: {},
+		{FromID: compilation, Type: kind.LinkWith, ToID: r}:       {},
 	}
 	if got := h.relations(t, compilation); !reflect.DeepEqual(got, want) {
 		t.Fatalf("compilation relations = %v, want %v", got, want)
@@ -824,8 +824,8 @@ func TestAnAlbumsCreditsFollowSpotify(t *testing.T) {
 	}
 	album := h.item(t, kind.SourceSpotifyAlbum, "K")
 	want := map[store.Relation]struct{}{
-		{FromID: album, Type: kind.RelationBy, ToID: h.item(t, kind.SourceSpotifyArtist, "CB")}:   {},
-		{FromID: album, Type: kind.RelationWith, ToID: h.item(t, kind.SourceSpotifyArtist, "CA")}: {},
+		{FromID: album, Type: kind.LinkBy, ToID: h.item(t, kind.SourceSpotifyArtist, "CB")}:   {},
+		{FromID: album, Type: kind.LinkWith, ToID: h.item(t, kind.SourceSpotifyArtist, "CA")}: {},
 	}
 	if got := h.relations(t, album); !reflect.DeepEqual(got, want) {
 		t.Fatalf("relations = %v, want %v", got, want)
@@ -842,7 +842,7 @@ func TestAnAlbumMetWithoutCreditsKeepsItsRelations(t *testing.T) {
 	h.run(t)
 	album := h.item(t, kind.SourceSpotifyAlbum, "K")
 	want := map[store.Relation]struct{}{
-		{FromID: album, Type: kind.RelationBy, ToID: h.item(t, kind.SourceSpotifyArtist, "CA")}: {},
+		{FromID: album, Type: kind.LinkBy, ToID: h.item(t, kind.SourceSpotifyArtist, "CA")}: {},
 	}
 	if got := h.relations(t, album); !reflect.DeepEqual(got, want) {
 		t.Fatalf("relations = %v, want %v", got, want)
