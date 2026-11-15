@@ -5,6 +5,7 @@
   padding: 3px;
   border-radius: 0.25rem;
   background: #111;
+  overflow-x: clip;
 }
 
 .tier {
@@ -80,7 +81,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
-  visibility: hidden;
+  display: none;
 }
 
 .tile:hover,
@@ -95,7 +96,7 @@
 .tile:hover .caption,
 .tile:focus-visible .caption,
 .tile[data-caption='shown'] .caption {
-  visibility: visible;
+  display: block;
 }
 
 .nothing {

@@ -140,6 +140,10 @@
   margin: 0;
 }
 
+.prose :is(ul, ol) {
+  padding-left: 1.25rem;
+}
+
 .prose blockquote {
   padding-left: 1rem;
   border-left: 3px solid var(--line-color);

@@ -121,3 +121,18 @@
   border-color: transparent;
   color: var(--foreground-secondary);
 }
+
+@media (max-width: 520px) {
+  .controls {
+    position: relative;
+  }
+
+  .menu {
+    position: static;
+  }
+
+  .options {
+    right: 0;
+    min-width: 0;
+  }
+}
