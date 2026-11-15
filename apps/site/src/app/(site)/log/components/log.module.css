@@ -156,3 +156,8 @@
   height: auto;
   border-radius: 0.5rem;
 }
+
+.thumb:is([data-shape='square'], [data-shape='tall']) {
+  width: 46.7%;
+  aspect-ratio: 1;
+}

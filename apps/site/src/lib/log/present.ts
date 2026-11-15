@@ -1,5 +1,13 @@
 import type { PublicItem } from './public-api'
-import type { Axis, FieldUse, KindSettings, Presentation, PublicField } from './types'
+import type {
+  Axis,
+  FieldUse,
+  KindSettings,
+  Picture,
+  Presentation,
+  PublicField,
+  Shape
+} from './types'
 
 export type Rank = { place: number; of: number }
 
@@ -49,8 +57,24 @@ export const listField = (fields: Fields, name: string) => {
 
 export const titleOf = (item: PublicItem) => textField(item.fields, 'title') ?? item.slug
 
-export const pictureOf = (item: PublicItem) =>
-  textField(item.fields, 'cover') ?? textField(item.fields, 'image')
+const picturesOf = (presentation: Presentation, item: PublicItem): Picture[] =>
+  (presentation.pictures[item.kind] ?? []).flatMap(({ key, shape }) => {
+    const url = textField(item.fields, key)
+    return url ? [{ url, shape }] : []
+  })
+
+const firstShaped = (pictures: Picture[], shapesBestFirst: Shape[]) =>
+  shapesBestFirst.flatMap((shape) => pictures.filter((picture) => picture.shape === shape))[0]
+
+const TILE_SHAPES: Shape[] = ['tall', 'square', 'wide']
+
+const BANNER_SHAPES: Shape[] = ['wide', 'square', 'tall']
+
+export const tileOf = (presentation: Presentation, item: PublicItem) =>
+  firstShaped(picturesOf(presentation, item), TILE_SHAPES)
+
+export const bannerOf = (presentation: Presentation, item: PublicItem) =>
+  firstShaped(picturesOf(presentation, item), BANNER_SHAPES)
 
 export const itemPath = (item: { kind: string; slug: string }) => `/log/${item.kind}/${item.slug}`
 
@@ -137,8 +161,8 @@ export type ListedItem = {
   kind: string
   slug: string
   title: string
-  picture: string | undefined
-  poster: string | undefined
+  banner: Picture | undefined
+  tile: Picture | undefined
   status: string
   scores: Record<string, string>
   rank: Rank | undefined
@@ -161,12 +185,12 @@ const asFieldValue = (value: unknown): FieldValue | undefined => {
 export const fieldValueOf = (item: PublicItem, field: PublicField) =>
   asFieldValue(field.take ? takeValues(item.takes, field.take)[field.name] : item.fields[field.key])
 
-export const toListed = (item: PublicItem, fields: PublicField[]): ListedItem => ({
+export const toListed = (item: PublicItem, presentation: Presentation): ListedItem => ({
   kind: item.kind,
   slug: item.slug,
   title: titleOf(item),
-  picture: pictureOf(item),
-  poster: textField(item.fields, 'poster'),
+  banner: bannerOf(presentation, item),
+  tile: tileOf(presentation, item),
   status: item.status,
   scores: item.scores,
   rank: item.rank,
@@ -174,7 +198,7 @@ export const toListed = (item: PublicItem, fields: PublicField[]): ListedItem =>
   tags: item.tags,
   proseWords: item.proseWords,
   values: Object.fromEntries(
-    fields.flatMap((field) => {
+    (presentation.fields[item.kind] ?? []).flatMap((field) => {
       const value = fieldValueOf(item, field)
       return value === undefined ? [] : [[field.key, value]]
     })

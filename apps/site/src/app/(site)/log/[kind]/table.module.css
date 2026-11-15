@@ -144,3 +144,8 @@
     grid-row: span 2;
   }
 }
+
+.thumb:is([data-shape='square'], [data-shape='tall']) {
+  width: 46.7%;
+  aspect-ratio: 1;
+}

@@ -44,6 +44,16 @@
   background: #333;
 }
 
+.tile[data-shape='square'] {
+  width: 4.5rem;
+  aspect-ratio: 1;
+}
+
+.tile[data-shape='wide'] {
+  width: 9.6rem;
+  aspect-ratio: 460 / 215;
+}
+
 .tile img {
   display: block;
   width: 100%;

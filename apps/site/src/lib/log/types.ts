@@ -70,6 +70,14 @@ export type PublicField = {
   defaultUses: FieldUse[]
 }
 
+export const SHAPES = ['tall', 'wide', 'square'] as const
+
+export type Shape = (typeof SHAPES)[number]
+
+export type PictureField = { key: string; shape: Shape }
+
+export type Picture = { url: string; shape: Shape }
+
 export type Overview = { sort: string; count: number }
 
 export type KindSettings = {
@@ -89,6 +97,7 @@ export type Presentation = {
   axes: Axis[]
   kinds: Record<string, KindSettings>
   fields: Record<string, PublicField[]>
+  pictures: Record<string, PictureField[]>
   tagTitles: Record<string, string>
   readables: Readable[]
   kindOrder: string[]

@@ -12,7 +12,7 @@ export const kindOverview = async (
   const settings = presentation.kinds[kind]
   const fields = presentation.fields[kind] ?? []
   const axes = settings.axes.flatMap((key) => presentation.axes.filter((a) => a.key === key))
-  const items = (await logPublic.items(kind)).map((item) => toListed(item, fields))
+  const items = (await logPublic.items(kind)).map((item) => toListed(item, presentation))
   const sorts = sortsFor(axes, fields, settings)
   const sort = overviewSort(items, axes, sorts, settings)
   return {
@@ -34,7 +34,7 @@ export const listed = (words: string[]) =>
 export const countsOf = (overviews: KindOverview[]) =>
   overviews.map(({ items, title }) => `${items.length} ${title}`)
 
-export const postersOf = (items: ListedItem[]) => items.flatMap((item) => item.poster ?? [])
+export const postersOf = (items: ListedItem[]) => items.flatMap((item) => item.tile?.url ?? [])
 
 export const roundRobin = <T>(lists: T[][]): T[] =>
   Array.from({ length: Math.max(0, ...lists.map((list) => list.length)) }).flatMap((_, i) =>

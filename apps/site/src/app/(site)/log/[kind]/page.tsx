@@ -43,7 +43,7 @@ export default async function KindPage({ params }: { params: Params }) {
   const [listed, { untriaged }] = await Promise.all([logPublic.items(kind), logPublic.kind(kind)])
   const title = kindTitle(presentation, kind)
   const description = presentation.kinds[kind]?.description.trim() ?? ''
-  const items = listed.map((item) => toListed(item, presentation.fields[kind] ?? []))
+  const items = listed.map((item) => toListed(item, presentation))
 
   return (
     <Stack gap={Gap.large} alignItems="stretch">

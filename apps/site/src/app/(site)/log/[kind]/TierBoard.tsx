@@ -23,11 +23,12 @@ const Tile = ({
   caption: Caption
   onReveal: () => void
 }) => {
-  const picture = item.poster ?? item.picture
+  const picture = item.tile
   return (
     <Link
       href={itemPath(item) + search}
       className={styles.tile}
+      data-shape={picture?.shape}
       data-caption={caption}
       aria-label={item.title}
       onClick={(event) => {
@@ -37,7 +38,7 @@ const Tile = ({
       }}
     >
       {picture ? (
-        <img src={picture} alt="" loading="lazy" />
+        <img src={picture.url} alt="" loading="lazy" />
       ) : (
         <span className={styles.titleTile}>{item.title}</span>
       )}

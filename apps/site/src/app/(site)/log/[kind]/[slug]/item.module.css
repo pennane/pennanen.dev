@@ -1,3 +1,14 @@
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heading:is([data-shape='square'], [data-shape='tall']) {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
 .picture {
   width: 100%;
   max-width: 20rem;
@@ -5,6 +16,16 @@
   aspect-ratio: 460 / 215;
   object-fit: cover;
   border-radius: 0.25rem;
+}
+
+.heading[data-shape='square'] .picture {
+  width: 9rem;
+  aspect-ratio: 1;
+}
+
+.heading[data-shape='tall'] .picture {
+  width: 7rem;
+  aspect-ratio: 2 / 3;
 }
 
 .fields {

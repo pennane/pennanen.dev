@@ -11,10 +11,10 @@ import {
   itemPath,
   kindTitle,
   pageFieldsOf,
-  pictureOf,
   shownTake,
   statusLabel,
   textField,
+  bannerOf,
   TIME_SPENT_LABELS,
   titleOf,
   toListed
@@ -151,15 +151,15 @@ const Visions = ({ prose }: { prose: string }) => (
 export default async function ItemPage({ params }: { params: Params }) {
   const item = await findItem(params)
   if (!item) notFound()
-  const picture = pictureOf(item)
   const [listed, presentation] = await Promise.all([
     logPublic.items(item.kind),
     logPublic.presentation()
   ])
+  const picture = bannerOf(presentation, item)
   const place = {
     kind: item.kind,
     slug: item.slug,
-    items: listed.map((other) => toListed(other, presentation.fields[item.kind] ?? []))
+    items: listed.map((other) => toListed(other, presentation))
   }
   const extras = pageFieldsOf(item, presentation)
 
@@ -174,22 +174,24 @@ export default async function ItemPage({ params }: { params: Params }) {
             <span aria-hidden>/</span>
           </nav>
           <Neighbours place={place} spot="top" />
-          {picture && (
-            <Image
-              className={styles.picture}
-              alt=""
-              src={picture}
-              width={PICTURE_WIDTH}
-              height={PICTURE_HEIGHT}
-              unoptimized
-              priority
-            />
-          )}
-          <Stack>
-            <h1>{titleOf(item)}</h1>
-            {item.blurb && <Lede>{item.blurb}</Lede>}
-            <Facts item={item} />
-          </Stack>
+          <div className={styles.heading} data-shape={picture?.shape}>
+            {picture && (
+              <Image
+                className={styles.picture}
+                alt=""
+                src={picture.url}
+                width={PICTURE_WIDTH}
+                height={PICTURE_HEIGHT}
+                unoptimized
+                priority
+              />
+            )}
+            <Stack>
+              <h1>{titleOf(item)}</h1>
+              {item.blurb && <Lede>{item.blurb}</Lede>}
+              <Facts item={item} />
+            </Stack>
+          </div>
         </Stack>
       </header>
       <Tags tags={item.tags} />

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { requiredEnv } from './env'
 import { isTimeSpent } from './present'
-import { DEFAULT_OVERVIEW_COUNT, DEFAULT_VIEWS, FIELD_TYPES, FIELD_USES } from './types'
+import { DEFAULT_OVERVIEW_COUNT, DEFAULT_VIEWS, FIELD_TYPES, FIELD_USES, SHAPES } from './types'
 
 export const LOG_CACHE_TAG = 'log'
 
@@ -142,6 +142,7 @@ const presentationSchema = z.object({
       )
     )
     .catch({}),
+  pictures: z.record(z.array(z.object({ key: z.string(), shape: z.enum(SHAPES) }))).catch({}),
   tagTitles: z.record(z.string()),
   readables: z
     .array(

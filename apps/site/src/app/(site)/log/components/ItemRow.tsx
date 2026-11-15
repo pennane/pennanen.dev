@@ -10,9 +10,15 @@ const THUMB_HEIGHT = 45
 
 export const ItemRow = ({ item }: { item: ListedItem }) => (
   <li className={styles.row}>
-    <Link href={itemPath(item)} className={styles.thumb} tabIndex={-1} aria-hidden>
-      {item.picture && (
-        <Image alt="" src={item.picture} width={THUMB_WIDTH} height={THUMB_HEIGHT} unoptimized />
+    <Link
+      href={itemPath(item)}
+      className={styles.thumb}
+      data-shape={item.banner?.shape}
+      tabIndex={-1}
+      aria-hidden
+    >
+      {item.banner && (
+        <Image alt="" src={item.banner.url} width={THUMB_WIDTH} height={THUMB_HEIGHT} unoptimized />
       )}
     </Link>
     <div className={styles.rowBody}>

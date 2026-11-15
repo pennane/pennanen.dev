@@ -1,4 +1,4 @@
-import { isPublicKind, pictureOf, shownScores, titleOf } from '../../../../../lib/log/present'
+import { bannerOf, isPublicKind, shownScores, titleOf } from '../../../../../lib/log/present'
 import { logPublic } from '../../../../../lib/log/public-api'
 import { ogCard, ogSize } from '../../components/ogCard'
 
@@ -22,6 +22,6 @@ export default async function OpenGraphImage({
           .map(({ axisName, division }) => `${axisName} ${division}`)
           .join(' · ')
       : '',
-    backdrop: { picture: item && pictureOf(item) }
+    backdrop: { picture: item && bannerOf(presentation, item)?.url }
   })
 }

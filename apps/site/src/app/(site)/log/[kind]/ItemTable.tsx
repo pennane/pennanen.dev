@@ -122,8 +122,14 @@ export const ItemTable = ({
         {items.map((item) => (
           <li key={item.slug} className={styles.row}>
             <span className={styles.rank}>{item.rank?.place}</span>
-            <Link href={itemPath(item) + search} className={styles.thumb} tabIndex={-1} aria-hidden>
-              {item.picture && <img src={item.picture} alt="" loading="lazy" />}
+            <Link
+              href={itemPath(item) + search}
+              className={styles.thumb}
+              data-shape={item.banner?.shape}
+              tabIndex={-1}
+              aria-hidden
+            >
+              {item.banner && <img src={item.banner.url} alt="" loading="lazy" />}
             </Link>
             <Link href={itemPath(item) + search} className={styles.title}>
               {item.title}

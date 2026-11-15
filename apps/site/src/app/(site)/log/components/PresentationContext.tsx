@@ -7,6 +7,7 @@ const PresentationContext = createContext<Presentation>({
   axes: [],
   kinds: {},
   fields: {},
+  pictures: {},
   tagTitles: {},
   readables: [],
   kindOrder: []
