@@ -145,6 +145,16 @@ UPDATE item_verdict
   SET verdicts = json_remove(verdicts, '$.values.listening', '$.sourceOf.listening')
   WHERE json_extract(verdicts, '$.sourceOf.listening') = 'spotify-listening';
 
+UPDATE setting
+  SET value = (
+    SELECT json_group_array(
+      CASE WHEN json_extract(axis.value, '$.reading.source') = 'spotify-listening'
+        THEN json_set(axis.value, '$.reading.source', 'spotify')
+        ELSE json(axis.value)
+      END)
+    FROM (SELECT key, value FROM json_each(setting.value) ORDER BY key) axis)
+  WHERE key = 'axes' AND json_valid(value) AND json_type(value) = 'array';
+
 DELETE FROM item_identity WHERE source = 'spotify-listening';
 
 DELETE FROM item_overlap WHERE source = 'spotify-listening';

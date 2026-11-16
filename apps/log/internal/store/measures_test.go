@@ -6,6 +6,7 @@ import (
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/rule"
+	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
@@ -73,5 +74,53 @@ func TestAMeasureOfAFieldTheKindLacksIsNotAValue(t *testing.T) {
 	}
 	if _, present := v.Verdicts.Values[kind.FieldListening]; present {
 		t.Fatalf("a movie got listening: %+v", v.Verdicts)
+	}
+}
+
+func TestAnAxisReadsTheListeningMeasure(t *testing.T) {
+	ctx := context.Background()
+	s, d := openStoreProposing(t)
+	artist := record.Identity{Source: record.SourceSpotifyArtist, ExternalID: "X"}
+	if err := s.PutClaim(ctx, artist, map[string]any{"id": "X", "name": "Xena"}); err != nil {
+		t.Fatal(err)
+	}
+	id, err := s.FindByIdentity(ctx, artist.Source, artist.ExternalID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.Exec(`INSERT INTO measure (item_id, source, field, value) VALUES (?, ?, ?, 80)`, id, record.SourceSpotify, kind.FieldListening); err != nil {
+		t.Fatal(err)
+	}
+	axis := store.Axis{
+		Key:       "listening-share",
+		Name:      "Listening share",
+		Divisions: tiers(),
+		Reading:   &store.Reading{Sort: store.ActivityAxis, Source: record.SourceSpotify, Field: kind.FieldListening, Floors: []float64{95, 70, 1}},
+	}
+	axes, err := s.Axes(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.SetAxes(ctx, append(axes, axis)); err != nil {
+		t.Fatal(err)
+	}
+	artistKind, _ := kind.Get(kind.Artist)
+	settings, err := s.KindSettings(ctx, artistKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.Axes = append(settings.Axes, axis.Key)
+	if _, err := s.SetKindSettings(ctx, artistKind, settings); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ChangeEntry(ctx, id, store.EntryChange{Status: ptr(kind.Listening)}); err != nil {
+		t.Fatal(err)
+	}
+	v, err := s.GetItem(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.Entry.ReadScores[axis.Key] != "a" {
+		t.Fatalf("read scores = %v", v.Entry.ReadScores)
 	}
 }

@@ -128,10 +128,16 @@ func TestMeasuresMigrationRekeysTakesAndWatchesAndMovesListening(t *testing.T) {
 			    '{"values":{"title":"Yara","listening":90},"sourceOf":{"title":"spotify-artist","listening":"ap"}}');`); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := d.ExecContext(ctx, `
+		INSERT OR REPLACE INTO setting (key, value) VALUES ('axes', '[{"key":"own","name":"Own","divisions":[{"key":"a","name":"A"}]},{"key":"listening-share","name":"Listening share","divisions":[{"key":"a","name":"A"}],"reading":{"sort":"activity","source":"spotify-listening","field":"listening","floors":[95]}}]');`); err != nil {
+		t.Fatal(err)
+	}
 	if err := db.MigrateUpTo(ctx, d, firstWithMeasures); err != nil {
 		t.Fatal(err)
 	}
 
+	assertRowsOf(t, d, `SELECT value FROM setting WHERE key = 'axes'`,
+		`[{"key":"own","name":"Own","divisions":[{"key":"a","name":"A"}]},{"key":"listening-share","name":"Listening share","divisions":[{"key":"a","name":"A"}],"reading":{"sort":"activity","source":"spotify","field":"listening","floors":[95]}}]`)
 	assertRowsOf(t, d, `SELECT i.item_id, c.external_id, c.data, c.fetched_at, c.changed_at FROM record_claim c JOIN item_identity i ON i.source = c.source AND i.external_id = c.external_id WHERE c.source = 'letterboxd-take' ORDER BY i.item_id`,
 		`1 letterboxd:heat1 {"rating":4.5} 2025-12-25T00:00:00Z 2025-12-24T00:00:00Z`,
 		`2 letterboxd:rip1 {"rating":5} 2025-11-02T00:00:00Z 2025-11-01T00:00:00Z`,

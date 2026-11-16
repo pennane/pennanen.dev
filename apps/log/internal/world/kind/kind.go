@@ -38,6 +38,7 @@ type Field struct {
 	InheritedThrough        string    `json:"inheritedThrough,omitempty"`
 	About                   About     `json:"about,omitempty"`
 	Shape                   Shape     `json:"shape,omitempty"`
+	MeasuredBy              string    `json:"-"`
 }
 
 type About string

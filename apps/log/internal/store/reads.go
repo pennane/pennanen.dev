@@ -260,6 +260,14 @@ func (s *Store) attachReadScores(ctx context.Context, readings map[int64][]readi
 	if err != nil {
 		return err
 	}
+	ids := make([]int64, 0, len(byID))
+	for id := range byID {
+		ids = append(ids, id)
+	}
+	measures, err := s.measuresOf(ctx, ids)
+	if err != nil {
+		return err
+	}
 	for id, v := range byID {
 		k, known := kind.Get(v.Kind)
 		if !known || v.Entry == nil {
@@ -270,6 +278,9 @@ func (s *Store) attachReadScores(ctx context.Context, readings map[int64][]readi
 				continue
 			}
 			value, present := verdict.Number(k, readings[id], axis.Reading.Source, axis.Reading.Field)
+			if measured, isMeasured := measures[measureKey{id, axis.Reading.Source, axis.Reading.Field}]; isMeasured && !present {
+				value, present = float64(measured), true
+			}
 			if !present {
 				continue
 			}

@@ -35,6 +35,9 @@ func Readables() []Readable {
 			if !f.Type.readable() {
 				continue
 			}
+			if f.MeasuredBy != "" {
+				add(Readable{Source: f.MeasuredBy, Field: f.Name, From: f.About.readFrom()})
+			}
 			for _, source := range f.SourcesBestFirstAfterAP {
 				add(Readable{Source: source, Field: f.Name, From: f.About.readFrom()})
 			}
