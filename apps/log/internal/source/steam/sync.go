@@ -10,7 +10,6 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const SyncName = "steam"
@@ -63,15 +62,12 @@ func (s *Syncer) recordReviews(ctx context.Context, p *syncs.Progress) error {
 	}
 	for _, r := range reviews {
 		appID := strconv.FormatInt(r.AppID, 10)
-		itemID, err := s.Store.FindByIdentity(ctx, record.SourceSteam, appID)
+		err := s.Store.PutClaimAbout(ctx, claimOf(record.SourceSteamTake, appID), steamGame(appID), r.Take)
 		if errors.Is(err, store.ErrNotFound) {
 			p.Problem("review of %d: no game with that app id", r.AppID)
 			continue
 		}
 		if err != nil {
-			return err
-		}
-		if err := s.Store.PutClaimItemKeyed(ctx, itemID, record.SourceSteamTake, appID, r.Take); err != nil {
 			return err
 		}
 		p.Add(CountReviewsRecorded, 1)
@@ -82,25 +78,26 @@ func (s *Syncer) recordReviews(ctx context.Context, p *syncs.Progress) error {
 
 func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, storeRequestAllowed <-chan time.Time) error {
 	appID := strconv.FormatInt(g.AppID, 10)
-	itemID, err := s.Store.FindByIdentity(ctx, record.SourceSteam, appID)
+	game := steamGame(appID)
+	_, err := s.Store.ClaimOf(ctx, game, record.SourceSteam)
 	var previousPlaytime int64
 	previousPlaytimeKnown := false
 	switch {
 	case errors.Is(err, store.ErrNotFound):
-		if itemID, err = s.Store.KnowItemFromSource(ctx, kind.Game, g.Name, record.SourceSteam, appID, g.Raw); err != nil {
+		if err = s.Store.PutClaim(ctx, game, g.Raw); err != nil {
 			return err
 		}
 		p.Add(CountGamesAdded, 1)
 	case err != nil:
 		return err
 	default:
-		previousPlaytime, previousPlaytimeKnown = s.playtimeClaimedBefore(ctx, itemID)
-		if err := s.Store.PutClaimItemKeyed(ctx, itemID, record.SourceSteam, appID, g.Raw); err != nil {
+		previousPlaytime, previousPlaytimeKnown = s.playtimeClaimedBefore(ctx, game)
+		if err := s.Store.PutClaim(ctx, game, g.Raw); err != nil {
 			return err
 		}
 	}
 
-	if s.lacksClaim(ctx, itemID, record.SourceSteamStore) {
+	if s.lacksClaim(ctx, game, record.SourceSteamStore) {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -110,19 +107,19 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 		if err != nil {
 			return err
 		}
-		if err := s.Store.PutClaimItemKeyed(ctx, itemID, record.SourceSteamStore, appID, details); err != nil {
+		if err := s.Store.PutClaimAbout(ctx, claimOf(record.SourceSteamStore, appID), game, details); err != nil {
 			return err
 		}
 		p.Add(CountStoreDetailsFetched, 1)
 	}
 
 	playtimeChanged := !previousPlaytimeKnown || g.PlaytimeForever != previousPlaytime
-	if g.PlaytimeForever > 0 && (playtimeChanged || s.lacksClaim(ctx, itemID, record.SourceSteamAchievements)) {
+	if g.PlaytimeForever > 0 && (playtimeChanged || s.lacksClaim(ctx, game, record.SourceSteamAchievements)) {
 		stats, err := s.Client.PlayerAchievements(ctx, g.AppID)
 		if err != nil {
 			return err
 		}
-		if err := s.Store.PutClaimItemKeyed(ctx, itemID, record.SourceSteamAchievements, appID, stats); err != nil {
+		if err := s.Store.PutClaimAbout(ctx, claimOf(record.SourceSteamAchievements, appID), game, stats); err != nil {
 			return err
 		}
 		p.Add(CountAchievementsFetched, 1)
@@ -130,8 +127,8 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 	return nil
 }
 
-func (s *Syncer) playtimeClaimedBefore(ctx context.Context, itemID int64) (int64, bool) {
-	c, err := s.Store.ClaimItemKeyed(ctx, itemID, record.SourceSteam)
+func (s *Syncer) playtimeClaimedBefore(ctx context.Context, game record.Identity) (int64, bool) {
+	c, err := s.Store.ClaimOf(ctx, game, record.SourceSteam)
 	if err != nil {
 		return 0, false
 	}
@@ -144,7 +141,15 @@ func (s *Syncer) playtimeClaimedBefore(ctx context.Context, itemID int64) (int64
 	return previous.PlaytimeForever, true
 }
 
-func (s *Syncer) lacksClaim(ctx context.Context, itemID int64, source string) bool {
-	_, err := s.Store.ClaimItemKeyed(ctx, itemID, source)
+func (s *Syncer) lacksClaim(ctx context.Context, game record.Identity, source string) bool {
+	_, err := s.Store.ClaimOf(ctx, game, source)
 	return errors.Is(err, store.ErrNotFound)
+}
+
+func steamGame(appID string) record.Identity {
+	return claimOf(record.SourceSteam, appID)
+}
+
+func claimOf(source, externalID string) record.Identity {
+	return record.Identity{Source: source, ExternalID: externalID}
 }

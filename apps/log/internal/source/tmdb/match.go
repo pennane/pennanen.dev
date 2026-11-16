@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"maps"
-	"slices"
 	"strings"
 	"time"
 	"unicode"
@@ -44,26 +42,26 @@ func NewMatcher(s *store.Store, c *Client, pages LetterboxdPages) *Matcher {
 }
 
 func (m *Matcher) Work(ctx context.Context, p *syncs.Progress) error {
-	itemOfFilm, err := m.Store.IdentitiesLackingSourcesItemKeyed(ctx, record.SourceLetterboxd, record.SourceTMDB, record.SourceTMDBSeries)
+	films, err := m.Store.IdentitiesLackingSources(ctx, record.SourceLetterboxd, record.SourceTMDB, record.SourceTMDBSeries)
 	if err != nil {
 		return err
 	}
 	requests := time.NewTicker(m.RequestInterval)
 	defer requests.Stop()
-	for _, filmID := range slices.Sorted(maps.Keys(itemOfFilm)) {
+	for _, film := range films {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 		p.Add(CountChecked, 1)
-		if err := m.match(ctx, itemOfFilm[filmID], p, requests.C); err != nil {
-			p.Problem("letterboxd %s: %v", filmID, err)
+		if err := m.match(ctx, film, p, requests.C); err != nil {
+			p.Problem("%s: %v", film, err)
 		}
 	}
 	return nil
 }
 
-func (m *Matcher) match(ctx context.Context, itemID int64, p *syncs.Progress, allowed <-chan time.Time) error {
-	c, err := m.Store.ClaimItemKeyed(ctx, itemID, record.SourceLetterboxd)
+func (m *Matcher) match(ctx context.Context, filmID record.Identity, p *syncs.Progress, allowed <-chan time.Time) error {
+	c, err := m.Store.ClaimOf(ctx, filmID, record.SourceLetterboxd)
 	if err != nil {
 		return err
 	}
@@ -83,7 +81,7 @@ func (m *Matcher) match(ctx context.Context, itemID int64, p *syncs.Progress, al
 	if err := wait(ctx, allowed); err != nil {
 		return err
 	}
-	if err := Identify(ctx, m.Store, m.Client, itemID, link); err != nil {
+	if err := Identify(ctx, m.Store, m.Client, filmID, link); err != nil {
 		return err
 	}
 	p.Add(CountMatched, 1)
@@ -117,12 +115,12 @@ func (m *Matcher) searched(ctx context.Context, film reading.LetterboxdFilm, all
 	return reading.TMDBLink{Type: reading.MovieOnTMDB, ID: movieID}, confident, nil
 }
 
-func Identify(ctx context.Context, s *store.Store, c *Client, itemID int64, link reading.TMDBLink) error {
+func Identify(ctx context.Context, s *store.Store, c *Client, film record.Identity, link reading.TMDBLink) error {
 	raw, err := c.Entry(ctx, link)
 	if err != nil {
 		return err
 	}
-	return s.Identify(ctx, itemID, store.Identity{
+	return s.IdentifyAbout(ctx, film, store.Identity{
 		Kind:       kind.OfTMDB(link.Type),
 		Source:     link.Type.Source(),
 		ExternalID: link.ExternalID(),

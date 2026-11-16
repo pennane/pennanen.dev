@@ -139,14 +139,18 @@ func TestOwnedSteamGamesAreLoggedUntriaged(t *testing.T) {
 	if report := syncer.Run(ctx); report.State != syncs.Succeeded || len(report.Problems) != 0 {
 		t.Fatalf("sync: %+v", report)
 	}
-	id, err := s.FindByIdentity(ctx, record.SourceSteam, "7")
+	owned := record.Identity{Source: record.SourceSteam, ExternalID: "7"}
+	if _, err := s.ClaimOf(ctx, owned, record.SourceSteam); err != nil {
+		t.Fatal(err)
+	}
+	items, err := s.ListItems(ctx, store.ItemFilter{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	v, err := s.GetItem(ctx, id)
-	if err != nil {
-		t.Fatal(err)
+	if len(items) != 1 {
+		t.Fatalf("items: %d", len(items))
 	}
+	v := items[0]
 	if v.Entry == nil || v.Entry.LoggedBy != steam.RuleOwned || v.Entry.Status != kind.Untriaged || v.Entry.StatusDecidedBy != take.Nobody {
 		t.Fatalf("an owned game: %+v", v.Entry)
 	}

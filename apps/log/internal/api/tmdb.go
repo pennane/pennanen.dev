@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"slices"
 	"strings"
 
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/tmdb"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
@@ -50,6 +52,22 @@ func notOnTMDB(err error, link reading.TMDBLink) error {
 		return fmt.Errorf("%w: tmdb has no %s %d", store.ErrInvalid, link.Type, link.ID)
 	}
 	return err
+}
+
+func (s *Server) identifyOnTMDB(ctx context.Context, view store.ItemView, link reading.TMDBLink) error {
+	about, err := identityToMatchFrom(view)
+	if err != nil {
+		return err
+	}
+	return notOnTMDB(tmdb.Identify(ctx, s.Store, s.TMDB, about, link), link)
+}
+
+func identityToMatchFrom(view store.ItemView) (record.Identity, error) {
+	if len(view.Claims) == 0 {
+		return record.Identity{}, fmt.Errorf("%w: item %d has no claim to match from", store.ErrInvalid, view.ID)
+	}
+	i := max(0, slices.IndexFunc(view.Claims, func(c reading.Claim) bool { return c.Source == record.SourceLetterboxd }))
+	return record.Identity{Source: view.Claims[i].Source, ExternalID: view.Claims[i].ExternalID}, nil
 }
 
 func (s *Server) searchTMDB(w http.ResponseWriter, r *http.Request) {
@@ -133,9 +151,9 @@ func (s *Server) matchTMDB(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	_, err := s.Store.GetItem(r.Context(), id)
+	view, err := s.Store.GetItem(r.Context(), id)
 	if err == nil {
-		err = notOnTMDB(tmdb.Identify(r.Context(), s.Store, s.TMDB, id, link), link)
+		err = s.identifyOnTMDB(r.Context(), view, link)
 	}
 	if err == nil {
 		err = s.Store.ProposeAll(r.Context())
