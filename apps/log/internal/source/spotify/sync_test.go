@@ -288,7 +288,7 @@ func TestASyncRecordsTodaysSnapshot(t *testing.T) {
 	assertRelation(t, h, a, x)
 	assertRelation(t, h, b, y)
 
-	claim, err := h.store.ClaimItemKeyed(ctx, a, record.SourceSpotifyAlbum)
+	claim, err := h.store.ClaimOf(ctx, record.Identity{Source: record.SourceSpotifyAlbum, ExternalID: "A"}, record.SourceSpotifyAlbum)
 	if err != nil || !strings.Contains(string(claim.Data), `"label":"Label A"`) {
 		t.Fatalf("album claim = %s, %v", claim.Data, err)
 	}
@@ -392,8 +392,7 @@ func TestAnAlbumTheBatchNeverReturnedIsAProblemNamingIt(t *testing.T) {
 	if !strings.Contains(strings.Join(report.Problems, "\n"), "spotify-album never came back in full: A") {
 		t.Fatalf("problems = %v", report.Problems)
 	}
-	b := h.item(t, record.SourceSpotifyAlbum, "B")
-	claim, err := h.store.ClaimItemKeyed(context.Background(), b, record.SourceSpotifyAlbum)
+	claim, err := h.store.ClaimOf(context.Background(), record.Identity{Source: record.SourceSpotifyAlbum, ExternalID: "B"}, record.SourceSpotifyAlbum)
 	if err != nil || !strings.Contains(string(claim.Data), `"label":"Lb"`) {
 		t.Fatalf("claim = %s, %v", claim.Data, err)
 	}
@@ -804,7 +803,7 @@ func TestAnArtistApTaggedBeforeAnySyncStillGetsItsComputedStatus(t *testing.T) {
 	if err := h.store.ChangeEntry(context.Background(), z, store.EntryChange{AddTags: []string{"favorite"}}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.store.ObserveItemKeyed(context.Background(), store.Observation{ItemID: z, Source: spotify.ObservationSource, Signal: record.SignalTopArtist, Key: "top-artist:long_term:2026-11-15:Z", ObservedAt: "2026-11-15T03:00:00Z", Data: json.RawMessage(`{}`)}); err != nil {
+	if _, err := h.store.Observe(context.Background(), record.Observation{About: record.Identity{Source: record.SourceSpotifyArtist, ExternalID: "Z"}, Source: spotify.ObservationSource, Signal: record.SignalTopArtist, Key: "top-artist:long_term:2026-11-15:Z", ObservedAt: "2026-11-15T03:00:00Z", Data: json.RawMessage(`{}`)}); err != nil {
 		t.Fatal(err)
 	}
 	h.run(t)

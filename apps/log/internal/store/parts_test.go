@@ -51,14 +51,21 @@ func albumWithID(id string) string {
 func TestLoggedIdentitiesNotDismissedNamesTheItemsClaimFromASource(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	logged, err := s.CreateItemFromSource(ctx, kind.Album, "Beta", record.SourceSpotifyAlbum, "B", json.RawMessage(albumWithID("B")))
+	kept, err := s.CreateItemFromSource(ctx, kind.Album, "Beta", record.SourceSpotifyAlbum, "B", json.RawMessage(albumWithID("B")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.ChangeEntry(ctx, logged, store.EntryChange{Status: ptr(kind.Listened)}); err != nil {
+	gone, err := s.CreateItemFromSource(ctx, kind.Album, "Gamma", record.SourceSpotifyAlbum, "G", json.RawMessage(albumWithID("G")))
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.CreateItemFromSource(ctx, kind.Album, "Gamma", record.SourceSpotifyAlbum, "G", json.RawMessage(albumWithID("G"))); err != nil {
+	for _, id := range []int64{kept, gone} {
+		if err := s.ChangeEntry(ctx, id, store.EntryChange{Status: ptr(kind.Listened)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	dismissed := store.Dismissed
+	if err := s.ChangeEntry(ctx, gone, store.EntryChange{Dismissal: &dismissed}); err != nil {
 		t.Fatal(err)
 	}
 	got, err := s.LoggedIdentitiesNotDismissed(ctx, kind.Album, record.SourceSpotifyAlbum)
@@ -66,11 +73,7 @@ func TestLoggedIdentitiesNotDismissedNamesTheItemsClaimFromASource(t *testing.T)
 	if err != nil || !slices.Equal(got, want) {
 		t.Fatalf("got %v, %v; want %v", got, err, want)
 	}
-	dismissed := store.Dismissed
-	if err := s.ChangeEntry(ctx, logged, store.EntryChange{Dismissal: &dismissed}); err != nil {
-		t.Fatal(err)
-	}
-	if got, err := s.LoggedIdentitiesNotDismissed(ctx, kind.Album, record.SourceSpotifyAlbum); err != nil || len(got) != 0 {
-		t.Errorf("after dismissing: %v, %v", got, err)
+	if got, err := s.LoggedIdentitiesNotDismissed(ctx, kind.Album, record.SourceSpotifyTrack); err != nil || len(got) != 0 {
+		t.Errorf("another source: %v, %v", got, err)
 	}
 }
