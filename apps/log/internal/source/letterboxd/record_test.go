@@ -91,7 +91,7 @@ func TestAWatchedFilmBackOnTheWatchlistGetsAnotherShotUntilRewatched(t *testing.
 		if _, err := r.Shelve(ctx, p, heat, letterboxd.WatchlistShelf); err != nil {
 			return err
 		}
-		return r.LeaveWatchlist(ctx, p, heatID)
+		return r.LeaveWatchlist(ctx, p, record.Identity{Source: record.SourceLetterboxd, ExternalID: "bbb2"})
 	})
 	if e := entryOf("bbb2"); !slices.Contains(e.Tags, kind.TagAnotherShot) || e.TagsFromRules[kind.TagAnotherShot] != "" {
 		t.Errorf("ap's own another shot was taken by the sync: %+v", e)
@@ -241,11 +241,11 @@ func TestTheNewestDiaryEntrySetsTheRating(t *testing.T) {
 	film := reading.LetterboxdFilm{ID: "lif1", Slug: "the-life-aquatic-with-steve-zissou", Title: "The Life Aquatic with Steve Zissou", Year: 2004}
 	stars := func(n float64) *float64 { return &n }
 	sync, _ := syncs.New(ctx, "diary", record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error {
-		itemID, err := r.Shelve(ctx, p, film, letterboxd.WatchedShelf)
+		filmIdentity, err := r.Shelve(ctx, p, film, letterboxd.WatchedShelf)
 		if err != nil {
 			return err
 		}
-		if err := r.PutListTake(ctx, itemID, letterboxd.ListedFilm{Film: film, Rating: stars(4.5)}); err != nil {
+		if err := r.PutListTake(ctx, filmIdentity, letterboxd.ListedFilm{Film: film, Rating: stars(4.5)}); err != nil {
 			return err
 		}
 		for _, entry := range []letterboxd.DiaryEntry{
@@ -266,5 +266,32 @@ func TestTheNewestDiaryEntrySetsTheRating(t *testing.T) {
 	v, _ := s.GetItem(ctx, id)
 	if take := v.Takes[0].Values; take["rating"] != 5.0 || take["last_watched"] != "2026-11-14" {
 		t.Errorf("take: %v", take)
+	}
+}
+
+func TestATakeIsKeyedByTheLetterboxdFilmAndAnOldItemKeyedOneIsRead(t *testing.T) {
+	ctx := context.Background()
+	d, err := db.Open(ctx, filepath.Join(t.TempDir(), "log.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer d.Close()
+	s := openProposing(t, d)
+	r := &letterboxd.Recorder{Store: s, Today: func() string { return "2026-11-14" }}
+	film := reading.LetterboxdFilm{ID: "bbb2", Slug: "heat", Title: "Heat", Year: 1995}
+	sync, _ := syncs.New(ctx, "shelve", record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error {
+		_, err := r.Shelve(ctx, p, film, letterboxd.WatchlistShelf)
+		return err
+	}, s, nil)
+	if report := sync.Run(ctx); report.State != syncs.Succeeded {
+		t.Fatalf("%+v", report)
+	}
+	heat := record.Identity{Source: record.SourceLetterboxd, ExternalID: "bbb2"}
+	c, err := s.ClaimOf(ctx, heat, record.SourceLetterboxdTake)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.ExternalID != "letterboxd:bbb2" {
+		t.Errorf("take claim keyed %q", c.ExternalID)
 	}
 }

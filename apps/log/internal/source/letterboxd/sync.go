@@ -3,6 +3,7 @@ package letterboxd
 import (
 	"context"
 
+	"github.com/pennane/pennanen.dev/apps/log/internal/record"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
 )
@@ -50,32 +51,32 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 	return ctx.Err()
 }
 
-func (s *Syncer) shelveWatched(ctx context.Context, p *syncs.Progress, listed ListedFilm) (int64, error) {
-	itemID, err := s.Recorder.Shelve(ctx, p, listed.Film, WatchedShelf)
+func (s *Syncer) shelveWatched(ctx context.Context, p *syncs.Progress, listed ListedFilm) (record.Identity, error) {
+	film, err := s.Recorder.Shelve(ctx, p, listed.Film, WatchedShelf)
 	if err == nil {
-		err = s.Recorder.PutListTake(ctx, itemID, listed)
+		err = s.Recorder.PutListTake(ctx, film, listed)
 	}
 	if err != nil {
 		p.Problem("%s: %v", listed.Film.Title, err)
 	}
-	return itemID, err
+	return film, err
 }
 
 func (s *Syncer) Import(ctx context.Context, p *syncs.Progress, export Export) error {
 	p.ChangedData()
-	onWatchlist := map[int64]struct{}{}
-	for _, film := range export.Watchlist {
-		itemID, err := s.Recorder.Shelve(ctx, p, film, WatchlistShelf)
+	onWatchlist := map[record.Identity]struct{}{}
+	for _, wanted := range export.Watchlist {
+		film, err := s.Recorder.Shelve(ctx, p, wanted, WatchlistShelf)
 		if err != nil {
-			p.Problem("%s: %v", film.Title, err)
+			p.Problem("%s: %v", wanted.Title, err)
 			continue
 		}
-		onWatchlist[itemID] = struct{}{}
+		onWatchlist[film] = struct{}{}
 	}
 	for _, listed := range export.Watched {
-		itemID, err := s.shelveWatched(ctx, p, listed)
-		if _, stillWanted := onWatchlist[itemID]; err == nil && !stillWanted {
-			if err := s.Recorder.LeaveWatchlist(ctx, p, itemID); err != nil {
+		film, err := s.shelveWatched(ctx, p, listed)
+		if _, stillWanted := onWatchlist[film]; err == nil && !stillWanted {
+			if err := s.Recorder.LeaveWatchlist(ctx, p, film); err != nil {
 				p.Problem("%s: %v", listed.Film.Title, err)
 			}
 		}

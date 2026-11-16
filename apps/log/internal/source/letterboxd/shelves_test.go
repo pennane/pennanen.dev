@@ -137,10 +137,8 @@ func TestLeavingTheWatchlistWithdrawsAnotherShot(t *testing.T) {
 	sh.shelve(heatFilm, letterboxd.WatchedShelf)
 	sh.day = "2026-11-14"
 	sh.shelve(heatFilm, letterboxd.WatchlistShelf)
-	heatID := sh.item(heatFilm).ID
-
 	report := sh.sync(func(ctx context.Context, p *syncs.Progress) error {
-		return sh.r.LeaveWatchlist(ctx, p, heatID)
+		return sh.r.LeaveWatchlist(ctx, p, record.Identity{Source: record.SourceLetterboxd, ExternalID: heatFilm.ID})
 	})
 	e := sh.item(heatFilm).Entry
 	if e.Status != kind.Watched || slices.Contains(e.Tags, kind.TagAnotherShot) {

@@ -11,7 +11,6 @@ import (
 	"github.com/pennane/pennanen.dev/apps/log/internal/record/reading"
 	"github.com/pennane/pennanen.dev/apps/log/internal/source/syncs"
 	"github.com/pennane/pennanen.dev/apps/log/internal/store"
-	"github.com/pennane/pennanen.dev/apps/log/internal/world/kind"
 )
 
 const (
@@ -39,30 +38,30 @@ func (r *Recorder) today() string {
 	return time.Now().UTC().Format(time.DateOnly)
 }
 
-func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film reading.LetterboxdFilm, shelf Shelf) (int64, error) {
+func (r *Recorder) Shelve(ctx context.Context, p *syncs.Progress, film reading.LetterboxdFilm, shelf Shelf) (record.Identity, error) {
 	p.Add(CountFilmsSeen, 1)
-	itemID, err := r.itemOf(ctx, film)
+	known, err := r.remember(ctx, film)
 	if errors.Is(err, store.ErrNotFound) && film.ID != "" {
 		film = r.identified(ctx, p, film)
-		itemID, err = r.itemOf(ctx, film)
+		known, err = r.remember(ctx, film)
 	}
-	switch {
-	case errors.Is(err, store.ErrNotFound) && film.ID != "":
-		if itemID, err = r.Store.KnowItemFromSource(ctx, kindOf(film), film.Title, record.SourceLetterboxd, film.ID, film); err != nil {
-			return 0, err
+	if errors.Is(err, store.ErrNotFound) && film.ID != "" {
+		if err = r.Store.PutClaim(ctx, filmIdentity(film.ID), film); err == nil {
+			p.Add(CountFilmsAdded, 1)
 		}
-		p.Add(CountFilmsAdded, 1)
-	case err != nil:
-		return 0, err
-	default:
-		if err := r.remember(ctx, itemID, film); err != nil {
-			return 0, err
-		}
+		known = film
+	}
+	if err != nil {
+		return record.Identity{}, err
+	}
+	id, err := identityOf(known)
+	if err != nil {
+		return record.Identity{}, err
 	}
 	if shelf == WatchlistShelf {
-		return itemID, r.arriveOnWatchlist(ctx, itemID)
+		return id, r.arriveOnWatchlist(ctx, id)
 	}
-	return itemID, r.arriveOnWatchedShelf(ctx, p, itemID)
+	return id, r.arriveOnWatchedShelf(ctx, p, id)
 }
 
 func (r *Recorder) identified(ctx context.Context, p *syncs.Progress, film reading.LetterboxdFilm) reading.LetterboxdFilm {
@@ -79,23 +78,16 @@ func (r *Recorder) identified(ctx context.Context, p *syncs.Progress, film readi
 	return film.Linked(link)
 }
 
-func kindOf(film reading.LetterboxdFilm) string {
-	if link, known := film.TMDB(); known {
-		return kind.OfTMDB(link.Type)
-	}
-	return kind.Movie
-}
-
-func (r *Recorder) arriveOnWatchlist(ctx context.Context, itemID int64) error {
-	return r.changeTake(ctx, itemID, func(t *reading.LetterboxdTake) {
+func (r *Recorder) arriveOnWatchlist(ctx context.Context, film record.Identity) error {
+	return r.changeTake(ctx, film, func(t *reading.LetterboxdTake) {
 		if t.OnWatchlistSince == "" {
 			t.OnWatchlistSince = r.today()
 		}
 	})
 }
 
-func (r *Recorder) arriveOnWatchedShelf(ctx context.Context, p *syncs.Progress, itemID int64) error {
-	return r.leaveWatchlistWhen(ctx, p, itemID, func(t *reading.LetterboxdTake) WatchlistMove {
+func (r *Recorder) arriveOnWatchedShelf(ctx context.Context, p *syncs.Progress, film record.Identity) error {
+	return r.leaveWatchlistWhen(ctx, p, film, func(t *reading.LetterboxdTake) WatchlistMove {
 		if t.OnWatchedShelfSince != "" {
 			return Stays
 		}
@@ -107,8 +99,8 @@ func (r *Recorder) arriveOnWatchedShelf(ctx context.Context, p *syncs.Progress, 
 	})
 }
 
-func (r *Recorder) LeaveWatchlist(ctx context.Context, p *syncs.Progress, itemID int64) error {
-	return r.leaveWatchlistWhen(ctx, p, itemID, func(*reading.LetterboxdTake) WatchlistMove { return Left })
+func (r *Recorder) LeaveWatchlist(ctx context.Context, p *syncs.Progress, film record.Identity) error {
+	return r.leaveWatchlistWhen(ctx, p, film, func(*reading.LetterboxdTake) WatchlistMove { return Left })
 }
 
 type WatchlistMove int
@@ -118,9 +110,9 @@ const (
 	Left
 )
 
-func (r *Recorder) leaveWatchlistWhen(ctx context.Context, p *syncs.Progress, itemID int64, move func(t *reading.LetterboxdTake) WatchlistMove) error {
+func (r *Recorder) leaveWatchlistWhen(ctx context.Context, p *syncs.Progress, film record.Identity, move func(t *reading.LetterboxdTake) WatchlistMove) error {
 	left := Stays
-	if err := r.changeTake(ctx, itemID, func(t *reading.LetterboxdTake) {
+	if err := r.changeTake(ctx, film, func(t *reading.LetterboxdTake) {
 		if move(t) == Left && t.OnWatchlistSince != "" {
 			t.OnWatchlistSince = ""
 			left = Left
@@ -134,8 +126,8 @@ func (r *Recorder) leaveWatchlistWhen(ctx context.Context, p *syncs.Progress, it
 	return nil
 }
 
-func (r *Recorder) PutListTake(ctx context.Context, itemID int64, listed ListedFilm) error {
-	return r.changeTake(ctx, itemID, func(t *reading.LetterboxdTake) {
+func (r *Recorder) PutListTake(ctx context.Context, film record.Identity, listed ListedFilm) error {
+	return r.changeTake(ctx, film, func(t *reading.LetterboxdTake) {
 		t.Rating = listed.Rating
 		t.Reaction = listed.Reaction
 	})
@@ -145,26 +137,24 @@ func (r *Recorder) RecordWatch(ctx context.Context, p *syncs.Progress, entry Dia
 	if entry.Film.ID == "" {
 		entry.Film.ID = idOfSlug[entry.Film.Slug]
 	}
-	itemID, err := r.itemOf(ctx, entry.Film)
+	var film record.Identity
+	known, err := r.remember(ctx, entry.Film)
 	if errors.Is(err, store.ErrNotFound) {
 		entry.Film, err = r.named(ctx, entry.Film)
 		if err != nil {
 			return fmt.Errorf("watched %s (%d) on %s, but the film isn't in the log yet and its page can't name it: %w", entry.Film.Title, entry.Film.Year, entry.WatchedOn, err)
 		}
-		itemID, err = r.Shelve(ctx, p, entry.Film, WatchedShelf)
+		film, err = r.Shelve(ctx, p, entry.Film, WatchedShelf)
+	} else if err == nil {
+		film, err = identityOf(known)
 	}
 	if err != nil {
 		return err
 	}
-	if entry.Film.ID != "" {
-		if err := r.remember(ctx, itemID, entry.Film); err != nil {
-			return err
-		}
-	}
-	if err := r.observe(ctx, p, itemID, entry); err != nil {
+	if err := r.observe(ctx, p, film, entry); err != nil {
 		return err
 	}
-	return r.leaveWatchlistWhen(ctx, p, itemID, func(t *reading.LetterboxdTake) WatchlistMove {
+	return r.leaveWatchlistWhen(ctx, p, film, func(t *reading.LetterboxdTake) WatchlistMove {
 		if entry.WatchedOn >= t.LastWatched && entry.Rating != nil {
 			t.Rating = entry.Rating
 		}
@@ -188,16 +178,16 @@ type watchObserved struct {
 	Review   string                     `json:"review,omitempty"`
 }
 
-func (r *Recorder) observe(ctx context.Context, p *syncs.Progress, itemID int64, entry DiaryEntry) error {
+func (r *Recorder) observe(ctx context.Context, p *syncs.Progress, film record.Identity, entry DiaryEntry) error {
 	data, err := json.Marshal(watchObserved{Rewatch: entry.Rewatch, Rating: entry.Rating, Reaction: entry.Reaction, Review: entry.Review})
 	if err != nil {
 		return err
 	}
-	outcome, err := r.Store.ObserveItemKeyed(ctx, store.Observation{
-		ItemID:     itemID,
+	outcome, err := r.Store.Observe(ctx, record.Observation{
+		About:      film,
 		Source:     record.SourceLetterboxd,
 		Signal:     record.SignalWatched,
-		Key:        fmt.Sprintf("item/%d/watched/%s", itemID, entry.WatchedOn),
+		Key:        fmt.Sprintf("%s/watched/%s", film, entry.WatchedOn),
 		ObservedAt: entry.WatchedOn,
 		Data:       data,
 	})
@@ -219,25 +209,52 @@ func (r *Recorder) named(ctx context.Context, film reading.LetterboxdFilm) (read
 	return film, err
 }
 
-func (r *Recorder) itemOf(ctx context.Context, film reading.LetterboxdFilm) (int64, error) {
-	if film.ID != "" {
-		itemID, err := r.Store.FindByIdentity(ctx, record.SourceLetterboxd, film.ID)
-		if !errors.Is(err, store.ErrNotFound) {
-			return itemID, err
-		}
-	}
-	if link, known := film.TMDB(); known {
-		return r.Store.FindByIdentity(ctx, link.Type.Source(), link.ExternalID())
-	}
-	return 0, store.ErrNotFound
+func filmIdentity(filmID string) record.Identity {
+	return record.Identity{Source: record.SourceLetterboxd, ExternalID: filmID}
 }
 
-func (r *Recorder) remember(ctx context.Context, itemID int64, film reading.LetterboxdFilm) error {
-	var known reading.LetterboxdFilm
-	if c, err := r.Store.ClaimItemKeyed(ctx, itemID, record.SourceLetterboxd); err == nil {
-		if err := json.Unmarshal(c.Data, &known); err != nil {
-			return err
+func takeIdentity(film record.Identity) record.Identity {
+	return record.Identity{Source: record.SourceLetterboxdTake, ExternalID: film.String()}
+}
+
+func identityOf(film reading.LetterboxdFilm) (record.Identity, error) {
+	if film.ID == "" {
+		return record.Identity{}, fmt.Errorf("%s has no letterboxd id", film.Title)
+	}
+	return filmIdentity(film.ID), nil
+}
+
+func (r *Recorder) holders(film reading.LetterboxdFilm) []record.Identity {
+	var ids []record.Identity
+	if film.ID != "" {
+		ids = append(ids, filmIdentity(film.ID))
+	}
+	if link, known := film.TMDB(); known {
+		ids = append(ids, record.Identity{Source: link.Type.Source(), ExternalID: link.ExternalID()})
+	}
+	return ids
+}
+
+func (r *Recorder) remember(ctx context.Context, film reading.LetterboxdFilm) (reading.LetterboxdFilm, error) {
+	for _, holder := range r.holders(film) {
+		merged, err := r.rememberOn(ctx, holder, film)
+		if !errors.Is(err, store.ErrNotFound) {
+			return merged, err
 		}
+	}
+	return film, store.ErrNotFound
+}
+
+func (r *Recorder) rememberOn(ctx context.Context, holder record.Identity, film reading.LetterboxdFilm) (reading.LetterboxdFilm, error) {
+	var known reading.LetterboxdFilm
+	c, err := r.Store.ClaimOf(ctx, holder, record.SourceLetterboxd)
+	switch {
+	case err == nil:
+		if err := json.Unmarshal(c.Data, &known); err != nil {
+			return film, err
+		}
+	case !errors.Is(err, store.ErrNotFound):
+		return film, err
 	}
 	merged := film
 	if merged.ID == "" {
@@ -253,17 +270,17 @@ func (r *Recorder) remember(ctx context.Context, itemID int64, film reading.Lett
 		merged.TMDBID, merged.TMDBType = known.TMDBID, known.TMDBType
 	}
 	if merged.ID == "" {
-		return nil
+		return merged, err
 	}
-	if merged == known {
-		return nil
+	if err == nil && merged == known {
+		return merged, nil
 	}
-	return r.Store.PutClaimItemKeyed(ctx, itemID, record.SourceLetterboxd, merged.ID, merged)
+	return merged, r.Store.PutClaimAbout(ctx, filmIdentity(merged.ID), holder, merged)
 }
 
-func (r *Recorder) changeTake(ctx context.Context, itemID int64, change func(t *reading.LetterboxdTake)) error {
+func (r *Recorder) changeTake(ctx context.Context, film record.Identity, change func(t *reading.LetterboxdTake)) error {
 	var take reading.LetterboxdTake
-	c, err := r.Store.ClaimItemKeyed(ctx, itemID, record.SourceLetterboxdTake)
+	c, err := r.Store.ClaimOf(ctx, film, record.SourceLetterboxdTake)
 	switch {
 	case err == nil:
 		if err := json.Unmarshal(c.Data, &take); err != nil {
@@ -281,5 +298,5 @@ func (r *Recorder) changeTake(ctx context.Context, itemID int64, change func(t *
 	if err != nil || string(before) == string(after) {
 		return err
 	}
-	return r.Store.PutClaimItemKeyed(ctx, itemID, record.SourceLetterboxdTake, "", json.RawMessage(after))
+	return r.Store.PutClaimAbout(ctx, takeIdentity(film), film, json.RawMessage(after))
 }
