@@ -71,7 +71,7 @@ func (s *Syncer) recordReviews(ctx context.Context, p *syncs.Progress) error {
 		if err != nil {
 			return err
 		}
-		if err := s.Store.PutClaim(ctx, itemID, record.SourceSteamTake, appID, r.Take); err != nil {
+		if err := s.Store.PutClaimItemKeyed(ctx, itemID, record.SourceSteamTake, appID, r.Take); err != nil {
 			return err
 		}
 		p.Add(CountReviewsRecorded, 1)
@@ -95,7 +95,7 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 		return err
 	default:
 		previousPlaytime, previousPlaytimeKnown = s.playtimeClaimedBefore(ctx, itemID)
-		if err := s.Store.PutClaim(ctx, itemID, record.SourceSteam, appID, g.Raw); err != nil {
+		if err := s.Store.PutClaimItemKeyed(ctx, itemID, record.SourceSteam, appID, g.Raw); err != nil {
 			return err
 		}
 	}
@@ -110,7 +110,7 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 		if err != nil {
 			return err
 		}
-		if err := s.Store.PutClaim(ctx, itemID, record.SourceSteamStore, appID, details); err != nil {
+		if err := s.Store.PutClaimItemKeyed(ctx, itemID, record.SourceSteamStore, appID, details); err != nil {
 			return err
 		}
 		p.Add(CountStoreDetailsFetched, 1)
@@ -122,7 +122,7 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 		if err != nil {
 			return err
 		}
-		if err := s.Store.PutClaim(ctx, itemID, record.SourceSteamAchievements, appID, stats); err != nil {
+		if err := s.Store.PutClaimItemKeyed(ctx, itemID, record.SourceSteamAchievements, appID, stats); err != nil {
 			return err
 		}
 		p.Add(CountAchievementsFetched, 1)
@@ -131,7 +131,7 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 }
 
 func (s *Syncer) playtimeClaimedBefore(ctx context.Context, itemID int64) (int64, bool) {
-	c, err := s.Store.Claim(ctx, itemID, record.SourceSteam)
+	c, err := s.Store.ClaimItemKeyed(ctx, itemID, record.SourceSteam)
 	if err != nil {
 		return 0, false
 	}
@@ -145,6 +145,6 @@ func (s *Syncer) playtimeClaimedBefore(ctx context.Context, itemID int64) (int64
 }
 
 func (s *Syncer) lacksClaim(ctx context.Context, itemID int64, source string) bool {
-	_, err := s.Store.Claim(ctx, itemID, source)
+	_, err := s.Store.ClaimItemKeyed(ctx, itemID, source)
 	return errors.Is(err, store.ErrNotFound)
 }

@@ -44,7 +44,7 @@ func NewMatcher(s *store.Store, c *Client, pages LetterboxdPages) *Matcher {
 }
 
 func (m *Matcher) Work(ctx context.Context, p *syncs.Progress) error {
-	itemOfFilm, err := m.Store.IdentitiesLackingSources(ctx, record.SourceLetterboxd, record.SourceTMDB, record.SourceTMDBSeries)
+	itemOfFilm, err := m.Store.IdentitiesLackingSourcesItemKeyed(ctx, record.SourceLetterboxd, record.SourceTMDB, record.SourceTMDBSeries)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (m *Matcher) Work(ctx context.Context, p *syncs.Progress) error {
 }
 
 func (m *Matcher) match(ctx context.Context, itemID int64, p *syncs.Progress, allowed <-chan time.Time) error {
-	c, err := m.Store.Claim(ctx, itemID, record.SourceLetterboxd)
+	c, err := m.Store.ClaimItemKeyed(ctx, itemID, record.SourceLetterboxd)
 	if err != nil {
 		return err
 	}

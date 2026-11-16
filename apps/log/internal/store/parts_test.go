@@ -24,7 +24,7 @@ func TestALinkTwoRecordsAssertIsOnePartAndOneRelation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaim(ctx, album, record.SourceSpotifyAlbum, "B2", json.RawMessage(albumWithID("B2"))); err != nil {
+	if err := s.PutClaimItemKeyed(ctx, album, record.SourceSpotifyAlbum, "B2", json.RawMessage(albumWithID("B2"))); err != nil {
 		t.Fatal(err)
 	}
 	first, err := s.KnowItemFromSource(ctx, kind.Track, "First", record.SourceSpotifyTrack, "I1", json.RawMessage(`{"id":"t1","name":"First"}`))

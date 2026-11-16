@@ -24,12 +24,12 @@ const (
 	AlreadyKnown ObserveOutcome = "already-known"
 )
 
-func (s *Store) Observe(ctx context.Context, o Observation) (ObserveOutcome, error) {
+func (s *Store) ObserveItemKeyed(ctx context.Context, o Observation) (ObserveOutcome, error) {
 	key, err := s.keyOf(ctx, s.db, o.ItemID)
 	if err != nil {
 		return "", err
 	}
-	return s.ObserveAbout(ctx, record.Observation{
+	return s.Observe(ctx, record.Observation{
 		About:      key,
 		Source:     o.Source,
 		Signal:     o.Signal,
@@ -39,7 +39,7 @@ func (s *Store) Observe(ctx context.Context, o Observation) (ObserveOutcome, err
 	})
 }
 
-func (s *Store) ObserveAbout(ctx context.Context, o record.Observation) (ObserveOutcome, error) {
+func (s *Store) Observe(ctx context.Context, o record.Observation) (ObserveOutcome, error) {
 	if o.About.Source == "" || o.About.ExternalID == "" || o.Source == "" || o.Signal == "" || o.Key == "" || o.ObservedAt == "" || !json.Valid(o.Data) {
 		return "", fmt.Errorf("%w: an observation needs what it is about, a source, a signal, a key, a time and json data", ErrInvalid)
 	}
@@ -75,7 +75,7 @@ func (s *Store) Observations(ctx context.Context, itemID int64, source, signal s
 	return observations, rows.Err()
 }
 
-func (s *Store) ItemsLastObservedAs(ctx context.Context, source string, signals []string, last string) ([]int64, error) {
+func (s *Store) ItemsLastObservedAsItemKeyed(ctx context.Context, source string, signals []string, last string) ([]int64, error) {
 	if len(signals) == 0 {
 		return []int64{}, nil
 	}
@@ -104,6 +104,38 @@ func (s *Store) ItemsLastObservedAs(ctx context.Context, source string, signals 
 		itemIDs = append(itemIDs, itemID)
 	}
 	return itemIDs, rows.Err()
+}
+
+func (s *Store) IdentitiesLastObservedAs(ctx context.Context, source string, signals []string, last string) ([]record.Identity, error) {
+	if len(signals) == 0 {
+		return []record.Identity{}, nil
+	}
+	marks := strings.TrimSuffix(strings.Repeat("?, ", len(signals)), ", ")
+	args := []any{source}
+	for _, signal := range signals {
+		args = append(args, signal)
+	}
+	args = append(args, last)
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT about_source, about_external_id FROM (
+			SELECT about_source, about_external_id, signal,
+				ROW_NUMBER() OVER (PARTITION BY about_source, about_external_id ORDER BY observed_at DESC, id DESC) AS recency
+			FROM record_observation WHERE source = ? AND signal IN (`+marks+`)
+		) WHERE recency = 1 AND signal = ?
+		ORDER BY about_source, about_external_id`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ids := []record.Identity{}
+	for rows.Next() {
+		var id record.Identity
+		if err := rows.Scan(&id.Source, &id.ExternalID); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }
 
 func (s *Store) HasObservationKeyWithPrefix(ctx context.Context, source, prefix string) (bool, error) {

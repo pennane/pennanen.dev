@@ -218,7 +218,7 @@ func TestASeriesOnLetterboxdIsLoggedAsASeriesOrJoinsTheOneAdded(t *testing.T) {
 	twinPeaks, _ := s.FindByIdentity(ctx, record.SourceLetterboxd, "twp1")
 	v, _ := s.GetItem(ctx, twinPeaks)
 	var claim reading.LetterboxdFilm
-	c, _ := s.Claim(ctx, twinPeaks, record.SourceLetterboxd)
+	c, _ := s.ClaimItemKeyed(ctx, twinPeaks, record.SourceLetterboxd)
 	json.Unmarshal(c.Data, &claim)
 	if v.Kind != kind.Series || claim.TMDBType != reading.SeriesOnTMDB || claim.TMDBID != 1920 {
 		t.Errorf("twin peaks: %s %+v", v.Kind, claim)

@@ -89,7 +89,7 @@ func TestRereadFillsMissingAndOldReadings(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
 	id := loggedMovie(t, s, record.SourceTMDB, matrix)
-	if err := s.PutClaim(ctx, id, record.SourceLetterboxd, "abc", json.RawMessage(`{"id":"abc","title":"The Matrix","year":1999}`)); err != nil {
+	if err := s.PutClaimItemKeyed(ctx, id, record.SourceLetterboxd, "abc", json.RawMessage(`{"id":"abc","title":"The Matrix","year":1999}`)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.ChangeOverride(ctx, id, map[string]any{"title": "Matrix"}); err != nil {
@@ -145,7 +145,7 @@ func TestAnUnreadableClaimHasNoReading(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
 	id := loggedMovie(t, s, record.SourceTMDB, matrix)
-	if err := s.PutClaim(ctx, id, record.SourceTMDB, "603", json.RawMessage(`[1]`)); err != nil {
+	if err := s.PutClaimItemKeyed(ctx, id, record.SourceTMDB, "603", json.RawMessage(`[1]`)); err != nil {
 		t.Fatal(err)
 	}
 	if got := readingVersions(t, d, id); len(got) != 0 {
@@ -178,7 +178,7 @@ func TestListedTakesKeepTheirClaimsFetchTime(t *testing.T) {
 	ctx := context.Background()
 	s, d := openStoreWithDB(t)
 	id := loggedMovie(t, s, record.SourceTMDB, matrix)
-	if err := s.PutClaim(ctx, id, record.SourceLetterboxdTake, "matrix", json.RawMessage(`{"rating":4.5}`)); err != nil {
+	if err := s.PutClaimItemKeyed(ctx, id, record.SourceLetterboxdTake, "matrix", json.RawMessage(`{"rating":4.5}`)); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := d.Exec(`UPDATE record_claim SET fetched_at = '2020-01-02T03:04:05Z' WHERE source = ?`, record.SourceLetterboxdTake); err != nil {

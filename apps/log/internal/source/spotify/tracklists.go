@@ -97,7 +97,7 @@ func fetchAlbumsWithoutTracklists(ctx context.Context, st *store.Store, c *Clien
 	}
 	itemOf := map[string]int64{}
 	for _, albumID := range albums {
-		claim, err := st.Claim(ctx, albumID, record.SourceSpotifyAlbum)
+		claim, err := st.ClaimItemKeyed(ctx, albumID, record.SourceSpotifyAlbum)
 		if errors.Is(err, store.ErrNotFound) {
 			continue
 		}
@@ -128,7 +128,7 @@ func fetchAlbumsWithoutTracklists(ctx context.Context, st *store.Store, c *Clien
 		if !asked {
 			continue
 		}
-		if err := st.PutClaim(ctx, albumID, record.SourceSpotifyAlbum, album.ID, raw); err != nil {
+		if err := st.PutClaimItemKeyed(ctx, albumID, record.SourceSpotifyAlbum, album.ID, raw); err != nil {
 			p.Problem("%s %s: %v", record.SourceSpotifyAlbum, album.ID, err)
 		}
 	}
@@ -142,7 +142,7 @@ func tracklistsOutOfStep(ctx context.Context, st *store.Store, p *syncs.Progress
 	}
 	toFill := []tracklistToFill{}
 	for _, albumID := range albums {
-		claim, err := st.Claim(ctx, albumID, record.SourceSpotifyAlbum)
+		claim, err := st.ClaimItemKeyed(ctx, albumID, record.SourceSpotifyAlbum)
 		if errors.Is(err, store.ErrNotFound) {
 			continue
 		}
@@ -181,7 +181,7 @@ func knowTrack(ctx context.Context, st *store.Store, p *syncs.Progress, raw json
 	key := RecordingKey(t)
 	itemID, err := st.FindByIdentity(ctx, record.SourceSpotifyTrack, key)
 	if err == nil {
-		return t.ID, itemID, st.PutClaim(ctx, itemID, record.SourceSpotifyTrack, key, raw)
+		return t.ID, itemID, st.PutClaimItemKeyed(ctx, itemID, record.SourceSpotifyTrack, key, raw)
 	}
 	if !errors.Is(err, store.ErrNotFound) {
 		return t.ID, 0, err

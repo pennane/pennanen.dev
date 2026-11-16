@@ -193,7 +193,7 @@ func (r *Recorder) observe(ctx context.Context, p *syncs.Progress, itemID int64,
 	if err != nil {
 		return err
 	}
-	outcome, err := r.Store.Observe(ctx, store.Observation{
+	outcome, err := r.Store.ObserveItemKeyed(ctx, store.Observation{
 		ItemID:     itemID,
 		Source:     record.SourceLetterboxd,
 		Signal:     record.SignalWatched,
@@ -234,7 +234,7 @@ func (r *Recorder) itemOf(ctx context.Context, film reading.LetterboxdFilm) (int
 
 func (r *Recorder) remember(ctx context.Context, itemID int64, film reading.LetterboxdFilm) error {
 	var known reading.LetterboxdFilm
-	if c, err := r.Store.Claim(ctx, itemID, record.SourceLetterboxd); err == nil {
+	if c, err := r.Store.ClaimItemKeyed(ctx, itemID, record.SourceLetterboxd); err == nil {
 		if err := json.Unmarshal(c.Data, &known); err != nil {
 			return err
 		}
@@ -258,12 +258,12 @@ func (r *Recorder) remember(ctx context.Context, itemID int64, film reading.Lett
 	if merged == known {
 		return nil
 	}
-	return r.Store.PutClaim(ctx, itemID, record.SourceLetterboxd, merged.ID, merged)
+	return r.Store.PutClaimItemKeyed(ctx, itemID, record.SourceLetterboxd, merged.ID, merged)
 }
 
 func (r *Recorder) changeTake(ctx context.Context, itemID int64, change func(t *reading.LetterboxdTake)) error {
 	var take reading.LetterboxdTake
-	c, err := r.Store.Claim(ctx, itemID, record.SourceLetterboxdTake)
+	c, err := r.Store.ClaimItemKeyed(ctx, itemID, record.SourceLetterboxdTake)
 	switch {
 	case err == nil:
 		if err := json.Unmarshal(c.Data, &take); err != nil {
@@ -281,5 +281,5 @@ func (r *Recorder) changeTake(ctx context.Context, itemID int64, change func(t *
 	if err != nil || string(before) == string(after) {
 		return err
 	}
-	return r.Store.PutClaim(ctx, itemID, record.SourceLetterboxdTake, "", json.RawMessage(after))
+	return r.Store.PutClaimItemKeyed(ctx, itemID, record.SourceLetterboxdTake, "", json.RawMessage(after))
 }

@@ -90,7 +90,7 @@ func computeListening(ctx context.Context, st *store.Store, p *syncs.Progress) e
 			return err
 		}
 		for id, listening := range percentiles(logged, weights) {
-			if err := st.PutClaim(ctx, id, record.SourceSpotifyListening, "", listeningClaim(listening)); err != nil {
+			if err := st.PutClaimItemKeyed(ctx, id, record.SourceSpotifyListening, "", listeningClaim(listening)); err != nil {
 				p.Problem("listening %d: %v", id, err)
 				continue
 			}

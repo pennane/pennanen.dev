@@ -152,7 +152,7 @@ func (n snapshot) topArtistsListed(ctx context.Context, timeRange TimeRange, cou
 		n.p.Problem("top artists listed %s: %v", timeRange, err)
 		return
 	}
-	_, err = n.recorder.Store.ObserveAbout(ctx, record.Observation{
+	_, err = n.recorder.Store.Observe(ctx, record.Observation{
 		About:      record.Identity{Source: ObservationSource, ExternalID: fmt.Sprintf("%s:%s", record.SignalTopArtistsListed, timeRange)},
 		Source:     ObservationSource,
 		Signal:     record.SignalTopArtistsListed,
@@ -215,7 +215,7 @@ func (n snapshot) plays(ctx context.Context, plays []Play) {
 }
 
 func (s *Syncer) saves(ctx context.Context, n snapshot, saved []SavedAlbum) error {
-	unsavedItems, err := s.Store.ItemsLastObservedAs(ctx, ObservationSource, []string{record.SignalSaved, record.SignalUnsaved}, record.SignalUnsaved)
+	unsavedItems, err := s.Store.ItemsLastObservedAsItemKeyed(ctx, ObservationSource, []string{record.SignalSaved, record.SignalUnsaved}, record.SignalUnsaved)
 	if err != nil {
 		return err
 	}
@@ -268,12 +268,12 @@ func savedIDs(saved []SavedAlbum) (map[string]struct{}, error) {
 }
 
 func (s *Syncer) unsaves(ctx context.Context, n snapshot, stillSaved map[string]struct{}) error {
-	wasSaved, err := s.Store.ItemsLastObservedAs(ctx, ObservationSource, []string{record.SignalSaved, record.SignalUnsaved}, record.SignalSaved)
+	wasSaved, err := s.Store.ItemsLastObservedAsItemKeyed(ctx, ObservationSource, []string{record.SignalSaved, record.SignalUnsaved}, record.SignalSaved)
 	if err != nil {
 		return err
 	}
 	for _, itemID := range wasSaved {
-		claim, err := s.Store.Claim(ctx, itemID, record.SourceSpotifyAlbum)
+		claim, err := s.Store.ClaimItemKeyed(ctx, itemID, record.SourceSpotifyAlbum)
 		if errors.Is(err, store.ErrNotFound) {
 			continue
 		}

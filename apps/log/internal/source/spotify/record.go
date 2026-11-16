@@ -97,7 +97,7 @@ func (r *Recorder) keepStoredClaimIfItHasCredits(ctx context.Context, itemID int
 	if json.Unmarshal(seen.raw, &arriving) != nil || len(arriving.Artists) > 0 {
 		return
 	}
-	stored, err := r.Store.Claim(ctx, itemID, record.SourceSpotifyAlbum)
+	stored, err := r.Store.ClaimItemKeyed(ctx, itemID, record.SourceSpotifyAlbum)
 	if err != nil {
 		return
 	}
@@ -154,7 +154,7 @@ func (r *Recorder) Observe(ctx context.Context, p *syncs.Progress, itemID int64,
 	if err != nil {
 		return "", err
 	}
-	outcome, err := r.Store.Observe(ctx, store.Observation{
+	outcome, err := r.Store.ObserveItemKeyed(ctx, store.Observation{
 		ItemID:     itemID,
 		Source:     ObservationSource,
 		Signal:     signal,
@@ -207,14 +207,14 @@ func (r *Recorder) refresh(ctx context.Context, p *syncs.Progress, met map[strin
 		if seen.detail != Full {
 			continue
 		}
-		if err := r.Store.PutClaim(ctx, seen.itemID, source, id, seen.raw); err != nil {
+		if err := r.Store.PutClaimItemKeyed(ctx, seen.itemID, source, id, seen.raw); err != nil {
 			p.Problem("%s %s: %v", source, id, err)
 		}
 	}
 }
 
 func (r *Recorder) storedClaimIsFull(ctx context.Context, itemID int64, source string) bool {
-	claim, err := r.Store.Claim(ctx, itemID, source)
+	claim, err := r.Store.ClaimItemKeyed(ctx, itemID, source)
 	if err != nil {
 		return false
 	}

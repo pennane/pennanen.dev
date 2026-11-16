@@ -28,7 +28,7 @@ func NewMatcher(s *store.Store, c *Client) *Matcher {
 }
 
 func (m *Matcher) Work(ctx context.Context, p *syncs.Progress) error {
-	itemOfApp, err := m.Store.IdentitiesLackingSources(ctx, record.SourceSteam, record.SourceIGDB)
+	itemOfApp, err := m.Store.IdentitiesLackingSourcesItemKeyed(ctx, record.SourceSteam, record.SourceIGDB)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (m *Matcher) matchChunk(ctx context.Context, appIDs []string, itemOfApp map
 		if !found || !fetched {
 			continue
 		}
-		if err := m.Store.PutClaim(ctx, itemOfApp[appID], record.SourceIGDB, fmt.Sprint(gameID), raw); err != nil {
+		if err := m.Store.PutClaimItemKeyed(ctx, itemOfApp[appID], record.SourceIGDB, fmt.Sprint(gameID), raw); err != nil {
 			p.Problem("steam %s → igdb %d: %v", appID, gameID, err)
 			continue
 		}

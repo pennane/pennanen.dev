@@ -24,7 +24,7 @@ func TestItemsLastObservedAs(t *testing.T) {
 	}
 	observe := func(itemID int64, signal, key, at string) {
 		t.Helper()
-		if _, err := s.Observe(ctx, store.Observation{ItemID: itemID, Source: "spotify", Signal: signal, Key: key, ObservedAt: at, Data: json.RawMessage(`{}`)}); err != nil {
+		if _, err := s.ObserveItemKeyed(ctx, store.Observation{ItemID: itemID, Source: "spotify", Signal: signal, Key: key, ObservedAt: at, Data: json.RawMessage(`{}`)}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -32,7 +32,7 @@ func TestItemsLastObservedAs(t *testing.T) {
 	observe(a, "unsaved", "unsaved:a", "2026-11-02T10:00:00Z")
 	observe(b, "saved", "saved:b", "2026-11-01T10:00:00Z")
 
-	got, err := s.ItemsLastObservedAs(ctx, "spotify", []string{"saved", "unsaved"}, "saved")
+	got, err := s.ItemsLastObservedAsItemKeyed(ctx, "spotify", []string{"saved", "unsaved"}, "saved")
 	if err != nil {
 		t.Fatal(err)
 	}

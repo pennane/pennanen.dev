@@ -40,7 +40,7 @@ func TestApFixesAWrongTMDBMatch(t *testing.T) {
 
 	id, _ := st.CreateItemFromSource(ctx, "movie", "Ripley", record.SourceLetterboxd, "aaa1", json.RawMessage(`{"id":"aaa1","title":"Ripley","year":2024}`))
 	wrong := json.RawMessage(`{"id":9,"title":"In the Realm of Ripley","poster_path":"/wrong.jpg"}`)
-	if err := st.PutClaim(ctx, id, record.SourceTMDB, "9", wrong); err != nil {
+	if err := st.PutClaimItemKeyed(ctx, id, record.SourceTMDB, "9", wrong); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,7 +51,7 @@ func TestApFixesAWrongTMDBMatch(t *testing.T) {
 	if v.Verdicts.Values["title"] != "Ripley" || v.Verdicts.Values["poster"] != nil {
 		t.Errorf("after no match: %v", v.Verdicts.Values)
 	}
-	lacking, _ := st.IdentitiesLackingSources(ctx, record.SourceLetterboxd, record.SourceTMDB, record.SourceTMDBSeries)
+	lacking, _ := st.IdentitiesLackingSourcesItemKeyed(ctx, record.SourceLetterboxd, record.SourceTMDB, record.SourceTMDBSeries)
 	if len(lacking) != 0 {
 		t.Errorf("the nightly match would try again: %v", lacking)
 	}
@@ -124,7 +124,7 @@ func TestApAddsASeriesFromTMDBAndMovesAFilmThatIsOne(t *testing.T) {
 	if v.Kind != kind.Series || v.Verdicts.Values["poster"] != "https://image.tmdb.org/t/p/w500/r.jpg" || v.Verdicts.Values["seasons"] != int64(1) {
 		t.Errorf("moved film: %s %v", v.Kind, v.Verdicts.Values)
 	}
-	if _, err := st.Claim(ctx, id, record.SourceTMDB); err == nil {
+	if _, err := st.ClaimItemKeyed(ctx, id, record.SourceTMDB); err == nil {
 		t.Error("the film's no-match answer stayed")
 	}
 }

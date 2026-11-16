@@ -31,7 +31,7 @@ func TestOverrideBeatsSourceAndSurvivesResync(t *testing.T) {
 	if err := s.ChangeOverride(ctx, id, map[string]any{"title": "HADES"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaim(ctx, id, record.SourceSteam, "1145360",
+	if err := s.PutClaimItemKeyed(ctx, id, record.SourceSteam, "1145360",
 		json.RawMessage(`{"appid":1145360,"name":"Hades","playtime_forever":3100}`)); err != nil {
 		t.Fatal(err)
 	}
@@ -55,8 +55,8 @@ func TestIdleHintFromCardsAndNoAchievements(t *testing.T) {
 	s, _ := openStoreProposing(t, steam.Proposer)
 	id, _ := s.CreateItemFromSource(ctx, "game", "Card Farm", record.SourceSteam, "1",
 		json.RawMessage(`{"appid":1,"name":"Card Farm","playtime_forever":150}`))
-	s.PutClaim(ctx, id, record.SourceSteamStore, "1", json.RawMessage(`{"name":"Card Farm","categories":[{"description":"Steam Trading Cards"}]}`))
-	s.PutClaim(ctx, id, record.SourceSteamAchievements, "1", json.RawMessage(`{"achievements":[{"achieved":0}]}`))
+	s.PutClaimItemKeyed(ctx, id, record.SourceSteamStore, "1", json.RawMessage(`{"name":"Card Farm","categories":[{"description":"Steam Trading Cards"}]}`))
+	s.PutClaimItemKeyed(ctx, id, record.SourceSteamAchievements, "1", json.RawMessage(`{"achievements":[{"achieved":0}]}`))
 	if err := s.Propose(ctx, record.SourceSteam); err != nil {
 		t.Fatal(err)
 	}
