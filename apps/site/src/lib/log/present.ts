@@ -1,6 +1,7 @@
 import type { PublicItem } from './public-api'
 import type {
   Axis,
+  DismissalChange,
   FieldUse,
   KindSettings,
   Picture,
@@ -95,6 +96,8 @@ const FAVORITE_TAG = 'favorite'
 export const isFavorite = (tags: string[]) => tags.some((tag) => tagIsWithin(tag, FAVORITE_TAG))
 
 export const PRESTIGE = 'prestige'
+export const DISMISSED = 'dismissed' satisfies DismissalChange
+export const KEPT = 'kept' satisfies DismissalChange
 
 export type ShownScore = { axis: string; axisName: string; division: string }
 

@@ -90,7 +90,7 @@ func changeEntry(ctx context.Context, tx *sql.Tx, axes Axes, settings map[string
 	if err != nil {
 		return err
 	}
-	if change.Status != nil && (*change.Status == kind.Dismissed || !k.HasStatus(*change.Status)) {
+	if change.Status != nil && !k.HasStatus(*change.Status) {
 		return fmt.Errorf("%w: %s has no status %q", ErrInvalid, k.Name, *change.Status)
 	}
 	for axis, division := range change.Scores {

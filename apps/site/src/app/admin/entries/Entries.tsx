@@ -11,7 +11,8 @@ import {
   statusLabel,
   tagIsWithin,
   tagLabel,
-  tagWithAncestors
+  tagWithAncestors,
+  DISMISSED
 } from '../../../lib/log/present'
 import type { EntryChange, Kind, ListedEntry, Visibility } from '../../../lib/log/types'
 import { changeEntry, openEntry } from '../actions'
@@ -138,7 +139,7 @@ export const Entries = ({
   const patchEntry = (id: number, change: EntryChange) => {
     if (change.dismissal) setEntries((all) => all.filter((e) => e.id !== id))
     else setEntries((all) => all.map((e) => (e.id === id ? applyChange(e, change) : e)))
-    if (change.dismissal === 'dismissed' || change.scores?.[kind.rankedAxis] === null) unplace(id)
+    if (change.dismissal === DISMISSED || change.scores?.[kind.rankedAxis] === null) unplace(id)
   }
 
   const placeEntry = (rival: Rival, placement: Placement) => {

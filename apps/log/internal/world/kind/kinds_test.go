@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-func TestEveryKindCanBeDismissed(t *testing.T) {
+func TestNoKindHasDismissedAsAStatus(t *testing.T) {
 	for _, k := range All() {
-		if !k.HasStatus(Dismissed) {
-			t.Errorf("%s cannot be dismissed", k.Name)
+		if k.HasStatus(Dismissed) {
+			t.Errorf("%s lists dismissed as a status", k.Name)
 		}
 	}
 }

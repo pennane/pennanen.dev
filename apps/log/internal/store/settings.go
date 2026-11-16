@@ -394,7 +394,7 @@ func validKindSettings(k kind.Kind, axes Axes, settings KindSettings) error {
 		return fmt.Errorf("%w: %s needs a title", ErrInvalid, k.Name)
 	}
 	for _, status := range settings.StatusesShown {
-		if !k.HasStatus(status) || status == kind.Untriaged || status == kind.Dismissed {
+		if !k.HasStatus(status) || status == kind.Untriaged {
 			return fmt.Errorf("%w: %q is not a status %s can show", ErrInvalid, status, k.Name)
 		}
 	}

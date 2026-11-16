@@ -3,7 +3,9 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import {
+  DISMISSED,
   divisionName,
+  KEPT,
   presenceOf,
   statusLabel,
   tagLabel,
@@ -137,7 +139,7 @@ export const Editor = ({
   const [statusDecidedBy, setStatusDecidedBy] = useState(entry.statusDecidedBy)
   const [statusChoice, setStatusChoice] = useState(entry.statusChoice)
   const [dismissal, setDismissal] = useState<DismissalChange>(
-    dismissedAt === undefined ? 'kept' : 'dismissed'
+    dismissedAt === undefined ? KEPT : DISMISSED
   )
   const [visibility, setVisibility] = useState(entry.visibility)
   const [tags, setTags] = useState(entry.tags)
@@ -268,7 +270,7 @@ export const Editor = ({
         >
           {DISMISSAL_ACTIONS[dismissal]}
         </button>
-        {dismissal === 'dismissed' && (
+        {dismissal === DISMISSED && (
           <p className={styles.note}>dismissed, so it is not in your log and never shown</p>
         )}
       </Section>
@@ -414,13 +416,13 @@ export const Editor = ({
 const LAST_PLAYED_FIELD = 'last_played'
 
 const OTHER_DISMISSAL: Record<DismissalChange, DismissalChange> = {
-  dismissed: 'kept',
-  kept: 'dismissed'
+  [DISMISSED]: KEPT,
+  [KEPT]: DISMISSED
 }
 
 const DISMISSAL_ACTIONS: Record<DismissalChange, string> = {
-  dismissed: 'keep in my log',
-  kept: 'dismiss from my log'
+  [DISMISSED]: 'keep in my log',
+  [KEPT]: 'dismiss from my log'
 }
 
 const StatusNote = ({

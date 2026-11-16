@@ -50,8 +50,11 @@ func (s *Store) attachProposals(ctx context.Context, ids []int64, byID map[int64
 		rows, err := s.db.QueryContext(ctx, `
 			SELECT item_id, rule, subject, value, strength, coalesce(changed_at, '') FROM proposal
 			WHERE item_id IN (`+placeholders(len(chunk))+`) AND subject IN (?, ?, ?)
+			AND NOT (subject = ? AND strength = ? AND NOT EXISTS (
+				SELECT 1 FROM item i JOIN kind_status ks ON ks.kind = i.kind AND ks.status = proposal.value
+				WHERE i.id = proposal.item_id))
 			ORDER BY item_id, rule, subject, value`,
-			append(int64sAsArgs(chunk), rule.SubjectStatus, rule.SubjectTag, rule.SubjectDismissal)...)
+			append(int64sAsArgs(chunk), rule.SubjectStatus, rule.SubjectTag, rule.SubjectDismissal, rule.SubjectStatus, rule.Applying)...)
 		if err != nil {
 			return err
 		}

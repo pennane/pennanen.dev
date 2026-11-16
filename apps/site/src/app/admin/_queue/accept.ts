@@ -1,3 +1,4 @@
+import { DISMISSED } from '../../../lib/log/present'
 import type { EntryChange, Suggestion } from '../../../lib/log/types'
 import type { TriageCard } from './toCard'
 
@@ -9,7 +10,7 @@ export const changeFromSuggestions = (suggestions: Suggestion[]): EntryChange =>
   for (const suggestion of suggestions) {
     if (suggestion.subject === 'status') change.status = suggestion.value
     if (suggestion.subject === 'tag') tags.push(suggestion.value)
-    if (suggestion.subject === 'dismissal') change.dismissal = 'dismissed'
+    if (suggestion.subject === 'dismissal') change.dismissal = DISMISSED
   }
   return tags.length > 0 ? { ...change, addTags: tags } : change
 }

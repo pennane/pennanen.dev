@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { requireAdmin } from '../../../lib/admin/require-admin'
 import { logAdmin } from '../../../lib/log/admin-api'
+import { DISMISSED } from '../../../lib/log/present'
 import type { Visibility } from '../../../lib/log/types'
 import { Entries } from './Entries'
 import styles from './entries.module.css'
@@ -9,7 +10,6 @@ export const dynamic = 'force-dynamic'
 
 const DEFAULT_KIND = 'game'
 const NOT_YET_TRIAGED = 'untriaged'
-const DISMISSED = 'dismissed'
 const VISIBILITIES: Visibility[] = ['auto', 'public', 'private']
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>

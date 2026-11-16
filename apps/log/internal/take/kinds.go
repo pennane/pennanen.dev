@@ -13,9 +13,6 @@ func WriteKindStatuses(ctx context.Context, q record.Queryer, kinds []kind.Kind)
 	}
 	for _, k := range kinds {
 		for _, status := range k.Statuses {
-			if status == kind.Dismissed {
-				continue
-			}
 			if _, err := q.ExecContext(ctx, `INSERT OR IGNORE INTO kind_status (kind, status) VALUES (?, ?)`, k.Name, status); err != nil {
 				return err
 			}

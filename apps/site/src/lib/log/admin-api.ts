@@ -1,4 +1,5 @@
 import { requiredEnv } from './env'
+import type { DISMISSED } from './present'
 import type {
   EntryChange,
   IGDBResult,
@@ -61,7 +62,7 @@ export const logAdmin = {
     call<string[]>('/admin/settings/kind-order', send('PUT', order)),
   items: (filter: Record<string, string>) =>
     call<ItemView[]>(`/admin/items?${new URLSearchParams(filter)}`),
-  entries: (kind: string, dismissal?: 'dismissed') =>
+  entries: (kind: string, dismissal?: typeof DISMISSED) =>
     call<ListedEntry[]>(
       `/admin/entries?${new URLSearchParams({ kind, ...(dismissal ? { dismissal } : {}) })}`
     ),

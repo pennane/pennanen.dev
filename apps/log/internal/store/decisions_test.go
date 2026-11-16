@@ -442,3 +442,22 @@ func TestKeepingAnItemThatWasNeverDismissedChangesNothing(t *testing.T) {
 		t.Fatalf("shown = %+v, %v", shown, err)
 	}
 }
+
+func TestTheEditorHearsOnlyStatusesTheKindHas(t *testing.T) {
+	ctx := context.Background()
+	var game int64
+	s, _ := openStoreProposing(t, saying(func() []rule.Proposal {
+		return []rule.Proposal{
+			applyingStatus(game, kind.Watched, longAgo),
+			applyingStatus(game, "played", longAgo),
+		}
+	}))
+	game = handMadeGame(t, s, "Celeste")
+	if err := s.ProposeAll(ctx); err != nil {
+		t.Fatal(err)
+	}
+	want := []store.StatusProposal{{Rule: ruleLists, Value: "played", ChangedAt: longAgo}}
+	if e := entryOf(t, s, game); !slices.Equal(e.StatusProposals, want) {
+		t.Errorf("proposals = %+v, want %+v", e.StatusProposals, want)
+	}
+}

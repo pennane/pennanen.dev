@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { PRESTIGE } from '../../../lib/log/present'
+import { DISMISSED, KEPT, PRESTIGE } from '../../../lib/log/present'
 import { IGDB_MATCH, STEAM_SYNC } from '../../../lib/log/syncs'
 import type { Kind, SyncReport } from '../../../lib/log/types'
 import { useSync } from '../_sync/useSync'
@@ -172,6 +172,13 @@ export const Triage = ({
     [current, settleTriaged, tagsToAdd, place]
   )
 
+  const dismiss = useCallback(() => {
+    if (current?.shape !== 'untriaged') return
+    settleTriaged([triagedAs(current, [])], `${current.title} → ${DISMISSED}`, () =>
+      changeEntry(current.id, { dismissal: DISMISSED })
+    )
+  }, [current, settleTriaged])
+
   const score = useCallback(
     (status: string, division: string) => {
       if (current?.shape !== 'untriaged') return
@@ -231,7 +238,7 @@ export const Triage = ({
       for (const { removeTags, ids } of undoing.values())
         await changeEntries(ids, {
           status: UNTRIAGED,
-          dismissal: 'kept',
+          dismissal: KEPT,
           scores: { [PRESTIGE]: null },
           removeTags
         })
@@ -275,6 +282,7 @@ export const Triage = ({
   const keys = useMemo(() => {
     const handlers: Record<string, () => void> = {
       s: skip,
+      d: dismiss,
       z: undo
     }
     if (current?.shape !== 'untriaged') return handlers
@@ -291,7 +299,20 @@ export const Triage = ({
       handlers.Escape = () => setStep({ phase: 'status' })
     }
     return handlers
-  }, [presets, step, statuses, choose, commit, score, skip, undo, toggleTag, comparing, current])
+  }, [
+    presets,
+    step,
+    statuses,
+    choose,
+    dismiss,
+    commit,
+    score,
+    skip,
+    undo,
+    toggleTag,
+    comparing,
+    current
+  ])
   useKeys(keys)
 
   const acceptances = useMemo(
@@ -402,6 +423,9 @@ export const Triage = ({
                   <kbd>{i + 1}</kbd> {status}
                 </button>
               ))}
+              <button className={styles.quiet} onClick={dismiss}>
+                <kbd>d</kbd> dismiss
+              </button>
             </div>
           ) : comparing ? (
             <Compare {...comparing} />

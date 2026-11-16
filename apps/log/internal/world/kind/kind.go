@@ -168,7 +168,6 @@ func isWebURL(s string) bool {
 var registry = map[string]Kind{}
 
 func register(k Kind) {
-	k.Statuses = append(k.Statuses, Dismissed)
 	if k.Takes == nil {
 		k.Takes = []Take{}
 	}
