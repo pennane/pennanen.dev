@@ -29,7 +29,7 @@ type albumTracklist struct {
 }
 
 type tracklistToFill struct {
-	albumID  int64
+	album    record.Identity
 	trackIDs []string
 }
 
@@ -67,7 +67,7 @@ func fillTracklists(ctx context.Context, st *store.Store, c *Client, p *syncs.Pr
 			return err
 		}
 		if len(unknown) > 0 {
-			p.Problem("album %d: %d of its %d tracks came back", list.albumID, len(list.trackIDs)-len(unknown), len(list.trackIDs))
+			p.Problem("album %s: %d of its %d tracks came back", list.album.ExternalID, len(list.trackIDs)-len(unknown), len(list.trackIDs))
 			continue
 		}
 		p.Add(CountTracklists, 1)
@@ -91,13 +91,13 @@ func unknownTracks(ctx context.Context, st *store.Store, trackIDs []string) ([]s
 }
 
 func fetchAlbumsWithoutTracklists(ctx context.Context, st *store.Store, c *Client, p *syncs.Progress) error {
-	albums, err := st.LoggedItemsNotDismissed(ctx, kind.Album)
+	albums, err := st.LoggedIdentitiesNotDismissed(ctx, kind.Album, record.SourceSpotifyAlbum)
 	if err != nil {
 		return err
 	}
 	wanted := map[string]struct{}{}
-	for _, albumID := range albums {
-		claim, err := st.ClaimItemKeyed(ctx, albumID, record.SourceSpotifyAlbum)
+	for _, albumIdentity := range albums {
+		claim, err := st.ClaimOf(ctx, albumIdentity, record.SourceSpotifyAlbum)
 		if errors.Is(err, store.ErrNotFound) {
 			continue
 		}
@@ -135,13 +135,13 @@ func fetchAlbumsWithoutTracklists(ctx context.Context, st *store.Store, c *Clien
 }
 
 func tracklistsOutOfStep(ctx context.Context, st *store.Store, p *syncs.Progress) ([]tracklistToFill, error) {
-	albums, err := st.LoggedItemsNotDismissed(ctx, kind.Album)
+	albums, err := st.LoggedIdentitiesNotDismissed(ctx, kind.Album, record.SourceSpotifyAlbum)
 	if err != nil {
 		return nil, err
 	}
 	toFill := []tracklistToFill{}
-	for _, albumID := range albums {
-		claim, err := st.ClaimItemKeyed(ctx, albumID, record.SourceSpotifyAlbum)
+	for _, albumIdentity := range albums {
+		claim, err := st.ClaimOf(ctx, albumIdentity, record.SourceSpotifyAlbum)
 		if errors.Is(err, store.ErrNotFound) {
 			continue
 		}
@@ -150,7 +150,7 @@ func tracklistsOutOfStep(ctx context.Context, st *store.Store, p *syncs.Progress
 		}
 		var album albumTracklist
 		if err := json.Unmarshal(claim.Data, &album); err != nil {
-			p.Problem("album %d: %v", albumID, err)
+			p.Problem("album %s: %v", albumIdentity.ExternalID, err)
 			continue
 		}
 		trackIDs := reading.InTracklistOrder(album.Tracks.Items)
@@ -163,7 +163,7 @@ func tracklistsOutOfStep(ctx context.Context, st *store.Store, p *syncs.Progress
 			return nil, err
 		}
 		if len(unknown) > 0 {
-			toFill = append(toFill, tracklistToFill{albumID: albumID, trackIDs: trackIDs})
+			toFill = append(toFill, tracklistToFill{album: albumIdentity, trackIDs: trackIDs})
 		}
 	}
 	return toFill, nil
