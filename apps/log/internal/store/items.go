@@ -89,16 +89,6 @@ func (s *Store) CreateItemFromSource(ctx context.Context, kindName, title, sourc
 	return id, err
 }
 
-func (s *Store) KnowItemFromSource(ctx context.Context, kindName, title, source, externalID string, data any) (int64, error) {
-	var id int64
-	err := s.inTx(ctx, func(tx *sql.Tx) error {
-		var err error
-		id, err = s.itemFromSource(ctx, tx, source, externalID, data)
-		return err
-	})
-	return id, err
-}
-
 func (s *Store) itemFromSource(ctx context.Context, tx *sql.Tx, source, externalID string, data any) (int64, error) {
 	if externalID == "" {
 		return 0, fmt.Errorf("%w: an item from %s needs an external id", ErrInvalid, source)
@@ -133,23 +123,6 @@ func Slugify(title string) string {
 
 func (s *Store) FindByIdentity(ctx context.Context, source, externalID string) (int64, error) {
 	return s.itemOf(ctx, s.db, identityOf(source, externalID))
-}
-
-func (s *Store) PutClaimItemKeyed(ctx context.Context, itemID int64, source, externalID string, data any) error {
-	raw, err := asJSON(data)
-	if err != nil {
-		return err
-	}
-	return s.inTx(ctx, func(tx *sql.Tx) error {
-		key, err := s.keyOf(ctx, tx, itemID)
-		if err != nil {
-			return err
-		}
-		if externalID == "" {
-			externalID = key.String()
-		}
-		return s.putClaimOn(ctx, tx, itemID, identityOf(source, externalID), raw)
-	})
 }
 
 func (s *Store) PutClaim(ctx context.Context, id record.Identity, data any) error {
@@ -210,7 +183,7 @@ func (s *Store) ClaimOf(ctx context.Context, id record.Identity, source string) 
 	if err != nil {
 		return reading.Claim{Source: source}, err
 	}
-	return s.ClaimItemKeyed(ctx, itemID, source)
+	return s.claimOn(ctx, itemID, source)
 }
 
 func (s *Store) IdentitiesLackingSources(ctx context.Context, have string, lacking ...string) ([]record.Identity, error) {
@@ -311,31 +284,6 @@ func (s *Store) answer(ctx context.Context, tx *sql.Tx, itemID int64, id record.
 	return s.rekeyOffAReplacedKey(ctx, tx, itemID, key, replaced, theAnswer(id))
 }
 
-func (s *Store) IdentitiesLackingSourcesItemKeyed(ctx context.Context, have string, lacking ...string) (map[string]int64, error) {
-	claimedOrAnswered, answeredArgs := claimedOrAnsweredFrom("l", lacking)
-	args := append([]any{have}, answeredArgs...)
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.external_id, c.item_id FROM claim c
-		JOIN shown_entry e ON e.item_id = c.item_id
-		WHERE c.source = ?
-		  AND NOT EXISTS (SELECT 1 FROM claim l WHERE l.item_id = c.item_id AND (`+claimedOrAnswered+`))`,
-		args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	itemOf := map[string]int64{}
-	for rows.Next() {
-		var externalID string
-		var itemID int64
-		if err := rows.Scan(&externalID, &itemID); err != nil {
-			return nil, err
-		}
-		itemOf[externalID] = itemID
-	}
-	return itemOf, rows.Err()
-}
-
 func claimedOrAnsweredFrom(alias string, sources []string) (string, []any) {
 	conditions := make([]string, 0, len(sources))
 	args := []any{}
@@ -357,7 +305,7 @@ func asJSON(data any) ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (s *Store) ClaimItemKeyed(ctx context.Context, itemID int64, source string) (reading.Claim, error) {
+func (s *Store) claimOn(ctx context.Context, itemID int64, source string) (reading.Claim, error) {
 	c := reading.Claim{Source: source}
 	var data string
 	err := s.db.QueryRowContext(ctx, `

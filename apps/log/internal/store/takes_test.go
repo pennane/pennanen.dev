@@ -19,7 +19,7 @@ func TestAnOutsideTakeShowsBesideTheEntryAndNeverAsAField(t *testing.T) {
 		t.Fatal(err)
 	}
 	take := json.RawMessage(`{"rating":4.5,"reaction":"liked","review":"slow, then not"}`)
-	if err := s.PutClaimItemKeyed(ctx, id, record.SourceLetterboxdTake, "stalker", take); err != nil {
+	if err := putClaimOnItem(ctx, s, id, record.Identity{Source: record.SourceLetterboxdTake, ExternalID: "stalker"}, take); err != nil {
 		t.Fatal(err)
 	}
 	v, err := s.GetItem(ctx, id)
@@ -60,17 +60,17 @@ func TestObservationsAreAppendedOnce(t *testing.T) {
 		ItemID: id, Source: record.SourceLetterboxd, Signal: "diary", Key: "diary/123",
 		ObservedAt: "2026-11-01", Data: json.RawMessage(`{"rating":4.5}`),
 	}
-	if got, err := s.ObserveItemKeyed(ctx, entry); err != nil || got != store.Observed {
+	if got, err := observeOnItem(ctx, s, entry); err != nil || got != store.Observed {
 		t.Fatalf("first: %s %v", got, err)
 	}
 	changed := entry
 	changed.Data = json.RawMessage(`{"rating":1}`)
-	if got, err := s.ObserveItemKeyed(ctx, changed); err != nil || got != store.AlreadyKnown {
+	if got, err := observeOnItem(ctx, s, changed); err != nil || got != store.AlreadyKnown {
 		t.Fatalf("again: %s %v", got, err)
 	}
 	rewatch := entry
 	rewatch.Key, rewatch.ObservedAt = "diary/456", "2026-11-10"
-	if _, err := s.ObserveItemKeyed(ctx, rewatch); err != nil {
+	if _, err := observeOnItem(ctx, s, rewatch); err != nil {
 		t.Fatal(err)
 	}
 	seen, err := s.Observations(ctx, id, record.SourceLetterboxd, "diary")

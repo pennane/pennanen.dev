@@ -31,8 +31,7 @@ func TestOverrideBeatsSourceAndSurvivesResync(t *testing.T) {
 	if err := s.ChangeOverride(ctx, id, map[string]any{"title": "HADES"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaimItemKeyed(ctx, id, record.SourceSteam, "1145360",
-		json.RawMessage(`{"appid":1145360,"name":"Hades","playtime_forever":3100}`)); err != nil {
+	if err := putClaimOnItem(ctx, s, id, record.Identity{Source: record.SourceSteam, ExternalID: "1145360"}, json.RawMessage(`{"appid":1145360,"name":"Hades","playtime_forever":3100}`)); err != nil {
 		t.Fatal(err)
 	}
 	v, err := s.GetItem(ctx, id)
@@ -55,8 +54,8 @@ func TestIdleHintFromCardsAndNoAchievements(t *testing.T) {
 	s, _ := openStoreProposing(t, steam.Proposer)
 	id, _ := s.CreateItemFromSource(ctx, "game", "Card Farm", record.SourceSteam, "1",
 		json.RawMessage(`{"appid":1,"name":"Card Farm","playtime_forever":150}`))
-	s.PutClaimItemKeyed(ctx, id, record.SourceSteamStore, "1", json.RawMessage(`{"name":"Card Farm","categories":[{"description":"Steam Trading Cards"}]}`))
-	s.PutClaimItemKeyed(ctx, id, record.SourceSteamAchievements, "1", json.RawMessage(`{"achievements":[{"achieved":0}]}`))
+	putClaimOnItem(ctx, s, id, record.Identity{Source: record.SourceSteamStore, ExternalID: "1"}, json.RawMessage(`{"name":"Card Farm","categories":[{"description":"Steam Trading Cards"}]}`))
+	putClaimOnItem(ctx, s, id, record.Identity{Source: record.SourceSteamAchievements, ExternalID: "1"}, json.RawMessage(`{"achievements":[{"achieved":0}]}`))
 	if err := s.Propose(ctx, record.SourceSteam); err != nil {
 		t.Fatal(err)
 	}
@@ -165,7 +164,7 @@ func TestAKnownItemHasNoEntry(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
 	data := json.RawMessage(`{"id":949,"title":"Heat"}`)
-	id, err := s.KnowItemFromSource(ctx, kind.Movie, "Heat", record.SourceTMDB, "949", data)
+	id, err := knowItem(ctx, s, record.Identity{Source: record.SourceTMDB, ExternalID: "949"}, data)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,7 +184,7 @@ func TestAKnownItemHasNoEntry(t *testing.T) {
 func TestAKnownItemIsNotListed(t *testing.T) {
 	ctx := context.Background()
 	s := openStore(t)
-	if _, err := s.KnowItemFromSource(ctx, kind.Movie, "Heat", record.SourceTMDB, "949", json.RawMessage(`{}`)); err != nil {
+	if _, err := knowItem(ctx, s, record.Identity{Source: record.SourceTMDB, ExternalID: "949"}, json.RawMessage(`{}`)); err != nil {
 		t.Fatal(err)
 	}
 	logged, err := s.CreateItem(ctx, kind.Movie, "Ronin", nil)

@@ -24,21 +24,6 @@ const (
 	AlreadyKnown ObserveOutcome = "already-known"
 )
 
-func (s *Store) ObserveItemKeyed(ctx context.Context, o Observation) (ObserveOutcome, error) {
-	key, err := s.keyOf(ctx, s.db, o.ItemID)
-	if err != nil {
-		return "", err
-	}
-	return s.Observe(ctx, record.Observation{
-		About:      key,
-		Source:     o.Source,
-		Signal:     o.Signal,
-		Key:        o.Key,
-		ObservedAt: o.ObservedAt,
-		Data:       o.Data,
-	})
-}
-
 func (s *Store) Observe(ctx context.Context, o record.Observation) (ObserveOutcome, error) {
 	if o.About.Source == "" || o.About.ExternalID == "" || o.Source == "" || o.Signal == "" || o.Key == "" || o.ObservedAt == "" || !json.Valid(o.Data) {
 		return "", fmt.Errorf("%w: an observation needs what it is about, a source, a signal, a key, a time and json data", ErrInvalid)
@@ -73,37 +58,6 @@ func (s *Store) Observations(ctx context.Context, itemID int64, source, signal s
 		observations = append(observations, o)
 	}
 	return observations, rows.Err()
-}
-
-func (s *Store) ItemsLastObservedAsItemKeyed(ctx context.Context, source string, signals []string, last string) ([]int64, error) {
-	if len(signals) == 0 {
-		return []int64{}, nil
-	}
-	marks := strings.TrimSuffix(strings.Repeat("?, ", len(signals)), ", ")
-	args := []any{source}
-	for _, signal := range signals {
-		args = append(args, signal)
-	}
-	args = append(args, last)
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT item_id FROM (
-			SELECT item_id, signal, ROW_NUMBER() OVER (PARTITION BY item_id ORDER BY observed_at DESC, id DESC) AS recency
-			FROM observation WHERE source = ? AND signal IN (`+marks+`)
-		) WHERE recency = 1 AND signal = ?
-		ORDER BY item_id`, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	itemIDs := []int64{}
-	for rows.Next() {
-		var itemID int64
-		if err := rows.Scan(&itemID); err != nil {
-			return nil, err
-		}
-		itemIDs = append(itemIDs, itemID)
-	}
-	return itemIDs, rows.Err()
 }
 
 func (s *Store) IdentitiesLastObservedAs(ctx context.Context, source string, signals []string, last string) ([]record.Identity, error) {

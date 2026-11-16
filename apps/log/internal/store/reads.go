@@ -195,6 +195,9 @@ func (s *Store) queryViews(ctx context.Context, where string, args ...any) ([]It
 	if err := s.attachVerdicts(ctx, ids, byID); err != nil {
 		return nil, err
 	}
+	if err := s.attachMeasures(ctx, ids, byID); err != nil {
+		return nil, err
+	}
 	if err := s.attachTakes(ctx, readings, byID); err != nil {
 		return nil, err
 	}

@@ -24,8 +24,8 @@ func TestAnAlbumPageListsItsTracksInOrder(t *testing.T) {
 	if err := st.ChangeEntry(ctx, album, store.EntryChange{Status: &listened}); err != nil {
 		t.Fatal(err)
 	}
-	second, _ := st.KnowItemFromSource(ctx, kind.Track, "Second", record.SourceSpotifyTrack, "I2", map[string]any{"id": "t2", "name": "Second"})
-	first, _ := st.KnowItemFromSource(ctx, kind.Track, "First", record.SourceSpotifyTrack, "I1", map[string]any{"id": "t1", "name": "First"})
+	second, _ := knowItem(ctx, st, record.Identity{Source: record.SourceSpotifyTrack, ExternalID: "I2"}, map[string]any{"id": "t2", "name": "Second"})
+	first, _ := knowItem(ctx, st, record.Identity{Source: record.SourceSpotifyTrack, ExternalID: "I1"}, map[string]any{"id": "t1", "name": "First"})
 	if first == 0 || second == 0 {
 		t.Fatalf("tracks %d %d", first, second)
 	}

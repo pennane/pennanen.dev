@@ -796,10 +796,10 @@ func TestThePlaysSyncSucceedsWithNothingToDoWhenNotConnected(t *testing.T) {
 func TestAnArtistApTaggedBeforeAnySyncStillGetsItsComputedStatus(t *testing.T) {
 	h := newHarness(t, newFake(), spotify.Connected)
 	h.run(t)
-	z, err := h.store.KnowItemFromSource(context.Background(), kind.Artist, "Zed", record.SourceSpotifyArtist, "Z", json.RawMessage(`{}`))
-	if err != nil {
+	if err := h.store.PutClaim(context.Background(), record.Identity{Source: record.SourceSpotifyArtist, ExternalID: "Z"}, json.RawMessage(`{}`)); err != nil {
 		t.Fatal(err)
 	}
+	z := h.item(t, record.SourceSpotifyArtist, "Z")
 	if err := h.store.ChangeEntry(context.Background(), z, store.EntryChange{AddTags: []string{"favorite"}}); err != nil {
 		t.Fatal(err)
 	}
@@ -815,10 +815,10 @@ func TestAnArtistApTaggedBeforeAnySyncStillGetsItsComputedStatus(t *testing.T) {
 func TestAHandPickedListeningOnAnUnlistedArtistStands(t *testing.T) {
 	h := newHarness(t, newFake(), spotify.Connected)
 	h.run(t)
-	z, err := h.store.KnowItemFromSource(context.Background(), kind.Artist, "Zed", record.SourceSpotifyArtist, "Z", json.RawMessage(`{}`))
-	if err != nil {
+	if err := h.store.PutClaim(context.Background(), record.Identity{Source: record.SourceSpotifyArtist, ExternalID: "Z"}, json.RawMessage(`{}`)); err != nil {
 		t.Fatal(err)
 	}
+	z := h.item(t, record.SourceSpotifyArtist, "Z")
 	listening := kind.Listening
 	if err := h.store.ChangeEntry(context.Background(), z, store.EntryChange{Status: &listening}); err != nil {
 		t.Fatal(err)
@@ -1173,7 +1173,7 @@ func TestARerunTheSameDayAfterACrashKeepsTheStreak(t *testing.T) {
 	}
 }
 
-func TestAFailedProposalMidSyncIsAProblemAndWeighingGoesOn(t *testing.T) {
+func TestAFailedProposalMidSyncIsAProblemAndTheSyncGoesOn(t *testing.T) {
 	failing := rule.Proposer{Source: record.SourceSpotify, Propose: func(context.Context, record.Queryer) ([]rule.Proposal, error) {
 		return nil, errors.New("a rule broke")
 	}}
@@ -1181,14 +1181,5 @@ func TestAFailedProposalMidSyncIsAProblemAndWeighingGoesOn(t *testing.T) {
 	report := h.run(t)
 	if report.State != syncs.Succeeded || !slices.ContainsFunc(report.Problems, func(p string) bool { return strings.Contains(p, "a rule broke") }) {
 		t.Fatalf("report = %+v", report)
-	}
-	x := h.item(t, record.SourceSpotifyArtist, "X")
-	listening := kind.Listening
-	if err := h.store.ChangeEntry(context.Background(), x, store.EntryChange{Status: &listening}); err != nil {
-		t.Fatal(err)
-	}
-	h.run(t)
-	if weight := h.listening(t, x); weight == nil {
-		t.Fatalf("X was not weighed after a failed proposal")
 	}
 }

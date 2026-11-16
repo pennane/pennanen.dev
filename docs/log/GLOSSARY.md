@@ -189,6 +189,10 @@ ap's choice ([ADR 7](./adr/0007-proposals-and-the-newest-word.md)).
 **Withdraw** — a source no longer saying something removes its proposal; the
 next word down decides.
 
+**Measure** — a number a rule derives for an item's field from records
+(listening). A field's value is ap's override, then the kind's sources, then
+the measure. Each run of a source's rules replaces all of its measures.
+
 **Hint** — a suggesting proposal for a game during triage, which only ap's
 yes applies. Four rules hint: `likely-played` and `likely-never-played` say a
 status, `likely-idled` says the tag `idled` and the status `never-played`, and
@@ -228,7 +232,7 @@ never ranked. One read from an outside take suggests a division while ap
 rates. _Replaces outside, crowd and activity axes._
 
 **Listening** — how much ap listens to an artist or album, from 0 to 100,
-worked out nightly by a rule from observations. Public. _Replaces the
+a measure Spotify's rules work out from observations. Public. _Replaces the
 `spotify-listening` claim._
 
 ## Presentation

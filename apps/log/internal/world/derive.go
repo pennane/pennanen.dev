@@ -52,7 +52,7 @@ func Derive(id record.Identity, reading map[string]any) Derivation {
 		return Derivation{Kind: kind.Series}
 	case record.SourceLetterboxd:
 		return deriveLetterboxd(reading)
-	case record.SourceLetterboxdTake, record.SourceSpotifyListening:
+	case record.SourceLetterboxdTake:
 		return Derivation{About: parseAll(id.ExternalID)}
 	case record.SourceSpotifyArtist:
 		return Derivation{Kind: kind.Artist}

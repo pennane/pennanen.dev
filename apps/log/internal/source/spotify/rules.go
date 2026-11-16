@@ -1,9 +1,11 @@
 package spotify
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"maps"
+	"math"
 	"slices"
 	"strings"
 	"time"
@@ -20,7 +22,7 @@ const (
 
 const secondLayout = "2006-01-02T15:04:05Z"
 
-var Proposer = rule.Proposer{Source: record.SourceSpotify, Propose: loadAndPropose}
+var Proposer = rule.Proposer{Source: record.SourceSpotify, Propose: loadAndPropose, Measure: measureListening}
 
 type observation struct {
 	itemID     int64
@@ -244,4 +246,183 @@ func mainArtistsOfSaved(ctx context.Context, q record.Queryer) ([]mainArtist, er
 		links = append(links, link)
 	}
 	return links, rows.Err()
+}
+
+const (
+	pointsPerPlay   = 0.1
+	wholePercentile = 100
+)
+
+var rangeFactors = map[TimeRange]float64{LongTerm: 3, MediumTerm: 2, ShortTerm: 1}
+
+type listPoints map[int64]map[string]float64
+
+func weighed(points map[string]float64) float64 {
+	weight := 0.0
+	for listRange, sum := range points {
+		weight += rangeFactors[TimeRange(listRange)] * sum
+	}
+	return weight
+}
+
+func measureListening(ctx context.Context, q record.Queryer) ([]rule.Measure, error) {
+	albums, artists, err := listeningWeights(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	var measures []rule.Measure
+	for _, weighing := range []struct {
+		kind    string
+		weights map[int64]float64
+	}{{kind.Album, albums}, {kind.Artist, artists}} {
+		logged, err := loggedNotDismissed(ctx, q, weighing.kind)
+		if err != nil {
+			return nil, err
+		}
+		for id, listening := range percentiles(logged, weighing.weights) {
+			measures = append(measures, rule.Measure{ItemID: id, Field: kind.FieldListening, Value: listening})
+		}
+	}
+	slices.SortFunc(measures, func(a, b rule.Measure) int { return cmp.Compare(a.ItemID, b.ItemID) })
+	return measures, nil
+}
+
+func listeningWeights(ctx context.Context, q record.Queryer) (albums, artists map[int64]float64, err error) {
+	trackPoints, err := topListPoints(ctx, q, record.SignalTopTrack)
+	if err != nil {
+		return nil, nil, err
+	}
+	artistPoints, err := topListPoints(ctx, q, record.SignalTopArtist)
+	if err != nil {
+		return nil, nil, err
+	}
+	plays, err := playCounts(ctx, q)
+	if err != nil {
+		return nil, nil, err
+	}
+	mainArtists, err := mainArtistsOfEveryAlbum(ctx, q)
+	if err != nil {
+		return nil, nil, err
+	}
+	albums = map[int64]float64{}
+	for id, points := range trackPoints {
+		albums[id] = weighed(points)
+	}
+	for id, count := range plays {
+		albums[id] += float64(count) * pointsPerPlay
+	}
+	artists = map[int64]float64{}
+	for id, points := range artistPoints {
+		artists[id] = weighed(points)
+	}
+	for _, link := range mainArtists {
+		artists[link.artistID] += albums[link.albumID]
+	}
+	return albums, artists, nil
+}
+
+func percentiles(ids []int64, weights map[int64]float64) map[int64]int64 {
+	sorted := make([]float64, 0, len(ids))
+	for _, id := range ids {
+		sorted = append(sorted, weights[id])
+	}
+	slices.Sort(sorted)
+	out := make(map[int64]int64, len(ids))
+	for _, id := range ids {
+		if len(ids) == 1 {
+			out[id] = wholePercentile
+			continue
+		}
+		below, _ := slices.BinarySearch(sorted, weights[id])
+		out[id] = int64(math.Round(wholePercentile * float64(below) / float64(len(ids)-1)))
+	}
+	return out
+}
+
+func topListPoints(ctx context.Context, q record.Queryer, signal string) (listPoints, error) {
+	rows, err := q.QueryContext(ctx, `
+		WITH listed AS (
+			SELECT item_id,
+				json_extract(data, '$.range') AS list_range,
+				json_extract(data, '$.day') AS day,
+				json_extract(data, '$.rank') AS place
+			FROM observation WHERE source = ? AND signal = ?),
+		lengths AS (SELECT list_range, day, count(*) AS length FROM listed GROUP BY list_range, day)
+		SELECT l.item_id, l.list_range, sum((n.length - l.place + 1) * 1.0 / n.length)
+		FROM listed l JOIN lengths n ON n.list_range = l.list_range AND n.day = l.day
+		GROUP BY l.item_id, l.list_range`, ObservationSource, signal)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	points := listPoints{}
+	for rows.Next() {
+		var itemID int64
+		var listRange string
+		var sum float64
+		if err := rows.Scan(&itemID, &listRange, &sum); err != nil {
+			return nil, err
+		}
+		if points[itemID] == nil {
+			points[itemID] = map[string]float64{}
+		}
+		points[itemID][listRange] = sum
+	}
+	return points, rows.Err()
+}
+
+func playCounts(ctx context.Context, q record.Queryer) (map[int64]int, error) {
+	rows, err := q.QueryContext(ctx, `
+		SELECT item_id, count(*) FROM observation WHERE source = ? AND signal = ? GROUP BY item_id`,
+		ObservationSource, record.SignalPlay)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	counts := map[int64]int{}
+	for rows.Next() {
+		var itemID int64
+		var count int
+		if err := rows.Scan(&itemID, &count); err != nil {
+			return nil, err
+		}
+		counts[itemID] = count
+	}
+	return counts, rows.Err()
+}
+
+func mainArtistsOfEveryAlbum(ctx context.Context, q record.Queryer) ([]mainArtist, error) {
+	rows, err := q.QueryContext(ctx, `SELECT from_id, to_id FROM relation WHERE type = ? ORDER BY from_id, to_id`, kind.LinkBy)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	links := []mainArtist{}
+	for rows.Next() {
+		var link mainArtist
+		if err := rows.Scan(&link.albumID, &link.artistID); err != nil {
+			return nil, err
+		}
+		links = append(links, link)
+	}
+	return links, rows.Err()
+}
+
+func loggedNotDismissed(ctx context.Context, q record.Queryer, kindName string) ([]int64, error) {
+	rows, err := q.QueryContext(ctx, `
+		SELECT e.item_id FROM shown_entry e JOIN item i ON i.id = e.item_id
+		WHERE i.kind = ? ORDER BY e.item_id`, kindName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ids := []int64{}
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }

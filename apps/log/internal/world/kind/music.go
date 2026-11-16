@@ -20,7 +20,7 @@ const (
 var listeningField = Field{
 	Name:                    FieldListening,
 	Type:                    Int,
-	SourcesBestFirstAfterAP: []string{record.SourceSpotifyListening},
+	SourcesBestFirstAfterAP: []string{},
 	About:                   AboutAP,
 }
 

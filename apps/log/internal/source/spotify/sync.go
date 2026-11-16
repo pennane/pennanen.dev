@@ -98,10 +98,7 @@ func (s *Syncer) Work(ctx context.Context, p *syncs.Progress) error {
 	}
 	snap.recorder.RefreshClaims(ctx, p, s.Client)
 	if err := s.Store.Propose(ctx, record.SourceSpotify); err != nil {
-		p.Problem("logging what the rules say before weighing: %v", err)
-	}
-	if err := computeListening(ctx, s.Store, p); err != nil {
-		return err
+		p.Problem("logging and weighing what the rules say: %v", err)
 	}
 	if err := fillTracklists(ctx, s.Store, s.Client, p); err != nil {
 		return err

@@ -2,6 +2,7 @@ package spotify
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"path/filepath"
 	"reflect"
@@ -177,4 +178,112 @@ func TestAnEmptyShortTermListingIsASnapshotTheArtistDroppedOutOf(t *testing.T) {
 	assertProposals(t, got, []rule.Proposal{
 		logged(pendulum, RuleArtist), status(pendulum, RuleArtist, kind.Listened, snapshotAt(4)),
 	})
+}
+
+const (
+	artistA    int64 = 1
+	artistB    int64 = 2
+	artistC    int64 = 3
+	albumD     int64 = 4
+	artistE    int64 = 5
+	albumF     int64 = 6
+	listenedAt       = "2026-01-01T03:00:00Z"
+)
+
+func openListening(t *testing.T) (context.Context, *sql.DB) {
+	t.Helper()
+	ctx := context.Background()
+	d, err := db.Open(ctx, filepath.Join(t.TempDir(), "log.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { d.Close() })
+	seed := `
+		INSERT INTO item (id, kind, slug) VALUES
+			(1, 'artist', 'a'), (2, 'artist', 'b'), (3, 'artist', 'c'), (4, 'album', 'd'), (5, 'artist', 'e'), (6, 'album', 'f');
+		INSERT INTO item_identity (item_id, source, external_id) VALUES
+			(1, 'spotify-artist', 'a'), (2, 'spotify-artist', 'b'), (3, 'spotify-artist', 'c'),
+			(4, 'spotify-album', 'd'), (5, 'spotify-artist', 'e'), (6, 'spotify-album', 'f');
+		INSERT INTO record_claim (source, external_id, data, fetched_at, changed_at) VALUES
+			('spotify-album', 'd', '{}', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
+		INSERT INTO link (asserted_source, asserted_external_id, from_source, from_external_id, type, to_source, to_external_id) VALUES
+			('spotify-album', 'd', 'spotify-album', 'd', 'by', 'spotify-artist', 'a');
+		INSERT INTO record_observation (about_source, about_external_id, source, signal, key, observed_at, data) VALUES
+			('spotify-album', 'd', 'spotify', 'top-track', 'top-track:medium_term:2026-01-01:d', '2026-01-01T03:00:00Z', '{"range":"medium_term","day":"2026-01-01","rank":1}'),
+			('spotify-album', 'd', 'spotify', 'play', 'play:1', '2026-01-01T03:00:00Z', '{}'),
+			('spotify-album', 'd', 'spotify', 'play', 'play:2', '2026-01-01T03:00:00Z', '{}'),
+			('spotify-album', 'd', 'spotify', 'play', 'play:3', '2026-01-01T03:00:00Z', '{}');
+		INSERT INTO entry (item_id) VALUES (1), (2), (3), (4), (6);`
+	if _, err := d.ExecContext(ctx, seed); err != nil {
+		t.Fatal(err)
+	}
+	return ctx, d
+}
+
+func listedInShortTerm(t *testing.T, d *sql.DB, artists ...string) {
+	t.Helper()
+	for i, artist := range artists {
+		if _, err := d.Exec(`
+			INSERT INTO record_observation (about_source, about_external_id, source, signal, key, observed_at, data)
+			VALUES ('spotify-artist', ?, 'spotify', 'top-artist', ?, ?, json_object('range', 'short_term', 'day', '2026-01-01', 'rank', ?))`,
+			artist, "top-artist:short_term:2026-01-01:"+artist, listenedAt, i+1); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func listening(itemID, value int64) rule.Measure {
+	return rule.Measure{ItemID: itemID, Field: kind.FieldListening, Value: value}
+}
+
+func assertMeasures(t *testing.T, got, want []rule.Measure) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("measures = %+v\nwant %+v", got, want)
+	}
+}
+
+func TestListeningMeasureMatchesOldPercentiles(t *testing.T) {
+	ctx, d := openListening(t)
+	listedInShortTerm(t, d, "a", "b")
+	got, err := Proposer.Measure(ctx, d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertMeasures(t, got, []rule.Measure{
+		listening(artistA, 100), listening(artistB, 50), listening(artistC, 0),
+		listening(albumD, 100), listening(albumF, 0),
+	})
+}
+
+func TestListeningSkipsDismissed(t *testing.T) {
+	ctx, d := openListening(t)
+	listedInShortTerm(t, d, "a", "e", "b")
+	if _, err := d.Exec(`INSERT INTO entry (item_id) VALUES (5); INSERT INTO dismissal (item_id, dismissed_at) VALUES (5, '2026-01-02T00:00:00Z')`); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Proposer.Measure(ctx, d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertMeasures(t, got, []rule.Measure{
+		listening(artistA, 100), listening(artistB, 50), listening(artistC, 0),
+		listening(albumD, 100), listening(albumF, 0),
+	})
+}
+
+func TestListeningIsOnlyForAlbumsAndArtists(t *testing.T) {
+	ctx, d := openListening(t)
+	if _, err := d.Exec(`INSERT INTO item (id, kind, slug) VALUES (7, 'track', 'g'); INSERT INTO entry (item_id) VALUES (7)`); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Proposer.Measure(ctx, d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range got {
+		if m.ItemID == 7 {
+			t.Errorf("a track was measured: %+v", m)
+		}
+	}
 }

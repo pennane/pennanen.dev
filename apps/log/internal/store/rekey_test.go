@@ -39,7 +39,7 @@ func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 			if err := s.ChangeOverride(ctx, corrected, map[string]any{"title": "Reloaded, by ap"}); err != nil {
 				t.Fatal(err)
 			}
-			if err := s.PutClaimItemKeyed(ctx, corrected, record.SourceLetterboxdTake, "", json.RawMessage(`{"review":"twice as long"}`)); err != nil {
+			if err := s.PutClaimAbout(ctx, record.Identity{Source: record.SourceLetterboxdTake, ExternalID: "tmdb:603"}, record.Identity{Source: record.SourceTMDB, ExternalID: "603"}, json.RawMessage(`{"review":"twice as long"}`)); err != nil {
 				t.Fatal(err)
 			}
 			other, err := s.CreateItem(ctx, kind.Movie, "Animatrix", nil)
@@ -50,7 +50,7 @@ func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 			if err := s.AddRelation(ctx, with); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := s.ObserveItemKeyed(ctx, store.Observation{ItemID: corrected, Source: record.SourceLetterboxd, Signal: "watched", Key: "watched-once", ObservedAt: "2026-11-01", Data: json.RawMessage(`{}`)}); err != nil {
+			if _, err := observeOnItem(ctx, s, store.Observation{ItemID: corrected, Source: record.SourceLetterboxd, Signal: "watched", Key: "watched-once", ObservedAt: "2026-11-01", Data: json.RawMessage(`{}`)}); err != nil {
 				t.Fatal(err)
 			}
 
@@ -101,7 +101,7 @@ func TestCorrectingTheKeyFreesItAndKeepsApsEdits(t *testing.T) {
 			if err != nil || found != real {
 				t.Fatalf("tmdb:603 belongs to %d, %v; want %d", found, err, real)
 			}
-			if err := s.PutClaimItemKeyed(ctx, found, record.SourceLetterboxd, "2bg8", json.RawMessage(`{"id":"2bg8","title":"The Matrix","tmdbId":603}`)); err != nil {
+			if err := putClaimOnItem(ctx, s, found, record.Identity{Source: record.SourceLetterboxd, ExternalID: "2bg8"}, json.RawMessage(`{"id":"2bg8","title":"The Matrix","tmdbId":603}`)); err != nil {
 				t.Fatal(err)
 			}
 			if owner, err := s.FindByIdentity(ctx, record.SourceLetterboxd, "2bg8"); err != nil || owner != real {
@@ -131,7 +131,7 @@ func TestNoMatchOnTheKeyRekeysOntoTheNextIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaimItemKeyed(ctx, game, record.SourceSteam, "220", json.RawMessage(`{"appid":220,"name":"Half-Life 2"}`)); err != nil {
+	if err := putClaimOnItem(ctx, s, game, record.Identity{Source: record.SourceSteam, ExternalID: "220"}, json.RawMessage(`{"appid":220,"name":"Half-Life 2"}`)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.ChangeOverride(ctx, game, map[string]any{"title": "HL2"}); err != nil {
@@ -174,7 +174,7 @@ func TestACorrectedKeyAnotherSourceStillNamesStaysHeld(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.PutClaimItemKeyed(ctx, film, record.SourceLetterboxd, "2bg8", json.RawMessage(`{"id":"2bg8","title":"The Matrix","tmdbId":603}`)); err != nil {
+	if err := putClaimOnItem(ctx, s, film, record.Identity{Source: record.SourceLetterboxd, ExternalID: "2bg8"}, json.RawMessage(`{"id":"2bg8","title":"The Matrix","tmdbId":603}`)); err != nil {
 		t.Fatal(err)
 	}
 

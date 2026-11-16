@@ -28,7 +28,6 @@ var claimReaders = map[string]readClaim{
 	record.SourceSpotifyArtist:     readSpotifyArtist,
 	record.SourceSpotifyAlbum:      readSpotifyAlbum,
 	record.SourceSpotifyTrack:      readSpotifyTrack,
-	record.SourceSpotifyListening:  readSpotifyListening,
 }
 
 func Reads(source string) bool {

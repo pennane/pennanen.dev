@@ -132,22 +132,6 @@ func largestImage(images []SpotifyImage) string {
 	return largest.URL
 }
 
-const listeningField = "listening"
-
-type SpotifyListening struct {
-	Listening *int64 `json:"listening"`
-}
-
-func readSpotifyListening(raw json.RawMessage) (map[string]any, error) {
-	var l SpotifyListening
-	if err := json.Unmarshal(raw, &l); err != nil {
-		return nil, err
-	}
-	values := map[string]any{}
-	putWhenGiven(values, listeningField, l.Listening)
-	return values, nil
-}
-
 type SpotifyTrack struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`

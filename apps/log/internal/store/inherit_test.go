@@ -19,7 +19,7 @@ func knowArtist(t *testing.T, s *store.Store, spotifyID, name string, genres ...
 	if err != nil {
 		t.Fatal(err)
 	}
-	id, err := s.KnowItemFromSource(context.Background(), kind.Artist, name, record.SourceSpotifyArtist, spotifyID, json.RawMessage(raw))
+	id, err := knowItem(context.Background(), s, record.Identity{Source: record.SourceSpotifyArtist, ExternalID: spotifyID}, json.RawMessage(raw))
 	if err != nil {
 		t.Fatal(err)
 	}

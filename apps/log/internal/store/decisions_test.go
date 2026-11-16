@@ -186,7 +186,7 @@ func TestDismissingKeepsTheEntryButHidesIt(t *testing.T) {
 	if got := listed(); len(got) != 0 {
 		t.Errorf("listed a dismissed item: %v", got)
 	}
-	if got, err := s.LoggedItemsNotDismissed(ctx, kind.Game); err != nil || len(got) != 0 {
+	if got, err := s.LoggedIdentitiesNotDismissed(ctx, kind.Game, record.SourceAP); err != nil || len(got) != 0 {
 		t.Errorf("logged and not dismissed = %v, %v", got, err)
 	}
 

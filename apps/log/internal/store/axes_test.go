@@ -142,7 +142,7 @@ func TestAnOutsideAxisReadsApsRatingFromTheTake(t *testing.T) {
 		t.Fatal(err)
 	}
 	id, _ := s.CreateItem(ctx, "movie", "Stalker", nil)
-	if err := s.PutClaimItemKeyed(ctx, id, record.SourceLetterboxdTake, "stalker", json.RawMessage(`{"rating":3.5}`)); err != nil {
+	if err := putClaimOnItem(ctx, s, id, record.Identity{Source: record.SourceLetterboxdTake, ExternalID: "stalker"}, json.RawMessage(`{"rating":3.5}`)); err != nil {
 		t.Fatal(err)
 	}
 	v, err := s.GetItem(ctx, id)

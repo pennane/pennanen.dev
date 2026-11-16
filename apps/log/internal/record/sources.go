@@ -10,7 +10,6 @@ const (
 	SourceSpotify           = "spotify"
 	SourceSpotifyAlbum      = "spotify-album"
 	SourceSpotifyArtist     = "spotify-artist"
-	SourceSpotifyListening  = "spotify-listening"
 	SourceSpotifyTrack      = "spotify-track"
 	SourceSpotifyTrackID    = "spotify-track-id"
 	SourceSteam             = "steam"

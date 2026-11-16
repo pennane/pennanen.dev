@@ -45,7 +45,6 @@ func TestEverySourceDerivesWhatItIsAbout(t *testing.T) {
 		{"spotify-album", "spotify-album:b", map[string]any{}, nil, kind.Album},
 		{"spotify-track", "spotify-track:USX", map[string]any{"spotify_id": "t1"}, []string{"spotify-track-id:t1"}, kind.Track},
 		{"letterboxd-take", "letterboxd-take:letterboxd:abc", nil, []string{"letterboxd:abc"}, ""},
-		{"spotify-listening", "spotify-listening:spotify-artist:a", nil, []string{"spotify-artist:a"}, ""},
 		{"ap item", "ap:item/3", map[string]any{"kind": "game", "title": "X"}, nil, kind.Game},
 		{"ap fields", "ap:fields/igdb:1942", map[string]any{"about": []any{"igdb:1942"}}, []string{"igdb:1942"}, ""},
 		{"matched", "matched:steam:220", map[string]any{"about": []any{"steam:220", "igdb:1942"}}, []string{"steam:220", "igdb:1942"}, ""},

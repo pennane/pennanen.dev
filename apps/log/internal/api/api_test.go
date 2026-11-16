@@ -485,7 +485,7 @@ func TestKnownItemsStayOutOfEntriesAndPublic(t *testing.T) {
 	srv := httptest.NewServer((&api.Server{Store: st, AdminToken: token, Images: &images.Store{Dir: t.TempDir()}}).Handler())
 	t.Cleanup(srv.Close)
 
-	if _, err := st.KnowItemFromSource(ctx, kind.Movie, "Heat", record.SourceTMDB, "949", json.RawMessage(`{"id":949,"title":"Heat"}`)); err != nil {
+	if _, err := knowItem(ctx, st, record.Identity{Source: record.SourceTMDB, ExternalID: "949"}, json.RawMessage(`{"id":949,"title":"Heat"}`)); err != nil {
 		t.Fatal(err)
 	}
 	logged, err := st.CreateItem(ctx, kind.Movie, "Ran", nil)
@@ -575,4 +575,47 @@ func TestPublicPresentationListsOnlyKindsWithSomethingPublic(t *testing.T) {
 			t.Errorf("admin settings lacks %s", name)
 		}
 	}
+}
+
+func TestUnrankedOrderByMeasure(t *testing.T) {
+	srv, d := newServerWithDB(t)
+	ids := map[string]string{}
+	for _, title := range []string{"Quiet", "Loud", "Unweighed"} {
+		status, body := call(t, srv, "POST", "/admin/items", token, `{"kind":"artist","title":"`+title+`"}`)
+		if status != http.StatusCreated {
+			t.Fatalf("create %s: %d %s", title, status, body)
+		}
+		var created struct{ ID int64 }
+		json.Unmarshal([]byte(body), &created)
+		ids[title] = itoa(created.ID)
+		if status, body := call(t, srv, "PATCH", "/admin/items/"+ids[title]+"/entry", token, `{"status":"listened","visibility":"public"}`); status != http.StatusOK {
+			t.Fatalf("entry %s: %d %s", title, status, body)
+		}
+	}
+	if _, err := d.Exec(`INSERT INTO measure (item_id, source, field, value) VALUES (?, 'spotify', 'listening', 10), (?, 'spotify', 'listening', 90)`, ids["Quiet"], ids["Loud"]); err != nil {
+		t.Fatal(err)
+	}
+	_, body := call(t, srv, "GET", "/public/items?kind=artist", "", "")
+	var items []struct {
+		Slug   string
+		Order  int
+		Fields map[string]any
+	}
+	if err := json.Unmarshal([]byte(body), &items); err != nil {
+		t.Fatalf("list: %v %s", err, body)
+	}
+	orders := map[string]int{}
+	for _, item := range items {
+		orders[item.Slug] = item.Order
+	}
+	if orders["loud"] != 1 || orders["quiet"] != 2 || orders["unweighed"] != 0 {
+		t.Fatalf("orders = %v from %s", orders, body)
+	}
+}
+
+func knowItem(ctx context.Context, st *store.Store, id record.Identity, data any) (int64, error) {
+	if err := st.PutClaim(ctx, id, data); err != nil {
+		return 0, err
+	}
+	return st.FindByIdentity(ctx, id.Source, id.ExternalID)
 }

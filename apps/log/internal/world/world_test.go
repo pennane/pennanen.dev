@@ -497,25 +497,6 @@ func TestASuppressedLinkIsDroppedAndNoLongerInherits(t *testing.T) {
 	}
 }
 
-func TestARecordWaitingOnItsTrackJoinsWhenTheTrackArrives(t *testing.T) {
-	f := newFixture(t)
-	listening := f.put("spotify-listening:spotify-track:ISRC1", `{"listening":5}`)
-	f.settle(listening)
-	if f.count("item") != 0 {
-		t.Fatalf("items = %d", f.count("item"))
-	}
-
-	track := f.put("spotify-track:ISRC1", trackOne)
-	f.settle(track)
-
-	if f.itemOf(listening) != f.itemOf(track) {
-		t.Fatalf("listening on %d, track on %d", f.itemOf(listening), f.itemOf(track))
-	}
-	if f.count("identity_waiting") != 0 {
-		t.Fatalf("still waiting: %d", f.count("identity_waiting"))
-	}
-}
-
 func TestATakeWaitingOnItsFilmJoinsWhenTheFilmArrives(t *testing.T) {
 	f := newFixture(t)
 	take := f.put("letterboxd-take:letterboxd:abc", `{"rating":4}`)
