@@ -325,6 +325,21 @@ func TestRunningTwiceADayAddsNothing(t *testing.T) {
 	}
 }
 
+func TestUnsavedOnceAfterPort(t *testing.T) {
+	fake := newFake()
+	h := newHarness(t, fake, spotify.Connected)
+	h.run(t)
+	b := h.item(t, record.SourceSpotifyAlbum, "B")
+
+	fake.saved = `[]`
+	h.day = "2026-11-16"
+	h.run(t)
+	report := h.run(t)
+	if got := h.observations(t, b, "unsaved"); len(got) != 1 || report.Counts[spotify.CountUnsaves] != 0 {
+		t.Fatalf("unsaved = %+v, counts = %v", got, report.Counts)
+	}
+}
+
 func TestAnAlbumMissingFromSavedIsUnsavedOnce(t *testing.T) {
 	fake := newFake()
 	h := newHarness(t, fake, spotify.Connected)
@@ -398,12 +413,13 @@ func TestAnAlbumSavedAgainAfterAnUnsaveIsSavedAgain(t *testing.T) {
 	h.day = "2026-11-17"
 	h.run(t)
 
-	latestSaved, err := h.store.ItemsLastObservedAsItemKeyed(ctx, spotify.ObservationSource, []string{"saved", "unsaved"}, "saved")
+	latestSaved, err := h.store.IdentitiesLastObservedAs(ctx, spotify.ObservationSource, []string{"saved", "unsaved"}, "saved")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Contains(latestSaved, b) {
-		t.Fatalf("saved = %v, want it to include %d", latestSaved, b)
+	album := record.Identity{Source: record.SourceSpotifyAlbum, ExternalID: "B"}
+	if !slices.Contains(latestSaved, album) {
+		t.Fatalf("saved = %v, want it to include %v", latestSaved, album)
 	}
 	if got := h.observations(t, b, "saved"); len(got) != 2 || got[1].Key != "saved:B:2026-11-10T09:00:00Z:2026-11-17" {
 		t.Fatalf("saved = %+v", got)
@@ -755,8 +771,8 @@ func TestTheHourlySyncFetchesNothingForAlbumsItAlreadyHasInFull(t *testing.T) {
 		t.Fatalf("report = %+v", report)
 	}
 	fetchesBefore := fake.catalogueFetches.Load()
-	a := h.item(t, record.SourceSpotifyAlbum, "A")
-	before, err := h.store.ClaimItemKeyed(context.Background(), a, record.SourceSpotifyAlbum)
+	a := record.Identity{Source: record.SourceSpotifyAlbum, ExternalID: "A"}
+	before, err := h.store.ClaimOf(context.Background(), a, record.SourceSpotifyAlbum)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -765,7 +781,7 @@ func TestTheHourlySyncFetchesNothingForAlbumsItAlreadyHasInFull(t *testing.T) {
 	if got := fake.catalogueFetches.Load(); got != fetchesBefore {
 		t.Fatalf("catalogue fetches went from %d to %d", fetchesBefore, got)
 	}
-	after, err := h.store.ClaimItemKeyed(context.Background(), a, record.SourceSpotifyAlbum)
+	after, err := h.store.ClaimOf(context.Background(), a, record.SourceSpotifyAlbum)
 	if err != nil || string(after.Data) != string(before.Data) || after.FetchedAt != before.FetchedAt {
 		t.Fatalf("claim changed: %+v -> %+v, %v", before, after, err)
 	}

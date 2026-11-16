@@ -34,10 +34,9 @@ const (
 )
 
 type metItem struct {
-	itemID     int64
-	externalID string
-	detail     Detail
-	raw        json.RawMessage
+	identity record.Identity
+	detail   Detail
+	raw      json.RawMessage
 }
 
 type reference struct {
@@ -59,37 +58,37 @@ func NewRecorder(s *store.Store) *Recorder {
 	return &Recorder{Store: s, artists: map[string]*metItem{}, albums: map[string]*metItem{}}
 }
 
-func (r *Recorder) KnowArtist(ctx context.Context, p *syncs.Progress, raw json.RawMessage, detail Detail) (int64, error) {
+func (r *Recorder) KnowArtist(ctx context.Context, p *syncs.Progress, raw json.RawMessage, detail Detail) (record.Identity, error) {
 	return r.know(ctx, p, r.artists, kind.Artist, record.SourceSpotifyArtist, CountArtists, raw, detail)
 }
 
-func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.RawMessage, detail Detail) (int64, error) {
-	itemID, err := r.know(ctx, p, r.albums, kind.Album, record.SourceSpotifyAlbum, CountAlbums, raw, detail)
+func (r *Recorder) KnowAlbum(ctx context.Context, p *syncs.Progress, raw json.RawMessage, detail Detail) (record.Identity, error) {
+	albumID, err := r.know(ctx, p, r.albums, kind.Album, record.SourceSpotifyAlbum, CountAlbums, raw, detail)
 	if err != nil {
-		return 0, err
+		return record.Identity{}, err
 	}
 	var album reference
 	if err := json.Unmarshal(raw, &album); err != nil {
-		return 0, err
+		return record.Identity{}, err
 	}
 	if len(album.Artists) == 0 {
-		r.keepStoredClaimIfItHasCredits(ctx, itemID, album.ID)
-		return itemID, nil
+		r.keepStoredClaimIfItHasCredits(ctx, albumID)
+		return albumID, nil
 	}
 	for _, credited := range album.Artists {
 		creditedRaw, err := json.Marshal(credited)
 		if err != nil {
-			return 0, err
+			return record.Identity{}, err
 		}
 		if _, err := r.KnowArtist(ctx, p, creditedRaw, Simplified); err != nil {
-			return 0, err
+			return record.Identity{}, err
 		}
 	}
-	return itemID, nil
+	return albumID, nil
 }
 
-func (r *Recorder) keepStoredClaimIfItHasCredits(ctx context.Context, itemID int64, albumID string) {
-	seen, met := r.albums[albumID]
+func (r *Recorder) keepStoredClaimIfItHasCredits(ctx context.Context, album record.Identity) {
+	seen, met := r.albums[album.ExternalID]
 	if !met {
 		return
 	}
@@ -97,7 +96,7 @@ func (r *Recorder) keepStoredClaimIfItHasCredits(ctx context.Context, itemID int
 	if json.Unmarshal(seen.raw, &arriving) != nil || len(arriving.Artists) > 0 {
 		return
 	}
-	stored, err := r.Store.ClaimItemKeyed(ctx, itemID, record.SourceSpotifyAlbum)
+	stored, err := r.Store.ClaimOf(ctx, album, record.SourceSpotifyAlbum)
 	if err != nil {
 		return
 	}
@@ -114,48 +113,45 @@ type albumCredits struct {
 	} `json:"tracks"`
 }
 
-func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*metItem, kindName, source, count string, raw json.RawMessage, detail Detail) (int64, error) {
+func (r *Recorder) know(ctx context.Context, p *syncs.Progress, met map[string]*metItem, kindName, source, count string, raw json.RawMessage, detail Detail) (record.Identity, error) {
 	var ref reference
 	if err := json.Unmarshal(raw, &ref); err != nil {
-		return 0, err
+		return record.Identity{}, err
 	}
 	if ref.ID == "" {
-		return 0, fmt.Errorf("a spotify %s without an id", kindName)
+		return record.Identity{}, fmt.Errorf("a spotify %s without an id", kindName)
 	}
 	if seen, ok := met[ref.ID]; ok {
 		if detail == Full && seen.detail != Full {
 			seen.detail, seen.raw = Full, raw
 		}
-		return seen.itemID, nil
+		return seen.identity, nil
 	}
+	id := record.Identity{Source: source, ExternalID: ref.ID}
 	known := detail
-	itemID, err := r.Store.FindByIdentity(ctx, source, ref.ID)
-	if err == nil && detail == Simplified && r.storedClaimIsFull(ctx, itemID, source) {
+	_, err := r.Store.ClaimOf(ctx, id, source)
+	switch {
+	case errors.Is(err, store.ErrNotFound):
+		if err := r.Store.PutClaim(ctx, id, raw); err != nil {
+			return record.Identity{}, err
+		}
+		p.Add(count, 1)
+	case err != nil:
+		return record.Identity{}, err
+	case detail == Simplified && r.storedClaimIsFull(ctx, id):
 		known = Kept
 	}
-	if errors.Is(err, store.ErrNotFound) {
-		itemID, err = r.Store.KnowItemFromSource(ctx, kindName, ref.Name, source, ref.ID, raw)
-		switch {
-		case errors.Is(err, store.ErrConflict):
-			itemID, err = r.Store.FindByIdentity(ctx, source, ref.ID)
-		case err == nil:
-			p.Add(count, 1)
-		}
-	}
-	if err != nil {
-		return 0, err
-	}
-	met[ref.ID] = &metItem{itemID: itemID, externalID: ref.ID, detail: known, raw: raw}
-	return itemID, nil
+	met[ref.ID] = &metItem{identity: id, detail: known, raw: raw}
+	return id, nil
 }
 
-func (r *Recorder) Observe(ctx context.Context, p *syncs.Progress, itemID int64, signal, key, observedAt, count string, data any) (store.ObserveOutcome, error) {
+func (r *Recorder) Observe(ctx context.Context, p *syncs.Progress, about record.Identity, signal, key, observedAt, count string, data any) (store.ObserveOutcome, error) {
 	encoded, err := json.Marshal(data)
 	if err != nil {
 		return "", err
 	}
-	outcome, err := r.Store.ObserveItemKeyed(ctx, store.Observation{
-		ItemID:     itemID,
+	outcome, err := r.Store.Observe(ctx, record.Observation{
+		About:      about,
 		Source:     ObservationSource,
 		Signal:     signal,
 		Key:        key,
@@ -207,14 +203,14 @@ func (r *Recorder) refresh(ctx context.Context, p *syncs.Progress, met map[strin
 		if seen.detail != Full {
 			continue
 		}
-		if err := r.Store.PutClaimItemKeyed(ctx, seen.itemID, source, id, seen.raw); err != nil {
+		if err := r.Store.PutClaim(ctx, seen.identity, seen.raw); err != nil {
 			p.Problem("%s %s: %v", source, id, err)
 		}
 	}
 }
 
-func (r *Recorder) storedClaimIsFull(ctx context.Context, itemID int64, source string) bool {
-	claim, err := r.Store.ClaimItemKeyed(ctx, itemID, source)
+func (r *Recorder) storedClaimIsFull(ctx context.Context, id record.Identity) bool {
+	claim, err := r.Store.ClaimOf(ctx, id, id.Source)
 	if err != nil {
 		return false
 	}
