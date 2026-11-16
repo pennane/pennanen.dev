@@ -131,3 +131,17 @@ func TestAKindMoveSetsTheChoiceAsideAndMovingBackRestoresIt(t *testing.T) {
 func sameChoice(got, want *store.StatusChoice) bool {
 	return got != nil && got.Status == want.Status && got.Standing == want.Standing
 }
+
+func TestIdentifyAboutAnUnknownIdentityIsNotFoundAndWritesNothing(t *testing.T) {
+	ctx := context.Background()
+	s := openStore(t)
+	unknown := record.Identity{Source: record.SourceLetterboxd, ExternalID: "nobody"}
+	answer := store.Identity{Kind: kind.Movie, Source: record.SourceTMDB, ExternalID: "1", Data: json.RawMessage(`{"id":1,"title":"x"}`)}
+	if err := s.IdentifyAbout(ctx, unknown, answer, []string{record.SourceTMDB}); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("identify about nothing: %v", err)
+	}
+	tmdbFilm := record.Identity{Source: record.SourceTMDB, ExternalID: "1"}
+	if _, err := s.ClaimOf(ctx, tmdbFilm, record.SourceTMDB); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("a claim was written: %v", err)
+	}
+}

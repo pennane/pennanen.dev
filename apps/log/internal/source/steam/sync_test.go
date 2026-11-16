@@ -3,6 +3,7 @@ package steam_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -153,5 +154,63 @@ func TestOwnedSteamGamesAreLoggedUntriaged(t *testing.T) {
 	v := items[0]
 	if v.Entry == nil || v.Entry.LoggedBy != steam.RuleOwned || v.Entry.Status != kind.Untriaged || v.Entry.StatusDecidedBy != take.Nobody {
 		t.Fatalf("an owned game: %+v", v.Entry)
+	}
+}
+
+func syncSteamAgainst(t *testing.T, games string, reviewBox string) (*store.Store, syncs.Report) {
+	t.Helper()
+	ctx := context.Background()
+	d, err := db.Open(ctx, filepath.Join(t.TempDir(), "log.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { d.Close() })
+	s := openProposing(t, d)
+	fake := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/IPlayerService/GetOwnedGames/v1/":
+			fmt.Fprint(w, games)
+		case "/api/appdetails":
+			fmt.Fprintf(w, `{"%s":{"success":false}}`, r.URL.Query().Get("appids"))
+		case "/profiles/me/recommended/":
+			if r.URL.Query().Get("p") == "1" {
+				fmt.Fprint(w, reviewBox)
+			}
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(fake.Close)
+	client := steam.NewClient("key", "me")
+	client.WebAPIBaseURL, client.StoreBaseURL, client.CommunityBaseURL = fake.URL, fake.URL, fake.URL
+	steamSyncer := steam.NewSyncer(s, client)
+	steamSyncer.StoreRequestInterval = 1
+	syncer, err := syncs.New(ctx, steam.SyncName, record.SourceSteam, steamSyncer.Work, s, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s, syncer.Run(ctx)
+}
+
+func TestAReviewOfAGameThatIsNotOwnedIsAProblemAndWritesNoClaim(t *testing.T) {
+	review := `<div class="review_box"><a href="https://steamcommunity.com/app/99"></a><img src="/icon_thumbsUp.png"><div class="content ">lost</div></div>`
+	s, report := syncSteamAgainst(t, `{"response":{"games":[{"appid":1,"name":"Owned","playtime_forever":0}]}}`, review)
+	if report.Counts[steam.CountReviewsRecorded] != 0 || len(report.Problems) == 0 {
+		t.Fatalf("report %+v", report)
+	}
+	unowned := record.Identity{Source: record.SourceSteamTake, ExternalID: "99"}
+	if _, err := s.ClaimOf(context.Background(), unowned, record.SourceSteamTake); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("a claim about a game with no item: %v", err)
+	}
+}
+
+func TestANewSteamGameTakesItsTitleFromTheOwnedGame(t *testing.T) {
+	s, report := syncSteamAgainst(t, `{"response":{"games":[{"appid":5,"name":"Owned Five","playtime_forever":0}]}}`, "")
+	if report.Counts[steam.CountGamesAdded] != 1 {
+		t.Fatalf("report %+v", report)
+	}
+	items, err := s.ListItems(context.Background(), store.ItemFilter{})
+	if err != nil || len(items) != 1 || items[0].Verdicts.Values["title"] != "Owned Five" {
+		t.Errorf("items %v %v", items, err)
 	}
 }

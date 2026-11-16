@@ -62,7 +62,7 @@ func (s *Syncer) recordReviews(ctx context.Context, p *syncs.Progress) error {
 	}
 	for _, r := range reviews {
 		appID := strconv.FormatInt(r.AppID, 10)
-		err := s.Store.PutClaimAbout(ctx, claimOf(record.SourceSteamTake, appID), steamGame(appID), r.Take)
+		err := s.Store.PutClaimAbout(ctx, identity(record.SourceSteamTake, appID), identity(record.SourceSteam, appID), r.Take)
 		if errors.Is(err, store.ErrNotFound) {
 			p.Problem("review of %d: no game with that app id", r.AppID)
 			continue
@@ -78,7 +78,7 @@ func (s *Syncer) recordReviews(ctx context.Context, p *syncs.Progress) error {
 
 func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, storeRequestAllowed <-chan time.Time) error {
 	appID := strconv.FormatInt(g.AppID, 10)
-	game := steamGame(appID)
+	game := identity(record.SourceSteam, appID)
 	_, err := s.Store.ClaimOf(ctx, game, record.SourceSteam)
 	var previousPlaytime int64
 	previousPlaytimeKnown := false
@@ -107,7 +107,7 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 		if err != nil {
 			return err
 		}
-		if err := s.Store.PutClaimAbout(ctx, claimOf(record.SourceSteamStore, appID), game, details); err != nil {
+		if err := s.Store.PutClaimAbout(ctx, identity(record.SourceSteamStore, appID), game, details); err != nil {
 			return err
 		}
 		p.Add(CountStoreDetailsFetched, 1)
@@ -119,7 +119,7 @@ func (s *Syncer) syncGame(ctx context.Context, g OwnedGame, p *syncs.Progress, s
 		if err != nil {
 			return err
 		}
-		if err := s.Store.PutClaimAbout(ctx, claimOf(record.SourceSteamAchievements, appID), game, stats); err != nil {
+		if err := s.Store.PutClaimAbout(ctx, identity(record.SourceSteamAchievements, appID), game, stats); err != nil {
 			return err
 		}
 		p.Add(CountAchievementsFetched, 1)
@@ -146,10 +146,6 @@ func (s *Syncer) lacksClaim(ctx context.Context, game record.Identity, source st
 	return errors.Is(err, store.ErrNotFound)
 }
 
-func steamGame(appID string) record.Identity {
-	return claimOf(record.SourceSteam, appID)
-}
-
-func claimOf(source, externalID string) record.Identity {
+func identity(source, externalID string) record.Identity {
 	return record.Identity{Source: source, ExternalID: externalID}
 }

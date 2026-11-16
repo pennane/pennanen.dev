@@ -81,7 +81,11 @@ func (m *Matcher) match(ctx context.Context, filmID record.Identity, p *syncs.Pr
 	if err := wait(ctx, allowed); err != nil {
 		return err
 	}
-	if err := Identify(ctx, m.Store, m.Client, filmID, link); err != nil {
+	answer, err := Answer(ctx, m.Client, link)
+	if err != nil {
+		return err
+	}
+	if err := m.Store.IdentifyAbout(ctx, filmID, answer, Sources); err != nil {
 		return err
 	}
 	p.Add(CountMatched, 1)
@@ -115,20 +119,20 @@ func (m *Matcher) searched(ctx context.Context, film reading.LetterboxdFilm, all
 	return reading.TMDBLink{Type: reading.MovieOnTMDB, ID: movieID}, confident, nil
 }
 
-func Identify(ctx context.Context, s *store.Store, c *Client, film record.Identity, link reading.TMDBLink) error {
+func Answer(ctx context.Context, c *Client, link reading.TMDBLink) (store.Identity, error) {
 	raw, err := c.Entry(ctx, link)
 	if err != nil {
-		return err
+		return store.Identity{}, err
 	}
-	return s.IdentifyAbout(ctx, film, store.Identity{
+	return store.Identity{
 		Kind:       kind.OfTMDB(link.Type),
 		Source:     link.Type.Source(),
 		ExternalID: link.ExternalID(),
 		Data:       raw,
-	}, tmdbSources)
+	}, nil
 }
 
-var tmdbSources = []string{record.SourceTMDB, record.SourceTMDBSeries}
+var Sources = []string{record.SourceTMDB, record.SourceTMDBSeries}
 
 func onlyMatch(film reading.LetterboxdFilm, found []Found) (int64, bool) {
 	fits := []Found{}
