@@ -3,7 +3,10 @@ package rule_test
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/pennane/pennanen.dev/apps/log/internal/platform/db"
@@ -227,5 +230,101 @@ func TestARuleSeesTheEntriesItsOwnRunLogged(t *testing.T) {
 	}
 	if got := countProposals(t, d, "a"); got != 1 || len(report.Logged) != 1 || report.Proposals != 1 {
 		t.Fatalf("one run left %d proposals, report %+v", got, report)
+	}
+}
+
+func measuring(source string, measures ...rule.Measure) rule.Proposer {
+	p := proposer(source)
+	p.Measure = func(context.Context, record.Queryer) ([]rule.Measure, error) {
+		return measures, nil
+	}
+	return p
+}
+
+func storedMeasures(t *testing.T, d *sql.DB) []string {
+	t.Helper()
+	rows, err := d.QueryContext(context.Background(), `SELECT item_id, source, field, value FROM measure ORDER BY item_id, field`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	var stored []string
+	for rows.Next() {
+		var itemID, value int64
+		var source, field string
+		if err := rows.Scan(&itemID, &source, &field, &value); err != nil {
+			t.Fatal(err)
+		}
+		stored = append(stored, fmt.Sprintf("%d %s %s %d", itemID, source, field, value))
+	}
+	return stored
+}
+
+func TestRunReplacesMeasures(t *testing.T) {
+	ctx, d := openLog(t)
+	addItem(t, d, 1)
+	addItem(t, d, 2)
+	a := measuring("a", rule.Measure{ItemID: 1, Field: "listening", Value: 10}, rule.Measure{ItemID: 2, Field: "listening", Value: 20})
+	b := measuring("b", rule.Measure{ItemID: 1, Field: "playtime", Value: 5})
+	if _, err := rule.RunAll(ctx, d, []rule.Proposer{a, b, proposer("c")}, "public"); err != nil {
+		t.Fatal(err)
+	}
+	fewer := measuring("a", rule.Measure{ItemID: 1, Field: "listening", Value: 11})
+	if _, err := rule.Run(ctx, d, fewer, "public"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := rule.Run(ctx, d, proposer("b"), "public"); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"1 a listening 11", "1 b playtime 5"}
+	if got := storedMeasures(t, d); !slices.Equal(got, want) {
+		t.Fatalf("measures = %v, want %v", got, want)
+	}
+}
+
+func TestAFailedMeasureKeepsThePreviousProposalsAndMeasures(t *testing.T) {
+	ctx, d := openLog(t)
+	addItem(t, d, 1)
+	first := measuring("a", rule.Measure{ItemID: 1, Field: "listening", Value: 10})
+	first.Propose = proposer("a", statusProposal(1, "ra", "watched", "2026-01-01")).Propose
+	if _, err := rule.Run(ctx, d, first, "public"); err != nil {
+		t.Fatal(err)
+	}
+	broken := proposer("a")
+	broken.Measure = func(context.Context, record.Queryer) ([]rule.Measure, error) {
+		return nil, errors.New("weighing broke")
+	}
+	if _, err := rule.Run(ctx, d, broken, "public"); err == nil {
+		t.Fatal("a broken measure did not fail the run")
+	}
+	if got := countProposals(t, d, "a"); got != 1 {
+		t.Fatalf("proposals = %d", got)
+	}
+	if got := storedMeasures(t, d); !slices.Equal(got, []string{"1 a listening 10"}) {
+		t.Fatalf("measures = %v", got)
+	}
+}
+
+func TestAMeasureSeesTheEntriesItsOwnRunLogged(t *testing.T) {
+	ctx, d := openLog(t)
+	addItem(t, d, 1)
+	logsThenMeasures := rule.Proposer{
+		Source: "a",
+		Propose: func(context.Context, record.Queryer) ([]rule.Proposal, error) {
+			return []rule.Proposal{{ItemID: 1, Rule: "ra", Subject: rule.SubjectEntry, Value: rule.EntryLogged, Strength: rule.Applying}}, nil
+		},
+		Measure: func(ctx context.Context, q record.Queryer) ([]rule.Measure, error) {
+			var logged int64
+			if err := q.QueryRowContext(ctx, `SELECT count(*) FROM entry WHERE item_id = 1`).Scan(&logged); err != nil {
+				return nil, err
+			}
+			return []rule.Measure{{ItemID: 1, Field: "logged", Value: logged}}, nil
+		},
+	}
+	if _, err := rule.Run(ctx, d, logsThenMeasures, "public"); err != nil {
+		t.Fatal(err)
+	}
+	if got := storedMeasures(t, d); !slices.Equal(got, []string{"1 a logged 1"}) {
+		t.Fatalf("measures = %v", got)
 	}
 }

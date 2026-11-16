@@ -37,9 +37,16 @@ type Proposal struct {
 	ChangedAt string
 }
 
+type Measure struct {
+	ItemID int64
+	Field  string
+	Value  int64
+}
+
 type Proposer struct {
 	Source  string
 	Propose func(ctx context.Context, q record.Queryer) ([]Proposal, error)
+	Measure func(ctx context.Context, q record.Queryer) ([]Measure, error)
 }
 
 type Report struct {
@@ -102,7 +109,31 @@ func Run(ctx context.Context, d *sql.DB, p Proposer, visibility string) (Report,
 		}
 	}
 	report.Proposals = len(stored)
+	if err := replaceMeasures(ctx, tx, p); err != nil {
+		return Report{}, err
+	}
 	return report, tx.Commit()
+}
+
+func replaceMeasures(ctx context.Context, q record.Queryer, p Proposer) error {
+	if p.Measure == nil {
+		return nil
+	}
+	measures, err := p.Measure(ctx, q)
+	if err != nil {
+		return err
+	}
+	if _, err := q.ExecContext(ctx, `DELETE FROM measure WHERE source = ?`, p.Source); err != nil {
+		return err
+	}
+	for _, m := range measures {
+		if _, err := q.ExecContext(ctx,
+			`INSERT INTO measure (item_id, source, field, value) VALUES (?, ?, ?, ?)`,
+			m.ItemID, p.Source, m.Field, m.Value); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func logEntries(ctx context.Context, q record.Queryer, proposals []Proposal, visibility string) ([]Proposal, []int64, error) {
