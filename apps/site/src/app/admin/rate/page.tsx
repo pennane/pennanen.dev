@@ -1,26 +1,54 @@
 import { requireAdmin } from '../../../lib/admin/require-admin'
 import { logAdmin } from '../../../lib/log/admin-api'
+import type { ItemView, Kind } from '../../../lib/log/types'
+import { QueueHeader } from '../_queue/card'
 import { toRanked } from '../_queue/placing'
-import { byPlaytime, toGameCard } from '../_queue/toCard'
-import { Rate } from './Rate'
+import styles from '../_queue/queue.module.css'
+import { toGameCard, unrankedOrderOf } from '../_queue/toCard'
+import { Rate, type KindQueue } from './Rate'
 
 export const dynamic = 'force-dynamic'
 
-const RATED_KIND = 'game'
+type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
-export default async function RatePage() {
+const single = (value: string | string[] | undefined) =>
+  typeof value === 'string' ? value : undefined
+
+const queueOf = async (kind: Kind) => ({
+  kind,
+  items: await logAdmin.items({ kind: kind.name, needs: 'score' })
+})
+
+const byUnrankedOrder = (kind: Kind) => (a: ItemView, b: ItemView) =>
+  unrankedOrderOf(kind, b) - unrankedOrderOf(kind, a)
+
+export default async function RatePage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdmin()
-  const [kinds, items, entries] = await Promise.all([
-    logAdmin.kinds(),
-    logAdmin.items({ kind: RATED_KIND, needs: 'score' }),
-    logAdmin.entries(RATED_KIND)
-  ])
-  const kind = kinds.find((k) => k.name === RATED_KIND)
-  if (!kind) throw new Error(`kind ${RATED_KIND} is missing from the log`)
+  const params = await searchParams
+  const queues = await Promise.all((await logAdmin.kinds()).map(queueOf))
+  const withWork = queues.filter((q) => q.items.length > 0)
+  const chosen = withWork.find((q) => q.kind.name === single(params.kind)) ?? withWork[0]
+
+  if (!chosen)
+    return (
+      <div className={styles.queue}>
+        <QueueHeader current="rate" />
+        <p className={styles.empty}>Everything has a score.</p>
+      </div>
+    )
+
+  const { kind, items } = chosen
+  const kindQueues: KindQueue[] = withWork.map((q) => ({
+    kind: q.kind.name,
+    count: q.items.length
+  }))
+  const entries = await logAdmin.entries(kind.name)
   return (
     <Rate
+      key={kind.name}
       kind={kind}
-      cards={items.map(toGameCard).sort(byPlaytime)}
+      kindQueues={kindQueues}
+      cards={[...items].sort(byUnrankedOrder(kind)).map(toGameCard)}
       ranked={toRanked(kind, entries)}
     />
   )

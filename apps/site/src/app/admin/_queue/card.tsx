@@ -12,6 +12,7 @@ export type GameCard = {
   id: number
   title: string
   cover?: string
+  artists: string[]
   playtimeMinutes?: number
   lastPlayed?: string
   achievements?: { unlocked: number; total: number }
@@ -96,6 +97,7 @@ export const QueueHeader = ({
 
 export const CardFace = ({ card, badge }: { card: GameCard; badge?: string }) => {
   const facts = [
+    card.artists.length > 0 && card.artists.join(', '),
     card.playtimeMinutes !== undefined && formatPlaytime(card.playtimeMinutes),
     card.achievements && `${card.achievements.unlocked}/${card.achievements.total} achievements`,
     card.lastPlayed && `last played ${card.lastPlayed}`,

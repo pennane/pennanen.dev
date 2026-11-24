@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useMemo, useState } from 'react'
 import { PRESTIGE } from '../../../lib/log/present'
 import type { Kind } from '../../../lib/log/types'
@@ -20,6 +21,8 @@ import {
 import styles from '../_queue/queue.module.css'
 import { useSaveQueue } from '../_queue/useSaveQueue'
 
+export type KindQueue = { kind: string; count: number }
+
 type Rated = { card: GameCard; blurb: string; addedTags: string[] }
 
 type Step = { phase: 'division' } | { phase: 'compare'; search: Search }
@@ -30,10 +33,12 @@ const RATE_TAGS = [{ tag: ANOTHER_SHOT, shortcut: 'a', label: 'worth another sho
 
 export const Rate = ({
   kind,
+  kindQueues,
   cards,
   ranked: initialRanked
 }: {
   kind: Kind
+  kindQueues: KindQueue[]
   cards: GameCard[]
   ranked: Ranked
 }) => {
@@ -142,6 +147,21 @@ export const Rate = ({
     <div className={styles.queue}>
       <QueueHeader current="rate" count={queue.length} />
 
+      {kindQueues.length > 1 && (
+        <nav className={styles.filters}>
+          {kindQueues.map((k) => (
+            <Link
+              key={k.kind}
+              href={`/admin/rate?kind=${k.kind}`}
+              className={styles.filter}
+              aria-current={k.kind === kind.name ? 'true' : undefined}
+            >
+              {k.kind} <span className={styles.count}>{k.count}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
+
       {current ? (
         <article className={styles.card} key={current.id}>
           <CardFace card={current} badge={current.status} />
@@ -181,7 +201,7 @@ export const Rate = ({
           </div>
         </article>
       ) : (
-        <p className={styles.empty}>Everything you played has a score.</p>
+        <p className={styles.empty}>Everything here has a score.</p>
       )}
 
       <footer className={styles.footer}>
