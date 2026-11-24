@@ -85,8 +85,5 @@ func (s *Server) placeEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := s.Store.Place(r.Context(), id, body.Division, body.Index)
-	if err == nil {
-		s.changed()
-	}
 	respond(w, http.StatusNoContent, nil, err)
 }

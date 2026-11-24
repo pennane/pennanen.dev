@@ -40,7 +40,7 @@ func (s *Server) importLetterboxdExport(w http.ResponseWriter, r *http.Request) 
 	}
 	run, err := syncs.New(r.Context(), LetterboxdExportSyncName, record.SourceLetterboxd, func(ctx context.Context, p *syncs.Progress) error {
 		return s.Letterboxd.Import(ctx, p, export)
-	}, s.Store, s.changed)
+	}, s.Store, nil)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

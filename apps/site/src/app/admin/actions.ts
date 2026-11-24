@@ -1,7 +1,9 @@
 'use server'
 
+import { revalidateTag } from 'next/cache'
 import { requireAdmin } from '../../lib/admin/require-admin'
 import { LogApiError, logAdmin } from '../../lib/log/admin-api'
+import { LOG_CACHE_TAG } from '../../lib/log/public-api'
 import { itemPath, textField } from '../../lib/log/present'
 import { LETTERBOXD_EXPORT_FIELD } from '../../lib/log/syncs'
 import type {
@@ -230,4 +232,9 @@ export async function saveTagTitles(titles: Record<string, string>) {
 export async function saveKindOrder(order: string[]) {
   await requireAdmin()
   return refusedByTheLog(() => logAdmin.putKindOrder(order))
+}
+
+export async function publishLog() {
+  await requireAdmin()
+  revalidateTag(LOG_CACHE_TAG)
 }

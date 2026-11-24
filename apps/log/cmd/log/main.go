@@ -78,7 +78,7 @@ func run() error {
 	}
 	pictures := &images.Store{Dir: imageDir}
 
-	server := &api.Server{Store: st, AdminToken: os.Getenv("LOG_ADMIN_TOKEN"), Changed: notifier.Changed, Images: pictures}
+	server := &api.Server{Store: st, AdminToken: os.Getenv("LOG_ADMIN_TOKEN"), Images: pictures}
 	if server.AdminToken == "" {
 		slog.Warn("LOG_ADMIN_TOKEN is empty; admin endpoints will refuse every request")
 	}
@@ -93,7 +93,7 @@ func run() error {
 		return sync, nil
 	}
 	addSync := func(name, source string, work syncs.Work) error {
-		sync, err := newSync(name, source, work, notifier.Changed)
+		sync, err := newSync(name, source, work, leaveTheSiteUntilTheDailyRun)
 		if err != nil {
 			return err
 		}

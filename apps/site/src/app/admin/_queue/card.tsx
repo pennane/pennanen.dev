@@ -2,9 +2,10 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { divisionName, findAxis, PRESTIGE } from '../../../lib/log/present'
 import type { Kind } from '../../../lib/log/types'
+import { publishLog } from '../actions'
 import styles from './queue.module.css'
 import type { SaveQueueState } from './useSaveQueue'
 
@@ -71,6 +72,38 @@ const QUEUES = [
   { href: '/admin/settings', label: 'settings' }
 ] as const
 
+type Publishing = 'idle' | 'published' | 'failed'
+
+const PUBLISH_LABELS: Record<Publishing, string> = {
+  idle: 'publish',
+  published: 'published',
+  failed: 'publish failed, retry'
+}
+
+const PublishButton = () => {
+  const [pending, startTransition] = useTransition()
+  const [state, setState] = useState<Publishing>('idle')
+  const publish = () =>
+    startTransition(async () => {
+      try {
+        await publishLog()
+        setState('published')
+      } catch {
+        setState('failed')
+      }
+    })
+  return (
+    <button
+      className={styles.quiet}
+      onClick={publish}
+      disabled={pending}
+      title="refresh the public log pages"
+    >
+      {pending ? 'publishing…' : PUBLISH_LABELS[state]}
+    </button>
+  )
+}
+
 export const QueueHeader = ({
   current,
   count,
@@ -90,6 +123,7 @@ export const QueueHeader = ({
           {q.label}
         </Link>
       ))}
+      <PublishButton />
       {children}
     </nav>
   </header>

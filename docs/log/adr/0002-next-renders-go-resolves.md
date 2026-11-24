@@ -17,8 +17,10 @@ that may go down. Recording should be quick, often from a phone.
 - Public pages `/log`, `/log/<kind>` and `/log/<kind>/<slug>` are ISR. They
   fetch unauthenticated public endpoints that return only what may show,
   already resolved for the page ([ADR 10](./0010-presentation-is-a-stored-projection.md)).
-  The VPS calls a Vercel revalidate hook, with its own secret, when public
-  data changes.
+  They refresh once a day, when the VPS calls a Vercel revalidate hook with
+  its own secret, or when ap presses publish in admin. Edits and syncs
+  never refresh them: each refresh rebuilds every log page a visitor or
+  crawler opens, and Vercel's free tier caps those writes.
 - Pictures use `next/image` with `unoptimized` and the source's own sizes.
 
 ## Consequences

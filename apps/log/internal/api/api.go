@@ -31,7 +31,6 @@ type Server struct {
 	Spotify    *spotify.Client
 	Backup     func(ctx context.Context) (string, error)
 	Images     *images.Store
-	Changed    func()
 }
 
 func (s *Server) Handler() http.Handler {
@@ -136,9 +135,6 @@ func (s *Server) putAxes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	axes, err := s.Store.SetAxes(r.Context(), body)
-	if err == nil {
-		s.changed()
-	}
 	respond(w, http.StatusOK, axes, err)
 }
 
@@ -157,9 +153,6 @@ func (s *Server) putKindSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	settings, err := s.Store.SetKindSettings(r.Context(), k, body)
-	if err == nil {
-		s.changed()
-	}
 	respond(w, http.StatusOK, settings, err)
 }
 
@@ -169,9 +162,6 @@ func (s *Server) putTagTitles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	titles, err := s.Store.SetTagTitles(r.Context(), body)
-	if err == nil {
-		s.changed()
-	}
 	respond(w, http.StatusOK, titles, err)
 }
 
@@ -181,9 +171,6 @@ func (s *Server) putKindOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	order, err := s.Store.SetKindOrder(r.Context(), body)
-	if err == nil {
-		s.changed()
-	}
 	respond(w, http.StatusOK, order, err)
 }
 
@@ -216,7 +203,6 @@ func (s *Server) createItem(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
-	s.changed()
 	view, err := s.Store.GetItem(r.Context(), id)
 	respond(w, http.StatusCreated, view, err)
 }
@@ -343,16 +329,7 @@ func (s *Server) backupNow(w http.ResponseWriter, r *http.Request) {
 	respond(w, http.StatusOK, map[string]string{"key": key}, err)
 }
 
-func (s *Server) changed() {
-	if s.Changed != nil {
-		s.Changed()
-	}
-}
-
 func (s *Server) mutated(w http.ResponseWriter, err error) {
-	if err == nil {
-		s.changed()
-	}
 	respond(w, http.StatusNoContent, nil, err)
 }
 
@@ -361,7 +338,6 @@ func (s *Server) mutatedItem(w http.ResponseWriter, r *http.Request, id int64, e
 		respond(w, 0, nil, err)
 		return
 	}
-	s.changed()
 	view, err := s.Store.GetItem(r.Context(), id)
 	respond(w, http.StatusOK, view, err)
 }

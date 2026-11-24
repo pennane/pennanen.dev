@@ -128,7 +128,6 @@ func (s *Server) addFromTMDB(w http.ResponseWriter, r *http.Request) {
 		respond(w, 0, nil, err)
 		return
 	}
-	s.changed()
 	view, err := s.Store.GetItem(r.Context(), id)
 	respond(w, http.StatusCreated, view, err)
 }
